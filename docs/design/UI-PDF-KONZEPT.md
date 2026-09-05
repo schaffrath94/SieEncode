@@ -130,3 +130,24 @@ Tastaturbedienung sowie 100/125/150 Prozent Windows-Skalierung.
 Physische Abnahme bleibt getrennt: ChangeFileSettings, installierter Gesamtbedienlauf,
 zweiter Windows-Benutzer/Rechner, anschließend neue Pakete mit exakt zugeordneten
 Studio-/Runtime-Hashes. Das Konzept erweitert keine bestehende Hardwarefreigabe.
+
+## Verbindlicher Funktionserhalt und Expertenumfang
+
+Die Zuordnung in FUNKTIONSPARITAET.md und die technische RC15-BEDIENINVENTUR.md
+sind Grundlage der Migration. Bestehende Aktionen dürfen nicht verschwinden,
+weil sie im neuen Normalmodus nicht auf die Hauptseite passen. Das betrifft
+insbesondere Profilhistorie, Import/Export, Projektvergleich, Serienbetrieb,
+Mastering, gezielten Rückbau, Recovery, manuelle Sitzungsschlüssel, Vaultprüfung,
+Diagnose, CLI und Startparameter. Neue Funktionen sind ergänzend.
+
+Der Expertenmodus erhält eigene Detailreiter je Arbeitsbereich. Er zeigt
+vollständige Strukturen und Rechte, Schlüsselnummern und Referenzen, Datenrezepte,
+Taskreihenfolge mit Voraussetzungen und Ergebnissen, Reader-/Runtime-Diagnose,
+Readbacks sowie explizite Grenzen der Kartenanalyse. Der Moduswechsel verändert
+weder Projekt noch ungespeicherte Eingaben oder den laufenden Auftrag.
+
+Berichtstyp (Soll, Ist, Vergleich) und Umfang (Kompakt, Technisch vollständig)
+sind unabhängig vom UI-Modus auswählbar. Ein Vollbericht darf Rohdaten nicht still
+kürzen. Noch nicht erhobene Chipfelder und noch nicht unterstützte Dateitypen
+bleiben als solche erkennbar. Der neue fünfseitige Entwurf konkretisiert den
+Umfang; die produktive Implementierung und Prüfung stehen aus.
