@@ -1,0 +1,7 @@
+title = "SieEncode scan configuration"
+[extend]
+useDefault = true
+[[allowlists]]
+description = "Public synthetic DESFire test vector; not a credential"
+regexTarget = "secret"
+regexes = ['''^00112233445566778899AABBCCDDEEFF$''']

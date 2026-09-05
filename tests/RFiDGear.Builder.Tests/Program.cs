@@ -1887,13 +1887,19 @@ static void TestExistingCardExtension()
     Directory.CreateDirectory(root);
     try
     {
-        var library = ProfileLibrary.Load(Path.Combine(Directory.GetCurrentDirectory(), "assets", "profiles"));
+        // Synthetic fixtures keep the full extension regression runnable without customer profiles.
+        var variable = new VariableDefinition { Id = "cardNumber", Label = "Test card", Scope = "card", Type = "digits", Length = 6, Required = true };
+        var library = ProfileLibrary.FromProfiles([
+            MinimalProfile("SYNTHETIC-BASE", "base", "A0B001", variable),
+            MinimalProfile("SYNTHETIC-EXTENSION", "customer", "A0B002", variable)
+        ]);
         var shells = TaskShellLibrary.Load(Path.Combine(Directory.GetCurrentDirectory(), "assets", "task-shells"));
         var project = ValidProject();
         project.Project.Name = "Extension";
         project.Project.CardMode = CardOperationMode.ExtendExisting;
         project.Project.Build = ["Mastering", "Coding"];
-        project.Profiles.Customers = ["DEVK"];
+        project.Profiles.Base = "SYNTHETIC-BASE";
+        project.Profiles.Customers = ["SYNTHETIC-EXTENSION"];
         project.Values["firmCode"] = "1234567890";
         var composition = library.Compose(project.Profiles.Base, project.Profiles.Customers);
         var additions = CardOperationMode.SelectApplications(composition, project);

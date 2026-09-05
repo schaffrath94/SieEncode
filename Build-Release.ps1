@@ -1,6 +1,7 @@
 ﻿[CmdletBinding()]
 param(
     [string]$RuntimeSource = '',
+    [string]$WixBin = $env:WIX_BIN,
     [string]$PackageVersion = '1.1.0-rc15',
     [string]$MsiProductVersion = '1.1.14',
     [string]$CodeSigningCertificateThumbprint = '',
@@ -21,7 +22,8 @@ $package = [IO.Path]::GetFullPath((Join-Path $artifacts 'package'))
 $studio = Join-Path $release 'Studio'
 $runtime = Join-Path $release 'Runtime'
 $wixWork = Join-Path $artifacts 'wix'
-$wixBin = [IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $root) '_tools\wix314\bin'))
+if ([string]::IsNullOrWhiteSpace($WixBin)) { throw 'WiX 3 bin directory must be supplied with -WixBin or WIX_BIN.' }
+$wixBin = [IO.Path]::GetFullPath($WixBin)
 $signingEnabled = -not [string]::IsNullOrWhiteSpace($CodeSigningCertificateThumbprint)
 if ($RequireSignature -and -not $signingEnabled) { throw 'Release-Signatur ist vorgeschrieben, aber kein Zertifikat-Thumbprint wurde angegeben.' }
 if ($PackageVersion -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$') { throw "Ungültige Paketversion: $PackageVersion" }

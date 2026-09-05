@@ -1,0 +1,25 @@
+{
+  "date": "2026-09-05",
+  "studio": {
+    "softwareTests": {
+      "passed": 48,
+      "failed": 0
+    },
+    "cliBuild": "passed",
+    "wpfBuild": "passed",
+    "warnings": 0,
+    "fixtureChange": "Additive card regression uses synthetic profiles instead of excluded local customer files"
+  },
+  "runtime": {
+    "repository": "schaffrath94/SieEncode.Runtime",
+    "baselineCommit": "8b7a475",
+    "softwareTests": {
+      "passed": 183,
+      "failed": 0,
+      "skipped": 0
+    },
+    "warnings": "Existing nullable/async and legacy native RID warnings remain"
+  },
+  "hardware": "Not executed during repository migration",
+  "existingPackages": "Unmodified; no new package or hardware release"
+}

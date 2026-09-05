@@ -9,10 +9,10 @@ $ErrorActionPreference = 'Stop'
 $builderRoot = [IO.Path]::GetFullPath($PSScriptRoot)
 $workspaceRoot = Split-Path -Parent $builderRoot
 if ([string]::IsNullOrWhiteSpace($SourceRoot)) {
-    $SourceRoot = Join-Path $workspaceRoot '_RFiDGear_SieEncodeRuntime_2.0.10.1_Work'
+    $SourceRoot = Join-Path $workspaceRoot 'SieEncode.Runtime'
 }
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
-    $OutputPath = Join-Path $workspaceRoot '_SieEncode_Runtime_SecurityTest_Portable'
+    $OutputPath = Join-Path $builderRoot 'artifacts/runtime'
 }
 $SourceRoot = [IO.Path]::GetFullPath($SourceRoot)
 $OutputPath = [IO.Path]::GetFullPath($OutputPath)

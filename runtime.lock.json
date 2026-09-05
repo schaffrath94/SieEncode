@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "productVersion": "1.1.0-rc15",
+  "runtimeRepository": "https://github.com/schaffrath94/SieEncode.Runtime",
+  "sourceTag": "rc15-source-baseline",
+  "sourceCommit": "8b7a475",
+  "originalWorkspaceCommit": "56fd8731a64660226c75fe6cfb415f708e2c2122",
+  "originalWorkspaceDirty": true,
+  "deliveredRuntime": {
+    "assemblySha256": "7CB1EEFC771A72823A495DB54666A862D969B71BA496D04CE4AA2A0109705B15",
+    "executableSha256": "389BF1837C4DDE5CE632DA9EAE19EC9FAFA075BA9A9678E19D92B66286905847",
+    "buildTimeTestsExecuted": false
+  },
+  "status": "source-preservation; no claim of bit-identical rebuild"
+}
