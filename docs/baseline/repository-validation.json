@@ -12,7 +12,7 @@
   },
   "runtime": {
     "repository": "schaffrath94/SieEncode.Runtime",
-    "baselineCommit": "8b7a475",
+    "baselineCommit": "b2b6875f4364f76d62a91c04ad36839fa3155995",
     "softwareTests": {
       "passed": 183,
       "failed": 0,
