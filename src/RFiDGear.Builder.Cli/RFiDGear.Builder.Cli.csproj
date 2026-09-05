@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RFiDGear.Builder.Core\RFiDGear.Builder.Core.csproj" />
+    <ProjectReference Include="..\RFiDGear.Builder.RfPrj\RFiDGear.Builder.RfPrj.csproj" />
+    <ProjectReference Include="..\RFiDGear.Builder.Runtime\RFiDGear.Builder.Runtime.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+﻿"Kartenlabel","Freigabe_bestaetigt","Serienwert","Startzeit","SieEncode_Ergebnis","Kartenfreigabe","Runtime_automatisch_beendet","Evidenzdatei","Bemerkung"
+"TESTTRANSPONDER-B","Ja","920001","2026-09-02T20:33:03.3708439+02:00","KODIERUNG ERFOLGREICH BESTÄTIGT","Ja","Ja","cards\TESTTRANSPONDER-B.json","Sichtbarer UI-Lauf: Recovery, Mastering, Kodierung und finale Verifikation bestanden."
+"TESTTRANSPONDER-A","Ja","920002","2026-09-02T20:44:05.5661676+02:00","KODIERUNG ERFOLGREICH BESTÄTIGT","Ja","Ja","cards\TESTTRANSPONDER-A.json","Sichtbarer UI-Lauf: Recovery, Mastering, Kodierung und finale Verifikation bestanden."
+"TESTKARTE-03","Nein","","","","Nein","Nein","",""
+"TESTKARTE-04","Nein","","","","Nein","Nein","",""
+"TESTKARTE-05","Nein","","","","Nein","Nein","",""

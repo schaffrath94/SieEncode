@@ -1,0 +1,722 @@
+{
+  "version": "1.1.0-rc15",
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "35a716268578535027b6dc44add667150919155dab06395093304893dbb0655f"
+    },
+    {
+      "path": "Build-Release.ps1",
+      "sha256": "59a7f5fb118f06d528a4a704f569685c699e749b6e559530ee4273c5c946eb25"
+    },
+    {
+      "path": "Build-Runtime.ps1",
+      "sha256": "5de22ed9ac2b5b246c1bceb3396c226865c5473c46ed7776a85db65d54fd2f05"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "cbb6ade525bfe13f9b2d38f84576d4fe4f94504b8dd3fb710be5d9aa89735a28"
+    },
+    {
+      "path": "Directory.Build.props",
+      "sha256": "2f6c0d34160fdc9a5904e753a871d9d029da3e628cf5f3a6e0609615e19d7d9a"
+    },
+    {
+      "path": "global.json",
+      "sha256": "4c9c8a7cae142c62fb060c71432ed1f7b8c402bd3e38d63b5a25f91c82612e07"
+    },
+    {
+      "path": "MIGRATION.md",
+      "sha256": "f34905ff3bcb9c6650d35962639c67c277a1694c28fe372d95ccca9a94941b8a"
+    },
+    {
+      "path": "NuGet.Config",
+      "sha256": "b168b4e5d33503d0cf4bd766ae3b184eb3987bd0a7cd09fd761499a8488f5483"
+    },
+    {
+      "path": "PARITY.md",
+      "sha256": "b4b75048cd555b321c38e881e879e40d90701ef6b3da46283de038eb3bff142d"
+    },
+    {
+      "path": "README.md",
+      "sha256": "678036d10b01c5718a87c212a6e5675dac8c0f7c5963fa53a2d51509ce2b6e01"
+    },
+    {
+      "path": "RUNTIME.md",
+      "sha256": "9c0071d0b42e0d8fc94148eabf80042436313786e7e21c6082ca30904eeaa0f0"
+    },
+    {
+      "path": "START_SieEncode.cmd",
+      "sha256": "d067174529e53f6cddaa7040d1f99bdf2c656fb5890ac2ee42fdede2f2899d25"
+    },
+    {
+      "path": "Test-All.ps1",
+      "sha256": "576ec41ea9cc152ddacde4cf896996420c6de1d1b5bb649eb538df15cf5ebe01"
+    },
+    {
+      "path": "VERSION",
+      "sha256": "fb201a26185dbfeb43e490079b5e7e84b3bfff32f89eb121eac921c7b0c3bd0b"
+    },
+    {
+      "path": "docs/ABNAHME-RC5.4.md",
+      "sha256": "47dab9fac906e36983761abd20aef2faf1b23a9ae896a5eebe57d42e54e92c56"
+    },
+    {
+      "path": "docs/ABNAHME-RC5.6.md",
+      "sha256": "e1515815efef02a98c23ed762cd748c37ce94f38e5e931f253cbe1e3b509d1c4"
+    },
+    {
+      "path": "docs/DATENBAUSTEINE.md",
+      "sha256": "fdece08444cf963250b9d5cb71e292877945f24b35e71494d9aad59cb521ba11"
+    },
+    {
+      "path": "docs/GRUNDPROFILE.md",
+      "sha256": "890968d817a574a726bade4503465af964551ff00040702b8cfc5cb7652ab092"
+    },
+    {
+      "path": "docs/HARDWARE-ABNAHME.md",
+      "sha256": "6c645add559d0c47651ce4e69e60f9a6ba3998d0a35ab6467145f35eb7a41882"
+    },
+    {
+      "path": "docs/PILOT-ABNAHME.md",
+      "sha256": "dd79a2d14b9348a6ed1169ccf81186e9bca43283e45bd995cf6e0458d8491a2d"
+    },
+    {
+      "path": "docs/PROJECT-SECRETS-V1.md",
+      "sha256": "cc797103f91788ab113aeff27b5499da78e91bbe8e36bdc2117bc8f2f1abdbaa"
+    },
+    {
+      "path": "docs/RELEASE-SIGNING.md",
+      "sha256": "d20cc8eb750057579a81641dc1f438f85ce903d2e137bb4bee571425be347678"
+    },
+    {
+      "path": "docs/RELEASE-UND-BEDIENKONZEPT.md",
+      "sha256": "9dedb17a969b6fa08362551ab161baf8e84783f6ddafba60926d7c928b0583c2"
+    },
+    {
+      "path": "docs/RFIDGEAR-BUILDER-RUNTIME-2.0.10.1.md",
+      "sha256": "199f57c64db82c7b34daa1bfb71f761554a0deb24e8aeb9c69da22a5f4cd7c30"
+    },
+    {
+      "path": "docs/RFIDGEAR-HOST-CONTRACT-V1.md",
+      "sha256": "fb1505313fc1ebed3090f0d1e022b9101bafad9285ae04795ef72b719db4e4e8"
+    },
+    {
+      "path": "docs/RFIDGEAR-SIEENCODE-RUNTIME-2.0.10.2.md",
+      "sha256": "e595c314d3a9e9fef7c695fdbd7e3af8ec27ac3305e043008c41cb405c87754d"
+    },
+    {
+      "path": "docs/RFIDGEAR-SIEENCODE-RUNTIME-2.0.10.3.md",
+      "sha256": "af76cd8500d3484114a4e2bf3f9873720327446b31d6e17c89ae3a262756b47a"
+    },
+    {
+      "path": "docs/UPSTREAM-ENTSCHEIDUNG.md",
+      "sha256": "6787f5a84c28a92f1c33f98a9aec09dbabbeecd4837c5608eadf023d6213ff7f"
+    },
+    {
+      "path": "installer/License.rtf",
+      "sha256": "feb62b02e3e582e5f48368203655a1bdd42a3540d3262f97edf5e7ea57c05eea"
+    },
+    {
+      "path": "installer/Product.wxs",
+      "sha256": "ea269c69ae05ff171bd543f58591fc906af00383011883a6aca65da0e16d5592"
+    },
+    {
+      "path": "legal/GPL-3.0.rtf",
+      "sha256": "2490127fa02fb035c26dfc79c2a6530c9bdbcafaa820c6f74996f76b3ec0fddb"
+    },
+    {
+      "path": "legal/LGPL-3.0.txt",
+      "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+    },
+    {
+      "path": "legal/RFiDGear-MIT-LICENSE.txt",
+      "sha256": "4f88c2b7dac862f9881483d65e597169fe3104f7093e94997e25ea4b47819b71"
+    },
+    {
+      "path": "legal/THIRD-PARTY-NOTICES.md",
+      "sha256": "d1e1c3d161227d6b18f77072728c9cfec64b452f86f109f73b4118fa614be749"
+    },
+    {
+      "path": "pilot-testkit/Collect-PilotEvidence.ps1",
+      "sha256": "df5a6a3093ebc73bdec115be8e38f198b5b85189bca6407a3cf81d4480c8bdb4"
+    },
+    {
+      "path": "pilot-testkit/DATENSCHUTZ-UND-SICHERHEIT.txt",
+      "sha256": "2bb27a49613edcc454117aefddd353f4efae52a749c6aef255e165c98b609f11"
+    },
+    {
+      "path": "pilot-testkit/MEHRKARTEN-TESTBOGEN.csv",
+      "sha256": "0cb7f2056a6320616ffa5d364ff789cb91182572b248a0d2686c52c866310bee"
+    },
+    {
+      "path": "pilot-testkit/Merge-PilotEvidence.ps1",
+      "sha256": "9a2c395e00d4567bee3f70a80825b4592437c94903168e73e5fa642160b7057d"
+    },
+    {
+      "path": "pilot-testkit/README.md",
+      "sha256": "dd9e14ad9fb446f411a30e105f7d2c5feee9e1fe7ab59d08eb86fe00b17070c1"
+    },
+    {
+      "path": "pilot-testkit/Run-FiveCardUiSeries.ps1",
+      "sha256": "dfbdbd095f679727eb173dec1ac1484aa79d13300244ab05efed4eceb60cc868"
+    },
+    {
+      "path": "pilot-testkit/START_MEHRKARTENTEST.cmd",
+      "sha256": "eb9a1f347ea8fa69f79f7dc1427293a88eaa965d7d50fcf0406010d191de28e0"
+    },
+    {
+      "path": "pilot-testkit/START_PILOTTEST.cmd",
+      "sha256": "7f7b135b606bb355008196027755067a730c77c88949e2bd71a45ebca3f4137f"
+    },
+    {
+      "path": "pilot-testkit/USABILITY-TESTBOGEN.md",
+      "sha256": "d2034eef99ae5b0d70bbeb910ed3eed3f3dcd162dc996964b4f0e44099c1b4db"
+    },
+    {
+      "path": "tools/Invoke-FiveCardUiSeries.ps1",
+      "sha256": "ce6a38e419eff66741f08496c9898d561469567c3fb7a85b8b3ae5d0554988f7"
+    },
+    {
+      "path": "tools/Test-InstalledReadOnlyUi.ps1",
+      "sha256": "74332209aa44552a1970887217e30124ac28c8bb350ac572ae26df0079171f34"
+    },
+    {
+      "path": "tools/Test-PilotReleaseGates.ps1",
+      "sha256": "c068773791fb0e1b4d69e668cba434116c8e8173869e9292d3ef6c5b5e42a511"
+    },
+    {
+      "path": "assets/branding/SieEncode-icon-1024.png",
+      "sha256": "5d1114372fc76688428f9336227fcd1b13951c0e24db89eff1421eacbc27bbb6"
+    },
+    {
+      "path": "assets/branding/SieEncode-icon-512.png",
+      "sha256": "c6d7311526f470b5b60d76d9039965acba62f2300904d40ab19bd4621a74a4c0"
+    },
+    {
+      "path": "assets/branding/SieEncode.ico",
+      "sha256": "f5a8e957d66cd3513c188c62dc282bbcdf738bc5c0b3fae297346c063179fda3"
+    },
+    {
+      "path": "assets/task-shells/AppExistCheck.xml",
+      "sha256": "7abf1ca159856aebc18146fbecb8e864d49e51db0f0e6e1c3539e5f6a638f126"
+    },
+    {
+      "path": "assets/task-shells/ApplicationKeyChangeover.xml",
+      "sha256": "a757e7312a2f6a774b55a3b73d1e61c6098b4835a89587002fbfdb365beae89c"
+    },
+    {
+      "path": "assets/task-shells/ApplicationKeySettingsChangeover.xml",
+      "sha256": "9523e6a456cdb37c5341c5cecdbb843c81bc198c20673e616773d94a29ce5c95"
+    },
+    {
+      "path": "assets/task-shells/ChangeFileSettings.xml",
+      "sha256": "1df662c833a4b1e2bcaf82cedf6b0ae2441f3acb1efaafbded69ddbef5e7c032"
+    },
+    {
+      "path": "assets/task-shells/CheckFileSettings.xml",
+      "sha256": "3c5d95994bad2e1138acb141642c0537cffdcc85fd81b54f78fccf0261518a29"
+    },
+    {
+      "path": "assets/task-shells/CreateApplication.xml",
+      "sha256": "aff6e952c7486bad181e9b02d445f49714666190377151a096c78be56159d4af"
+    },
+    {
+      "path": "assets/task-shells/CreateFile.xml",
+      "sha256": "291d9ce4997df35e0617a7202ada254210d0f7166abeb58f50bb77d5db7aec4d"
+    },
+    {
+      "path": "assets/task-shells/FormatDesfireCard.xml",
+      "sha256": "45fa09deecbd864f58dfd86afd6656e94445a1e3db7a3178755192d67eb804d9"
+    },
+    {
+      "path": "assets/task-shells/PICCMasterKeyChangeover.xml",
+      "sha256": "0ff575a55ccdf83215a5b89605eda190b2dd7782c2597c3d97743f228320c2c4"
+    },
+    {
+      "path": "assets/task-shells/PICCMasterKeySettingsChangeover.xml",
+      "sha256": "95236df0a8ba8626561b8ce37c35bb017cde139fc3c743cda20940ab8c4630b3"
+    },
+    {
+      "path": "assets/task-shells/ReadData.xml",
+      "sha256": "2eea10b8877d49d70ba708398d902b2dd1849d38588c5217797ff46eb42f37fb"
+    },
+    {
+      "path": "assets/task-shells/WriteData.xml",
+      "sha256": "6a46ce2b2b7ec765411cec0026b176ae6bd0fd7abbd42fae289f2258bd1e09bc"
+    },
+    {
+      "path": "docs/contracts/de.rfidgear.host.v1.request.schema.json",
+      "sha256": "dff515f84486eb38254378e1f80f48dbe76afbb27e618732129b1e97e41099c1"
+    },
+    {
+      "path": "docs/contracts/de.rfidgear.host.v1.result.schema.json",
+      "sha256": "2aabf81c11b90fbc89e17c4333c75e4b927e60a1a1a458f7f276dc4bad405d1d"
+    },
+    {
+      "path": "pilot-testkit/Automation/Invoke-FiveCardUiSeries.ps1",
+      "sha256": "a647e5f216b509c0d962041b2e96e4a684532115ca5d4067fdd9b80bdccc512b"
+    },
+    {
+      "path": "pilot-testkit/Automation/Invoke-SecurityAcceptanceUi.ps1",
+      "sha256": "5f4858e4eeb7537c13df2c388f79734355c5a1cf30a86c250313f994ab0d380c"
+    },
+    {
+      "path": "pilot-testkit/Automation/Invoke-SyntheticHardwareUi.ps1",
+      "sha256": "87b9f92c23426e89368acb2999ca9df9ea68b2d66afdc6e1093a94bb2f9f8c1d"
+    },
+    {
+      "path": "pilot-testkit/fixtures/Synthetic-AES-Mixed.base.json",
+      "sha256": "7a6cc7a9c8a646962ebedb4a405462976d28f54832ce8bff0f0442c1bec8a66f"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/AcceptancePage.cs",
+      "sha256": "1f74e61fb9b74c4517f73d5e820368476dcd55cc8737a415c0f9a81e9c608b65"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/AnalysisPage.cs",
+      "sha256": "964fe45ca9dbd1c980bbce69c33839834c70b3f732e309bb3694a51642c7a9db"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/App.xaml",
+      "sha256": "9b2ce2c3cd6f0649dcd8dd3b6dc512b2a78ca12eae274de45f40970355f879e5"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/App.xaml.cs",
+      "sha256": "4d4c857bd5ebedd583e58fa049d332804c4ee3e0e3962d36dc9b73a43b521e4d"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/AppIdentity.cs",
+      "sha256": "28185c73caa3314adb1b416e9103fb14673fb1d7a213d95197de03adb54af6a8"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/ApplicationInspectionDialog.cs",
+      "sha256": "d745a653ec9c6e54ea8dd6de9c3470ef817256bfb871b0dd8e2d03122c8b2f8b"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/CodingQuickStartPage.cs",
+      "sha256": "6008044917ed86b2d8f511c7ccca6fc98e01f1e6a05857cbbef5a3b04658dfe1"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/DiffPage.cs",
+      "sha256": "91ff0ac0c9e77b6cf20157422b426e065e32c33ec100dc186df7ca5419dd258e"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/HardwareAcceptancePage.cs",
+      "sha256": "9165964bf50a7b894da3aa15460934db85adf7daeaa06965786cbcd8dc08f109"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/HardwareSmokeTestRunner.cs",
+      "sha256": "6e02e4228d9d05be75f7eef7154958705a2ff9a8d366971cff02ba1c79facc1e"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "sha256": "125b210e2ab450a2a28929aec5ad7b763da524c2d077fca3df3593cb73b39958"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "sha256": "bf1124a8cc9ec77da87fdf2c3ea577dcb0eb0efa5b86796824f5b3a7bca86f17"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "sha256": "6b44699150137c3cf077c9e888a55e323a29db25256ad3d66ecb61c9010875d6"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "sha256": "35b0a29f8363463bcfb1d68148e2ccb304e15c8085c4463bc75ac1fb510234af"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "sha256": "e51454e426a29c7f64459ec2cb8179c180aaf15acd52092a26e1f7f82df9c283"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml",
+      "sha256": "0bc017906324f4d6a8fa6a724bab021bdb2d1a2bbc6db006a6168e76fe0c1f14"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml.cs",
+      "sha256": "c2af0e5f483ecbb56fda13f83454e4ec5101bef7d9b5a48d302f2efdd9773a86"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "sha256": "16452b6f870df4d2fc7e5a4f1d23ac70db912a4ba29e53b85f1a2267948bd499"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/ProjectDeletionPage.cs",
+      "sha256": "599b6b02ac6f07ff2c8a797bca7f8f65709254de189d937153cfbea6bd692f96"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "sha256": "fa9b3dfb79d5633e954cb00c8a4343b8c45da6f8e8c7b6af42d47aa7031d9e11"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/RFiDGear.Builder.App.csproj",
+      "sha256": "678c1eeb0371015fc56abf95bf6d881c1a36e5028ba1d8340c4fedf3f2a48322"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "sha256": "4adc44c0f9cae349a742b75948daa5bd7298f28d54f7f3095e61202cdd153665"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml.cs",
+      "sha256": "87a5125cbd36d0396ec62823322a556603de03679589812989acd64062579174"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/TeamVaultWindow.cs",
+      "sha256": "4c73508f9b753bcafb3eee3f9c67b4ee1e02960921dc455fadcaff349cbb0600"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/TestStationHardwareAcceptanceRunner.cs",
+      "sha256": "eabc36531ef4c20e72f78afa53d2596373af08e0805c3d282814ecb46907cd52"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/TransponderFormatDialog.cs",
+      "sha256": "61ed69c8fa59970b509391508bd5dbe3ffbd6dbd32a4b7b70e768238dcff7efa"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/TutorialPage.cs",
+      "sha256": "2806cac78bb3b2a470b4b243cb7fbf08a555f06e44a05842dd54827ce613b12f"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/TutorialWindow.xaml",
+      "sha256": "1e9766f6ed085de8839ecdb1395979fcdf1379436491f831ae429b0a0197f55a"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/TutorialWindow.xaml.cs",
+      "sha256": "5079f5825d13dc5534fcd1b8979eb27b45d880aed734c5f7f6b3419b0ae61f26"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/UiTestability.cs",
+      "sha256": "e9ef8369f20ea6655c62ee218cdab83888ffd0973c2b911358a010e403f9997a"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/VaultAccessWindow.cs",
+      "sha256": "9539ac3ad20383342fd8d7efd7031593bd33ba11cdf4c36addb5e93709a1a984"
+    },
+    {
+      "path": "src/RFiDGear.Builder.App/WindowsVaultIdentityService.cs",
+      "sha256": "09a1a9c7045d33f140613bdfda574536aa3be50c2cfc44bf6a820ed140a4a0e5"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Cli/Program.cs",
+      "sha256": "4a1be07ebbca6f59e2fb43a55c48db60a99e0047f0c2a94e15b1300fdabad1d3"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Cli/RFiDGear.Builder.Cli.csproj",
+      "sha256": "473ed6148d23939fad61cc52f07f4fbb7b9f2222d01335e1d9700e9986157443"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/BuilderSettingsStore.cs",
+      "sha256": "f164348f314958005f8e7bf31cbfdf552106f36a71fae7ffe45e949a0dc03ec4"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/CardOperationMode.cs",
+      "sha256": "837ab685c216e082cb0148170386310e9152e8ef0325b43ca85c3495beeaeaf9"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/CertificateVaultService.cs",
+      "sha256": "ff3f04bf1653b840c123e25d32a4c5f8fb11ffe2a853964c92e569945348e13f"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/CodingSpecificationService.cs",
+      "sha256": "802d290fd1c2b90b8d35b973ac5ab2ccff87ee89452b106cca4a7f47b303b68b"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ContractArtifactFactory.cs",
+      "sha256": "bb65236b2f8c98de8f3135bb62f1ee322cdfd95720c4b93094f13ceaccd2cfc8"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/FileConcurrency.cs",
+      "sha256": "71fd52261c8183d10aaa6c4bf862752507612f3bbb5531805a8ed9d4aec0b6f1"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/FileSettingsExplanationService.cs",
+      "sha256": "a78ca9928082a0b76ff0e90b5f6b24024cf248d20fcac17b7a7ad3b06f5f057f"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/KeyVault.cs",
+      "sha256": "66c4a9624661c1a78a6d093a88c0263e0ef304cd977b6bbd5dfdb5664cceec73"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/LegacyProjectMigrationService.cs",
+      "sha256": "0d434683bc73c3802c2ccd0a40247752f21bc5a80bed67f9b20e602ab1d782dd"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/PayloadEngine.cs",
+      "sha256": "707904dfac71cc6b27c63641f02032584ad7baf77933ede25c95ee376fd4b932"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProfileBindingService.cs",
+      "sha256": "12ea7404dc6dfcc06fefcfef1a52037befb2f63124ee01e61571a1c9b9386563"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProfileDiffService.cs",
+      "sha256": "0dcbd97a12dbe929ed676e8d7922cbbcb773394df7c18d276082a3ade951a22b"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProfileEditingService.cs",
+      "sha256": "7d441bbc4876c95b1b1f6f173a2fa59f7ff28c857b18ffb760cf88e3eda08193"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProfileHistoryService.cs",
+      "sha256": "12a2ad39801aeb2650371eef8f306f584bb2db434fab46d3377a4181459696b7"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProfileLibrary.cs",
+      "sha256": "ac6d1984d2c469ef57aa857e2b1f321ba73b29874abfe4c889e44722631e9fac"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProfileModels.cs",
+      "sha256": "5f23e07919a46113643f6d24aae6561092138f06f08f6abe6983472276f5c3e3"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProfileValidator.cs",
+      "sha256": "dcafc32fd0c107d0f2baba3ef730f7fbcde8f3035b8dec3f4162193ec914e252"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProjectCatalog.cs",
+      "sha256": "537d16d5b08019064955a03137907a902e758c775506a66deaf2b9b854585424"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProjectContractValidator.cs",
+      "sha256": "db828b2aa4c2a19d96cf9e322c2c3f432f1cac218e9a1f4fe852b83b4af07112"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProjectDeletionService.cs",
+      "sha256": "df491b2f4e737eb7032f0f2c9773ec80c3c1a4466ac49062f7c7f61c68e5907f"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProjectDraftFactory.cs",
+      "sha256": "325758181daf49dde6dbc0dd6be204de1e2ffb238c3d1bb98536d8752b508687"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProjectJson.cs",
+      "sha256": "8cffd54dc45a5cb4aadef12992e2d78fdb42276b0ccdc4a18bf585f9afe62930"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProjectKeyVault.cs",
+      "sha256": "8f62d294b83e7c9204b609697043a99d3067a02af922f9b8d01de76bf49c3f8c"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProjectModels.cs",
+      "sha256": "ef9dc40c89bf756de6eadef33456fd6720cff186b383d40a35c25b61a0f66cff"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProjectPaths.cs",
+      "sha256": "06a0cf2487f984ccbe2d25ff1e638e7c78cc7d72eebd951db9b454a2075c2fdc"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/ProjectValidator.cs",
+      "sha256": "9797ee67286d8bb12ca7e8d3a4ce275b740d448de7cffa9320b376f34712e63a"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/RFiDGear.Builder.Core.csproj",
+      "sha256": "e44c6aa5d69d0526c6b7961331a2020122c313ee9ea087d1daa3f4e7cab34bad"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/RFiDGearTrustedBuildCatalog.cs",
+      "sha256": "f3de93bda7e2d4460e3b3c7200819f31aeb49ead0b34f3d276fa72edc3422d4f"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/TeamVaultRecipientStore.cs",
+      "sha256": "f1d9711f68c6eef719b53d4321c3597feab6fff3f8cca24e4370a295c5dda3fa"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/VaultBackupService.cs",
+      "sha256": "7c99bab2bffc58e94f8bafc332847cde6df0d75fc0980d0a085f94059bdf53f1"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Core/WorkspaceLease.cs",
+      "sha256": "a9463ab1cbf2457159f486eaa23ba1f726d39bb011c06087f3572668a15907f9"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/ApplicationAcceptanceCompatibilityService.cs",
+      "sha256": "74c7966ab22b52ec65b6c6299e91e83af3bf233e3eb5b68925410c8009d4b89b"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/CardReportPdfService.cs",
+      "sha256": "43b4e6b3f57f5ae9ff34d92e7de73a19470f1713291f05a3a790f2c12e15fa66"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/CompatibilityMatrixService.cs",
+      "sha256": "a98f0558bc6262237f34b20005b2ec0bde6897a216884dc90177eb35c162cc62"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/MainProjectFactory.cs",
+      "sha256": "0fa1fc3275ea3118a59631149ffa67ca14e844e1042f23dc32d65ffc696456b0"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/MasteringInitializationService.cs",
+      "sha256": "e77cf0bff3e3a407c3af83a7da784cd2e51990a5cfe0a156674f03dda29b7ddd"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/ProjectAnalysisService.cs",
+      "sha256": "c96baa840baac2f1b4dbdc839d69dce2f0e4fea8de4d935bfefe836dcbe1a4c7"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/ProjectBuildService.cs",
+      "sha256": "123d7697f345a5fe5bda939090a6f0198b14f82e023419155f6b8f0cb672462c"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/ProjectInspection.cs",
+      "sha256": "d71da772af88bc68fbe11e3302b3766bf7c353ba38486c43d386799ea7a5ac47"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/RFiDGear.Builder.RfPrj.csproj",
+      "sha256": "976f892d367d33455beb7a9c354186e569e6f0e0aaf4c3ae4fafe656fe467091"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/RfPrjArchive.cs",
+      "sha256": "e9811f623f5ea645e9ed0f02166c1684e86972ad9b1ec2c813d0bfb76d0f76f0"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/RfPrjDocument.cs",
+      "sha256": "f5833d7f99af82cb21952fd8266cc2a4fdaca05a73f46202bfaebe4794a5a5c2"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/RfPrjProfileImportService.cs",
+      "sha256": "56d20d8268e364982434de84bd153570a7b88fffcbd44423da800cc340750c1d"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/RfPrjSecretProtection.cs",
+      "sha256": "81cb876601ce661d6e98cb54eb8b973aeda2454ac2aec99f6dffcdb060275db5"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/RfPrjSemanticComparer.cs",
+      "sha256": "e905f1f818930b6cd20040d2e84a410bc7210f1c2b058af026463399620882bd"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/SupportProjectFactory.cs",
+      "sha256": "46ebc02e562f1350b064cee4484a25dfed96d0467d7e7beebd23fb49dfbba1de"
+    },
+    {
+      "path": "src/RFiDGear.Builder.RfPrj/TaskShellLibrary.cs",
+      "sha256": "e9ab74fe66441659396a26f00581f0be3315e4dc0bf31de87a042e84dab03339"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/AcceptanceReportService.cs",
+      "sha256": "5a75308c01ab4570ca1e61d4f29bc8fe467baf79c610abeeb897311c8463cd81"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/ApplicationAcceptanceEvidenceService.cs",
+      "sha256": "5b3e3de10a60b0db71dac47a285b2c1e8db82fd2916e13d8f631621aded9a29b"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/ApplicationInventoryReportService.cs",
+      "sha256": "f6165390272d7dba7c08dcf95672fa6d01b1fae6af39dae22ac077e9447afad3"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/CardPreflightService.cs",
+      "sha256": "1e2ef50b12bda326032ca29e0ddf7703b739d336a68b2b232fbda1b667faf385"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/CardRecognitionService.cs",
+      "sha256": "d66659082c25c332973ccfe5df04403d028d800956b602857b7f1b2293350d6a"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/CodingRunEvaluator.cs",
+      "sha256": "41a3291b682d619f769e237e40b0c3829a3f08719a5324b486131c93708c73a1"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/CodingRunFinalizationGate.cs",
+      "sha256": "efc5aa9d27eec00ee5120c1d8a938e973067da82ef0869436fab170583b8d4fb"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/CodingRunOperatorAnalysis.cs",
+      "sha256": "e83b48e36ea95decac712dbe08e92698c52c5a35d0ec17586f57944f2af4d639"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/CodingSeriesService.cs",
+      "sha256": "3699a69fbc596b65288a5ae3818d4462da7842dc1935f473a1ce634a50384944"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/CodingSessionService.cs",
+      "sha256": "f622e8dd120ae052cc22979764c32bcd2ef120fe8b3d2bf34aa3f01c032f1daa"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/CodingStationQuickStartService.cs",
+      "sha256": "23e9f0fc5f5656ca4eb89a236ab28f27fd54ca765a1f9d861d16d559546e3d78"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/DiagnosticBundleService.cs",
+      "sha256": "fab2c5fce0019d0b4c46211fadb3acff127f38d19ab26be076dd4b5a5f91a370"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/EnvironmentCheckService.cs",
+      "sha256": "77fed3316fd7204655713aa45b27e94754fa4fdad7702d0c245954e85512d70a"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/HardwareAcceptancePlanService.cs",
+      "sha256": "a60f9f7c2b116543a0a0fe4afed00ae0d1761caae3f1d6e63c31ac601aa39fcf"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/PayloadPreparationStateService.cs",
+      "sha256": "e54962a68066ae331d7bdd8c61d504cddee46b9627584cb1b73e1c1c9fd9c5a6"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/ProjectSecretPipeServer.cs",
+      "sha256": "71ea1cd45959b9b4b6ca5748f92121dc3de740e63fecdccd40929cf19f6838c7"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGear.Builder.Runtime.csproj",
+      "sha256": "82b2005cb7d9a1d8cbad4dbe61c62c08e7c47df64a079400ca25630b8a4c2417"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearCapabilities.cs",
+      "sha256": "9819d9fe3607855b2606cf0c074e092741cb554ba201019612d0422bf726bb15"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearDiagnostics.cs",
+      "sha256": "e73c677e5cc0086c963ed0534fb82c22080c9c44f2eef5c184dc3bf4a8786e5c"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearHostContractV1.cs",
+      "sha256": "1eccc5ef2579bcbb633b719985752e6bb9d176a3d266070e90cfbcb397028355"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearKeyChangeSafety.cs",
+      "sha256": "5b5994d834d61d70c093569c3254dff7dc295b01e6a5fb9aab678cc933e7b9c7"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearLauncher.cs",
+      "sha256": "23f16b918cc3c05be89c7a3f298dd14def33a3cc3aac52d74923ff2b1747b7de"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearOperations.cs",
+      "sha256": "b32186736e0c7a1ff114c703f4039efabae50f301577b5f7ca430de0c934e882"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearProcessCompletionService.cs",
+      "sha256": "0a73e24363c8578f5cf888dbc59f7b86ae14e9b6638fd3fb2db4615378b2328b"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearRunSafety.cs",
+      "sha256": "1d189ab0a0fb5293afb0986a29df7abf04a408221a60fb2aa73b63df8963a750"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearSettingsInspection.cs",
+      "sha256": "14ee8043ec86c674cbc0879a0df2ced7a19ee6ad55cc20059e711f0d4f96c4eb"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/RFiDGearStructuredRunEvidence.cs",
+      "sha256": "d53b16e9224ecc7e7e5ec6b391b1b9d664156fce9ff34d6f117ceb46395082de"
+    },
+    {
+      "path": "src/RFiDGear.Builder.Runtime/SecureOperationalSession.cs",
+      "sha256": "46a639e8984150ce5bf0134bc929452b7d8a2642363848145a7c3a8467414649"
+    },
+    {
+      "path": "tests/RFiDGear.Builder.Tests/Program.cs",
+      "sha256": "df5b1668036997fec76af85f9016e0af6e59871eaeaa1995bf08d6c6fc11cf97"
+    },
+    {
+      "path": "tests/RFiDGear.Builder.Tests/RFiDGear.Builder.Tests.csproj",
+      "sha256": "cc90484668a08ea811dfadb308ae44e0f023d7b80a27f2c7efd6e3204a748c6d"
+    }
+  ],
+  "excluded": [
+    "Customer/base profile files and bound project templates",
+    "Local hardware evidence, card data, vaults and settings",
+    "Build outputs, caches and historical packages"
+  ]
+}

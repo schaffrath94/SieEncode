@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>SieEncode</AssemblyName>
+    <Product>SieEncode Studio</Product>
+    <Description>Projekt-, Kodier- und Prüfverwaltung für RFID-Karten</Description>
+    <Company>SieEncode Project</Company>
+    <Copyright>SieEncode contributors; based on RFiDGear © 2018 Steven</Copyright>
+    <Version>1.1.0-rc15</Version>
+    <ApplicationIcon>..\..\assets\branding\SieEncode.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RFiDGear.Builder.Core\RFiDGear.Builder.Core.csproj" />
+    <ProjectReference Include="..\RFiDGear.Builder.RfPrj\RFiDGear.Builder.RfPrj.csproj" />
+    <ProjectReference Include="..\RFiDGear.Builder.Runtime\RFiDGear.Builder.Runtime.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="..\..\assets\branding\SieEncode.ico" />
+    <Resource Include="..\..\assets\branding\SieEncode.ico">
+      <Link>assets\branding\SieEncode.ico</Link>
+    </Resource>
+    <Content Include="..\..\assets\**\*" Exclude="..\..\assets\profiles\**\*;..\..\assets\templates\projekt.config.template.json">
+      <Link>assets\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\pilot-testkit\fixtures\Synthetic-AES-Mixed.base.json">
+      <Link>assets\test-fixtures\Synthetic-AES-Mixed.base.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

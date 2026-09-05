@@ -1,0 +1,36 @@
+{
+  "version": "1.1.0-rc15",
+  "status": "existing internal acceptance candidate; not a new hardware approval",
+  "artifacts": [
+    {
+      "name": "SHA256SUMS.json",
+      "sha256": "4617bef2185b94351d37b293e9104cc2528a0dc9ceeeb1d848bfe757ecb004f5",
+      "bytes": 541
+    },
+    {
+      "name": "SieEncode_1.1.0-rc15_internal_acceptance-testkit.zip",
+      "sha256": "941ee6a29f1ab9da39463c9bdca4bddbf42a1256680c823ea924a625065d79d5",
+      "bytes": 31505
+    },
+    {
+      "name": "SieEncode_1.1.0-rc15_internal_portable_x64.zip",
+      "sha256": "5641bf8a0ecc269e19cdb0ff64a4bd0900a65f59385c35edf064a5214fc205a0",
+      "bytes": 164738518
+    },
+    {
+      "name": "SieEncode_1.1.0-rc15_internal_x64.msi",
+      "sha256": "0ae85220162f55b7e47f3a7e895ef6e9db58022fd5f1a2f7c968d609f5ac4c51",
+      "bytes": 118341876
+    },
+    {
+      "name": "SieEncode_RC15_Kartenreport_Beispiel.pdf",
+      "sha256": "961d16ed8fcfbf2b345e637941f70a352fa0eba1377e53d69d81e671dc701321",
+      "bytes": 10525
+    },
+    {
+      "name": "SIGNING.json",
+      "sha256": "7f508b259eb26a419ac428d5b7f064712aaa58b66065406dabca732945fcbbfd",
+      "bytes": 387
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ChipTaskHandlerModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><ManifestVersion>2.0.6</ManifestVersion><TaskCollection><anyType xsi:type="MifareDesfireSetupViewModel">
+      <MifareDesfireChipModelToUse>
+        <UID>Task Description: </UID>
+        <CardType>DESFireEV1</CardType>
+        <AppList />
+        <FreeMemory>0</FreeMemory>
+      </MifareDesfireChipModelToUse>
+      <SelectedExecuteConditionErrorLevel>Empty</SelectedExecuteConditionErrorLevel>
+      <IsDesfireFileAuthoringTabEnabled>true</IsDesfireFileAuthoringTabEnabled>
+      <IsDataExplorerEditTabEnabled>true</IsDataExplorerEditTabEnabled>
+      <IsDesfirePICCAuthoringTabEnabled>false</IsDesfirePICCAuthoringTabEnabled>
+      <IsDesfireAuthenticationTabEnabled>false</IsDesfireAuthenticationTabEnabled>
+      <IsDesfireAppAuthenticationTabEnabled>true</IsDesfireAppAuthenticationTabEnabled>
+      <IsDesfireAppAuthoringTabEnabled>true</IsDesfireAppAuthoringTabEnabled>
+      <IsDesfireAppCreationTabEnabled>false</IsDesfireAppCreationTabEnabled>
+      <SelectedTaskType>ReadData</SelectedTaskType>
+      <CurrentTaskIndex>30</CurrentTaskIndex>
+      <SelectedTaskDescription>PCS Zeit / SIEMENS Zutritt: File 00 zurücklesen</SelectedTaskDescription>
+      <KeyVersionCurrent>00</KeyVersionCurrent>
+      <KeyVersionTarget>00</KeyVersionTarget>
+      <SelectedDesfireMasterKeyEncryptionTypeCurrent>DF_KEY_DES</SelectedDesfireMasterKeyEncryptionTypeCurrent>
+      <DesfireMasterKeyCurrent>00000000000000000000000000000000</DesfireMasterKeyCurrent>
+      <SelectedDesfireMasterKeyEncryptionTypeTarget>DF_KEY_DES</SelectedDesfireMasterKeyEncryptionTypeTarget>
+      <DesfireMasterKeyTarget>00000000000000000000000000000000</DesfireMasterKeyTarget>
+      <SelectedDesfireAppKeyEncryptionTypeCreateNewApp>DF_KEY_DES</SelectedDesfireAppKeyEncryptionTypeCreateNewApp>
+      <SelectedDesfireAppMaxNumberOfKeys>1</SelectedDesfireAppMaxNumberOfKeys>
+      <SelectedDesfireAppKeySettingsCreateNewApp>ChangeKeyUsingMK</SelectedDesfireAppKeySettingsCreateNewApp>
+      <AppNumberNew>0xF482D0</AppNumberNew>
+      <IsAllowChangeMKChecked>true</IsAllowChangeMKChecked>
+      <IsAllowListingWithoutMKChecked>true</IsAllowListingWithoutMKChecked>
+      <IsAllowCreateDelWithoutMKChecked>false</IsAllowCreateDelWithoutMKChecked>
+      <IsAllowConfigChangableChecked>true</IsAllowConfigChangableChecked>
+      <SelectedDesfireAppKeyEncryptionTypeCurrent>DF_KEY_AES</SelectedDesfireAppKeyEncryptionTypeCurrent>
+      <SelectedDesfireAppKeyNumberCurrent>0</SelectedDesfireAppKeyNumberCurrent>
+      <DesfireAppKeyCurrent>00000000000000000000000000000000</DesfireAppKeyCurrent>
+      <DesfireAppKeyCurrentOld>00000000000000000000000000000000</DesfireAppKeyCurrentOld>
+      <AppNumberCurrent>0xF482D0</AppNumberCurrent>
+      <SelectedDesfireAppKeyEncryptionTypeTarget>DF_KEY_AES</SelectedDesfireAppKeyEncryptionTypeTarget>
+      <SelectedDesfireAppKeyVersionTarget>00</SelectedDesfireAppKeyVersionTarget>
+      <DesfireAppKeyTarget>00000000000000000000000000000000</DesfireAppKeyTarget>
+      <AppNumberTarget>0</AppNumberTarget>
+      <SelectedDesfireFileAccessRightReadWrite>AR_KEY0</SelectedDesfireFileAccessRightReadWrite>
+      <SelectedDesfireFileAccessRightChange>AR_KEY0</SelectedDesfireFileAccessRightChange>
+      <SelectedDesfireFileAccessRightRead>AR_KEY0</SelectedDesfireFileAccessRightRead>
+      <SelectedDesfireFileAccessRightWrite>AR_KEY0</SelectedDesfireFileAccessRightWrite>
+      <SelectedDesfireFileCryptoMode>CM_ENCRYPT</SelectedDesfireFileCryptoMode>
+      <SelectedDesfireFileType>StdDataFile</SelectedDesfireFileType>
+      <FileNumberCurrent>0</FileNumberCurrent>
+      <FileSizeCurrent>14</FileSizeCurrent>
+      <ChildNodeViewModelFromChip>
+        <Children>
+          <RFiDChipGrandChildLayerViewModel>
+            <Children />
+            <DataAsHexString>0000000000000000000000000000</DataAsHexString>
+            <IsValidDataContent xsi:nil="true" />
+            <DesfireFile>
+              <Data>AAAAAAAAAAAAAAAAAAA=</Data>
+              <FileID>0</FileID>
+            </DesfireFile>
+            <GrandChildNodeHeader>File No.: [000]</GrandChildNodeHeader>
+            <SelectedDataLength>0</SelectedDataLength>
+            <SelectedDataIndexStart>0</SelectedDataIndexStart>
+            <SelectedDataLengthInBytes>14</SelectedDataLengthInBytes>
+            <DataBlockNumber>0</DataBlockNumber>
+          </RFiDChipGrandChildLayerViewModel>
+        </Children>
+        <SectorNumber>-1</SectorNumber>
+        <PageNumber>-1</PageNumber>
+        <ChildNodeHeader>AppID: 0 (0x00000000)</ChildNodeHeader>
+      </ChildNodeViewModelFromChip>
+      <ChildNodeViewModelTemp>
+        <Children>
+          <RFiDChipGrandChildLayerViewModel>
+            <Children />
+            <DataAsHexString>0000000000000000000000000000</DataAsHexString>
+            <IsValidDataContent xsi:nil="true" />
+            <DesfireFile>
+              <Data>AAAAAAAAAAAAAAAAAAA=</Data>
+              <FileID>0</FileID>
+            </DesfireFile>
+            <GrandChildNodeHeader>File No.: [000]</GrandChildNodeHeader>
+            <SelectedDataLength>0</SelectedDataLength>
+            <SelectedDataIndexStart>0</SelectedDataIndexStart>
+            <SelectedDataLengthInBytes>14</SelectedDataLengthInBytes>
+            <DataBlockNumber>0</DataBlockNumber>
+          </RFiDChipGrandChildLayerViewModel>
+        </Children>
+        <SectorNumber>-1</SectorNumber>
+        <PageNumber>-1</PageNumber>
+        <ChildNodeHeader>AppID: 0 (0x00000000)</ChildNodeHeader>
+      </ChildNodeViewModelTemp>
+      <RefreshDesfireDataFromFileBeforeWrite>false</RefreshDesfireDataFromFileBeforeWrite>
+      <DesfireReadDataFilePath>placeholder\readback.hex</DesfireReadDataFilePath>
+      <OverwriteReadDataFileOnRead>true</OverwriteReadDataFileOnRead>
+      <DesfireReadKeyCurrent>7507EE4E16BCC54BA6DF2044A9C3DF50</DesfireReadKeyCurrent>
+      <SelectedDesfireReadKeyNumber>1</SelectedDesfireReadKeyNumber>
+      <DesfireWriteKeyCurrent>00000000000000000000000000000000</DesfireWriteKeyCurrent>
+      <SelectedDesfireWriteKeyNumber>1</SelectedDesfireWriteKeyNumber>
+      <SelectedDesfireReadKeyEncryptionType>DF_KEY_AES</SelectedDesfireReadKeyEncryptionType>
+      <SelectedDesfireWriteKeyEncryptionType>DF_KEY_DES</SelectedDesfireWriteKeyEncryptionType>
+    </anyType>
+    </TaskCollection></ChipTaskHandlerModel>

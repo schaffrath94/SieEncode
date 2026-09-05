@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rfidgear.de/contracts/de.rfidgear.host.v1/result/1.1",
+  "title": "RFiDGear Host V1.1 Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractId", "requestId", "createdAt", "state",
+    "acceptanceState", "accepted", "processId", "runIdHash", "terminalEvent",
+    "taskOutcomeEvents", "failedOutcomes", "skippedOutcomes", "taskOutcomes",
+    "failureCategory", "failedTaskExecutionIndex", "failedTaskType", "summary",
+    "containsKeys", "containsCardData"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.1" },
+    "contractId": { "const": "de.rfidgear.host.v1" },
+    "requestId": { "type": "string", "format": "uuid" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "state": { "enum": ["requested", "running", "successful", "failed", "timedout", "cancelled"] },
+    "acceptanceState": { "enum": ["waiting", "successful", "failed", "not-evaluated", "not-applicable"] },
+    "accepted": { "type": "boolean" },
+    "processId": { "type": ["integer", "null"], "minimum": 1 },
+    "runIdHash": { "oneOf": [{ "const": "" }, { "$ref": "#/$defs/sha256" }] },
+    "terminalEvent": { "enum": ["", "TaskLoop.Success", "TaskLoop.Failure"] },
+    "taskOutcomeEvents": { "type": "integer", "minimum": 0 },
+    "failedOutcomes": { "type": "integer", "minimum": 0 },
+    "skippedOutcomes": { "type": "integer", "minimum": 0 },
+    "taskOutcomes": { "type": "array", "items": { "$ref": "#/$defs/taskOutcome" } },
+    "failureCategory": { "type": "string" },
+    "failedTaskExecutionIndex": { "type": ["integer", "null"], "minimum": 0 },
+    "failedTaskType": { "type": "string" },
+    "summary": { "type": "string" },
+    "containsKeys": { "const": false },
+    "containsCardData": { "const": false }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9A-F]{64}$" },
+    "token": { "type": "string", "pattern": "^$|^[A-Za-z0-9_.-]{1,80}$" },
+    "taskOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position", "index", "type", "decision", "skipReason", "outcome", "errorCode", "timestamp"],
+      "properties": {
+        "position": { "type": "integer", "minimum": 0 },
+        "index": { "type": "string" },
+        "type": { "type": "string", "minLength": 1 },
+        "decision": { "$ref": "#/$defs/token" },
+        "skipReason": { "$ref": "#/$defs/token" },
+        "outcome": { "$ref": "#/$defs/token" },
+        "errorCode": { "$ref": "#/$defs/token" },
+        "timestamp": { "type": "string" }
+      }
+    }
+  }
+}

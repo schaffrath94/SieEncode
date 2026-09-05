@@ -1,0 +1,128 @@
+{
+  "profile": {
+    "id": "SYNTHETIC-MODULAR-2.0",
+    "code": "SYNTH-MODULAR",
+    "name": "TEST · Synthetisches modulares Mischprofil",
+    "kind": "base",
+    "version": "2.0",
+    "description": "Nur für Hardwareabnahmen: erfundene AID mit Plain-, MAC- und Encrypt-Dateien sowie allen modularen Datenformaten. Keine produktive Kodiervorschrift."
+  },
+  "picc": {
+    "productiveKeySettings": "0F"
+  },
+  "variables": [
+    {
+      "id": "testSite",
+      "label": "Test-Standort",
+      "scope": "project",
+      "type": "digits",
+      "length": 4,
+      "default": "0042",
+      "required": true
+    },
+    {
+      "id": "testSerial",
+      "label": "Test-Seriennummer",
+      "scope": "card",
+      "type": "digits",
+      "minLength": 1,
+      "maxLength": 6,
+      "required": true
+    },
+    {
+      "id": "testHex",
+      "label": "Rohe Testkennung",
+      "scope": "project",
+      "type": "hex",
+      "length": 6,
+      "default": "A1B2C3",
+      "required": true
+    },
+    {
+      "id": "testLabel",
+      "label": "ASCII-Testtext",
+      "scope": "project",
+      "type": "text",
+      "length": 4,
+      "default": "OSS1",
+      "required": true
+    },
+    {
+      "id": "testUnicode",
+      "label": "UTF-8-Testtext",
+      "scope": "project",
+      "type": "text",
+      "length": 2,
+      "default": "ÄÖ",
+      "required": true
+    }
+  ],
+  "applications": [
+    {
+      "id": "A1B2C3",
+      "name": "TEST · AES Mixed",
+      "keyType": "DF_KEY_AES",
+      "keyCount": 3,
+      "transportKeySettings": "0F",
+      "productiveKeySettings": "0B",
+      "changeKeyMode": "ChangeKeyUsingMK",
+      "files": [
+        {
+          "id": 0,
+          "name": "Modulares Infofile",
+          "type": "StdDataFile",
+          "size": 32,
+          "communication": "CM_PLAIN",
+          "access": { "read": 0, "write": 0, "readWrite": 0, "change": 0 },
+          "coding": {
+            "output": "synthetic-plain.hex",
+            "recipe": [
+              { "op": "fixedHex", "value": "CAFE" },
+              { "op": "fixedAscii", "value": "OSS" },
+              { "op": "fixedUtf8", "value": "Ä" },
+              { "op": "asciiDigits", "source": "testSite", "width": 4, "padLeft": "0" },
+              { "op": "bcdDigits", "source": "testSerial", "width": 6, "padLeft": "0" },
+              { "op": "hexBytes", "source": "testHex", "width": 3 },
+              { "op": "asciiText", "source": "testLabel", "width": 6, "padRight": "20" },
+              { "op": "utf8Text", "source": "testUnicode", "width": 4, "padRight": "00" },
+              { "op": "uintBigEndian", "source": "testSerial", "width": 3 },
+              { "op": "padToFileSize", "value": "EE" }
+            ]
+          }
+        },
+        {
+          "id": 1,
+          "name": "MAC Backup",
+          "type": "BackupFile",
+          "size": 8,
+          "communication": "CM_MAC",
+          "access": { "read": 1, "write": 2, "readWrite": 1, "change": 0 },
+          "masteringInitialization": { "type": "none" },
+          "coding": {
+            "output": "synthetic-mac.hex",
+            "recipe": [ { "op": "uintLittleEndian", "source": "testSerial", "width": 8 } ]
+          }
+        },
+        {
+          "id": 31,
+          "name": "Encrypted Hardened",
+          "type": "StdDataFile",
+          "size": 32,
+          "communication": "CM_ENCRYPT",
+          "access": { "read": 2, "write": 2, "readWrite": 1, "change": 0 },
+          "creationSettings": {
+            "communication": "CM_PLAIN",
+            "access": { "read": 0, "write": 0, "readWrite": 0, "change": 0 }
+          },
+          "coding": {
+            "output": "synthetic-encrypted.hex",
+            "recipe": [
+              { "op": "bcdDigits", "source": "testSerial", "width": 8, "padLeft": "0" },
+              { "op": "zeroPadToFileSize" }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

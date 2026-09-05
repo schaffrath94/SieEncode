@@ -1,0 +1,14 @@
+Das interne Abnahme-Kit darf enthalten:
+- Produktversionen und SHA-256-Dateihashes
+- Hashes von Windows-SID, Rechnername und konfigurierten Pfaden
+- DPI, Bildschirmauflösung und Bestanden-/Fehlerstatus
+- neutrale Kartenlabels, Serienwerte und schlüsselwertfreie SieEncode-Berichte
+
+Das interne Abnahme-Kit darf niemals enthalten:
+- produktive oder Transport-Schlüsselwerte
+- Vault-Dateien oder Vault-Passphrasen
+- vollständige Projektdefinitionen oder rfPrj-Dateien
+- Kartennutzdaten, sofern sie nicht bereits ausdrücklich für den Test freigegeben sind
+- Namen oder Kontonamen der Testpersonen
+
+Bei Unsicherheit die Datei nicht versenden und stattdessen lokal prüfen lassen.

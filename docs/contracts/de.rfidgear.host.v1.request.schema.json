@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rfidgear.de/contracts/de.rfidgear.host.v1/request/1.1",
+  "title": "RFiDGear Host V1.1 Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractId", "requestId", "createdAt", "operation",
+    "projectName", "projectFile", "projectDirectory", "projectFileSha256",
+    "mode", "taskPlanSha256", "expectedTaskCount", "tasks",
+    "requiredCapabilities", "availableCapabilities", "engineVersion",
+    "containsKeys", "containsCardData", "referencedProjectMayContainKeys"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.1" },
+    "contractId": { "const": "de.rfidgear.host.v1" },
+    "requestId": { "type": "string", "format": "uuid" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "operation": {
+      "enum": [
+        "coding", "mastering", "card-preflight-transport",
+        "card-preflight-productive", "application-acceptance-productive",
+        "recovery-transport", "recovery-productive"
+      ]
+    },
+    "projectName": { "type": "string", "minLength": 1 },
+    "projectFile": { "type": "string", "pattern": "^[^/\\\\]+\\.rfPrj$" },
+    "projectDirectory": { "const": "." },
+    "projectFileSha256": { "$ref": "#/$defs/sha256" },
+    "mode": { "enum": ["open", "autorun", "automode"] },
+    "taskPlanSha256": { "$ref": "#/$defs/sha256" },
+    "expectedTaskCount": { "type": "integer", "minimum": 1 },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/task" }
+    },
+    "requiredCapabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "availableCapabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "engineVersion": { "type": "string", "minLength": 1 },
+    "containsKeys": { "const": false },
+    "containsCardData": { "const": false },
+    "referencedProjectMayContainKeys": { "const": true }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9A-F]{64}$" },
+    "portablePath": { "type": "string", "pattern": "^(|(?!(?:[A-Za-z]:|/|.*(?:^|/)\\.\\.(?:/|$)))[^\\\\]+)$" },
+    "capability": {
+      "enum": [
+        "CustomProjectFile", "AutorunOnce", "ContinuousAutoMode",
+        "ChangeFileSettings", "ExactAppSettingsCheck", "AppKeyCountCheck",
+        "FileSettingsCheck", "VerifiedApplicationKeyChange",
+        "StructuredTaskLogging", "AuthoritativeTaskLoopTerminalStatus", "LegacyUiExtensions",
+        "ApplicationUiExtensionHost", "StableExtensionHostApi"
+      ]
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "position", "index", "type", "conditionIndex", "conditionLevel",
+        "aid", "fileId", "input", "output", "fileSize"
+      ],
+      "properties": {
+        "position": { "type": "integer", "minimum": 0 },
+        "index": { "type": "string" },
+        "type": { "type": "string", "minLength": 1 },
+        "conditionIndex": { "type": "string" },
+        "conditionLevel": { "type": "string" },
+        "aid": { "type": "string" },
+        "fileId": { "type": "string" },
+        "input": { "$ref": "#/$defs/portablePath" },
+        "output": { "$ref": "#/$defs/portablePath" },
+        "fileSize": { "type": "string" }
+      }
+    }
+  }
+}

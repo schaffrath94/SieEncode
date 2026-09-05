@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="SieEncode" Language="1031" Version="$(var.ProductVersion)" Manufacturer="SieEncode Project" UpgradeCode="3AEDCDB0-0E05-4D4F-AEF7-5436C27CB880">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Platform="x64" Description="SieEncode Studio, Station und Runtime" />
+    <MajorUpgrade Schedule="afterInstallValidate" AllowSameVersionUpgrades="yes" DowngradeErrorMessage="Eine neuere SieEncode-Version ist bereits installiert." />
+    <!-- SieEncode besitzt seinen Installationsordner exklusiv. Beim Übergang von
+         frühen Pilotpaketen mit zufälligen Heat-GUIDs müssen auch gleichversionierte
+         Runtime-Dateien nach der Altproduktentfernung sicher neu kopiert werden. -->
+    <Property Id="REINSTALLMODE" Value="amus" />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <Icon Id="StartMenuIcon.exe" SourceFile="$(var.ProjectRoot)\assets\branding\SieEncode.ico" />
+    <Property Id="ARPPRODUCTICON" Value="StartMenuIcon.exe" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectRoot)\installer\License.rtf" />
+    <UIRef Id="WixUI_InstallDir" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <!-- Entspricht bewusst der aktuell funktionierenden RFiDGear-Struktur. -->
+      <Directory Id="CommonAppDataFolder">
+        <Directory Id="ProgramMenuFolder">
+          <Directory Id="ApplicationProgramsFolder" Name="SieEncode">
+            <Component Id="StartMenuShortcuts" Guid="3A902E85-A2EA-46DF-96F4-437AA08A5946">
+              <Shortcut Id="StudioShortcut" Directory="ApplicationProgramsFolder" Name="SieEncode" Description="Kodiervorschriften verwalten und Transponder kodieren" Target="[StudioFolder]SieEncode.exe" WorkingDirectory="StudioFolder" Advertise="no" Icon="StartMenuIcon.exe" IconIndex="0" />
+              <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
+              <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Type="string" Value="" KeyPath="yes" />
+            </Component>
+          </Directory>
+        </Directory>
+        <Component Id="RegValInstallLocation" Guid="286EB900-FC95-4C99-9EA8-C5FC8ECCC16E" Win64="yes">
+          <RegistryValue Root="HKLM" Key="Software\SieEncode" Name="InstallLocation" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+        </Component>
+      </Directory>
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="SieEncode">
+          <Directory Id="StudioFolder" Name="Studio" />
+          <Directory Id="RuntimeFolder" Name="Runtime" />
+        </Directory>
+      </Directory>
+    </Directory>
+    <Feature Id="Complete" Title="SieEncode" Level="1" Display="expand" ConfigurableDirectory="INSTALLFOLDER">
+      <ComponentGroupRef Id="StudioComponents" />
+      <ComponentGroupRef Id="RuntimeComponents" />
+      <ComponentRef Id="RegValInstallLocation" />
+      <Feature Id="StartMenu" Title="Startmenü-Verknüpfung" Description="Verknüpfung für SieEncode" Level="1">
+        <ComponentRef Id="StartMenuShortcuts" />
+      </Feature>
+    </Feature>
+  </Product>
+</Wix>
