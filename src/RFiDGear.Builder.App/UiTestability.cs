@@ -93,6 +93,7 @@ public partial class MainWindow
         VerifyOperatingModeContract(checks);
         VerifyPreflightPresentationContract(checks);
         VerifyNavigationContract(checks);
+        VerifyWorkspaceStateContract(checks);
         VerifyConstrainedLayoutContract(checks);
         VerifyIsolatedProjectFlows(checks);
 
@@ -148,7 +149,7 @@ public partial class MainWindow
             var expertSurfaces = new FrameworkElement[]
             {
                 NavProfilesButton, ProjectAdvancedActions, EditorTransportSettings, EditorAdvancedActions,
-                StationOpenRFiDGearButton,
+                StationOpenRFiDGearButton, StationDetailedPreflight, StationAdvancedCardActions,
                 StationTechnicalDetails, HelpExpertTools, SettingsCapabilityDetails, EditorBuildSettings,
                 EditorAuditVaultButton, ProjectOpenFolderButton, StationProjectPath, StationProjectFolderButton
             };
@@ -166,12 +167,12 @@ public partial class MainWindow
             ApplyOperatingMode();
             if (expertSurfaces.Any(element => element.Visibility != Visibility.Visible))
                 throw new InvalidOperationException("Der Expertenmodus stellt nicht alle Fachfunktionen bereit.");
-            if (StationDetailedPreflight.Visibility != Visibility.Collapsed || StationAdvancedCardActions.Visibility != Visibility.Collapsed)
-                throw new InvalidOperationException("Die in die Teststation verlagerten Fachaktionen überladen erneut die Kodierstation.");
+            if (StationDetailedPreflight.Visibility != Visibility.Visible || StationAdvancedCardActions.Visibility != Visibility.Visible)
+                throw new InvalidOperationException("Die Expertenansicht stellt die vorhandenen Prüf- und Wartungsaktionen nicht bereit.");
             if (OperatingModeText.Text != "Erweiterte Ansicht" ||
                 ExpertModeToggle.ToolTip?.ToString()?.Contains("Standardansicht", StringComparison.Ordinal) != true)
                 throw new InvalidOperationException("Der kompakte Modusschalter kennzeichnet den Expertenmodus nicht eindeutig.");
-            checks.Add("Bedienmodus: Normalansicht reduziert auf den geführten Ablauf; Expertenansicht ergänzt Fachdetails, Kartenprüfung und Wartung bleiben in der Teststation");
+            checks.Add("Bedienmodus: Normalansicht reduziert auf den geführten Ablauf; Expertenansicht ergänzt Fachdetails, bestehende Prüf- und Wartungsaktionen bleiben als Expertenbereiche verfügbar");
         }
         finally
         {
@@ -298,6 +299,7 @@ public partial class MainWindow
             VerifyOperatorUiContract(checks);
             VerifyOperationStartGate(checks);
             VerifySeriesUiFlows(checks);
+            CaptureWorkspaceReview();
             UpdateLayout();
             InitializeAutomationContract();
             VerifyAutomationContract(this);

@@ -34,11 +34,11 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<ProjectCatalogEntry> projects = [];
     private readonly ObservableCollection<CodingFieldInput> stationFields = [];
     private readonly ObservableCollection<CodingSeriesHistoryRow> stationHistory = [];
-    private readonly Stack<string> navigationHistory = new();
+    private readonly WorkspaceNavigation navigation = new();
     private readonly Dictionary<string, FrameworkElement> pages;
     private BuilderSettings settings = new();
     private string projectsDirectory = "";
-    private string currentPage = "Home";
+    private string currentPage => navigation.CurrentPage;
     private ProjectCatalogEntry? selectedProject;
     private CodingSessionDefinition? sessionDefinition;
     private PreparedCodingSession? preparedSession;
@@ -99,6 +99,7 @@ public partial class MainWindow : Window
         operationTimer.Tick += OperationTimer_Tick;
         InitializeProjectEditor();
         InitializeDiffPage();
+        RefreshWorkspaceNavigation();
     }
 
     public void RunSelfTest()
@@ -206,11 +207,6 @@ public partial class MainWindow : Window
     private void Navigate_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: string page }) return;
-        if (!settings.ExpertMode && IsExpertPage(page))
-        {
-            SetStatus("Diese Verwaltungs- oder Diagnosefunktion ist im Expertenmodus verfügbar.");
-            return;
-        }
         Navigate(page);
     }
 
@@ -245,8 +241,8 @@ public partial class MainWindow : Window
         StationProjectFolderButton.Visibility = visibility;
         EditorTransportSettings.Visibility = visibility;
         EditorAdvancedActions.Visibility = visibility;
-        StationDetailedPreflight.Visibility = Visibility.Collapsed;
-        StationAdvancedCardActions.Visibility = Visibility.Collapsed;
+        StationDetailedPreflight.Visibility = visibility;
+        StationAdvancedCardActions.Visibility = visibility;
         StationOpenRFiDGearButton.Visibility = visibility;
         StationTechnicalDetails.Visibility = visibility;
         HelpExpertTools.Visibility = visibility;
@@ -261,11 +257,7 @@ public partial class MainWindow : Window
         if (selectedProject is not null) UpdateProjectSelectionInfo(selectedProject);
         if (editorProject is not null) RefreshProfileBindingStatus();
         else RefreshEditorWorkflow();
-        if (!settings.ExpertMode && IsExpertPage(currentPage))
-        {
-            navigationHistory.Clear();
-            Navigate("Help", addHistory: false);
-        }
+        RefreshWorkspaceNavigation();
     }
 
     internal static string NormalizeVisibleFieldLabel(string id, string label)
@@ -277,22 +269,18 @@ public partial class MainWindow : Window
     private void Navigate(string page, bool addHistory = true)
     {
         if (!pages.ContainsKey(page)) return;
-        if (addHistory && currentPage != page) navigationHistory.Push(currentPage);
+        navigation.Navigate(page, addHistory);
         foreach (var item in pages) item.Value.Visibility = item.Key == page ? Visibility.Visible : Visibility.Collapsed;
-        currentPage = page;
         var title = page switch
         {
-            "Home" => "Übersicht", "Projects" => "Projekte", "Station" => "Kodierstation", "TestStation" => "Teststation",
+            "Home" => "Übersicht", "Projects" => "Projektbibliothek", "Station" => "Karten kodieren", "TestStation" => "Karten untersuchen",
             "Editor" => "Projekt bearbeiten", "Profiles" => "Profile", "Analysis" => "Analyse / Dry-Run", "Diff" => "Projekt-/Profilvergleich",
             "Acceptance" => "Prüfung & Abnahme", "Settings" => "Einstellungen", "Help" => "Werkzeuge & Hilfe", _ => page
         };
-        PageTitle.Text = title;
-        Breadcrumb.Text = "SieEncode / " + title;
-        BackButton.IsEnabled = navigationHistory.Count > 0;
-        var navButtons = new[] { NavHomeButton, NavProjectsButton, NavStationButton, NavTestStationButton, NavProfilesButton, NavHelpButton, NavSettingsButton };
-        foreach (var button in navButtons)
-            button.Style = (Style)FindResource(string.Equals(button.Tag as string, page, StringComparison.Ordinal)
-                ? "NavButtonActive" : "NavButton");
+        PageTitle.Text = WorkspaceTitle(WorkspaceNavigation.WorkspaceFor(page));
+        Breadcrumb.Text = "SieEncode / " + PageTitle.Text + (PageTitle.Text == title ? "" : " / " + title);
+        BackButton.IsEnabled = navigation.CanGoBack;
+        RefreshWorkspaceNavigation();
     }
 
     private void PopulateTestAnalysisTree(CardRecognitionReport report)
@@ -373,8 +361,7 @@ public partial class MainWindow : Window
 
     private void Back_Click(object sender, RoutedEventArgs e)
     {
-        if (navigationHistory.Count == 0) return;
-        Navigate(navigationHistory.Pop(), addHistory: false);
+        if (navigation.GoBack()) Navigate(currentPage, addHistory: false);
     }
 
     private void RefreshProjects_Click(object sender, RoutedEventArgs e)

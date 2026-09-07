@@ -34,6 +34,7 @@ if (args.Length == 2 && args[0] == "hardware-extension-upgrade-rollback")
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Key generation", TestKeyGeneration),
     ("Vault roundtrip and tamper rejection", TestVault),
     ("Certificate recipient vault and recovery", TestCertificateVault),
@@ -157,6 +158,29 @@ static (RFiDGearHostRunV1 Run, RFiDGearHostResultV1 Result) CompleteApplicationH
     var session = new RFiDGearOperationSession(operation, launch, new RFiDGearLogSnapshot(started, root, new Dictionary<string, long>()), started, TimeSpan.FromMinutes(2));
     var evaluation = RFiDGearOperationService.EvaluateText(session, log, DateTimeOffset.Now);
     return (run, host.CompleteOperation(run, session, evaluation, acceptanceState));
+}
+
+static void TestWorkspaceNavigation()
+{
+    var state = new WorkspaceNavigation();
+    state.Navigate("Editor");
+    state.Navigate("Station");
+    Assert(state.LastPageFor("Projects") == "Editor", "Editor subpage must survive workspace switch.");
+    state.Navigate(state.LastPageFor("Projects"));
+    Assert(state.CurrentPage == "Editor", "Return to last workspace page.");
+    Assert(state.GoBack() && state.CurrentPage == "Station", "Back must follow actual navigation.");
+    state.Navigate("Profiles");
+    state.Navigate("Profiles");
+    Assert(state.GoBack() && state.CurrentPage == "Station", "Selecting current page must not duplicate history.");
+    state.Navigate("Acceptance");
+    Assert(WorkspaceNavigation.WorkspaceFor(state.CurrentPage) == "TestStation", "Acceptance belongs to inspection.");
+    AssertThrows<ArgumentException>(() => state.Navigate("Unknown"));
+    Assert(state.CurrentPage == "Acceptance", "Invalid navigation must not change state.");
+    foreach (var page in new[] { "Home", "Projects", "Editor", "Profiles", "Analysis", "Diff", "Station", "TestStation", "Acceptance", "Settings", "Help" })
+    {
+        state.Navigate(page);
+        Assert(state.LastPageFor(WorkspaceNavigation.WorkspaceFor(page)) == page, "Every RC15 page must retain its workspace route.");
+    }
 }
 
 static void TestKeyGeneration()
