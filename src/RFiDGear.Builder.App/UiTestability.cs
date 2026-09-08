@@ -299,6 +299,19 @@ public partial class MainWindow
             VerifyOperatorUiContract(checks);
             VerifyOperationStartGate(checks);
             VerifySeriesUiFlows(checks);
+            RunAnalysis(ProjectJson.Load(editable.SourcePath), editable.SourcePath, Path.Combine(fixture, "analysis"));
+            var analyzed = lastAnalysisFiles!.Report;
+            if (AnalysisApplicationsGrid.Items.Count != analyzed.Applications.Count || analyzed.Applications.Count == 0)
+                throw new InvalidOperationException("Anwendungs- und Schlüsselkontext fehlen in der Expertenanalyse.");
+            foreach (var pair in new[] { (AnalysisMasteringGrid, analyzed.MasteringTasks), (AnalysisCodingGrid, analyzed.CodingTasks) })
+            {
+                var displayed = pair.Item1.Items.Cast<AnalysisTaskRow>().ToArray();
+                if (displayed.Length != pair.Item2.Count || displayed.Where((row, index) =>
+                    row.Settings != pair.Item2[index].Settings || row.FileContract != pair.Item2[index].FileContract ||
+                    row.Position != pair.Item2[index].Position).Any())
+                    throw new InvalidOperationException("Taskdetails verlieren Einstellungen, Reihenfolge oder Dateiverträge.");
+            }
+            checks.Add("Expertenanalyse: vollständiger Anwendungskontext und unveränderte Einstellungen/Dateiverträge aller geplanten Tasks verfügbar.");
             CaptureWorkspaceReview();
             UpdateLayout();
             InitializeAutomationContract();

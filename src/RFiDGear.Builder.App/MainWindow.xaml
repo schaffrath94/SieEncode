@@ -10,7 +10,7 @@
         <StackPanel DockPanel.Dock="Top" Margin="14,22,14,16">
           <StackPanel Orientation="Horizontal">
             <Image Source="assets/branding/SieEncode.ico" Width="42" Height="42" Margin="0,0,10,0"/>
-            <StackPanel VerticalAlignment="Center"><TextBlock Text="SieEncode" Foreground="White" FontWeight="Bold" FontSize="25"/><TextBlock x:Name="AppVersionText" Text="Studio" Foreground="#BFE0E2" FontSize="12"/></StackPanel>
+            <StackPanel VerticalAlignment="Center"><TextBlock Text="SieEncode" Foreground="White" FontWeight="Bold" FontSize="25"/><TextBlock x:Name="AppVersionText" MaxWidth="145" TextWrapping="Wrap" Text="Studio" Foreground="#BFE0E2" FontSize="12"/></StackPanel>
           </StackPanel>
           <TextBlock Text="ARBEITSBEREICHE" Foreground="#BFE0E2" FontSize="11" Margin="6,26,0,6"/>
           <Button x:Name="NavStationButton" Style="{StaticResource NavButton}" Tag="Station" Click="Workspace_Click" Content="Karten kodieren"/>
@@ -335,9 +335,46 @@
           <StackPanel Grid.Row="0"><TextBlock Text="Erzeugt Karten- und Taskplan vollständig im Speicher und simuliert Credential-Rollen, Keywechsel und Endzustand mit synthetischen Tokens. Produktivkeys oder ein Vault werden weder benötigt noch in Berichte übernommen." Foreground="#526B70" Margin="0,5,0,10" TextWrapping="Wrap"/></StackPanel>
           <StackPanel Grid.Row="1"><WrapPanel><Button x:Name="AnalysisEditorButton" Content="Aktuelles Editorprojekt analysieren" Click="AnalyzeEditorProject_Click"/><Button x:Name="AnalysisSelectedButton" Content="Ausgewähltes Projekt analysieren" Click="AnalyzeSelectedProject_Click" Style="{StaticResource PrimaryButton}"/><Button Content="Projektdatei wählen" Click="AnalyzeFile_Click"/></WrapPanel><TextBlock x:Name="AnalysisSource" Text="Noch keine Analyse ausgeführt." FontFamily="Consolas" Foreground="#607D86" TextWrapping="Wrap" Margin="4"/><Border x:Name="AnalysisResultBorder" Background="#F7F9FA" BorderBrush="#C9D1D4" BorderThickness="1" CornerRadius="4" Padding="10"><TextBlock x:Name="AnalysisResult" Text="Bereit." FontWeight="SemiBold" TextWrapping="Wrap"/></Border></StackPanel>
           <TabControl Grid.Row="2" Margin="0,8">
+            <TabItem Header="Anwendungen und Schlüsselkontext">
+              <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <TextBlock Text="Projektvorgaben · keine ausgelesenen Kartenwerte. Schlüsselwerte werden nicht angezeigt. Ausgangseinstellungen und Produktivzustand bleiben getrennt." TextWrapping="Wrap" Margin="8" Foreground="{StaticResource MutedTextBrush}"/>
+                <DataGrid x:Name="AnalysisApplicationsGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" RowDetailsVisibilityMode="VisibleWhenSelected">
+                  <DataGrid.Columns>
+                    <DataGridTextColumn Header="AID" Binding="{Binding Aid}" Width="90"/>
+                    <DataGridTextColumn Header="Anwendung" Binding="{Binding Name}" Width="*" MinWidth="180"/>
+                    <DataGridTextColumn Header="Schlüsseltyp" Binding="{Binding KeyType}" Width="150"/>
+                    <DataGridTextColumn Header="Anzahl" Binding="{Binding KeyCount}" Width="70"/>
+                    <DataGridTextColumn Header="Ausgangszustand" Binding="{Binding TransportKeySettings}" Width="145"/>
+                    <DataGridTextColumn Header="Produktivzustand" Binding="{Binding ProductiveKeySettings}" Width="145"/>
+                    <DataGridTextColumn Header="Wechselstrategie" Binding="{Binding ChangeKeyMode}" Width="150"/>
+                  </DataGrid.Columns>
+                  <DataGrid.RowDetailsTemplate><DataTemplate><StackPanel Margin="12">
+                    <TextBlock Text="Vollständige Anwendungsbezeichnung" FontWeight="SemiBold"/>
+                    <TextBox Text="{Binding Name, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                    <TextBlock Text="Schlüsselversionen und Chipmerkmale gehören zur Ist-Untersuchung und sind hier nicht als gelesen belegt." TextWrapping="Wrap"/>
+                  </StackPanel></DataTemplate></DataGrid.RowDetailsTemplate>
+                </DataGrid>
+              </Grid>
+            </TabItem>
             <TabItem Header="Kartenaufbau"><DataGrid x:Name="AnalysisFilesGrid" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="AID" Binding="{Binding Aid}" Width="90"/><DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="1.5*"/><DataGridTextColumn Header="File" Binding="{Binding File}" Width="1.4*"/><DataGridTextColumn Header="Typ / Größe" Binding="{Binding TypeSize}" Width="1.2*"/><DataGridTextColumn Header="Endzustand" Binding="{Binding FinalSettings}" Width="2*"/><DataGridTextColumn Header="Mastering" Binding="{Binding Mastering}" Width="2*"/><DataGridTextColumn Header="Kodierung" Binding="{Binding Coding}" Width="1.5*"/></DataGrid.Columns></DataGrid></TabItem>
-            <TabItem Header="Mastering-Taskplan"><DataGrid x:Name="AnalysisMasteringGrid" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="#" Binding="{Binding Index}" Width="55"/><DataGridTextColumn Header="Task" Binding="{Binding Type}" Width="1.3*"/><DataGridTextColumn Header="Beschreibung" Binding="{Binding Description}" Width="3*"/><DataGridTextColumn Header="Bedingung" Binding="{Binding ConditionText}" Width="1.4*"/><DataGridTextColumn Header="AID / File" Binding="{Binding Target}" Width="1.2*"/><DataGridTextColumn Header="Keyrollen" Binding="{Binding KeyReference}" Width="1.2*"/></DataGrid.Columns></DataGrid></TabItem>
-            <TabItem Header="Kodier-Taskplan"><DataGrid x:Name="AnalysisCodingGrid" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="#" Binding="{Binding Index}" Width="55"/><DataGridTextColumn Header="Task" Binding="{Binding Type}" Width="1.3*"/><DataGridTextColumn Header="Beschreibung" Binding="{Binding Description}" Width="3*"/><DataGridTextColumn Header="Bedingung" Binding="{Binding ConditionText}" Width="1.4*"/><DataGridTextColumn Header="AID / File" Binding="{Binding Target}" Width="1.2*"/><DataGridTextColumn Header="Keyrollen" Binding="{Binding KeyReference}" Width="1.2*"/></DataGrid.Columns></DataGrid></TabItem>
+            <TabItem Header="Mastering-Taskplan"><DataGrid x:Name="AnalysisMasteringGrid" AutoGenerateColumns="False" IsReadOnly="True" RowDetailsVisibilityMode="VisibleWhenSelected">
+              <DataGrid.RowDetailsTemplate><DataTemplate><StackPanel Margin="12">
+                <TextBlock Text="Taskdetails · geplante Aktion, kein Ausführungsnachweis" FontWeight="SemiBold"/>
+                <TextBlock Text="Beschreibung"/><TextBox Text="{Binding Description, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Einstellungen"/><TextBox Text="{Binding Settings, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+                <TextBlock Text="Dateivertrag"/><TextBox Text="{Binding FileContract, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+                <TextBlock Text="Schlüsselrollen"/><TextBox Text="{Binding KeyReference, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+              </StackPanel></DataTemplate></DataGrid.RowDetailsTemplate>
+              <DataGrid.Columns><DataGridTextColumn Header="Pos." Binding="{Binding Position}" Width="55"/><DataGridTextColumn Header="#" Binding="{Binding Index}" Width="55"/><DataGridTextColumn Header="Task" Binding="{Binding Type}" Width="1.3*"/><DataGridTextColumn Header="Beschreibung" Binding="{Binding Description}" Width="3*"/><DataGridTextColumn Header="Bedingung" Binding="{Binding ConditionText}" Width="1.4*"/><DataGridTextColumn Header="AID / File" Binding="{Binding Target}" Width="1.2*"/><DataGridTextColumn Header="Keyrollen" Binding="{Binding KeyReference}" Width="1.2*"/></DataGrid.Columns></DataGrid></TabItem>
+            <TabItem Header="Kodier-Taskplan"><DataGrid x:Name="AnalysisCodingGrid" AutoGenerateColumns="False" IsReadOnly="True" RowDetailsVisibilityMode="VisibleWhenSelected">
+              <DataGrid.RowDetailsTemplate><DataTemplate><StackPanel Margin="12">
+                <TextBlock Text="Taskdetails · geplante Aktion, kein Ausführungsnachweis" FontWeight="SemiBold"/>
+                <TextBlock Text="Beschreibung"/><TextBox Text="{Binding Description, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Einstellungen"/><TextBox Text="{Binding Settings, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+                <TextBlock Text="Dateivertrag"/><TextBox Text="{Binding FileContract, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+                <TextBlock Text="Schlüsselrollen"/><TextBox Text="{Binding KeyReference, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+              </StackPanel></DataTemplate></DataGrid.RowDetailsTemplate>
+              <DataGrid.Columns><DataGridTextColumn Header="Pos." Binding="{Binding Position}" Width="55"/><DataGridTextColumn Header="#" Binding="{Binding Index}" Width="55"/><DataGridTextColumn Header="Task" Binding="{Binding Type}" Width="1.3*"/><DataGridTextColumn Header="Beschreibung" Binding="{Binding Description}" Width="3*"/><DataGridTextColumn Header="Bedingung" Binding="{Binding ConditionText}" Width="1.4*"/><DataGridTextColumn Header="AID / File" Binding="{Binding Target}" Width="1.2*"/><DataGridTextColumn Header="Keyrollen" Binding="{Binding KeyReference}" Width="1.2*"/></DataGrid.Columns></DataGrid></TabItem>
             <TabItem Header="Befunde"><DataGrid x:Name="AnalysisIssuesGrid" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="Stufe" Binding="{Binding Severity}" Width="90"/><DataGridTextColumn Header="Bereich" Binding="{Binding Area}" Width="180"/><DataGridTextColumn Header="Befund" Binding="{Binding Message}" Width="*"/></DataGrid.Columns></DataGrid></TabItem>
           </TabControl>
           <WrapPanel Grid.Row="3"><Button x:Name="AnalysisExportPdfButton" Content="PDF-Kartenreport speichern" Click="ExportAnalysisPdf_Click" IsEnabled="False" Style="{StaticResource PrimaryButton}"/><Button x:Name="AnalysisOpenReportButton" Content="Textbericht öffnen" Click="OpenAnalysisReport_Click" IsEnabled="False"/><Button x:Name="AnalysisOpenFolderButton" Content="Berichtsordner öffnen" Click="OpenAnalysisFolder_Click" IsEnabled="False"/><TextBlock x:Name="AnalysisReportPath" Text="Bericht: –" FontFamily="Consolas" Foreground="#526B70" VerticalAlignment="Center" Margin="12,0" TextWrapping="Wrap"/></WrapPanel>

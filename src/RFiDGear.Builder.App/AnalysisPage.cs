@@ -79,6 +79,7 @@ public partial class MainWindow
             $"{file.Communication} · {file.Access}",
             file.CreationSettings is null ? file.Initialization : $"{file.Initialization} · temporär {file.CreationSettings}",
             string.IsNullOrWhiteSpace(file.CodingOutput) ? "–" : file.CodingOutput))).ToArray();
+        AnalysisApplicationsGrid.ItemsSource = report.Applications;
         AnalysisMasteringGrid.ItemsSource = report.MasteringTasks.Select(ToTaskRow).ToArray();
         AnalysisCodingGrid.ItemsSource = report.CodingTasks.Select(ToTaskRow).ToArray();
         AnalysisIssuesGrid.ItemsSource = report.Issues;
@@ -100,7 +101,7 @@ public partial class MainWindow
         => new(task.Index, task.Type, task.Description,
             string.IsNullOrWhiteSpace(task.ConditionIndex) ? "–" : $"Task {task.ConditionIndex} = {task.ConditionLevel}",
             string.Join(" / ", new[] { task.Aid.Length == 0 ? "" : "AID " + task.Aid, task.FileId.Length == 0 ? "" : "File " + task.FileId }.Where(value => value.Length > 0)),
-            string.IsNullOrWhiteSpace(task.KeyReference) ? "–" : task.KeyReference);
+            string.IsNullOrWhiteSpace(task.KeyReference) ? "–" : task.KeyReference, task.Position, task.Settings, task.FileContract);
 
     private void OpenAnalysisReport_Click(object sender, RoutedEventArgs e)
     {
@@ -151,5 +152,5 @@ public partial class MainWindow
     }
 
     private sealed record AnalysisFileRow(string Aid, string Application, string File, string TypeSize, string FinalSettings, string Mastering, string Coding);
-    private sealed record AnalysisTaskRow(string Index, string Type, string Description, string ConditionText, string Target, string KeyReference);
+    private sealed record AnalysisTaskRow(string Index, string Type, string Description, string ConditionText, string Target, string KeyReference, int Position, string Settings, string FileContract);
 }

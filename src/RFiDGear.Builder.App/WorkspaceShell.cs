@@ -20,7 +20,7 @@ public partial class MainWindow
             {
                 settings.ExpertMode = expert;
                 ApplyOperatingMode();
-                foreach (var page in new[] { "Station", "Projects", "TestStation" })
+                foreach (var page in new[] { "Station", "Projects", "TestStation", "Analysis" })
                 {
                     Navigate(page, false);
                     UpdateLayout();

@@ -15,6 +15,15 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
 - Standard-Studio: 49 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
+## Erledigt im aktuellen Abschnitt
+Experten-Projektanalyse erweitert: eigener Anwendungskontext (Typ, Keyanzahl,
+Ausgangs-/Produktiveinstellungen, Wechselstrategie); Mastering-/Kodiertasks
+mit Position und auswählbaren vollständigen Details (Beschreibung, Einstellungen,
+Dateivertrag, Schlüsselrollen). Vorhandene Analysemodelle unverändert verwendet.
+Finaler isolierter Preview-Publish und WPF-Smoke-Test bestanden, synthetische
+27 Tasks vollständig verglichen; echte WPF-Ansicht visuell geprüft.
+Kein neues Benutzerpaket und kein neuer PDF-Exporter in diesem Abschnitt.
+
 ## Nächster Abschnitt - tatsächlich implementieren
 1. Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und
    UI-PDF-KONZEPT.md ausarbeiten: vollständige Anwendungen/Dateirechte,
