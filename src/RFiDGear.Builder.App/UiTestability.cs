@@ -327,8 +327,10 @@ public partial class MainWindow
             var legacyReport = RunSelectedPreflight();
             if (legacyReport.Status != "OK" || !IsLegacyCompatibilityReport(legacyReport))
                 throw new InvalidOperationException("Kompatibler Altbuild wird durch das additive Erkennungsmodul vollständig gesperrt.");
+            var runtimeCanAutorun = File.Exists(settings.RFiDGear.ExecutablePath) &&
+                rfidgearCapabilities?.Has(RFiDGearCapabilityId.AutorunOnce) == true;
             if (!LoadStation(legacy) || StationRecognitionButton.IsEnabled || StationRecognitionButton.Visibility != Visibility.Collapsed ||
-                !StationPreflightTransportButton.IsEnabled || !StationLegacyTransportButton.IsEnabled ||
+                StationPreflightTransportButton.IsEnabled != runtimeCanAutorun || StationLegacyTransportButton.IsEnabled != runtimeCanAutorun ||
                 StationLegacyTransportButton.Visibility != Visibility.Visible || !StationPrepareButton.IsEnabled)
                 throw new InvalidOperationException("Kodierstation gibt beim Altbuild nicht exakt die vorhandenen sicheren Funktionen frei.");
             DisplayProjectPreflight(legacyReport);

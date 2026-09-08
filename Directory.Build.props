@@ -6,4 +6,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(SieEncodeUiPreview)' == 'true'">
+    <DefineConstants>$(DefineConstants);SIEENCODE_UI_PREVIEW</DefineConstants>
+  </PropertyGroup>
 </Project>
