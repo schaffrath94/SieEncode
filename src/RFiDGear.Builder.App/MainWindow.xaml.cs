@@ -686,7 +686,8 @@ public partial class MainWindow : Window
         TestDeepAnalyzeButton.IsEnabled = operationAvailable && autorun &&
             rfidgearCapabilities?.Has(RFiDGearCapabilityId.ApplicationFileInventory) == true &&
             lastCardRecognitionReport?.Report is { State: "RECOGNIZED", ApplicationIds.Count: > 0 };
-        TestOpenRecognitionResultButton.IsEnabled = lastCardRecognitionReport is not null;
+        TestOpenRecognitionResultButton.IsEnabled = File.Exists(lastTestReportPath);
+        TestOpenInventoryPdfButton.IsEnabled = LatestInventoryPdfPath() is not null;
         TestProjectRecognitionButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && Has(RFiDGearOperationKind.CardRecognitionReadOnly);
         TestProjectTransportButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && Has(RFiDGearOperationKind.CardPreflightTransport);
         TestProjectProductiveButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && productiveExpectationAvailable && Has(RFiDGearOperationKind.CardPreflightProductive);
@@ -1188,6 +1189,7 @@ public partial class MainWindow : Window
                     lastCardRecognitionReport = new CardRecognitionService().Create(reportRoot,
                         operationSession.Operation, evaluation);
                     lastTestReportPath = lastCardRecognitionReport.TextPath;
+                    TestOpenInventoryPdfButton.IsEnabled = false;
                     StationOpenRecognitionResultButton.IsEnabled = true;
                     var report = lastCardRecognitionReport.Report;
                     StationState.Text = "TRANSPONDER · " + report.Structure;
@@ -1209,6 +1211,7 @@ public partial class MainWindow : Window
                     var report = new ApplicationInventoryReportService().Create(reportRoot,
                         Path.Combine(reportRoot, "application-inventory.runtime.json"));
                     lastTestReportPath = report.TextPath;
+                    TestOpenInventoryPdfButton.IsEnabled = LatestInventoryPdfPath() is not null;
                     TestAnalysisInfo.Text = report.Summary;
                     AppendApplicationInventoryTree(report.JsonPath);
                     TestOpenRecognitionResultButton.IsEnabled = true;
@@ -1290,6 +1293,24 @@ public partial class MainWindow : Window
             if (string.IsNullOrWhiteSpace(lastTestReportPath) || !File.Exists(lastTestReportPath))
                 throw new FileNotFoundException("In dieser Sitzung liegt noch kein Teststationsbericht vor.");
             Process.Start(new ProcessStartInfo(lastTestReportPath) { UseShellExecute = true });
+        }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
+    private string? LatestInventoryPdfPath()
+    {
+        if (string.IsNullOrWhiteSpace(lastTestReportPath) ||
+            !string.Equals(Path.GetFileName(lastTestReportPath), "application-inventory.result.txt", StringComparison.OrdinalIgnoreCase)) return null;
+        var path = Path.ChangeExtension(lastTestReportPath, ".pdf");
+        return File.Exists(path) ? path : null;
+    }
+
+    private void OpenInventoryPdf_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var path = LatestInventoryPdfPath() ?? throw new FileNotFoundException("Zum letzten Analyseergebnis liegt kein PDF-Istreport vor.");
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
         }
         catch (Exception exception) { ShowError(exception); }
     }

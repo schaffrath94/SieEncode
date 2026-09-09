@@ -111,6 +111,7 @@
                   <Button x:Name="TestAnalyzeCardButton" Content="Transponder analysieren" Click="AnalyzeCardWithoutProject_Click" Style="{StaticResource PrimaryButton}"/>
                   <Button x:Name="TestDeepAnalyzeButton" Content="Application genauer untersuchen" Click="DeepAnalyzeApplication_Click" IsEnabled="False"/>
                   <Button x:Name="TestOpenRecognitionResultButton" Content="Letzten Bericht öffnen" Click="OpenLatestTestReport_Click" IsEnabled="False"/>
+                  <Button x:Name="TestOpenInventoryPdfButton" Content="PDF-Istreport öffnen" Click="OpenInventoryPdf_Click" IsEnabled="False"/>
                 </WrapPanel>
                 <TextBlock x:Name="TestAnalysisInfo" Text="Noch keine projektlose Analyse in dieser Sitzung." Foreground="#526B70" TextWrapping="Wrap" Margin="4,5,4,0"/>
                 <Border Margin="4,12,4,0" BorderBrush="#C7D6D8" BorderThickness="1" CornerRadius="5" Background="White" MinHeight="210">

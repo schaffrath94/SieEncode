@@ -272,6 +272,18 @@ public partial class MainWindow
         try
         {
             var library = LoadProfileLibrary();
+            var previousReport = lastTestReportPath;
+            try
+            {
+                lastTestReportPath = Path.Combine(fixture, "application-inventory.result.txt");
+                if (LatestInventoryPdfPath() is not null) throw new InvalidOperationException("Fehlendes PDF wird angeboten.");
+                File.WriteAllText(Path.ChangeExtension(lastTestReportPath, ".pdf"), "synthetic path fixture");
+                if (LatestInventoryPdfPath() != Path.ChangeExtension(lastTestReportPath, ".pdf")) throw new InvalidOperationException("Inventur-PDF nicht erreichbar.");
+                lastTestReportPath = Path.Combine(fixture, "recognition.result.txt");
+                if (LatestInventoryPdfPath() is not null) throw new InvalidOperationException("Veraltetes Inventur-PDF wird für einen anderen Bericht angeboten.");
+                checks.Add("PDF-Istreport: passender Inventurpfad erreichbar; fehlende und veraltete Berichte gesperrt.");
+            }
+            finally { lastTestReportPath = previousReport; }
             var shells = TaskShellLibrary.Load(Path.Combine(AppContext.BaseDirectory, "assets", "task-shells"));
             BuildFixtureProject("UI-Bearbeitbar", Path.Combine(libraryRoot, "UI-Bearbeitbar.project.json"), libraryRoot, library, shells);
             BuildFixtureProject("UI-Artefakt", Path.Combine(externalSources, "UI-Artefakt.project.json"), libraryRoot, library, shells);

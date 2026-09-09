@@ -38,6 +38,7 @@ var tests = new (string Name, Action Run)[]
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
     ("Observed inventory PDF preserves evidence and payload", TestInventoryPdf),
+    ("Payload comparison requires complete unambiguous reads", TestInventoryComparison),
     ("Key generation", TestKeyGeneration),
     ("Vault roundtrip and tamper rejection", TestVault),
     ("Certificate recipient vault and recovery", TestCertificateVault),
@@ -184,6 +185,27 @@ static void TestWorkspaceNavigation()
         state.Navigate(page);
         Assert(state.LastPageFor(WorkspaceNavigation.WorkspaceFor(page)) == page, "Every RC15 page must retain its workspace route.");
     }
+}
+
+static void TestInventoryComparison()
+{
+    var service = new InventoryPayloadComparisonService();
+    var expected = new Dictionary<int, byte[]> { [1] = [0, 255] };
+    InventoryPayloadComparison Compare(string files)
+    {
+        using var document = JsonDocument.Parse("{\"readOnly\":true,\"applicationId\":\"A1B2C3\",\"files\":" + files + "}");
+        return service.Compare("a1b2c3", expected, document.RootElement).Single();
+    }
+    Assert(Compare("[{\"fileId\":1,\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"00ff\"}]").State == PayloadComparisonState.Equal, "Equivalent full bytes should match.");
+    Assert(Compare("[{\"fileId\":1,\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"0000\"}]").State == PayloadComparisonState.Different, "Full observed byte difference must be reported.");
+    foreach (var files in new[] {
+        "[]", "[{\"fileId\":1},{\"fileId\":1}]",
+        "[{\"fileId\":1,\"contentResult\":\"PermissionDenied\"}]",
+        "[{\"fileId\":1,\"contentResult\":\"NoError\",\"declaredSize\":4,\"hex\":\"00FF\"}]",
+        "[{\"fileId\":1,\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"00FF\",\"truncated\":true}]" })
+        Assert(Compare(files).State == PayloadComparisonState.NotComparable, "Missing, denied, duplicate or partial reads must never establish equality or difference.");
+    using var wrong = JsonDocument.Parse("{\"readOnly\":true,\"applicationId\":\"FFFFFF\"}");
+    AssertThrows<InvalidDataException>(() => service.Compare("A1B2C3", expected, wrong.RootElement));
 }
 
 static void TestInventoryPdf()
