@@ -12,26 +12,26 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 54 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 55 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Teststation ruft Inhaltsvergleich auf: explizite Sollprojekt-Dateiauswahl, AID-Prüfung,
-Dialog für benötigte Kartenwerte mit sichtbaren Profilvorbelegungen, PDF-Speichern.
-Eingaben nur für Bericht; Projekt/Vault unverändert. Vergleichsschema 1.2 mit eigenem
-Kind application-content-comparison; vollständige Soll-/Ist-HEX-Daten separat,
-nachgewiesene Abweichungen rot. Fehlende Istfiles bleiben mit Sollbytes und
-nicht vergleichbar im Bericht, keine erfundenen Ist-Metadaten. Umfang nur Inhalte.
-54/54 Tests sowie CLI/WPF-Build ohne Warnungen bestanden (tmp/comparison-ui-ci.log).
-Zweiseitiges output/pdf/Inhaltsvergleich-Synthetische-Abnahme.pdf gerendert und
-vollständig visuell geprüft. Isolierter Publish preview.5 unter
-artifacts/ui-comparison-check/Studio; WPF-Smoke OK (tmp/comparison-smoke/),
-276 Elemente, 11 Seiten, Formularinitialisierung und bestehende Abläufe geprüft.
-Teststation-Screenshot visuell geprüft. Native Öffnen-/Speichern-Dialogkette noch
-nicht als vollständiger Endanwenderlauf geprüft. Kein ZIP/Release, keine Hardwareabnahme.
+Dateivergleich um sieben Metadatenfelder erweitert: Typ, Byte-Größe, Kommunikation
+und vier Zugriffsrechte. InventoryFileSettingsComparisonService wertet ausschließlich
+eindeutige erfolgreiche Metadaten-Nachweise aus. Verweigerter Inhaltszugriff sperrt
+keinen nachgewiesenen Metadatenvergleich; verweigerte Metadaten, doppelte IDs,
+unbekannte Modi/ungültige Rechte bleiben nicht vergleichbar. Value-/Record-Uniongröße
+wird nicht als Datenfile-Bytegröße interpretiert. Soll sind finale Dateieinstellungen.
+Vergleichsschema 1.3 / application-comparison; pro Feld Soll, Ist und Bewertung im PDF,
+Abweichungen rot, weitere Befunde getrennt vom Inhaltsvergleich. UI-Beschriftung angepasst.
+55/55 Tests sowie CLI/WPF-Build ohne Warnungen bestanden (tmp/settings-comparison-ci.log).
+Zweiseitiges output/pdf/Soll-Ist-Dateivergleich-Synthetische-Abnahme.pdf vollständig
+gerendert und visuell geprüft. Keine neue UI-Struktur; letzter WPF-Smoke preview.5
+unter artifacts/ui-comparison-check/Studio enthält diese Ergänzung noch nicht.
+Native Dateidialogkette noch nicht vollständig abgenommen; kein ZIP/Release/Hardwaretest.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes Metadatenvergleich ergänzen und Berichtsumfang kompakt/vollständig
+1. Als Nächstes Berichtsumfang kompakt/vollständig
    unabhängig vom UI-Modus anbieten; alten Sollreport ohne Kürzung paginieren.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.

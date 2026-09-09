@@ -5,12 +5,15 @@ using RFiDGear.Builder.Core;
 namespace RFiDGear.Builder.RfPrj;
 
 public sealed record CardReportField(string Name, string Value);
+public enum ReportComparisonState { Equal, Different, NotComparable }
+public sealed record CardReportSettingComparison(string Name, string Expected, string Observed, ReportComparisonState State);
 public sealed record CardReportFile(
     int Id, string Name, string Type, int? Size, string Communication, string Access,
     string CreationSettings, string Initialization, string DataDefinition, string HexDump, string AsciiDump)
 {
     public string? ExpectedHexDump { get; init; }
     public string? Comparison { get; init; }
+    public IReadOnlyList<CardReportSettingComparison> SettingsComparison { get; init; } = [];
 }
 public sealed record CardReportApplication(
     string Aid, string Name, string KeyType, int? KeyCount, string TransportKeySettings,
@@ -167,7 +170,7 @@ public sealed class CardReportPdfService
 
         private void AddApplication(CardReportApplication app)
         {
-            if (report.Kind is "application-inventory" or "application-content-comparison")
+            if (report.Kind is "application-inventory" or "application-content-comparison" or "application-comparison")
             {
                 AddObservedApplication(app);
                 return;
@@ -236,9 +239,15 @@ public sealed class CardReportPdfService
                 AddLine($"Typ: {file.Type} | Größe: {file.Size?.ToString() ?? "unbekannt"} Byte", 9);
                 AddLine($"Kommunikation: {file.Communication} | Rechte: {file.Access}", 9);
                 AddLine(file.DataDefinition, 9, true);
+                foreach (var setting in file.SettingsComparison)
+                {
+                    var verdict = setting.State switch { ReportComparisonState.Equal => "Gleich", ReportComparisonState.Different => "Abweichung", _ => "Nicht vergleichbar" };
+                    AddLine($"{setting.Name}: Soll {setting.Expected} | Ist {setting.Observed} | {verdict}", 9,
+                        setting.State == ReportComparisonState.Different, setting.State == ReportComparisonState.Different ? "error" : "black");
+                }
                 if (file.Comparison is not null)
                     AddLine(file.Comparison, 9, true, file.Comparison.StartsWith("Abweichung", StringComparison.Ordinal) ? "error" : "teal");
-                if (report.Kind == "application-content-comparison")
+                if (report.Kind is "application-content-comparison" or "application-comparison")
                 {
                     AddLine("Soll-HEX (aus Projekt und Eingaben):", 9, true);
                     foreach (var line in Wrap(file.ExpectedHexDump ?? "nicht erzeugbar oder kein Sollfile", 60)) AddLine(line, 8);

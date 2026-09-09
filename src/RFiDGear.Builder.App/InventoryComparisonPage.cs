@@ -18,7 +18,7 @@ public partial class MainWindow
         {
             if (LatestInventoryPdfPath() is null) throw new InvalidOperationException("Bitte zuerst eine Application untersuchen.");
             using var inventory = JsonDocument.Parse(File.ReadAllText(Path.ChangeExtension(lastTestReportPath!, ".json")));
-            var choose = new OpenFileDialog { Title = "Sollprojekt für den Inhaltsvergleich auswählen", Filter = "SieEncode-Projekt (*.project.json)|*.project.json", CheckFileExists = true };
+            var choose = new OpenFileDialog { Title = "Sollprojekt für den Dateivergleich auswählen", Filter = "SieEncode-Projekt (*.project.json)|*.project.json", CheckFileExists = true };
             if (choose.ShowDialog(this) != true) return;
             var project = ProjectJson.Load(choose.FileName);
             var profiles = LoadProfileLibrary().Compose(project.Profiles.Base, project.Profiles.Customers);
@@ -38,11 +38,11 @@ public partial class MainWindow
             var report = new ProjectInventoryComparisonService().CreateReport(profiles, project.Values, values, inventory.RootElement,
                 Path.ChangeExtension(lastTestReportPath!, ".json")) with { Project = project.Project.Name };
             report = report with { Findings = report.Findings.Append(new ProjectAnalysisIssue("INFO", "Sollquelle", choose.FileName)).ToArray() };
-            var save = new SaveFileDialog { Title = "Inhaltsvergleich speichern", Filter = "PDF-Dokument (*.pdf)|*.pdf", FileName = SafeName(project.Project.Name) + "_Inhaltsvergleich.pdf" };
+            var save = new SaveFileDialog { Title = "Soll/Ist-Dateivergleich speichern", Filter = "PDF-Dokument (*.pdf)|*.pdf", FileName = SafeName(project.Project.Name) + "_Dateivergleich.pdf" };
             if (save.ShowDialog(this) != true) return;
             new CardReportPdfService().Save(report, save.FileName);
             Process.Start(new ProcessStartInfo(save.FileName) { UseShellExecute = true });
-            SetStatus("Inhaltsvergleich gespeichert. Nicht vergleichbare Dateien sind ausdrücklich gekennzeichnet.");
+            SetStatus("Dateivergleich gespeichert. Nicht vergleichbare Inhalte und Einstellungen sind ausdrücklich gekennzeichnet.");
         }
         catch (Exception exception) { ShowError(exception); }
     }

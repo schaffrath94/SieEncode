@@ -43,7 +43,13 @@ public sealed class ProjectInventoryComparisonService
             comparisons.AddRange(new InventoryPayloadComparisonService().Compare(aid, new Dictionary<int, byte[]> { [file.Id] = bytes }, inventory));
         }
         var findings = observed.Findings.ToList();
-        findings.Add(new("INFO", "Vergleichsumfang", "Nur Dateiinhalte dieser Application; keine Prüfung von Rechten, Schlüsseln oder anderen Applications. Sollwerte stammen aus dem gewählten Profil und den übergebenen Projekt-/Kartenwerten."));
+        var rawFiles = inventory.TryGetProperty("files", out var rawArray) && rawArray.ValueKind == JsonValueKind.Array ? rawArray.EnumerateArray().ToArray() : [];
+        var settings = application.Files.ToDictionary(file => file.Id, file => new InventoryFileSettingsComparisonService().Compare(file, rawFiles));
+        findings.Add(new("INFO", "Vergleichsumfang", "Dateiinhalte und finale Dateieinstellungen dieser Application. Keine Schlüssel- oder Ganzkartenabnahme; temporäre Erstellungseinstellungen sind nicht der Soll-Endzustand."));
+        foreach (var file in settings)
+            foreach (var setting in file.Value.Where(setting => setting.State != ReportComparisonState.Equal))
+                findings.Add(new(setting.State == ReportComparisonState.Different ? "ERROR" : "WARN", $"Dateieinstellungen / File {file.Key:D2}",
+                    $"{setting.Name}: Soll {setting.Expected}; Ist {setting.Observed}. " + (setting.State == ReportComparisonState.Different ? "Abweichung." : "Nicht vergleichbar.")));
         foreach (var comparison in comparisons)
             findings.Add(new(comparison.State == PayloadComparisonState.Different ? "ERROR" : comparison.State == PayloadComparisonState.Equal ? "INFO" : "WARN",
                 $"Inhaltsvergleich / File {comparison.FileId:D2}", comparison.Reason));
@@ -56,17 +62,18 @@ public sealed class ProjectInventoryComparisonService
         reportFiles = reportFiles.Select(file => file with
         {
             ExpectedHexDump = expectedHex.GetValueOrDefault(file.Id),
+            SettingsComparison = settings.GetValueOrDefault(file.Id) ?? [],
             Comparison = comparisons.FirstOrDefault(comparison => comparison.FileId == file.Id) is { } comparison
                 ? (comparison.State switch { PayloadComparisonState.Equal => "Gleich", PayloadComparisonState.Different => "Abweichung", _ => "Nicht vergleichbar" }) + ": " + comparison.Reason
                 : "Nicht vergleichbar: kein Sollfile definiert."
         }).ToList();
         return observed with
         {
-            SchemaVersion = "1.2",
-            Kind = "application-content-comparison",
-            Title = "SieEncode Inhaltsvergleich",
+            SchemaVersion = "1.3",
+            Kind = "application-comparison",
+            Title = "SieEncode Soll/Ist-Vergleich",
             Applications = [observed.Applications[0] with { Files = reportFiles }],
-            General = observed.General.Select(field => field.Name == "Berichtsart" ? field with { Value = "Soll/Ist - Dateiinhalte einer AID" } : field).ToArray(),
+            General = observed.General.Select(field => field.Name == "Berichtsart" ? field with { Value = "Soll/Ist - Dateien einer AID" } : field).ToArray(),
             Findings = findings
         };
     }

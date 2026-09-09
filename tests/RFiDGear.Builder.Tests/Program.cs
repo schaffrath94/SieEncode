@@ -40,6 +40,7 @@ var tests = new (string Name, Action Run)[]
     ("Observed inventory PDF preserves evidence and payload", TestInventoryPdf),
     ("Payload comparison requires complete unambiguous reads", TestInventoryComparison),
     ("Project comparison uses full scoped production payloads", TestProjectInventoryComparison),
+    ("File settings comparison respects metadata evidence and final state", TestInventoryFileSettings),
     ("Key generation", TestKeyGeneration),
     ("Vault roundtrip and tamper rejection", TestVault),
     ("Certificate recipient vault and recovery", TestCertificateVault),
@@ -188,6 +189,30 @@ static void TestWorkspaceNavigation()
     }
 }
 
+static void TestInventoryFileSettings()
+{
+    var expected = new FileDefinition { Id = 1, Type = "StdDataFile", Size = 32, Communication = "CM_ENCRYPT",
+        Access = new AccessDefinition { Read = 14, Write = 15, ReadWrite = 2, Change = 0 },
+        CreationSettings = new FileSettingsDefinition { Communication = "CM_PLAIN" } };
+    IReadOnlyList<CardReportSettingComparison> Compare(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        return new InventoryFileSettingsComparisonService().Compare(expected, doc.RootElement.EnumerateArray().ToArray());
+    }
+    const string matching = """
+        [{"fileId":1,"metadataResult":"NoError","contentResult":"PermissionDenied","fileType":"StdDataFile","declaredSize":32,"communicationMode":"CM_ENCRYPT","access":{"read":14,"write":15,"readWrite":2,"change":0}}]
+        """;
+    Assert(Compare(matching).All(row => row.State == ReportComparisonState.Equal), "Readable metadata can match despite denied content; compare final settings, not temporary ones.");
+    Assert(Compare(matching.Replace("NoError", "PermissionDenied")).All(row => row.State == ReportComparisonState.NotComparable), "Denied metadata cannot establish matches from stale values.");
+    var changed = Compare(matching.Replace("CM_ENCRYPT", "CM_PLAIN").Replace("\"read\":14", "\"read\":15"));
+    Assert(changed.Count(row => row.State == ReportComparisonState.Different) == 2 && changed.Single(row => row.Name == "Leserecht").Expected.Contains("frei"), "Communication and special rights differences must be independent.");
+    Assert(Compare("[]").All(row => row.State == ReportComparisonState.NotComparable), "Missing metadata is not evidence of absent settings.");
+    Assert(Compare("[{\"fileId\":1},{\"fileId\":1}]").All(row => row.State == ReportComparisonState.NotComparable), "Duplicate IDs must not pick an arbitrary result.");
+    Assert(Compare(matching.Replace("CM_ENCRYPT", "CM_UNKNOWN")).Single(row => row.Name == "Kommunikation").State == ReportComparisonState.NotComparable, "Unknown enum is not a differing known mode.");
+    Assert(Compare(matching.Replace("StdDataFile", "ValueFile")).Single(row => row.Name == "Dateigröße (Byte)").State == ReportComparisonState.NotComparable, "Value-file union size is not a byte-size observation.");
+    Assert(Compare(matching.Replace("\"read\":14", "\"read\":99")).Single(row => row.Name == "Leserecht").State == ReportComparisonState.NotComparable, "Invalid rights are not trustworthy differences.");
+}
+
 static void TestProjectInventoryComparison()
 {
     var file = new FileDefinition { Id = 1, Size = 512, Coding = new CodingDefinition
@@ -203,7 +228,7 @@ static void TestProjectInventoryComparison()
     var service = new ProjectInventoryComparisonService();
     var result = service.CreateReport(profiles, new Dictionary<string, string>(), new Dictionary<string, string>(), inventory.RootElement, "synthetic");
     Assert(result.Findings.Any(f => f.Severity == "ERROR" && f.Area.Contains("Inhaltsvergleich")), "Difference after byte 256 must not disappear.");
-    Assert(result.Kind == "application-content-comparison" && result.Applications[0].Files[0].ExpectedHexDump == new string('A', 1022) + "FF", "Comparison needs its own kind and complete expected bytes.");
+    Assert(result.Kind == "application-comparison" && result.Applications[0].Files[0].ExpectedHexDump == new string('A', 1022) + "FF", "Comparison needs its own kind and complete expected bytes.");
     var review = Environment.GetEnvironmentVariable("SIEENCODE_COMPARISON_PDF_REVIEW");
     var pdfPath = string.IsNullOrWhiteSpace(review) ? Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf") : Path.GetFullPath(review);
     try
