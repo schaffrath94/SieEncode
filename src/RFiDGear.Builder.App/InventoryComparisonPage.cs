@@ -52,14 +52,14 @@ public partial class MainWindow
 
 internal sealed class ComparisonReportOptionsDialog : Window
 {
-    private readonly RadioButton full = new() { Content = "Vollständig - mit Soll-/Ist-Rohdaten", IsChecked = true, Margin = new Thickness(0, 8, 0, 8) };
+    private readonly RadioButton full = new() { Content = "Vollständig - mit verfügbaren Rohdaten", IsChecked = true, Margin = new Thickness(0, 8, 0, 8) };
     public CardReportDetail Detail => full.IsChecked == true ? CardReportDetail.Full : CardReportDetail.Compact;
     public ComparisonReportOptionsDialog()
     {
-        Title = "Umfang des Vergleichsberichts"; Width = 530; SizeToContent = SizeToContent.Height;
+        Title = "Umfang des PDF-Berichts"; Width = 530; SizeToContent = SizeToContent.Height;
         ResizeMode = ResizeMode.NoResize; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var body = new StackPanel { Margin = new Thickness(20) };
-        body.Children.Add(new TextBlock { Text = "Beide Varianten enthalten alle Vergleichsergebnisse und nicht prüfbaren Anforderungen.", TextWrapping = TextWrapping.Wrap });
+        body.Children.Add(new TextBlock { Text = "Beide Varianten enthalten die Berichtsbefunde einschließlich vorhandener Vergleichsergebnisse und nicht prüfbarer Anforderungen.", TextWrapping = TextWrapping.Wrap });
         body.Children.Add(full);
         body.Children.Add(new RadioButton { Content = "Kompakt - ohne HEX-/ASCII-Rohdaten", Margin = new Thickness(0, 0, 0, 14) });
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };

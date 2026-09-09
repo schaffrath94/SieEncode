@@ -16,6 +16,12 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
+Kleiner Folgeschritt auf ausdrücklichen Wunsch wegen knappem Nutzungslimit:
+Soll-PDF-Export nutzt jetzt denselben kompakt/vollständig-Auswahldialog.
+Dialogtexte gelten für Soll- und Vergleichsberichte. Gezielt nur WPF-Build geprüft:
+0 Fehler/0 Warnungen, tmp/soll-options-build.log. Kein erneuter Gesamttestlauf,
+keine PDF-Neuerzeugung, keine Behebung der bekannten Kürzungen im Soll-Vollrenderer.
+
 Vergleichsexport bietet eigenes Dialogfenster kompakt/vollständig unabhängig vom
 UI-Modus. Renderer akzeptiert CardReportDetail (Standard Full); Compact lässt
 Rohdaten ausdrücklich weg und erhält alle Bewertungen/Befunde. Keine Veränderung
@@ -29,7 +35,7 @@ RC15-Quellinventur erneut bestanden; Nachweisgrenzen und gesamte Release-Restlis
 in RELEASE-STATUS-2026-09-09.md festgehalten. Keine vollständige Funktions-/Hardwarefreigabe.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes Berichtsauswahl auch bei Soll-/Ist-Export anbieten und alten
+1. Als Nächstes Berichtsauswahl auch bei Ist-Export anbieten und alten
    Sollreport ohne Kürzung paginieren. Optionale Dokumentationsfelder umsetzen.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
