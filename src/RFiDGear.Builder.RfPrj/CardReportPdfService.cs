@@ -6,10 +6,10 @@ namespace RFiDGear.Builder.RfPrj;
 
 public sealed record CardReportField(string Name, string Value);
 public sealed record CardReportFile(
-    int Id, string Name, string Type, int Size, string Communication, string Access,
+    int Id, string Name, string Type, int? Size, string Communication, string Access,
     string CreationSettings, string Initialization, string DataDefinition, string HexDump, string AsciiDump);
 public sealed record CardReportApplication(
-    string Aid, string Name, string KeyType, int KeyCount, string TransportKeySettings,
+    string Aid, string Name, string KeyType, int? KeyCount, string TransportKeySettings,
     string ProductiveKeySettings, string ChangeKeyMode, string KeyVersions, IReadOnlyList<CardReportFile> Files);
 
 /// <summary>
@@ -163,6 +163,11 @@ public sealed class CardReportPdfService
 
         private void AddApplication(CardReportApplication app)
         {
+            if (report.Kind == "application-inventory")
+            {
+                AddObservedApplication(app);
+                return;
+            }
             Ensure(260);
             AddBand($"AID {app.Aid} | {app.Name}");
             var settingsTop = y + 3;
@@ -209,6 +214,29 @@ public sealed class CardReportPdfService
                 AddFieldCell(rows[index], Margin, y, half);
                 if (index + 1 < rows.Length) AddFieldCell(rows[index + 1], Margin + half + 8, y, half);
                 y -= 31;
+            }
+        }
+
+        private void AddObservedApplication(CardReportApplication app)
+        {
+            Ensure(90);
+            AddBand($"AID {app.Aid}");
+            AddLine($"Schlüsseltyp: {app.KeyType} | Key-Slots: {app.KeyCount?.ToString() ?? "unbekannt"}", 9);
+            AddLine($"Gelesene KeySettings: {app.ProductiveKeySettings}", 9);
+            AddLine($"Key-Versionen: {app.KeyVersions}", 9);
+            if (app.Files.Count == 0) AddLine("Keine Dateidetails vorhanden. Vollständigkeit siehe Inventurbefund.", 9);
+            foreach (var file in app.Files)
+            {
+                Ensure(95);
+                AddBand($"AID {app.Aid} | File {file.Id:D2}", compact: true);
+                AddLine($"Typ: {file.Type} | Größe: {file.Size?.ToString() ?? "unbekannt"} Byte", 9);
+                AddLine($"Kommunikation: {file.Communication} | Rechte: {file.Access}", 9);
+                AddLine(file.DataDefinition, 9, true);
+                AddLine("HEX (gelesene Bytes):", 9, true);
+                foreach (var line in Wrap(file.HexDump, 60)) AddLine(line, 8);
+                AddLine("ASCII (gelesene Bytes):", 9, true);
+                foreach (var line in Wrap(file.AsciiDump, 60)) AddLine(line, 8);
+                AddSpace(8);
             }
         }
 

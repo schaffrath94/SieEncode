@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using RFiDGear.Builder.RfPrj;
 
 namespace RFiDGear.Builder.Runtime;
 
@@ -52,6 +53,9 @@ public sealed class ApplicationInventoryReportService
         var textPath = Path.Combine(reportDirectory, "application-inventory.result.txt");
         var jsonPath = Path.Combine(reportDirectory, "application-inventory.result.json");
         File.WriteAllText(textPath, builder.ToString()); File.Copy(source, jsonPath, true);
+        var pdfPath = Path.Combine(reportDirectory, "application-inventory.result.pdf");
+        new CardReportPdfService().Save(new InventoryCardReportFactory().Create(top, source), pdfPath);
+        File.AppendAllText(textPath, Environment.NewLine + "PDF-Istreport: " + pdfPath + Environment.NewLine);
         return new(textPath, jsonPath, count is int known
             ? $"AID {aid}: {known} File(s), {readable} Inhalt(e) lesbar; Authentisierung {auth}."
             : $"AID {aid}: File-Inventur nicht vollständig möglich; Authentisierung {auth}. Nicht als leer bewerten.");

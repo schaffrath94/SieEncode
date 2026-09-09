@@ -37,6 +37,7 @@ var tests = new (string Name, Action Run)[]
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
+    ("Observed inventory PDF preserves evidence and payload", TestInventoryPdf),
     ("Key generation", TestKeyGeneration),
     ("Vault roundtrip and tamper rejection", TestVault),
     ("Certificate recipient vault and recovery", TestCertificateVault),
@@ -183,6 +184,33 @@ static void TestWorkspaceNavigation()
         state.Navigate(page);
         Assert(state.LastPageFor(WorkspaceNavigation.WorkspaceFor(page)) == page, "Every RC15 page must retain its workspace route.");
     }
+}
+
+static void TestInventoryPdf()
+{
+    var hex = new string('A', 1400) + "DEADBEEF";
+    using var json = JsonDocument.Parse(JsonSerializer.Serialize(new
+    {
+        readOnly = true, applicationId = "A1B2C3", authentication = "NoError", listing = "PermissionDenied",
+        createdUtc = "2026-09-09T10:00:00Z", secret = "DO-NOT-EXPORT-CREDENTIAL",
+        files = new object[] {
+            new { fileId = 1, declaredSize = 8192, fileType = "StdDataFile", communicationMode = "CM_ENCRYPT", metadataResult = "NoError", contentResult = "NoError", truncated = true, hex, ascii = new string('Q', 704) },
+            new { fileId = 2, contentResult = "PermissionDenied" } }
+    }));
+    var report = new InventoryCardReportFactory().Create(json.RootElement, "synthetische Inventur");
+    Assert(report.Applications[0].KeyCount is null && report.Applications[0].Files[1].Size is null, "Unknown metadata must not become zero.");
+    Assert(report.Applications[0].Files[0].HexDump == hex && report.Applications[0].Files[0].DataDefinition.Contains("Teilweise"), "Payload and partial evidence must survive mapping.");
+    Assert(report.Findings.Any(f => f.Message.Contains("Dateiliste nicht vollständig")), "Denied listing must stay incomplete.");
+    var output = Environment.GetEnvironmentVariable("SIEENCODE_INVENTORY_PDF_REVIEW");
+    var path = string.IsNullOrWhiteSpace(output) ? Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf") : Path.GetFullPath(output);
+    try
+    {
+        new CardReportPdfService().Save(report, path);
+        var pdf = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(path));
+        Assert(pdf.Contains("DEADBEEF") && !pdf.Contains("DO-NOT-EXPORT-CREDENTIAL"), "Observed PDF loses trailing bytes or exports unapproved fields.");
+        Assert(System.Text.RegularExpressions.Regex.Matches(pdf, @"/Type /Page\b").Count >= 2, "Long observed payload must paginate.");
+    }
+    finally { if (string.IsNullOrWhiteSpace(output)) File.Delete(path); }
 }
 
 static void TestInventoryEvidence()

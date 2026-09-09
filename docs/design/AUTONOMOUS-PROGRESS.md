@@ -12,25 +12,25 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 51 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 52 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Istbefunde: gemeinsames FileInventoryEvidence-Modell in Studio.Runtime ergänzt
-und in vorhandenen Inventurbaum sowie Textbericht eingebunden. Unterscheidet
-vollständig/teilweise gelesen, kein Zugriff, nicht geprüft, nicht unterstützt,
-Lesefehler und unbekannten/widersprüchlichen Nachweis. NoError allein beweist
-keinen Inhalt; fehlende/ungültige Bytes und unbekannte Größe bleiben ungeprüft.
-Runtime-Limit (4096 Byte), kurze Daten und explizites truncated verhindern die
-Aussage vollständig gelesen. Originale Status-/HEX-/ASCII-Daten bleiben erhalten.
-51/51 Regressionstests sowie CLI/WPF-Build ohne Warnungen bestanden;
-Nachweis tmp/inventory-evidence-ci.log. Kein neuer WPF-Bedienlauf, PDF oder Paket.
-Vorheriger Dateidetail-Stand a4653f7 bleibt enthalten, geprüftes UI-preview.3
-unter artifacts/ui-file-expert-check/Studio enthält diesen neuen Abschnitt noch nicht.
+InventoryCardReportFactory bindet einzelne Application-Inventur an CardReport an.
+FileInventoryEvidence wiederverwendet; unbekannte Dateigröße/Keyanzahl nullable,
+unvollständige Dateiliste ausdrücklich gekennzeichnet. Kein Ganzkarten-Nachweis.
+ApplicationInventoryReportService speichert PDF automatisch neben TXT/JSON und
+vermerkt den PDF-Pfad im Textbericht. Neuer Ist-Layoutpfad mit vollständigen
+Rohdaten und Seitenumbrüchen; bestehendes Soll-Layout unverändert.
+52/52 Tests bestanden (tmp/ist-pdf-tests.log); zuvor CLI/WPF-Build erfolgreich
+(tmp/ist-pdf-ci.log). Synthetisches zweitseitiges PDF unter
+output/pdf/Istreport-Synthetische-Abnahme.pdf: beide Seiten gerendert und geprüft,
+lange HEX-Zeilen nach erstem Bildcheck korrigiert; letzter Byteblock nachgewiesen.
+Kein neuer WPF-Bedienlauf oder Paket; UI-preview.3 enthält diesen Abschnitt nicht.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes Istreport an CardReport anbinden; FileInventoryEvidence wiederverwenden
-   (Studio.Runtime referenziert RfPrj, daher keine umgekehrte Abhängigkeit einführen).
+1. Als Nächstes direkte PDF-Öffnen-Aktion in Teststation sowie Soll/Ist-Vergleich
+   auf dem Berichtvertrag implementieren; kein Zugriff darf keine Abweichung werden.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und
    UI-PDF-KONZEPT.md ausarbeiten: vollständige Anwendungen/Dateirechte,
