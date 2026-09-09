@@ -35,6 +35,7 @@ if (args.Length == 2 && args[0] == "hardware-extension-upgrade-rollback")
 var tests = new (string Name, Action Run)[]
 {
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
+    ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Key generation", TestKeyGeneration),
     ("Vault roundtrip and tamper rejection", TestVault),
     ("Certificate recipient vault and recovery", TestCertificateVault),
@@ -181,6 +182,27 @@ static void TestWorkspaceNavigation()
         state.Navigate(page);
         Assert(state.LastPageFor(WorkspaceNavigation.WorkspaceFor(page)) == page, "Every RC15 page must retain its workspace route.");
     }
+}
+
+static void TestFileExpertDescription()
+{
+    var file = new FileDefinition {
+        Access = new AccessDefinition { Read = 14, Write = 15, ReadWrite = 2, Change = 0 },
+        CreationSettings = new FileSettingsDefinition { Communication = "CM_PLAIN", Access = new AccessDefinition() },
+        Coding = new CodingDefinition { Recipe = [new RecipeStep { Op = "fixedHex", Value = new string('A', 600) },
+            new RecipeStep { Op = "asciiDigits", Source = "serial", Width = 9, PadLeft = "0", PadRight = " " }] }
+    };
+    var detail = FileExpertDescription.FromFile(file);
+    Assert(detail.FinalRights.Contains("frei (0xE)") && detail.FinalRights.Contains("gesperrt (0xF)") &&
+        detail.FinalRights.Contains("Schlüssel 2") && detail.FinalRights.Contains("Rechte ändern: Schlüssel 0"), "All four rights need correct special values.");
+    Assert(detail.CreationRights.Contains("CM_PLAIN") && !detail.CreationRights.Contains("gesperrt"), "Creation settings must remain distinct.");
+    using var recipe = JsonDocument.Parse(detail.Recipe);
+    Assert(recipe.RootElement[0].GetProperty("value").GetString()!.Length == 600, "Recipe literals must not truncate.");
+    Assert(recipe.RootElement[1].GetProperty("source").GetString() == "serial" && recipe.RootElement[1].GetProperty("padRight").GetString() == " ", "All parameters and order preserved.");
+    file.Coding.Recipe.Clear();
+    using var snapshot = JsonDocument.Parse(detail.Recipe);
+    Assert(snapshot.RootElement.GetArrayLength() == 2, "Details must be a snapshot.");
+    Assert(FileExpertDescription.FromFile(new FileDefinition()).Recipe.Contains("Kein"), "Missing recipe explicitly described.");
 }
 
 static void TestKeyGeneration()

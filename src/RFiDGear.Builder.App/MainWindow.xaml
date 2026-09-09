@@ -334,7 +334,7 @@
           <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <StackPanel Grid.Row="0"><TextBlock Text="Erzeugt Karten- und Taskplan vollständig im Speicher und simuliert Credential-Rollen, Keywechsel und Endzustand mit synthetischen Tokens. Produktivkeys oder ein Vault werden weder benötigt noch in Berichte übernommen." Foreground="#526B70" Margin="0,5,0,10" TextWrapping="Wrap"/></StackPanel>
           <StackPanel Grid.Row="1"><WrapPanel><Button x:Name="AnalysisEditorButton" Content="Aktuelles Editorprojekt analysieren" Click="AnalyzeEditorProject_Click"/><Button x:Name="AnalysisSelectedButton" Content="Ausgewähltes Projekt analysieren" Click="AnalyzeSelectedProject_Click" Style="{StaticResource PrimaryButton}"/><Button Content="Projektdatei wählen" Click="AnalyzeFile_Click"/></WrapPanel><TextBlock x:Name="AnalysisSource" Text="Noch keine Analyse ausgeführt." FontFamily="Consolas" Foreground="#607D86" TextWrapping="Wrap" Margin="4"/><Border x:Name="AnalysisResultBorder" Background="#F7F9FA" BorderBrush="#C9D1D4" BorderThickness="1" CornerRadius="4" Padding="10"><TextBlock x:Name="AnalysisResult" Text="Bereit." FontWeight="SemiBold" TextWrapping="Wrap"/></Border></StackPanel>
-          <TabControl Grid.Row="2" Margin="0,8">
+          <TabControl x:Name="AnalysisTabs" Grid.Row="2" Margin="0,8">
             <TabItem Header="Anwendungen und Schlüsselkontext">
               <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <TextBlock Text="Projektvorgaben · keine ausgelesenen Kartenwerte. Schlüsselwerte werden nicht angezeigt. Ausgangseinstellungen und Produktivzustand bleiben getrennt." TextWrapping="Wrap" Margin="8" Foreground="{StaticResource MutedTextBrush}"/>
@@ -356,7 +356,21 @@
                 </DataGrid>
               </Grid>
             </TabItem>
-            <TabItem Header="Kartenaufbau"><DataGrid x:Name="AnalysisFilesGrid" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="AID" Binding="{Binding Aid}" Width="90"/><DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="1.5*"/><DataGridTextColumn Header="File" Binding="{Binding File}" Width="1.4*"/><DataGridTextColumn Header="Typ / Größe" Binding="{Binding TypeSize}" Width="1.2*"/><DataGridTextColumn Header="Endzustand" Binding="{Binding FinalSettings}" Width="2*"/><DataGridTextColumn Header="Mastering" Binding="{Binding Mastering}" Width="2*"/><DataGridTextColumn Header="Kodierung" Binding="{Binding Coding}" Width="1.5*"/></DataGrid.Columns></DataGrid></TabItem>
+            <TabItem Header="Kartenaufbau"><DataGrid x:Name="AnalysisFilesGrid" AutoGenerateColumns="False" IsReadOnly="True" RowDetailsVisibilityMode="VisibleWhenSelected" VirtualizingPanel.ScrollUnit="Pixel">
+              <DataGrid.RowDetailsTemplate><DataTemplate><StackPanel Margin="12" MaxWidth="750" HorizontalAlignment="Left">
+                <TextBlock Text="Vollständige Dateidefinition · Projektvorgabe" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding File, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Kommunikation und Endzustand"/>
+                <TextBox Text="{Binding FinalSettings, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBox Text="{Binding Details.FinalRights, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Temporäre Erstellungseinstellungen"/>
+                <TextBox Text="{Binding Details.CreationRights, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Mastering / Initialisierung"/>
+                <TextBox Text="{Binding Mastering, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Datenrezept · Schritte in Ausführungsreihenfolge"/>
+                <TextBox Text="{Binding Details.Recipe, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+              </StackPanel></DataTemplate></DataGrid.RowDetailsTemplate>
+              <DataGrid.Columns><DataGridTextColumn Header="AID" Binding="{Binding Aid}" Width="90"/><DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="1.5*"/><DataGridTextColumn Header="File" Binding="{Binding File}" Width="1.4*"/><DataGridTextColumn Header="Typ / Größe" Binding="{Binding TypeSize}" Width="1.2*"/><DataGridTextColumn Header="Endzustand" Binding="{Binding FinalSettings}" Width="2*"/><DataGridTextColumn Header="Mastering" Binding="{Binding Mastering}" Width="2*"/><DataGridTextColumn Header="Kodierung" Binding="{Binding Coding}" Width="1.5*"/></DataGrid.Columns></DataGrid></TabItem>
             <TabItem Header="Mastering-Taskplan"><DataGrid x:Name="AnalysisMasteringGrid" AutoGenerateColumns="False" IsReadOnly="True" RowDetailsVisibilityMode="VisibleWhenSelected">
               <DataGrid.RowDetailsTemplate><DataTemplate><StackPanel Margin="12">
                 <TextBlock Text="Taskdetails · geplante Aktion, kein Ausführungsnachweis" FontWeight="SemiBold"/>

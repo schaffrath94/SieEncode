@@ -1,4 +1,4 @@
-# Autonome Weiterarbeit - Stand 2026-09-08
+# Autonome Weiterarbeit - Stand 2026-09-09
 
 ## Autorisierung und Ziel
 Der Benutzer hat autonome, tokensparsame Fertigstellung einschließlich automatischer
@@ -7,25 +7,31 @@ Tests, private Branch-Pushes oder lokale Testpakete nötig. Keine echten Karten
 beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen ausweisen.
 
 ## Ausgangsstand
-- Studio: codex/workspace-ui, a33d2ad; drei Arbeitsbereiche und Zustandsnavigation.
+- Studio: codex/workspace-ui; drei Arbeitsbereiche, Anwendungskontext, Task- und Dateidetails.
 - Runtime: codex/upstream-key-context, c959bd4; selektiver Key-Kontext-Port,
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 49 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 50 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Experten-Projektanalyse erweitert: eigener Anwendungskontext (Typ, Keyanzahl,
-Ausgangs-/Produktiveinstellungen, Wechselstrategie); Mastering-/Kodiertasks
-mit Position und auswählbaren vollständigen Details (Beschreibung, Einstellungen,
-Dateivertrag, Schlüsselrollen). Vorhandene Analysemodelle unverändert verwendet.
-Finaler isolierter Preview-Publish und WPF-Smoke-Test bestanden, synthetische
-27 Tasks vollständig verglichen; echte WPF-Ansicht visuell geprüft.
-Kein neues Benutzerpaket und kein neuer PDF-Exporter in diesem Abschnitt.
+Dateidetails der Expertenanalyse ergänzt: alle vier Rechte einschließlich frei/gesperrt,
+getrennte temporäre Erstellungseinstellungen und vollständiges Profil-Kodierrezept
+mit allen Parametern in Ausführungsreihenfolge. Unveränderlicher Snapshot;
+keine Credential-Auflösung und keine Änderung am bestehenden Analyse-Exportformat.
+Lange Detailzeilen pixelweise scrollbar, bestehende Spalten und Aktionen erhalten.
+50/50 Regressionstests und CLI-Build bestanden; WPF-Build nach SDK-Sandbox-
+Eskalation ohne Warnungen bestanden. Isolierter Publish ui-preview.3 unter
+artifacts/ui-file-expert-check/Studio; finaler WPF-Smoke OK inklusive Profil-/UI-
+Datenvergleich. Dateirechte und Rezeptende in echten WPF-Screenshots geprüft:
+tmp/file-expert-smoke/screens/AnalysisFiles-expert.png und AnalysisRecipe-expert.png.
+Darstellungstest wartet auf abgeschlossene Dispatcher-Arbeit vor Screenshots.
+Kein neues ZIP/Release und kein neuer PDF-Exporter in diesem Abschnitt.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und
+1. Als Nächstes detaillierte Istbefunde und Berichtsdatenmodell bearbeiten.
+   Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und
    UI-PDF-KONZEPT.md ausarbeiten: vollständige Anwendungen/Dateirechte,
    Schlüsselkontext, Datenrezepte, geordnete Taskpläne, detaillierte Istbefunde.
    Vorhandene Editoren und Modelle erweitern; keine parallele zweite Fachlogik.

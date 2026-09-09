@@ -74,11 +74,15 @@ public partial class MainWindow
         var report = lastAnalysisFiles.Report;
         lastCardReport = new CardReportFactory().FromProject(project, report, source, library);
 
+        var fileDetails = (report.Applications.Count == 0 ? Enumerable.Empty<ApplicationDefinition>() : library.Compose(project.Profiles.Base, project.Profiles.Customers).Applications)
+            .SelectMany(app => app.Files.Select(file => new { Aid = ProfileValidator.NormalizeAid(app.Id), file.Id, Detail = FileExpertDescription.FromFile(file) }))
+            .GroupBy(item => (item.Aid, item.Id))
+            .ToDictionary(group => group.Key, group => group.First().Detail);
         AnalysisFilesGrid.ItemsSource = report.Applications.SelectMany(application => application.Files.Select(file => new AnalysisFileRow(
             application.Aid, application.Name, $"{file.Id:D2} · {file.Name}", $"{file.Type} · {file.Size} B",
             $"{file.Communication} · {file.Access}",
             file.CreationSettings is null ? file.Initialization : $"{file.Initialization} · temporär {file.CreationSettings}",
-            string.IsNullOrWhiteSpace(file.CodingOutput) ? "–" : file.CodingOutput))).ToArray();
+            string.IsNullOrWhiteSpace(file.CodingOutput) ? "–" : file.CodingOutput, fileDetails[(application.Aid, file.Id)]))).ToArray();
         AnalysisApplicationsGrid.ItemsSource = report.Applications;
         AnalysisMasteringGrid.ItemsSource = report.MasteringTasks.Select(ToTaskRow).ToArray();
         AnalysisCodingGrid.ItemsSource = report.CodingTasks.Select(ToTaskRow).ToArray();
@@ -151,6 +155,6 @@ public partial class MainWindow
         return safe.Length == 0 ? "Entwurf" : safe;
     }
 
-    private sealed record AnalysisFileRow(string Aid, string Application, string File, string TypeSize, string FinalSettings, string Mastering, string Coding);
+    private sealed record AnalysisFileRow(string Aid, string Application, string File, string TypeSize, string FinalSettings, string Mastering, string Coding, FileExpertDescription Details);
     private sealed record AnalysisTaskRow(string Index, string Type, string Description, string ConditionText, string Target, string KeyReference, int Position, string Settings, string FileContract);
 }

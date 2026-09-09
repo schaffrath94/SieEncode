@@ -14,17 +14,36 @@ public partial class MainWindow
         System.IO.Directory.CreateDirectory(directory);
         var originalMode = settings.ExpertMode;
         var originalPage = currentPage;
+        var originalAnalysisTab = AnalysisTabs.SelectedIndex;
+        var originalFile = AnalysisFilesGrid.SelectedIndex;
         try
         {
             foreach (var expert in new[] { false, true })
             {
                 settings.ExpertMode = expert;
                 ApplyOperatingMode();
-                foreach (var page in new[] { "Station", "Projects", "TestStation", "Analysis" })
+                foreach (var page in new[] { "Station", "Projects", "TestStation", "Analysis", "AnalysisFiles", "AnalysisRecipe" })
                 {
-                    Navigate(page, false);
+                    Navigate(page is "AnalysisFiles" or "AnalysisRecipe" ? "Analysis" : page, false);
+                    if (page == "Analysis") AnalysisTabs.SelectedIndex = 0;
+                    if (page is "AnalysisFiles" or "AnalysisRecipe")
+                    {
+                        AnalysisTabs.SelectedIndex = 1;
+                        AnalysisFilesGrid.SelectedIndex = 0;
+                        AnalysisFilesGrid.UpdateLayout();
+                        ((ScrollViewer)AnalysisFilesGrid.Template.FindName("DG_ScrollViewer", AnalysisFilesGrid)).ScrollToTop();
+                    }
                     UpdateLayout();
-                    Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+                    Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                    UpdateLayout();
+                    if (page == "AnalysisRecipe")
+                    {
+                        var scroll = (ScrollViewer)AnalysisFilesGrid.Template.FindName("DG_ScrollViewer", AnalysisFilesGrid);
+                        var row = (DataGridRow)AnalysisFilesGrid.ItemContainerGenerator.ContainerFromIndex(0);
+                        scroll.ScrollToVerticalOffset(Math.Max(0, row.ActualHeight - scroll.ViewportHeight));
+                        Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                        UpdateLayout();
+                    }
                     var surface = (FrameworkElement)Content;
                     var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
                         (int)Math.Ceiling(surface.ActualWidth), (int)Math.Ceiling(surface.ActualHeight),
@@ -39,6 +58,8 @@ public partial class MainWindow
         }
         finally
         {
+            AnalysisTabs.SelectedIndex = originalAnalysisTab;
+            AnalysisFilesGrid.SelectedIndex = originalFile;
             settings.ExpertMode = originalMode;
             ApplyOperatingMode();
             Navigate(originalPage, false);

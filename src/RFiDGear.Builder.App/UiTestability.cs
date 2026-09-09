@@ -312,6 +312,15 @@ public partial class MainWindow
                     throw new InvalidOperationException("Taskdetails verlieren Einstellungen, Reihenfolge oder Dateiverträge.");
             }
             checks.Add("Expertenanalyse: vollständiger Anwendungskontext und unveränderte Einstellungen/Dateiverträge aller geplanten Tasks verfügbar.");
+            var analyzedProject = ProjectJson.Load(editable.SourcePath);
+            var expectedFiles = library.Compose(analyzedProject.Profiles.Base, analyzedProject.Profiles.Customers).Applications
+                .SelectMany(app => app.Files.Select(file => (Aid: ProfileValidator.NormalizeAid(app.Id), File: file))).ToArray();
+            var displayedFiles = AnalysisFilesGrid.Items.Cast<AnalysisFileRow>().ToArray();
+            if (displayedFiles.Length != expectedFiles.Length || expectedFiles.Any(expected =>
+                !displayedFiles.Any(row => row.Aid == expected.Aid && row.File.StartsWith($"{expected.File.Id:D2} · ") &&
+                    row.Details == FileExpertDescription.FromFile(expected.File))))
+                throw new InvalidOperationException("Dateirechte oder Datenrezepte fehlen in der Expertenansicht.");
+            checks.Add("Expertenanalyse: Dateirechte, Erstellungseinstellungen und vollständige Datenrezepte stimmen mit den synthetischen Profilen überein.");
             CaptureWorkspaceReview();
             UpdateLayout();
             InitializeAutomationContract();
