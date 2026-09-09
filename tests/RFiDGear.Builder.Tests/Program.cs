@@ -203,6 +203,16 @@ static void TestProjectInventoryComparison()
     var service = new ProjectInventoryComparisonService();
     var result = service.CreateReport(profiles, new Dictionary<string, string>(), new Dictionary<string, string>(), inventory.RootElement, "synthetic");
     Assert(result.Findings.Any(f => f.Severity == "ERROR" && f.Area.Contains("Inhaltsvergleich")), "Difference after byte 256 must not disappear.");
+    Assert(result.Kind == "application-content-comparison" && result.Applications[0].Files[0].ExpectedHexDump == new string('A', 1022) + "FF", "Comparison needs its own kind and complete expected bytes.");
+    var review = Environment.GetEnvironmentVariable("SIEENCODE_COMPARISON_PDF_REVIEW");
+    var pdfPath = string.IsNullOrWhiteSpace(review) ? Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf") : Path.GetFullPath(review);
+    try
+    {
+        new CardReportPdfService().Save(result, pdfPath);
+        var content = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(pdfPath));
+        Assert(content.Contains("Soll-HEX") && content.Contains("Abweichung") && content.Contains("0.70 0.10 0.10 rg"), "Comparison PDF must expose expected bytes and emphasize difference.");
+    }
+    finally { if (string.IsNullOrWhiteSpace(review)) File.Delete(pdfPath); }
     file.Coding.Recipe = [new RecipeStep { Op = "asciiDigits", Source = "serial", Width = 1 }, new RecipeStep { Op = "zeroPadToFileSize" }];
     profiles = profiles with { Variables = [new VariableDefinition { Id = "serial", Scope = "card", Type = "digits", Length = 1, Required = true }] };
     result = service.CreateReport(profiles, new Dictionary<string, string> { ["serial"] = "7" }, new Dictionary<string, string>(), inventory.RootElement, "synthetic");

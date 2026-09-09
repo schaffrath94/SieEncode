@@ -688,6 +688,7 @@ public partial class MainWindow : Window
             lastCardRecognitionReport?.Report is { State: "RECOGNIZED", ApplicationIds.Count: > 0 };
         TestOpenRecognitionResultButton.IsEnabled = File.Exists(lastTestReportPath);
         TestOpenInventoryPdfButton.IsEnabled = LatestInventoryPdfPath() is not null;
+        TestExportInventoryComparisonButton.IsEnabled = TestOpenInventoryPdfButton.IsEnabled;
         TestProjectRecognitionButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && Has(RFiDGearOperationKind.CardRecognitionReadOnly);
         TestProjectTransportButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && Has(RFiDGearOperationKind.CardPreflightTransport);
         TestProjectProductiveButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && productiveExpectationAvailable && Has(RFiDGearOperationKind.CardPreflightProductive);
@@ -1190,6 +1191,7 @@ public partial class MainWindow : Window
                         operationSession.Operation, evaluation);
                     lastTestReportPath = lastCardRecognitionReport.TextPath;
                     TestOpenInventoryPdfButton.IsEnabled = false;
+                    TestExportInventoryComparisonButton.IsEnabled = false;
                     StationOpenRecognitionResultButton.IsEnabled = true;
                     var report = lastCardRecognitionReport.Report;
                     StationState.Text = "TRANSPONDER · " + report.Structure;
@@ -1212,6 +1214,7 @@ public partial class MainWindow : Window
                         Path.Combine(reportRoot, "application-inventory.runtime.json"));
                     lastTestReportPath = report.TextPath;
                     TestOpenInventoryPdfButton.IsEnabled = LatestInventoryPdfPath() is not null;
+                    TestExportInventoryComparisonButton.IsEnabled = TestOpenInventoryPdfButton.IsEnabled;
                     TestAnalysisInfo.Text = report.Summary;
                     AppendApplicationInventoryTree(report.JsonPath);
                     TestOpenRecognitionResultButton.IsEnabled = true;

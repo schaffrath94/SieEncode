@@ -16,24 +16,23 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-ProjectInventoryComparisonService erzeugt Sollbytes direkt mit PayloadEngine.BuildAll
-pro Datei und bindet den Inhaltsvergleich an CardReport.Findings an. Projekt- und
-Kartenwerte bleiben getrennt; fehlende Kartenwerte werden nicht aus Projektwerten
-ersetzt. Kein Rezept/ungültige Werte ergeben nicht vergleichbar; Exceptiontexte mit
-eventuellen Eingabewerten werden nicht exportiert. Doppelte Soll-IDs/mehrdeutige AID
-werden abgewiesen. Vergleichsumfang ausdrücklich nur Dateiinhalte, keine Rechte-
-oder Schlüsselabnahme. Fehlende Sollfiles werden ebenfalls als unverglichen genannt.
-54/54 Tests sowie CLI/WPF-Build bestanden (tmp/project-comparison-ci.log), einschließlich
-Abweichung hinter Byte 256 und Prüfung der getrennten Variablenbereiche.
-Noch keine UI-Anbindung dieses Adapters und kein neuer visueller Vergleichs-PDF-Test.
-Vorheriger geprüfter UI-Publish bleibt artifacts/ui-report-check/Studio (preview.4).
-Kein neues Paket, keine Hardwareabnahme.
+Teststation ruft Inhaltsvergleich auf: explizite Sollprojekt-Dateiauswahl, AID-Prüfung,
+Dialog für benötigte Kartenwerte mit sichtbaren Profilvorbelegungen, PDF-Speichern.
+Eingaben nur für Bericht; Projekt/Vault unverändert. Vergleichsschema 1.2 mit eigenem
+Kind application-content-comparison; vollständige Soll-/Ist-HEX-Daten separat,
+nachgewiesene Abweichungen rot. Fehlende Istfiles bleiben mit Sollbytes und
+nicht vergleichbar im Bericht, keine erfundenen Ist-Metadaten. Umfang nur Inhalte.
+54/54 Tests sowie CLI/WPF-Build ohne Warnungen bestanden (tmp/comparison-ui-ci.log).
+Zweiseitiges output/pdf/Inhaltsvergleich-Synthetische-Abnahme.pdf gerendert und
+vollständig visuell geprüft. Isolierter Publish preview.5 unter
+artifacts/ui-comparison-check/Studio; WPF-Smoke OK (tmp/comparison-smoke/),
+276 Elemente, 11 Seiten, Formularinitialisierung und bestehende Abläufe geprüft.
+Teststation-Screenshot visuell geprüft. Native Öffnen-/Speichern-Dialogkette noch
+nicht als vollständiger Endanwenderlauf geprüft. Kein ZIP/Release, keine Hardwareabnahme.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes ProjectInventoryComparisonService in UI anbinden und resultierendes
-   Vergleichs-PDF rendern/prüfen. Explizite Sollprojekt-Auswahl und Kartenwerte erfassen.
-   Berichtschema für Vergleich separat ausweisen (der Adapter nutzt noch Ist-Kind
-   für den vorhandenen Renderer), Soll-/Istbytes gegenüberstellen und Befunde hervorheben.
+1. Als Nächstes Metadatenvergleich ergänzen und Berichtsumfang kompakt/vollständig
+   unabhängig vom UI-Modus anbieten; alten Sollreport ohne Kürzung paginieren.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und

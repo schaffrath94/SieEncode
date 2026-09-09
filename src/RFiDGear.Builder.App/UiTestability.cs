@@ -282,6 +282,11 @@ public partial class MainWindow
                 lastTestReportPath = Path.Combine(fixture, "recognition.result.txt");
                 if (LatestInventoryPdfPath() is not null) throw new InvalidOperationException("Veraltetes Inventur-PDF wird für einen anderen Bericht angeboten.");
                 checks.Add("PDF-Istreport: passender Inventurpfad erreichbar; fehlende und veraltete Berichte gesperrt.");
+                var valuesDialog = new InventoryComparisonValuesDialog("Synthetic", "A1B2C3",
+                    [new VariableDefinition { Id = "serial", Scope = "card", Default = "007", Label = "Seriennummer" }]);
+                if (valuesDialog.Values.GetValueOrDefault("serial") != "007") throw new InvalidOperationException("Vergleichsformular verliert explizite Profilvorbelegung.");
+                valuesDialog.Close();
+                checks.Add("Inhaltsvergleich: Kartenwerteformular mit expliziter Profilvorbelegung initialisiert.");
             }
             finally { lastTestReportPath = previousReport; }
             var shells = TaskShellLibrary.Load(Path.Combine(AppContext.BaseDirectory, "assets", "task-shells"));
