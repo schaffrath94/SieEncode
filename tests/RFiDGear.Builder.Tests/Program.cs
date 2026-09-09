@@ -39,6 +39,7 @@ var tests = new (string Name, Action Run)[]
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
     ("Observed inventory PDF preserves evidence and payload", TestInventoryPdf),
     ("Payload comparison requires complete unambiguous reads", TestInventoryComparison),
+    ("Project comparison uses full scoped production payloads", TestProjectInventoryComparison),
     ("Key generation", TestKeyGeneration),
     ("Vault roundtrip and tamper rejection", TestVault),
     ("Certificate recipient vault and recovery", TestCertificateVault),
@@ -185,6 +186,29 @@ static void TestWorkspaceNavigation()
         state.Navigate(page);
         Assert(state.LastPageFor(WorkspaceNavigation.WorkspaceFor(page)) == page, "Every RC15 page must retain its workspace route.");
     }
+}
+
+static void TestProjectInventoryComparison()
+{
+    var file = new FileDefinition { Id = 1, Size = 512, Coding = new CodingDefinition
+    {
+        Output = "test.hex", Recipe = [new RecipeStep { Op = "fixedHex", Value = new string('A', 1022) + "FF" }]
+    } };
+    var profiles = new ComposedProfiles([], [new ApplicationDefinition { Id = "A1B2C3", Files = [file] }], []);
+    using var inventory = JsonDocument.Parse(JsonSerializer.Serialize(new
+    {
+        readOnly = true, applicationId = "A1B2C3", listing = "NoError", fileCount = 1,
+        files = new[] { new { fileId = 1, declaredSize = 512, contentResult = "NoError", hex = new string('A', 1022) + "00" } }
+    }));
+    var service = new ProjectInventoryComparisonService();
+    var result = service.CreateReport(profiles, new Dictionary<string, string>(), new Dictionary<string, string>(), inventory.RootElement, "synthetic");
+    Assert(result.Findings.Any(f => f.Severity == "ERROR" && f.Area.Contains("Inhaltsvergleich")), "Difference after byte 256 must not disappear.");
+    file.Coding.Recipe = [new RecipeStep { Op = "asciiDigits", Source = "serial", Width = 1 }, new RecipeStep { Op = "zeroPadToFileSize" }];
+    profiles = profiles with { Variables = [new VariableDefinition { Id = "serial", Scope = "card", Type = "digits", Length = 1, Required = true }] };
+    result = service.CreateReport(profiles, new Dictionary<string, string> { ["serial"] = "7" }, new Dictionary<string, string>(), inventory.RootElement, "synthetic");
+    Assert(result.Findings.Any(f => f.Area.Contains("Inhaltsvergleich") && f.Severity == "WARN" && f.Message.Contains("Sollinhalt nicht erzeugbar")), "Project values must not silently substitute missing card values.");
+    result = service.CreateReport(profiles, new Dictionary<string, string>(), new Dictionary<string, string> { ["serial"] = "7" }, inventory.RootElement, "synthetic");
+    Assert(result.Findings.Any(f => f.Area.Contains("Inhaltsvergleich") && f.Severity == "ERROR"), "Explicit card value should permit comparison.");
 }
 
 static void TestInventoryComparison()
