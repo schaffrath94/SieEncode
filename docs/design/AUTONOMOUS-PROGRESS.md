@@ -16,23 +16,21 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Dateivergleich um sieben Metadatenfelder erweitert: Typ, Byte-Größe, Kommunikation
-und vier Zugriffsrechte. InventoryFileSettingsComparisonService wertet ausschließlich
-eindeutige erfolgreiche Metadaten-Nachweise aus. Verweigerter Inhaltszugriff sperrt
-keinen nachgewiesenen Metadatenvergleich; verweigerte Metadaten, doppelte IDs,
-unbekannte Modi/ungültige Rechte bleiben nicht vergleichbar. Value-/Record-Uniongröße
-wird nicht als Datenfile-Bytegröße interpretiert. Soll sind finale Dateieinstellungen.
-Vergleichsschema 1.3 / application-comparison; pro Feld Soll, Ist und Bewertung im PDF,
-Abweichungen rot, weitere Befunde getrennt vom Inhaltsvergleich. UI-Beschriftung angepasst.
-55/55 Tests sowie CLI/WPF-Build ohne Warnungen bestanden (tmp/settings-comparison-ci.log).
-Zweiseitiges output/pdf/Soll-Ist-Dateivergleich-Synthetische-Abnahme.pdf vollständig
-gerendert und visuell geprüft. Keine neue UI-Struktur; letzter WPF-Smoke preview.5
-unter artifacts/ui-comparison-check/Studio enthält diese Ergänzung noch nicht.
-Native Dateidialogkette noch nicht vollständig abgenommen; kein ZIP/Release/Hardwaretest.
+Vergleichsexport bietet eigenes Dialogfenster kompakt/vollständig unabhängig vom
+UI-Modus. Renderer akzeptiert CardReportDetail (Standard Full); Compact lässt
+Rohdaten ausdrücklich weg und erhält alle Bewertungen/Befunde. Keine Veränderung
+der bestehenden Exportaufrufe ohne Optionen. Alter Soll-Vollrenderer bleibt zu überarbeiten.
+55/55 Tests bestanden; CLI/WPF-Build erfolgreich (tmp/compact-report-ci.log),
+finale Renderer-Tests tmp/compact-report-final-tests.log. PDF-Vollbeispiel (2 Seiten)
+und kompakte Variante (1 Seite) unter output/pdf/Dateivergleich-Vollstaendig*.pdf
+vollständig visuell geprüft. Isolierter Publish preview.6 unter artifacts/ui-compact-check/Studio;
+WPF-Smoke tmp/compact-smoke/ einschließlich Umschaltung im Berichtsdialog bestanden.
+RC15-Quellinventur erneut bestanden; Nachweisgrenzen und gesamte Release-Restliste
+in RELEASE-STATUS-2026-09-09.md festgehalten. Keine vollständige Funktions-/Hardwarefreigabe.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes Berichtsumfang kompakt/vollständig
-   unabhängig vom UI-Modus anbieten; alten Sollreport ohne Kürzung paginieren.
+1. Als Nächstes Berichtsauswahl auch bei Soll-/Ist-Export anbieten und alten
+   Sollreport ohne Kürzung paginieren. Optionale Dokumentationsfelder umsetzen.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und

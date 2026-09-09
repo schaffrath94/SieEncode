@@ -6,6 +6,7 @@ namespace RFiDGear.Builder.RfPrj;
 
 public sealed record CardReportField(string Name, string Value);
 public enum ReportComparisonState { Equal, Different, NotComparable }
+public enum CardReportDetail { Full, Compact }
 public sealed record CardReportSettingComparison(string Name, string Expected, string Observed, ReportComparisonState State);
 public sealed record CardReportFile(
     int Id, string Name, string Type, int? Size, string Communication, string Access,
@@ -122,29 +123,32 @@ public sealed class CardReportPdfService
     private const double Margin = 76;
     private const double RightMargin = 34;
 
-    public void Save(CardReport report, string outputPath)
+    public void Save(CardReport report, string outputPath, CardReportDetail detail = CardReportDetail.Full)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
         var fullPath = Path.GetFullPath(outputPath);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-        var document = new LayoutDocument(report);
+        var document = new LayoutDocument(report, detail);
         File.WriteAllBytes(fullPath, BuildPdf(document.Pages));
     }
 
     private sealed class LayoutDocument
     {
         private readonly CardReport report;
+        private readonly CardReportDetail detail;
         private readonly List<PageCanvas> pages = [];
         private PageCanvas current = null!;
         private double y;
 
-        public LayoutDocument(CardReport report)
+        public LayoutDocument(CardReport report, CardReportDetail detail)
         {
             this.report = report;
+            this.detail = detail;
             NewPage();
             AddTitle(report.Title);
             AddLine($"{report.Kind} | Schema {report.SchemaVersion}", 9, false, "muted");
+            if (detail == CardReportDetail.Compact) AddLine("Kompaktbericht: Rohdaten ausgelassen; Bewertungen und Befunde bleiben enthalten.", 9, false, "muted");
             AddSpace(8);
             AddSection("Allgemeine Karten- und Projektinformationen");
             AddFields(report.General);
@@ -161,7 +165,7 @@ public sealed class CardReportPdfService
             {
                 AddSection($"Analysebefunde ({report.Findings.Count})");
                 foreach (var finding in report.Findings)
-                    AddLine($"[{finding.Severity}] {finding.Area}: {finding.Message}", 9, finding.Severity == "ERROR", finding.Severity == "ERROR" ? "error" : "black");
+                    AddLine($"[{finding.Severity}] {finding.Area}: {finding.Message}", detail == CardReportDetail.Compact ? 8 : 9, finding.Severity == "ERROR", finding.Severity == "ERROR" ? "error" : "black");
             }
             FinishFooters();
         }
@@ -187,6 +191,15 @@ public sealed class CardReportPdfService
             y = settingsTop - 58;
             foreach (var file in app.Files)
             {
+                if (detail == CardReportDetail.Compact)
+                {
+                    Ensure(85);
+                    AddBand($"File ID {file.Id:D2} | {file.Name}", compact: true);
+                    AddLine($"{file.Type} | {file.Size} Byte | {file.Communication} | {file.Access}", 9);
+                    AddLine($"Erstellung: {file.CreationSettings} | Initialisierung: {file.Initialization}", 9);
+                    AddLine($"Daten / Rezept: {file.DataDefinition}", 9);
+                    continue;
+                }
                 var hexLines = Wrap("HEX: " + file.HexDump, 104).ToArray();
                 var asciiLines = Wrap("ASCII: " + file.AsciiDump, 104).ToArray();
                 var dumpHeight = Math.Max(35, 10 + ((hexLines.Length + asciiLines.Length + 1) * 10));
@@ -247,6 +260,11 @@ public sealed class CardReportPdfService
                 }
                 if (file.Comparison is not null)
                     AddLine(file.Comparison, 9, true, file.Comparison.StartsWith("Abweichung", StringComparison.Ordinal) ? "error" : "teal");
+                if (detail == CardReportDetail.Compact)
+                {
+                    AddSpace(8);
+                    continue;
+                }
                 if (report.Kind is "application-content-comparison" or "application-comparison")
                 {
                     AddLine("Soll-HEX (aus Projekt und Eingaben):", 9, true);

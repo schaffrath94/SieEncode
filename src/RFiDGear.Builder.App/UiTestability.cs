@@ -286,6 +286,11 @@ public partial class MainWindow
                     [new VariableDefinition { Id = "serial", Scope = "card", Default = "007", Label = "Seriennummer" }]);
                 if (valuesDialog.Values.GetValueOrDefault("serial") != "007") throw new InvalidOperationException("Vergleichsformular verliert explizite Profilvorbelegung.");
                 valuesDialog.Close();
+                var reportOptions = new ComparisonReportOptionsDialog();
+                if (reportOptions.Detail != RFiDGear.Builder.RfPrj.CardReportDetail.Full) throw new InvalidOperationException("Vollbericht-Standard fehlt.");
+                ((StackPanel)reportOptions.Content).Children.OfType<RadioButton>().Last().IsChecked = true;
+                if (reportOptions.Detail != RFiDGear.Builder.RfPrj.CardReportDetail.Compact) throw new InvalidOperationException("Kompaktbericht nicht auswählbar.");
+                reportOptions.Close();
                 checks.Add("Inhaltsvergleich: Kartenwerteformular mit expliziter Profilvorbelegung initialisiert.");
             }
             finally { lastTestReportPath = previousReport; }

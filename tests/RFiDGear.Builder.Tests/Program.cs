@@ -236,6 +236,17 @@ static void TestProjectInventoryComparison()
         new CardReportPdfService().Save(result, pdfPath);
         var content = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(pdfPath));
         Assert(content.Contains("Soll-HEX") && content.Contains("Abweichung") && content.Contains("0.70 0.10 0.10 rg"), "Comparison PDF must expose expected bytes and emphasize difference.");
+        var compactPath = Path.ChangeExtension(pdfPath, ".compact.pdf");
+        try
+        {
+            new CardReportPdfService().Save(result, compactPath, CardReportDetail.Compact);
+            var compact = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(compactPath));
+            Assert(!compact.Contains("Soll-HEX") && !compact.Contains("AAFF") && compact.Contains("Abweichung") &&
+                compact.Contains("Nicht vergleichbar") && compact.Contains("Dateieinstellungen") && compact.Contains("Rohdaten ausgelassen"),
+                "Compact report must omit raw payloads explicitly, while retaining differences and unknown requirements.");
+            Assert(new FileInfo(compactPath).Length < new FileInfo(pdfPath).Length, "Compact output should reduce payload volume.");
+        }
+        finally { if (string.IsNullOrWhiteSpace(review)) File.Delete(compactPath); }
     }
     finally { if (string.IsNullOrWhiteSpace(review)) File.Delete(pdfPath); }
     file.Coding.Recipe = [new RecipeStep { Op = "asciiDigits", Source = "serial", Width = 1 }, new RecipeStep { Op = "zeroPadToFileSize" }];

@@ -38,13 +38,35 @@ public partial class MainWindow
             var report = new ProjectInventoryComparisonService().CreateReport(profiles, project.Values, values, inventory.RootElement,
                 Path.ChangeExtension(lastTestReportPath!, ".json")) with { Project = project.Project.Name };
             report = report with { Findings = report.Findings.Append(new ProjectAnalysisIssue("INFO", "Sollquelle", choose.FileName)).ToArray() };
+            var options = new ComparisonReportOptionsDialog { Owner = this };
+            if (options.ShowDialog() != true) return;
             var save = new SaveFileDialog { Title = "Soll/Ist-Dateivergleich speichern", Filter = "PDF-Dokument (*.pdf)|*.pdf", FileName = SafeName(project.Project.Name) + "_Dateivergleich.pdf" };
             if (save.ShowDialog(this) != true) return;
-            new CardReportPdfService().Save(report, save.FileName);
+            new CardReportPdfService().Save(report, save.FileName, options.Detail);
             Process.Start(new ProcessStartInfo(save.FileName) { UseShellExecute = true });
             SetStatus("Dateivergleich gespeichert. Nicht vergleichbare Inhalte und Einstellungen sind ausdrücklich gekennzeichnet.");
         }
         catch (Exception exception) { ShowError(exception); }
+    }
+}
+
+internal sealed class ComparisonReportOptionsDialog : Window
+{
+    private readonly RadioButton full = new() { Content = "Vollständig - mit Soll-/Ist-Rohdaten", IsChecked = true, Margin = new Thickness(0, 8, 0, 8) };
+    public CardReportDetail Detail => full.IsChecked == true ? CardReportDetail.Full : CardReportDetail.Compact;
+    public ComparisonReportOptionsDialog()
+    {
+        Title = "Umfang des Vergleichsberichts"; Width = 530; SizeToContent = SizeToContent.Height;
+        ResizeMode = ResizeMode.NoResize; WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        var body = new StackPanel { Margin = new Thickness(20) };
+        body.Children.Add(new TextBlock { Text = "Beide Varianten enthalten alle Vergleichsergebnisse und nicht prüfbaren Anforderungen.", TextWrapping = TextWrapping.Wrap });
+        body.Children.Add(full);
+        body.Children.Add(new RadioButton { Content = "Kompakt - ohne HEX-/ASCII-Rohdaten", Margin = new Thickness(0, 0, 0, 14) });
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        buttons.Children.Add(new Button { Content = "Abbrechen", IsCancel = true });
+        var save = new Button { Content = "Weiter zum Speichern", IsDefault = true };
+        save.Click += (_, _) => DialogResult = true; buttons.Children.Add(save);
+        body.Children.Add(buttons); Content = body;
     }
 }
 

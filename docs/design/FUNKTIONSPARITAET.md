@@ -1,7 +1,9 @@
 # Verbindlicher Erhalt der RC15-Funktionen
 
 Stand: 06.09.2026. Quelle: Tag `rc15-source-baseline`.
-Status: Bestandsaufnahme und Zielzuordnung; produktive Umsetzung und praktische Abnahme stehen aus.
+Status der ursprünglichen Tabelle: Bestandsaufnahme und Zielzuordnung. Umsetzung
+inzwischen teilweise erfolgt; vollständige praktische Abnahme steht weiterhin aus.
+Aktueller Nachweisstand: [Release-Status 09.09.2026](RELEASE-STATUS-2026-09-09.md).
 
 ## Abnahmeregel
 
@@ -17,7 +19,7 @@ Vollständige Einstiegsliste: RC15-BEDIENINVENTUR.md und rc15-inventory.json.
 
 ## Fachliche Zuordnung
 
-Alle Zeilen: in RC15 vorhanden, Ziel festgelegt, Neuumsetzung noch nicht abgenommen.
+Alle Zeilen: in RC15 vorhanden, Ziel festgelegt, vollständige Neuumsetzung noch nicht abgenommen.
 
 | ID | Bestehender Funktionsumfang | Normalmodus / Ziel | Expertenmodus / Ergänzung | Maßgebliche Quelle |
 |---|---|---|---|---|
