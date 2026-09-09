@@ -336,6 +336,11 @@ public partial class MainWindow : Window
                 if (file.TryGetProperty("access", out var access))
                     fileItem.Items.Add(new TreeViewItem { Header = $"Rechte: R {JsonValue(access, "read", "?")} · W {JsonValue(access, "write", "?")} · RW {JsonValue(access, "readWrite", "?")} · Ändern {JsonValue(access, "change", "?")}" });
                 fileItem.Items.Add(new TreeViewItem { Header = $"Metadaten: {JsonValue(file, "metadataResult", "unbekannt")} · Inhalt: {JsonValue(file, "contentResult", "nicht angefordert")}" });
+                fileItem.Items.Add(new TreeViewItem { Header = new TextBlock
+                {
+                    Text = "Lesenachweis: " + FileInventoryEvidence.FromRuntime(file).Description,
+                    TextWrapping = TextWrapping.Wrap, MaxWidth = 750
+                } });
                 if (file.TryGetProperty("hex", out var hex) && hex.ValueKind == JsonValueKind.String)
                 {
                     fileItem.Items.Add(new TreeViewItem { Header = "HEX: " + hex.GetString() });

@@ -34,8 +34,10 @@ public sealed class ApplicationInventoryReportService
         {
             foreach (var file in files.EnumerateArray())
             {
+                var evidence = FileInventoryEvidence.FromRuntime(file);
                 builder.AppendLine($"File {Value(file, "fileId", "?")} · {Value(file, "fileType", "Typ unbekannt")} · {Value(file, "declaredSize", "Größe unbekannt")} Byte")
                     .AppendLine($"  Kommunikation: {Value(file, "communicationMode", "unbekannt")} · Metadaten: {Value(file, "metadataResult", "unbekannt")} · Inhalt: {Value(file, "contentResult", "nicht versucht")}");
+                builder.AppendLine("  Lesenachweis: " + evidence.Description);
                 if (file.TryGetProperty("access", out var access)) builder.AppendLine($"  Rechte: Lesen Key {Value(access, "read", "?")} · Schreiben Key {Value(access, "write", "?")} · Lesen/Schreiben Key {Value(access, "readWrite", "?")} · Ändern Key {Value(access, "change", "?")}");
                 if (file.TryGetProperty("hex", out var hex) && hex.ValueKind == JsonValueKind.String)
                 {

@@ -36,6 +36,7 @@ var tests = new (string Name, Action Run)[]
 {
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
+    ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
     ("Key generation", TestKeyGeneration),
     ("Vault roundtrip and tamper rejection", TestVault),
     ("Certificate recipient vault and recovery", TestCertificateVault),
@@ -182,6 +183,31 @@ static void TestWorkspaceNavigation()
         state.Navigate(page);
         Assert(state.LastPageFor(WorkspaceNavigation.WorkspaceFor(page)) == page, "Every RC15 page must retain its workspace route.");
     }
+}
+
+static void TestInventoryEvidence()
+{
+    FileInventoryEvidence Read(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return FileInventoryEvidence.FromRuntime(document.RootElement);
+    }
+    foreach (var status in new[] { "PermissionDenied", "AuthFailure", "AuthenticationError" })
+        Assert(Read(JsonSerializer.Serialize(new { contentResult = status })).State == InventoryReadState.NoAccess, "Denied reads are not empty or different.");
+    foreach (var status in new[] { "NotRequested", "NotAttempted", "EmptyOrUnknownSize" })
+        Assert(Read(JsonSerializer.Serialize(new { contentResult = status })).State == InventoryReadState.NotChecked, "Unperformed reads stay unverified.");
+    Assert(Read("{\"contentResult\":\"DeferredFileType\"}").State == InventoryReadState.Unsupported, "Deferred file types must be explicit.");
+    Assert(Read("{\"contentResult\":\"IOError\"}").State == InventoryReadState.Failed, "Read errors must not imply denied access.");
+    Assert(Read("{}").State == InventoryReadState.Unknown, "Missing result is not success.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":0}").State == InventoryReadState.Unknown, "NoError without bytes is not an empty read.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":0,\"hex\":\"\"}").State == InventoryReadState.Complete, "Explicit successful empty read remains representable.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"00FF\"}").State == InventoryReadState.Complete, "Exact bytes prove a complete read.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"00\"}").State == InventoryReadState.Partial, "Short bytes cannot prove completeness.");
+    foreach (var hex in new[] { "Z0", "0", "000000" })
+        Assert(Read(JsonSerializer.Serialize(new { contentResult = "NoError", declaredSize = 2, hex })).State == InventoryReadState.Unknown, "Malformed or excessive bytes cannot prove completeness.");
+    var limited = Read(JsonSerializer.Serialize(new { contentResult = "NoError", declaredSize = 8192, truncated = true, hex = new string('A', 8192) }));
+    Assert(limited.State == InventoryReadState.Partial && limited.BytesRead == 4096 && limited.Description.Contains("8192"), "Runtime cap must remain visible.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":1,\"hex\":\"00\",\"truncated\":true}").State == InventoryReadState.Partial, "Explicit truncation prevents a complete verdict.");
 }
 
 static void TestFileExpertDescription()

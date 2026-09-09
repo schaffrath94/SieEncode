@@ -12,25 +12,26 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 50 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 51 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Dateidetails der Expertenanalyse ergänzt: alle vier Rechte einschließlich frei/gesperrt,
-getrennte temporäre Erstellungseinstellungen und vollständiges Profil-Kodierrezept
-mit allen Parametern in Ausführungsreihenfolge. Unveränderlicher Snapshot;
-keine Credential-Auflösung und keine Änderung am bestehenden Analyse-Exportformat.
-Lange Detailzeilen pixelweise scrollbar, bestehende Spalten und Aktionen erhalten.
-50/50 Regressionstests und CLI-Build bestanden; WPF-Build nach SDK-Sandbox-
-Eskalation ohne Warnungen bestanden. Isolierter Publish ui-preview.3 unter
-artifacts/ui-file-expert-check/Studio; finaler WPF-Smoke OK inklusive Profil-/UI-
-Datenvergleich. Dateirechte und Rezeptende in echten WPF-Screenshots geprüft:
-tmp/file-expert-smoke/screens/AnalysisFiles-expert.png und AnalysisRecipe-expert.png.
-Darstellungstest wartet auf abgeschlossene Dispatcher-Arbeit vor Screenshots.
-Kein neues ZIP/Release und kein neuer PDF-Exporter in diesem Abschnitt.
+Istbefunde: gemeinsames FileInventoryEvidence-Modell in Studio.Runtime ergänzt
+und in vorhandenen Inventurbaum sowie Textbericht eingebunden. Unterscheidet
+vollständig/teilweise gelesen, kein Zugriff, nicht geprüft, nicht unterstützt,
+Lesefehler und unbekannten/widersprüchlichen Nachweis. NoError allein beweist
+keinen Inhalt; fehlende/ungültige Bytes und unbekannte Größe bleiben ungeprüft.
+Runtime-Limit (4096 Byte), kurze Daten und explizites truncated verhindern die
+Aussage vollständig gelesen. Originale Status-/HEX-/ASCII-Daten bleiben erhalten.
+51/51 Regressionstests sowie CLI/WPF-Build ohne Warnungen bestanden;
+Nachweis tmp/inventory-evidence-ci.log. Kein neuer WPF-Bedienlauf, PDF oder Paket.
+Vorheriger Dateidetail-Stand a4653f7 bleibt enthalten, geprüftes UI-preview.3
+unter artifacts/ui-file-expert-check/Studio enthält diesen neuen Abschnitt noch nicht.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes detaillierte Istbefunde und Berichtsdatenmodell bearbeiten.
+1. Als Nächstes Istreport an CardReport anbinden; FileInventoryEvidence wiederverwenden
+   (Studio.Runtime referenziert RfPrj, daher keine umgekehrte Abhängigkeit einführen).
+   Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und
    UI-PDF-KONZEPT.md ausarbeiten: vollständige Anwendungen/Dateirechte,
    Schlüsselkontext, Datenrezepte, geordnete Taskpläne, detaillierte Istbefunde.
