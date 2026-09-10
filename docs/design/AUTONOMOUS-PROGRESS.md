@@ -1,4 +1,4 @@
-# Autonome Weiterarbeit - Stand 2026-09-09
+# Autonome Weiterarbeit - Stand 2026-09-10
 
 ## Autorisierung und Ziel
 Der Benutzer hat autonome, tokensparsame Fertigstellung einschließlich automatischer
@@ -16,6 +16,14 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
+Ist-PDF-Export ergänzt: eigener Exportknopf neben unverändertem Direktöffnen,
+vorhandener Umfangsdialog kompakt/vollständig und expliziter Speichern-Dialog.
+Verwendet gespeicherte Inventur dieser Sitzung; Buttonfreigabe folgt dem vorhandenen
+Ist-PDF-Knopf. Keine neue Readeraktion. WPF-Build 0 Fehler/0 Warnungen bestanden
+(tmp/ist-options-build.log), git diff --check sauber. Keine Rendereränderung und
+kein erneuter Gesamttest/PDF-/WPF-Bedienlauf für diese kleine Anbindung.
+Workspace derzeit read-only; autorisierte Änderung und Build per Eskalation erfolgt.
+
 Kleiner Folgeschritt auf ausdrücklichen Wunsch wegen knappem Nutzungslimit:
 Soll-PDF-Export nutzt jetzt denselben kompakt/vollständig-Auswahldialog.
 Dialogtexte gelten für Soll- und Vergleichsberichte. Gezielt nur WPF-Build geprüft:
@@ -35,7 +43,7 @@ RC15-Quellinventur erneut bestanden; Nachweisgrenzen und gesamte Release-Restlis
 in RELEASE-STATUS-2026-09-09.md festgehalten. Keine vollständige Funktions-/Hardwarefreigabe.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes Berichtsauswahl auch bei Ist-Export anbieten und alten
+1. Als Nächstes alten
    Sollreport ohne Kürzung paginieren. Optionale Dokumentationsfelder umsetzen.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.

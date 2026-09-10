@@ -12,6 +12,27 @@ namespace RFiDGear.Builder.App;
 
 public partial class MainWindow
 {
+    private void ExportInventoryPdf_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var existing = LatestInventoryPdfPath() ?? throw new FileNotFoundException("Zum letzten Analyseergebnis liegt kein PDF-Istreport vor.");
+            using var inventory = JsonDocument.Parse(File.ReadAllText(Path.ChangeExtension(existing, ".json")));
+            var options = new ComparisonReportOptionsDialog { Owner = this };
+            if (options.ShowDialog() != true) return;
+            var report = new InventoryCardReportFactory().Create(inventory.RootElement, Path.ChangeExtension(existing, ".json"));
+            var save = new SaveFileDialog
+            {
+                Title = "PDF-Istreport speichern", Filter = "PDF-Dokument (*.pdf)|*.pdf",
+                FileName = "AID_" + SafeName(report.Applications.Single().Aid) + "_Istreport.pdf"
+            };
+            if (save.ShowDialog(this) != true) return;
+            new CardReportPdfService().Save(report, save.FileName, options.Detail);
+            Process.Start(new ProcessStartInfo(save.FileName) { UseShellExecute = true });
+            SetStatus("PDF-Istreport im gewählten Umfang gespeichert.");
+        }
+        catch (Exception exception) { ShowError(exception); }
+    }
     private void ExportInventoryComparison_Click(object sender, RoutedEventArgs e)
     {
         try
