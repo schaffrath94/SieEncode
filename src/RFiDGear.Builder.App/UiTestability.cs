@@ -287,9 +287,14 @@ public partial class MainWindow
                 if (valuesDialog.Values.GetValueOrDefault("serial") != "007") throw new InvalidOperationException("Vergleichsformular verliert explizite Profilvorbelegung.");
                 valuesDialog.Close();
                 var reportOptions = new ComparisonReportOptionsDialog();
+                if (reportOptions.Documentation is not null) throw new InvalidOperationException("Optionale Dokumentation ist unerwartet vorausgewählt.");
                 if (reportOptions.Detail != RFiDGear.Builder.RfPrj.CardReportDetail.Full) throw new InvalidOperationException("Vollbericht-Standard fehlt.");
                 ((StackPanel)reportOptions.Content).Children.OfType<RadioButton>().Last().IsChecked = true;
                 if (reportOptions.Detail != RFiDGear.Builder.RfPrj.CardReportDetail.Compact) throw new InvalidOperationException("Kompaktbericht nicht auswählbar.");
+                ((StackPanel)reportOptions.Content).Children.OfType<CheckBox>().Single().IsChecked = true;
+                if (reportOptions.Documentation is null || reportOptions.Documentation.HasContent) throw new InvalidOperationException("Leere Dokumentationsauswahl erzeugt unerwartete Inhalte.");
+                ((StackPanel)reportOptions.Content).Children.OfType<CheckBox>().Single().IsChecked = false;
+                if (reportOptions.Documentation is not null) throw new InvalidOperationException("Abgewählte Dokumentation bleibt aktiv.");
                 reportOptions.Close();
                 checks.Add("Inhaltsvergleich: Kartenwerteformular mit expliziter Profilvorbelegung initialisiert.");
             }

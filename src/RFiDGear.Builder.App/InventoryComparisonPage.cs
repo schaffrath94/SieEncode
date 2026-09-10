@@ -27,7 +27,7 @@ public partial class MainWindow
                 FileName = "AID_" + SafeName(report.Applications.Single().Aid) + "_Istreport.pdf"
             };
             if (save.ShowDialog(this) != true) return;
-            new CardReportPdfService().Save(report, save.FileName, options.Detail);
+            new CardReportPdfService().Save(report, save.FileName, options.Detail, options.Documentation);
             Process.Start(new ProcessStartInfo(save.FileName) { UseShellExecute = true });
             SetStatus("PDF-Istreport im gewählten Umfang gespeichert.");
         }
@@ -63,7 +63,7 @@ public partial class MainWindow
             if (options.ShowDialog() != true) return;
             var save = new SaveFileDialog { Title = "Soll/Ist-Dateivergleich speichern", Filter = "PDF-Dokument (*.pdf)|*.pdf", FileName = SafeName(project.Project.Name) + "_Dateivergleich.pdf" };
             if (save.ShowDialog(this) != true) return;
-            new CardReportPdfService().Save(report, save.FileName, options.Detail);
+            new CardReportPdfService().Save(report, save.FileName, options.Detail, options.Documentation);
             Process.Start(new ProcessStartInfo(save.FileName) { UseShellExecute = true });
             SetStatus("Dateivergleich gespeichert. Nicht vergleichbare Inhalte und Einstellungen sind ausdrücklich gekennzeichnet.");
         }
@@ -75,6 +75,13 @@ internal sealed class ComparisonReportOptionsDialog : Window
 {
     private readonly RadioButton full = new() { Content = "Vollständig - mit verfügbaren Rohdaten", IsChecked = true, Margin = new Thickness(0, 8, 0, 8) };
     public CardReportDetail Detail => full.IsChecked == true ? CardReportDetail.Full : CardReportDetail.Compact;
+    private readonly CheckBox includeDocumentation = new() { Content = "Dokumentationsangaben ergänzen", Margin = new Thickness(0, 0, 0, 10) };
+    private readonly DatePicker documentationDate = new();
+    private readonly TextBox place = new();
+    private readonly TextBox notes = new() { AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, Height = 90, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+    private readonly CheckBox signature = new() { Content = "Unterschriftsbereich ausgeben" };
+    public CardReportDocumentation? Documentation => includeDocumentation.IsChecked == true
+        ? new(documentationDate.SelectedDate is { } date ? DateOnly.FromDateTime(date) : null, place.Text, notes.Text, signature.IsChecked == true) : null;
     public ComparisonReportOptionsDialog()
     {
         Title = "Umfang des PDF-Berichts"; Width = 530; SizeToContent = SizeToContent.Height;
@@ -83,6 +90,16 @@ internal sealed class ComparisonReportOptionsDialog : Window
         body.Children.Add(new TextBlock { Text = "Beide Varianten enthalten die Berichtsbefunde einschließlich vorhandener Vergleichsergebnisse und nicht prüfbarer Anforderungen.", TextWrapping = TextWrapping.Wrap });
         body.Children.Add(full);
         body.Children.Add(new RadioButton { Content = "Kompakt - ohne HEX-/ASCII-Rohdaten", Margin = new Thickness(0, 0, 0, 14) });
+        body.Children.Add(includeDocumentation);
+        var fields = new StackPanel();
+        fields.Children.Add(new TextBlock { Text = "Dokumentationsdatum (optional)" }); fields.Children.Add(documentationDate);
+        fields.Children.Add(new TextBlock { Text = "Ort (optional)" }); fields.Children.Add(place);
+        fields.Children.Add(new TextBlock { Text = "Notizen (optional)" }); fields.Children.Add(notes);
+        fields.Children.Add(signature);
+        var fieldScroll = new ScrollViewer { Content = fields, MaxHeight = 250, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Visibility = Visibility.Collapsed };
+        includeDocumentation.Checked += (_, _) => fieldScroll.Visibility = Visibility.Visible;
+        includeDocumentation.Unchecked += (_, _) => fieldScroll.Visibility = Visibility.Collapsed;
+        body.Children.Add(fieldScroll);
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         buttons.Children.Add(new Button { Content = "Abbrechen", IsCancel = true });
         var save = new Button { Content = "Weiter zum Speichern", IsDefault = true };

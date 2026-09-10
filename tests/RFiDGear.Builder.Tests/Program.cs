@@ -49,6 +49,7 @@ var tests = new (string Name, Action Run)[]
     ("Project validation and secret sanitizing", TestProject),
     ("Key-free multipage PDF card report", TestCardReportPdf),
     ("Full target report preserves long payloads and fields", TestFullTargetReport),
+    ("Optional PDF documentation is explicit and paginated", TestReportDocumentation),
     ("Project draft profile synchronization", TestProjectDraft),
     ("Managed multi-base profile library", TestManagedBaseProfiles),
     ("Pinned profile identity and version history", TestProfileBindingAndHistory),
@@ -609,6 +610,30 @@ static X509Certificate2 SelfSigned(string name, RSA key)
     var request = new CertificateRequest($"CN=SieEncode Test {name}", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
     request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment, true));
     return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddYears(1));
+}
+
+static void TestReportDocumentation()
+{
+    var report = new CardReport("1.0", "project-plan", "SieEncode Dokumentation", "Synthetische Abnahme",
+        DateTimeOffset.Parse("2026-09-10T10:00:00+02:00"), "synthetisch", [], [], [], []);
+    var root = Path.Combine(Path.GetTempPath(), "sieencode-doc-test-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    var requested = Environment.GetEnvironmentVariable("SIEENCODE_DOCUMENTATION_PDF_REVIEW");
+    var output = string.IsNullOrWhiteSpace(requested) ? Path.Combine(root, "documented.pdf") : Path.GetFullPath(requested);
+    try
+    {
+        var service = new CardReportPdfService();
+        service.Save(report, Path.Combine(root, "plain.pdf"));
+        service.Save(report, Path.Combine(root, "empty.pdf"), documentation: new());
+        Assert(File.ReadAllBytes(Path.Combine(root, "plain.pdf")).SequenceEqual(File.ReadAllBytes(Path.Combine(root, "empty.pdf"))), "Empty documentation must not produce an extra section or page.");
+        var notes = string.Join("\n", Enumerable.Range(1, 28).Select(i => $"Synthetische Notiz {i:D2}: Prüfung einer längeren Dokumentation mit Zeilenumbruch.")) + "\nDOKUMENTATIONSENDE";
+        service.Save(report, output, CardReportDetail.Compact, new(new DateOnly(2026, 9, 10), "Synthetischer Testort", notes, true));
+        var text = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(output));
+        Assert(text.Contains("10.09.2026") && text.Contains("Synthetischer Testort") && text.Contains("DOKUMENTATIONSENDE") && text.Contains("Name / Unterschrift"), "Selected documentation must remain complete even in compact mode.");
+        Assert(text.Split("/Type /Page ").Length > 2, "Long notes must paginate.");
+        Assert(!System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(Path.Combine(root, "plain.pdf"))).Contains("Unterschrift"), "Unselected signature block must be absent.");
+    }
+    finally { Directory.Delete(root, true); }
 }
 
 static void TestFullTargetReport()

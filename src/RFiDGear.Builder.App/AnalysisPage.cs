@@ -142,7 +142,7 @@ public partial class MainWindow
                 InitialDirectory = lastAnalysisFiles is null ? projectsDirectory : Path.GetDirectoryName(lastAnalysisFiles.TextPath)
             };
             if (dialog.ShowDialog(this) != true) return;
-            new CardReportPdfService().Save(lastCardReport, dialog.FileName, options.Detail);
+            new CardReportPdfService().Save(lastCardReport, dialog.FileName, options.Detail, options.Documentation);
             AnalysisReportPath.Text = (lastAnalysisFiles is null ? "" : $"Text: {lastAnalysisFiles.TextPath}\nJSON: {lastAnalysisFiles.JsonPath}\n") + $"PDF: {dialog.FileName}";
             Process.Start(new ProcessStartInfo(dialog.FileName) { UseShellExecute = true });
             SetStatus("Schlüsselwertfreier PDF-Kartenreport wurde gespeichert.");

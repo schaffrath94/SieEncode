@@ -12,24 +12,23 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 56 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 57 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Sollreport: 256-Byte-Kürzung aus HEX/ASCII entfernt. Projektfelder, Applicationnamen,
-Dateinamen, Key-Versionen, Wechselstrategie, Erstellung/Initialisierung/Datenbeschreibung
-werden vollständig mit Seitenumbrüchen ausgegeben. Vollständiger Quellpfad im Bericht;
-Fortsetzungsheader begrenzt statt überlangem Projektnamen. Kompakt lässt Rohdaten weg.
-Alter starrer Soll-Dateikasten durch zeilenweisen Layoutpfad ersetzt. Textumbruch
-bewahrt echte Zeilenwechsel; Ist-/Vergleichslayout bleibt ansonsten erhalten.
-56/56 Tests sowie CLI/WPF-Build bestanden (tmp/full-target-ci.log). Neues synthetisches
-512-Byte-/Langtext-Beispiel output/pdf/Sollreport-Vollstaendig-Synthetisch.pdf mit
-3 Seiten vollständig gerendert/visuell geprüft; Endbytes und Textenden getestet.
-Kein neues Benutzerpaket, keine Hardwareabnahme. Letzter UI-Publish weiterhin preview.6.
-Berichtsauswahl inzwischen bei Soll, Ist und Vergleich angebunden.
+Optionale Dokumentation bei Soll-, Ist- und Vergleichsexport ergänzt: Notizen,
+Dokumentationsdatum, Ort und Unterschriftsbereich. Gemeinsamer Umfangsdialog aktiviert
+Felder nur bei Auswahl, Werte nur für jeweiligen Export. Leere/abgewählte Angaben
+ändern den PDF-Inhalt nicht; lange Notizen werden vollständig paginiert. Unterschrift
+ist ausdrücklich keine digitale Signatur oder technische Freigabe. Bilder noch offen.
+57/57 Tests sowie CLI/WPF-Build ohne Warnungen bestanden (tmp/documentation-ci.log).
+Zweiseitiges output/pdf/Dokumentation-Synthetische-Abnahme.pdf vollständig visuell
+geprüft. Isolierter Publish preview.7 unter artifacts/ui-documentation-check/Studio;
+WPF-Smoke OK (tmp/documentation-smoke/), Ein-/Ausschalten der optionalen Angaben
+und bestehende Abläufe geprüft. Kein neues ZIP/Release, keine Hardwareabnahme.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes optionale Dokumentationsfelder umsetzen (Notizen/Bilder/Datum/Ort/Unterschrift).
+1. Als Nächstes optionale Kartenbilder integrieren, danach Gesamt-Funktionsabgleich und internes Testpaket.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und

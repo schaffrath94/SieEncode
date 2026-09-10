@@ -7,6 +7,10 @@ namespace RFiDGear.Builder.RfPrj;
 public sealed record CardReportField(string Name, string Value);
 public enum ReportComparisonState { Equal, Different, NotComparable }
 public enum CardReportDetail { Full, Compact }
+public sealed record CardReportDocumentation(DateOnly? Date = null, string Place = "", string Notes = "", bool Signature = false)
+{
+    public bool HasContent => Date is not null || !string.IsNullOrWhiteSpace(Place) || !string.IsNullOrWhiteSpace(Notes) || Signature;
+}
 public sealed record CardReportSettingComparison(string Name, string Expected, string Observed, ReportComparisonState State);
 public sealed record CardReportFile(
     int Id, string Name, string Type, int? Size, string Communication, string Access,
@@ -124,13 +128,13 @@ public sealed class CardReportPdfService
     private const double Margin = 76;
     private const double RightMargin = 34;
 
-    public void Save(CardReport report, string outputPath, CardReportDetail detail = CardReportDetail.Full)
+    public void Save(CardReport report, string outputPath, CardReportDetail detail = CardReportDetail.Full, CardReportDocumentation? documentation = null)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
         var fullPath = Path.GetFullPath(outputPath);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-        var document = new LayoutDocument(report, detail);
+        var document = new LayoutDocument(report, detail, documentation);
         File.WriteAllBytes(fullPath, BuildPdf(document.Pages));
     }
 
@@ -142,7 +146,7 @@ public sealed class CardReportPdfService
         private PageCanvas current = null!;
         private double y;
 
-        public LayoutDocument(CardReport report, CardReportDetail detail)
+        public LayoutDocument(CardReport report, CardReportDetail detail, CardReportDocumentation? documentation)
         {
             this.report = report;
             this.detail = detail;
@@ -168,7 +172,30 @@ public sealed class CardReportPdfService
                 foreach (var finding in report.Findings)
                     AddLine($"[{finding.Severity}] {finding.Area}: {finding.Message}", detail == CardReportDetail.Compact ? 8 : 9, finding.Severity == "ERROR", finding.Severity == "ERROR" ? "error" : "black");
             }
+            if (documentation?.HasContent == true) AddDocumentation(documentation);
             FinishFooters();
+        }
+
+        private void AddDocumentation(CardReportDocumentation documentation)
+        {
+            AddSection("Ergänzende Dokumentation");
+            if (documentation.Date is { } date) AddLine($"Dokumentationsdatum: {date:dd.MM.yyyy}", 9);
+            if (!string.IsNullOrWhiteSpace(documentation.Place))
+                foreach (var line in Wrap("Ort: " + documentation.Place, 45)) AddLine(line, 9);
+            if (!string.IsNullOrWhiteSpace(documentation.Notes))
+            {
+                AddLine("Notizen:", 9, true);
+                foreach (var line in Wrap(documentation.Notes, 45)) AddLine(line, 9);
+            }
+            if (documentation.Signature)
+            {
+                Ensure(95);
+                AddSpace(30);
+                current.Rule(y, 0.32, 0.42, 0.44);
+                y -= 15;
+                AddLine("Name / Unterschrift", 9);
+                AddLine("Dokumentation - keine digitale Signatur oder technische Freigabe.", 8, false, "muted");
+            }
         }
 
         public IReadOnlyList<PageCanvas> Pages => pages;
