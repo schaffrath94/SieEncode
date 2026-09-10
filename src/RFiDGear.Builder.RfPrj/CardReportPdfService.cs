@@ -41,6 +41,7 @@ public sealed class CardReportFactory
         var general = new List<CardReportField>
         {
             new("Berichtsart", "Projektdefinition / Soll"),
+            new("Quelle", source),
             new("Kartentyp", "MIFARE DESFire (aus Projektkontext)"),
             new("UID", "nicht verfügbar (Sollreport)"),
             new("Raw UID", "nicht verfuegbar"),
@@ -106,9 +107,9 @@ public sealed class CardReportFactory
     }
 
     private static string HexDump(byte[] bytes)
-        => string.Join(" ", bytes.Take(256).Select(value => value.ToString("X2", CultureInfo.InvariantCulture))) + (bytes.Length > 256 ? " ..." : "");
+        => string.Join(" ", bytes.Select(value => value.ToString("X2", CultureInfo.InvariantCulture)));
     private static string AsciiDump(byte[] bytes)
-        => new string(bytes.Take(256).Select(value => value is >= 32 and <= 126 ? (char)value : '.').ToArray()) + (bytes.Length > 256 ? "..." : "");
+        => new string(bytes.Select(value => value is >= 32 and <= 126 ? (char)value : '.').ToArray());
 
     private static DateTimeOffset ParseGeneratedAt(string value)
         => DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var parsed)
@@ -179,53 +180,41 @@ public sealed class CardReportPdfService
                 AddObservedApplication(app);
                 return;
             }
-            Ensure(260);
-            AddBand($"AID {app.Aid} | {app.Name}");
-            var settingsTop = y + 3;
-            current.Box(Margin, y - 48, PageWidth - Margin - RightMargin, 52, 0.82, 0.84, 0.85);
-            current.Text(Margin + 7, y - 10, "Application Settings", 8.5, true, "muted");
-            current.Text(Margin + 7, y - 24, $"Kryptografie: {app.KeyType}    Key-Slots: {app.KeyCount}", 8.5, true, "black");
-            current.Text(Margin + 242, y - 24, $"AMK Soll: {app.ProductiveKeySettings}    Transport: {app.TransportKeySettings}", 8.5, true, "black");
-            current.Text(Margin + 7, y - 38, $"Key-Versionen: {Clip(app.KeyVersions, 43)}", 8, false, "muted");
-            current.Text(Margin + 242, y - 38, $"Keywechsel: {Clip(app.ChangeKeyMode, 29)}", 8, false, "muted");
-            y = settingsTop - 58;
+            Ensure(90);
+            AddBand($"AID {app.Aid}");
+            AddLine(app.Name, 11, true);
+            AddLine($"Kryptografie: {app.KeyType} | Key-Slots: {app.KeyCount}", 9);
+            AddLine($"KeySettings Soll: {app.ProductiveKeySettings} | Transport: {app.TransportKeySettings}", 9);
+            AddLine($"Key-Versionen: {app.KeyVersions}", 9);
+            AddLine($"Keywechsel: {app.ChangeKeyMode}", 9);
             foreach (var file in app.Files)
             {
-                if (detail == CardReportDetail.Compact)
+                Ensure(85);
+                AddBand($"AID {app.Aid} | File ID {file.Id:D2}", compact: true);
+                AddLine(file.Name, 10, true);
+                AddLine($"Typ: {file.Type} | Größe: {file.Size} Byte", 9);
+                AddLine($"Kommunikation: {file.Communication} | Rechte: {file.Access}", 9);
+                AddLine($"Erstellung: {file.CreationSettings}", 9);
+                AddLine($"Initialisierung: {file.Initialization}", 9);
+                AddLine($"Daten / Rezept: {file.DataDefinition}", 9);
+                if (detail == CardReportDetail.Full)
                 {
-                    Ensure(85);
-                    AddBand($"File ID {file.Id:D2} | {file.Name}", compact: true);
-                    AddLine($"{file.Type} | {file.Size} Byte | {file.Communication} | {file.Access}", 9);
-                    AddLine($"Erstellung: {file.CreationSettings} | Initialisierung: {file.Initialization}", 9);
-                    AddLine($"Daten / Rezept: {file.DataDefinition}", 9);
-                    continue;
+                    AddLine("HEX (Sollbytes):", 9, true);
+                    foreach (var line in Wrap(file.HexDump, 48)) AddLine(line, 8);
+                    AddLine("ASCII (Sollbytes):", 9, true);
+                    foreach (var line in Wrap(file.AsciiDump, 48)) AddLine(line, 8);
                 }
-                var hexLines = Wrap("HEX: " + file.HexDump, 104).ToArray();
-                var asciiLines = Wrap("ASCII: " + file.AsciiDump, 104).ToArray();
-                var dumpHeight = Math.Max(35, 10 + ((hexLines.Length + asciiLines.Length + 1) * 10));
-                Ensure(92 + dumpHeight);
-                AddBand($"File ID {file.Id:D2} | {file.Name}", compact: true);
-                var propertiesTop = y + 3;
-                var half = (PageWidth - Margin - RightMargin - 8) / 2;
-                current.Box(Margin, y - 53, half, 57, 0.82, 0.84, 0.85);
-                current.Box(Margin + half + 8, y - 53, half, 57, 0.82, 0.84, 0.85);
-                current.Text(Margin + 7, y - 12, $"Typ: {file.Type}", 8.5, true, "black");
-                current.Text(Margin + 7, y - 27, $"Groesse: {file.Size} Byte", 8.5, true, "black");
-                current.Text(Margin + 7, y - 42, $"Initialisierung: {Clip(file.Initialization, 34)}", 8, false, "muted");
-                current.Text(Margin + half + 15, y - 12, $"Access Rights: {file.Access}", 8.5, true, "black");
-                current.Text(Margin + half + 15, y - 27, $"Comm. Mode: {file.Communication}", 8.5, true, "black");
-                current.Text(Margin + half + 15, y - 42, $"Erstellung: {Clip(file.CreationSettings, 31)}", 8, false, "muted");
-                y = propertiesTop - 62;
-                current.Box(Margin, y - dumpHeight + 4, PageWidth - Margin - RightMargin, dumpHeight, 0.82, 0.84, 0.85);
-                current.Text(Margin + 6, y - 8, $"Daten / Rezept: {Clip(file.DataDefinition, 74)}", 8.3, true, "black");
-                var dumpY = y - 21;
-                foreach (var line in hexLines.Concat(asciiLines)) { current.Text(Margin + 6, dumpY, line, 7.4, false, "mono"); dumpY -= 10; }
-                y -= dumpHeight + 3;
+                AddSpace(8);
             }
         }
 
         private void AddFields(IEnumerable<CardReportField> fields)
         {
+            if (report.Kind == "project-plan")
+            {
+                foreach (var field in fields) AddLine(field.Name + ": " + field.Value, 9);
+                return;
+            }
             var rows = fields.ToArray();
             for (var index = 0; index < rows.Length; index += 2)
             {
@@ -312,7 +301,7 @@ public sealed class CardReportPdfService
         private void AddLine(string value, double size, bool bold = false, string color = "black", double indent = 0)
         {
             var maxWidth = PageWidth - Margin - RightMargin - indent;
-            foreach (var line in Wrap(value, Math.Max(18, (int)(maxWidth / (size * 0.52)))))
+            foreach (var line in Wrap(value, Math.Max(18, (int)(maxWidth / (size * (report.Kind == "project-plan" ? 1.0 : 0.52))))))
             {
                 Ensure(size + 5);
                 current.Text(Margin + indent, y, line, size, bold, color);
@@ -331,7 +320,7 @@ public sealed class CardReportPdfService
             y = PageHeight - 46;
             if (pages.Count > 1)
             {
-                current.Text(Margin, y, $"SieEncode Kartenreport | {report.Project}", 8.5, true, "teal");
+                current.Text(Margin, y, (report.Kind == "project-plan" ? "SieEncode Sollreport | Fortsetzung" : $"SieEncode Kartenreport | {report.Project}"), 8.5, true, "teal");
                 current.Rule(y - 7, 0.65, 0.75, 0.76);
                 y -= 24;
             }
@@ -406,12 +395,12 @@ public sealed class CardReportPdfService
 
     private static IEnumerable<string> Wrap(string value, int max)
     {
-        var text = Normalize(value);
+        var text = value;
         if (text.Length == 0) return [""];
         var result = new List<string>();
         foreach (var paragraph in text.Replace("\r", "").Split('\n'))
         {
-            var remaining = paragraph.Trim();
+            var remaining = Normalize(paragraph).Trim();
             while (remaining.Length > max)
             {
                 var cut = remaining.LastIndexOf(' ', max);

@@ -12,39 +12,24 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 55 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 56 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Ist-PDF-Export ergänzt: eigener Exportknopf neben unverändertem Direktöffnen,
-vorhandener Umfangsdialog kompakt/vollständig und expliziter Speichern-Dialog.
-Verwendet gespeicherte Inventur dieser Sitzung; Buttonfreigabe folgt dem vorhandenen
-Ist-PDF-Knopf. Keine neue Readeraktion. WPF-Build 0 Fehler/0 Warnungen bestanden
-(tmp/ist-options-build.log), git diff --check sauber. Keine Rendereränderung und
-kein erneuter Gesamttest/PDF-/WPF-Bedienlauf für diese kleine Anbindung.
-Workspace derzeit read-only; autorisierte Änderung und Build per Eskalation erfolgt.
-
-Kleiner Folgeschritt auf ausdrücklichen Wunsch wegen knappem Nutzungslimit:
-Soll-PDF-Export nutzt jetzt denselben kompakt/vollständig-Auswahldialog.
-Dialogtexte gelten für Soll- und Vergleichsberichte. Gezielt nur WPF-Build geprüft:
-0 Fehler/0 Warnungen, tmp/soll-options-build.log. Kein erneuter Gesamttestlauf,
-keine PDF-Neuerzeugung, keine Behebung der bekannten Kürzungen im Soll-Vollrenderer.
-
-Vergleichsexport bietet eigenes Dialogfenster kompakt/vollständig unabhängig vom
-UI-Modus. Renderer akzeptiert CardReportDetail (Standard Full); Compact lässt
-Rohdaten ausdrücklich weg und erhält alle Bewertungen/Befunde. Keine Veränderung
-der bestehenden Exportaufrufe ohne Optionen. Alter Soll-Vollrenderer bleibt zu überarbeiten.
-55/55 Tests bestanden; CLI/WPF-Build erfolgreich (tmp/compact-report-ci.log),
-finale Renderer-Tests tmp/compact-report-final-tests.log. PDF-Vollbeispiel (2 Seiten)
-und kompakte Variante (1 Seite) unter output/pdf/Dateivergleich-Vollstaendig*.pdf
-vollständig visuell geprüft. Isolierter Publish preview.6 unter artifacts/ui-compact-check/Studio;
-WPF-Smoke tmp/compact-smoke/ einschließlich Umschaltung im Berichtsdialog bestanden.
-RC15-Quellinventur erneut bestanden; Nachweisgrenzen und gesamte Release-Restliste
-in RELEASE-STATUS-2026-09-09.md festgehalten. Keine vollständige Funktions-/Hardwarefreigabe.
+Sollreport: 256-Byte-Kürzung aus HEX/ASCII entfernt. Projektfelder, Applicationnamen,
+Dateinamen, Key-Versionen, Wechselstrategie, Erstellung/Initialisierung/Datenbeschreibung
+werden vollständig mit Seitenumbrüchen ausgegeben. Vollständiger Quellpfad im Bericht;
+Fortsetzungsheader begrenzt statt überlangem Projektnamen. Kompakt lässt Rohdaten weg.
+Alter starrer Soll-Dateikasten durch zeilenweisen Layoutpfad ersetzt. Textumbruch
+bewahrt echte Zeilenwechsel; Ist-/Vergleichslayout bleibt ansonsten erhalten.
+56/56 Tests sowie CLI/WPF-Build bestanden (tmp/full-target-ci.log). Neues synthetisches
+512-Byte-/Langtext-Beispiel output/pdf/Sollreport-Vollstaendig-Synthetisch.pdf mit
+3 Seiten vollständig gerendert/visuell geprüft; Endbytes und Textenden getestet.
+Kein neues Benutzerpaket, keine Hardwareabnahme. Letzter UI-Publish weiterhin preview.6.
+Berichtsauswahl inzwischen bei Soll, Ist und Vergleich angebunden.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes alten
-   Sollreport ohne Kürzung paginieren. Optionale Dokumentationsfelder umsetzen.
+1. Als Nächstes optionale Dokumentationsfelder umsetzen (Notizen/Bilder/Datum/Ort/Unterschrift).
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und

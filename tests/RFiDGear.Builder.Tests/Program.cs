@@ -48,6 +48,7 @@ var tests = new (string Name, Action Run)[]
     ("Verified independent vault recovery backup", TestVaultRecoveryBackup),
     ("Project validation and secret sanitizing", TestProject),
     ("Key-free multipage PDF card report", TestCardReportPdf),
+    ("Full target report preserves long payloads and fields", TestFullTargetReport),
     ("Project draft profile synchronization", TestProjectDraft),
     ("Managed multi-base profile library", TestManagedBaseProfiles),
     ("Pinned profile identity and version history", TestProfileBindingAndHistory),
@@ -608,6 +609,30 @@ static X509Certificate2 SelfSigned(string name, RSA key)
     var request = new CertificateRequest($"CN=SieEncode Test {name}", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
     request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment, true));
     return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddYears(1));
+}
+
+static void TestFullTargetReport()
+{
+    var payload = new string('4', 1022) + "FF";
+    var name = string.Join(" ", Enumerable.Repeat("Langer Dateiname", 8)) + " DATEIENDE";
+    var definition = new ProfileDefinition { Profile = new ProfileMetadata { Id = "SYNTH-PDF", Kind = "base" },
+        Applications = [new ApplicationDefinition { Id = "A1B2C3", Files = [new FileDefinition { Id = 1, Size = 512,
+            Coding = new CodingDefinition { Output = "test.hex", Recipe = [new RecipeStep { Op = "fixedHex", Value = payload }] } }] }] };
+    var project = new ProjectDefinition { Project = new ProjectSection { Name = "Synthetische Sollreport-Abnahme" }, Profiles = new ProfileSelection { Base = "SYNTH-PDF" },
+        Values = new Dictionary<string, string> { ["Notiz"] = new string('W', 100) + " FELDENDE" } };
+    var analysis = new ProjectAnalysisReport { Applications = [new ProjectAnalysisApplication("A1B2C3", name, "AES", 14, "0B", "0F", name, [new ProjectAnalysisFile(1, name, "StdDataFile", 512, "CM_PLAIN", "R0/W0/RW0/C0", name, name, name)])] };
+    var report = new CardReportFactory().FromProject(project, analysis, "synthetisch", ProfileLibrary.FromProfiles([definition]));
+    Assert(report.Applications[0].Files[0].HexDump.Replace(" ", "") == payload && report.Applications[0].Files[0].AsciiDump.Length == 512, "Sollreport must retain every payload byte.");
+    var requested = Environment.GetEnvironmentVariable("SIEENCODE_FULL_TARGET_PDF_REVIEW");
+    var path = string.IsNullOrWhiteSpace(requested) ? Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf") : Path.GetFullPath(requested);
+    try
+    {
+        new CardReportPdfService().Save(report, path);
+        var content = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(path));
+        Assert(content.Contains("DATEIENDE") && content.Contains("FELDENDE") && content.Contains("13: nicht"), "Names, fields and key-version list must not be clipped.");
+        Assert(content.Contains("44 FF") && content.Split("/Type /Page ").Length > 2, "Full payload tail must survive multipage layout.");
+    }
+    finally { if (string.IsNullOrWhiteSpace(requested)) File.Delete(path); }
 }
 
 static void TestCardReportPdf()
