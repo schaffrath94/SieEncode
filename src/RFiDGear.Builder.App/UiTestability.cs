@@ -287,6 +287,15 @@ public partial class MainWindow
                 if (valuesDialog.Values.GetValueOrDefault("serial") != "007") throw new InvalidOperationException("Vergleichsformular verliert explizite Profilvorbelegung.");
                 valuesDialog.Close();
                 var reportOptions = new ComparisonReportOptionsDialog();
+                var imagePath = Path.Combine(fixture, "synthetic-card.png");
+                var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(System.Windows.Media.Imaging.BitmapSource.Create(2, 1, 96, 96,
+                    System.Windows.Media.PixelFormats.Rgb24, null, new byte[] { 255, 0, 0, 0, 0, 255 }, 6)));
+                using (var imageStream = File.Create(imagePath)) png.Save(imageStream);
+                var picture = ComparisonReportOptionsDialog.LoadPicture(imagePath, "Synthetic");
+                File.Delete(imagePath);
+                if (picture.Width != 2 || picture.Height != 1 || !picture.Rgb.SequenceEqual(new byte[] { 255, 0, 0, 0, 0, 255 }))
+                    throw new InvalidOperationException("Kartenbild verliert Farbe, Seitenverhältnis oder Freigabe der Quelldatei.");
                 if (reportOptions.Documentation is not null) throw new InvalidOperationException("Optionale Dokumentation ist unerwartet vorausgewählt.");
                 if (reportOptions.Detail != RFiDGear.Builder.RfPrj.CardReportDetail.Full) throw new InvalidOperationException("Vollbericht-Standard fehlt.");
                 ((StackPanel)reportOptions.Content).Children.OfType<RadioButton>().Last().IsChecked = true;

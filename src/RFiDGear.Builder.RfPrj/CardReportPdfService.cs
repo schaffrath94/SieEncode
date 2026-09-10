@@ -7,9 +7,11 @@ namespace RFiDGear.Builder.RfPrj;
 public sealed record CardReportField(string Name, string Value);
 public enum ReportComparisonState { Equal, Different, NotComparable }
 public enum CardReportDetail { Full, Compact }
+public sealed record CardReportImage(string Caption, int Width, int Height, byte[] Rgb);
 public sealed record CardReportDocumentation(DateOnly? Date = null, string Place = "", string Notes = "", bool Signature = false)
 {
-    public bool HasContent => Date is not null || !string.IsNullOrWhiteSpace(Place) || !string.IsNullOrWhiteSpace(Notes) || Signature;
+    public IReadOnlyList<CardReportImage> Images { get; init; } = [];
+    public bool HasContent => Date is not null || !string.IsNullOrWhiteSpace(Place) || !string.IsNullOrWhiteSpace(Notes) || Signature || Images.Count > 0;
 }
 public sealed record CardReportSettingComparison(string Name, string Expected, string Observed, ReportComparisonState State);
 public sealed record CardReportFile(
@@ -132,6 +134,13 @@ public sealed class CardReportPdfService
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+        if (documentation is not null)
+        {
+            if (documentation.Images.Count > 2) throw new InvalidDataException("Höchstens zwei Kartenbilder pro Bericht.");
+            foreach (var picture in documentation.Images)
+                if (picture.Width is < 1 or > 1280 || picture.Height is < 1 or > 1280 || picture.Rgb is null || picture.Rgb.Length != picture.Width * picture.Height * 3)
+                    throw new InvalidDataException("Kartenbild enthält ungültige RGB-Daten oder Abmessungen.");
+        }
         var fullPath = Path.GetFullPath(outputPath);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
         var document = new LayoutDocument(report, detail, documentation);
@@ -186,6 +195,16 @@ public sealed class CardReportPdfService
             {
                 AddLine("Notizen:", 9, true);
                 foreach (var line in Wrap(documentation.Notes, 45)) AddLine(line, 9);
+            }
+            foreach (var picture in documentation.Images)
+            {
+                var scale = Math.Min((PageWidth - Margin - RightMargin) / picture.Width, 210.0 / picture.Height);
+                var width = picture.Width * scale;
+                var height = picture.Height * scale;
+                Ensure(height + 55);
+                AddLine(picture.Caption, 9, true);
+                current.Image(picture, Margin, y - height, width, height);
+                y -= height + 15;
             }
             if (documentation.Signature)
             {
@@ -368,6 +387,13 @@ public sealed class CardReportPdfService
     {
         private readonly StringBuilder content = new();
         public string Content => content.ToString();
+        public void Image(CardReportImage picture, double x, double bottom, double width, double height)
+        {
+            content.AppendLine($"q {F(width)} 0 0 {F(height)} {F(x)} {F(bottom)} cm");
+            content.AppendLine($"BI /W {picture.Width} /H {picture.Height} /CS /RGB /BPC 8 /F /AHx ID");
+            content.AppendLine(Convert.ToHexString(picture.Rgb) + ">");
+            content.AppendLine("EI Q");
+        }
         public void Text(double x, double y, string value, double size, bool bold, string color)
         {
             var rgb = color switch { "error" => "0.70 0.10 0.10", "teal" => "0.08 0.38 0.41", "muted" => "0.32 0.42 0.44", _ => "0 0 0" };

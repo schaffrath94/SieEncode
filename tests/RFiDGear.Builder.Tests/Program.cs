@@ -50,6 +50,7 @@ var tests = new (string Name, Action Run)[]
     ("Key-free multipage PDF card report", TestCardReportPdf),
     ("Full target report preserves long payloads and fields", TestFullTargetReport),
     ("Optional PDF documentation is explicit and paginated", TestReportDocumentation),
+    ("Optional PDF card images preserve RGB and validate dimensions", TestReportImages),
     ("Project draft profile synchronization", TestProjectDraft),
     ("Managed multi-base profile library", TestManagedBaseProfiles),
     ("Pinned profile identity and version history", TestProfileBindingAndHistory),
@@ -610,6 +611,34 @@ static X509Certificate2 SelfSigned(string name, RSA key)
     var request = new CertificateRequest($"CN=SieEncode Test {name}", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
     request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment, true));
     return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddYears(1));
+}
+
+static void TestReportImages()
+{
+    var report = new CardReport("1.0", "project-plan", "SieEncode Kartenbilder", "Synthetische Bildabnahme",
+        DateTimeOffset.Parse("2026-09-10T12:00:00Z"), "synthetisch", [], [], [], []);
+    var pixels = new byte[120 * 75 * 3];
+    for (var y = 0; y < 75; y++)
+        for (var x = 0; x < 120; x++)
+        {
+            var i = (y * 120 + x) * 3;
+            pixels[i] = (byte)(x < 60 ? 220 : 20); pixels[i + 1] = (byte)(y < 38 ? 80 : 190); pixels[i + 2] = 100;
+        }
+    var picture = new CardReportImage("Synthetische Vorderseite", 120, 75, pixels);
+    var documentation = new CardReportDocumentation { Images = [picture, picture with { Caption = "Synthetische Rückseite" }] };
+    var requested = Environment.GetEnvironmentVariable("SIEENCODE_IMAGES_PDF_REVIEW");
+    var output = string.IsNullOrWhiteSpace(requested) ? Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf") : Path.GetFullPath(requested);
+    try
+    {
+        var service = new CardReportPdfService();
+        service.Save(report, output, CardReportDetail.Compact, documentation);
+        var pdf = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(output));
+        Assert(pdf.Split("BI /W 120 /H 75").Length == 3 && pdf.Contains(Convert.ToHexString(pixels)), "Both selected images must retain RGB content, also in compact mode.");
+        AssertThrows<InvalidDataException>(() => service.Save(report, output, documentation: documentation with { Images = [picture, picture, picture] }));
+        AssertThrows<InvalidDataException>(() => service.Save(report, output, documentation: documentation with { Images = [picture with { Width = 1281 }] }));
+        AssertThrows<InvalidDataException>(() => service.Save(report, output, documentation: documentation with { Images = [picture with { Rgb = [0] }] }));
+    }
+    finally { if (string.IsNullOrWhiteSpace(requested)) File.Delete(output); }
 }
 
 static void TestReportDocumentation()

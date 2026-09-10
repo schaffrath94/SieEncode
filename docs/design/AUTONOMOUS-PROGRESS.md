@@ -12,23 +12,25 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 57 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 58 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Optionale Dokumentation bei Soll-, Ist- und Vergleichsexport ergänzt: Notizen,
-Dokumentationsdatum, Ort und Unterschriftsbereich. Gemeinsamer Umfangsdialog aktiviert
-Felder nur bei Auswahl, Werte nur für jeweiligen Export. Leere/abgewählte Angaben
-ändern den PDF-Inhalt nicht; lange Notizen werden vollständig paginiert. Unterschrift
-ist ausdrücklich keine digitale Signatur oder technische Freigabe. Bilder noch offen.
-57/57 Tests sowie CLI/WPF-Build ohne Warnungen bestanden (tmp/documentation-ci.log).
-Zweiseitiges output/pdf/Dokumentation-Synthetische-Abnahme.pdf vollständig visuell
-geprüft. Isolierter Publish preview.7 unter artifacts/ui-documentation-check/Studio;
-WPF-Smoke OK (tmp/documentation-smoke/), Ein-/Ausschalten der optionalen Angaben
-und bestehende Abläufe geprüft. Kein neues ZIP/Release, keine Hardwareabnahme.
+Optionale Kartenbilder bei allen PDF-Exporten integriert: bis zwei PNG/JPEG auswählen
+oder entfernen, proportional maximal 1280 Pixel je Kante aufbereiten, Transparenz auf
+Weiß. Export enthält RGB-Pixel, keine eingebetteten Bildmetadaten/Quellpfade. Keine
+Auswahl/abgewählte Dokumentation erzeugt keinen Bildbereich. RGB-Länge, Abmessungen
+und Anzahl validiert; Bilder auch im Kompaktbericht bewusst auswählbar.
+58/58 Tests und CLI/WPF-Build bestanden (tmp/card-images-ci.log). Einseitiges
+output/pdf/Kartenbilder-Synthetische-Abnahme.pdf gerendert und visuell geprüft.
+Isolierter Publish preview.8 unter artifacts/ui-card-images-check/Studio;
+WPF-Smoke OK (tmp/card-images-smoke/), synthetisches PNG durch tatsächlichen Loader,
+Farben/Seitenverhältnis und Freigabe der Quelldatei geprüft. Native Auswahlkette und
+EXIF-Orientierung realer Kamerafotos noch nicht praktisch abgenommen; explizite
+EXIF-Rotation ist aktuell nicht implementiert. Kein neues ZIP/Release/Hardwaretest.
 
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes optionale Kartenbilder integrieren, danach Gesamt-Funktionsabgleich und internes Testpaket.
+1. Als Nächstes Bildorientierung und PDF-/UI-Randfälle abschließen, Gesamt-Funktionsabgleich und internes Testpaket vorbereiten.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und

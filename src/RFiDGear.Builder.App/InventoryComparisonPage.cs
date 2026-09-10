@@ -80,8 +80,55 @@ internal sealed class ComparisonReportOptionsDialog : Window
     private readonly TextBox place = new();
     private readonly TextBox notes = new() { AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, Height = 90, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     private readonly CheckBox signature = new() { Content = "Unterschriftsbereich ausgeben" };
+    private readonly List<CardReportImage> pictures = [];
+    private readonly TextBlock pictureInfo = new() { Text = "Keine Kartenbilder ausgewählt.", TextWrapping = TextWrapping.Wrap };
     public CardReportDocumentation? Documentation => includeDocumentation.IsChecked == true
-        ? new(documentationDate.SelectedDate is { } date ? DateOnly.FromDateTime(date) : null, place.Text, notes.Text, signature.IsChecked == true) : null;
+        ? new(documentationDate.SelectedDate is { } date ? DateOnly.FromDateTime(date) : null, place.Text, notes.Text, signature.IsChecked == true) { Images = pictures.ToArray() } : null;
+    private void ChoosePictures()
+    {
+        var dialog = new OpenFileDialog { Title = "Kartenbilder auswählen", Filter = "Bilder (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg", Multiselect = true };
+        if (dialog.ShowDialog(this) != true) return;
+        try
+        {
+            if (dialog.FileNames.Length > 2) throw new InvalidDataException("Bitte höchstens zwei Bilder auswählen.");
+            var selected = dialog.FileNames.Select((path, index) => LoadPicture(path, $"Kartenbild {index + 1}")).ToArray();
+            pictures.Clear(); pictures.AddRange(selected);
+            pictureInfo.Text = string.Join("\n", dialog.FileNames.Select(Path.GetFileName));
+        }
+        catch (Exception exception) { MessageBox.Show(this, exception.Message, "Kartenbilder", MessageBoxButton.OK, MessageBoxImage.Warning); }
+    }
+
+    internal static CardReportImage LoadPicture(string path, string caption)
+    {
+        using var stream = File.OpenRead(path);
+        var decoder = System.Windows.Media.Imaging.BitmapDecoder.Create(stream, System.Windows.Media.Imaging.BitmapCreateOptions.DelayCreation, System.Windows.Media.Imaging.BitmapCacheOption.OnDemand);
+        var sourceWidth = decoder.Frames[0].PixelWidth;
+        var sourceHeight = decoder.Frames[0].PixelHeight;
+        if ((long)sourceWidth * sourceHeight > 40_000_000) throw new InvalidDataException("Bild ist zu groß; bitte auf höchstens 40 Megapixel verkleinern.");
+        stream.Position = 0;
+        var image = new System.Windows.Media.Imaging.BitmapImage();
+        image.BeginInit();
+        image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+        image.DecodePixelWidth = Math.Max(1, (int)(sourceWidth * Math.Min(1.0, 1280.0 / Math.Max(sourceWidth, sourceHeight))));
+        image.StreamSource = stream;
+        image.EndInit();
+        var scale = Math.Min(1.0, 1280.0 / Math.Max(image.PixelWidth, image.PixelHeight));
+        var width = Math.Max(1, (int)Math.Round(image.PixelWidth * scale));
+        var height = Math.Max(1, (int)Math.Round(image.PixelHeight * scale));
+        var visual = new System.Windows.Media.DrawingVisual();
+        using (var drawing = visual.RenderOpen())
+        {
+            drawing.DrawRectangle(System.Windows.Media.Brushes.White, null, new Rect(0, 0, width, height));
+            drawing.DrawImage(image, new Rect(0, 0, width, height));
+        }
+        var rendered = new System.Windows.Media.Imaging.RenderTargetBitmap(width, height, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+        rendered.Render(visual);
+        var rgb = new System.Windows.Media.Imaging.FormatConvertedBitmap(rendered, System.Windows.Media.PixelFormats.Rgb24, null, 0);
+        var bytes = new byte[width * height * 3];
+        rgb.CopyPixels(bytes, width * 3, 0);
+        return new(caption, width, height, bytes);
+    }
+
     public ComparisonReportOptionsDialog()
     {
         Title = "Umfang des PDF-Berichts"; Width = 530; SizeToContent = SizeToContent.Height;
@@ -96,6 +143,11 @@ internal sealed class ComparisonReportOptionsDialog : Window
         fields.Children.Add(new TextBlock { Text = "Ort (optional)" }); fields.Children.Add(place);
         fields.Children.Add(new TextBlock { Text = "Notizen (optional)" }); fields.Children.Add(notes);
         fields.Children.Add(signature);
+        var choosePictures = new Button { Content = "Kartenbilder auswählen (max. 2)" };
+        choosePictures.Click += (_, _) => ChoosePictures();
+        var clearPictures = new Button { Content = "Kartenbilder entfernen" };
+        clearPictures.Click += (_, _) => { pictures.Clear(); pictureInfo.Text = "Keine Kartenbilder ausgewählt."; };
+        fields.Children.Add(choosePictures); fields.Children.Add(clearPictures); fields.Children.Add(pictureInfo);
         var fieldScroll = new ScrollViewer { Content = fields, MaxHeight = 250, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Visibility = Visibility.Collapsed };
         includeDocumentation.Checked += (_, _) => fieldScroll.Visibility = Visibility.Visible;
         includeDocumentation.Unchecked += (_, _) => fieldScroll.Visibility = Visibility.Collapsed;
