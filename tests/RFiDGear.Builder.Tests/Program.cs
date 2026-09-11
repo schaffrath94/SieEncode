@@ -51,6 +51,7 @@ var tests = new (string Name, Action Run)[]
     ("Full target report preserves long payloads and fields", TestFullTargetReport),
     ("Optional PDF documentation is explicit and paginated", TestReportDocumentation),
     ("Optional PDF card images preserve RGB and validate dimensions", TestReportImages),
+    ("Card images normalize all eight EXIF orientations", TestReportImageOrientation),
     ("Project draft profile synchronization", TestProjectDraft),
     ("Managed multi-base profile library", TestManagedBaseProfiles),
     ("Pinned profile identity and version history", TestProfileBindingAndHistory),
@@ -611,6 +612,25 @@ static X509Certificate2 SelfSigned(string name, RSA key)
     var request = new CertificateRequest($"CN=SieEncode Test {name}", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
     request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment, true));
     return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddYears(1));
+}
+
+static void TestReportImageOrientation()
+{
+    var pixels = Enumerable.Range(1, 6).SelectMany(i => new byte[] { (byte)i, (byte)(i + 10), (byte)(i + 20) }).ToArray();
+    var image = new CardReportImage("Synthetic", 3, 2, pixels.ToArray());
+    int[][] expected = [[1,2,3,4,5,6], [3,2,1,6,5,4], [6,5,4,3,2,1], [4,5,6,1,2,3],
+        [1,4,2,5,3,6], [4,1,5,2,6,3], [6,3,5,2,4,1], [3,6,2,5,1,4]];
+    for (var orientation = 1; orientation <= 8; orientation++)
+    {
+        var actual = CardReportImageOrientation.Apply(image, orientation);
+        Assert(actual.Width == (orientation >= 5 ? 2 : 3) && actual.Height == (orientation >= 5 ? 3 : 2), "Oriented dimensions");
+        var rgb = expected[orientation - 1].SelectMany(i => new byte[] { (byte)i, (byte)(i + 10), (byte)(i + 20) });
+        Assert(actual.Rgb.SequenceEqual(rgb), $"EXIF orientation {orientation} pixel mapping");
+        Assert(actual.Caption == image.Caption && image.Rgb.SequenceEqual(pixels), "Caption and source preserved");
+    }
+    Assert(CardReportImageOrientation.Apply(image, 0).Rgb.SequenceEqual(pixels), "Missing orientation stays normal");
+    Assert(CardReportImageOrientation.Apply(image, 9).Rgb.SequenceEqual(pixels), "Unknown orientation stays normal");
+    AssertThrows<ArgumentException>(() => CardReportImageOrientation.Apply(new("Invalid", 3, 2, []), 6));
 }
 
 static void TestReportImages()

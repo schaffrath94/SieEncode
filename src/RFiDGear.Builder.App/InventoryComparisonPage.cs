@@ -104,6 +104,11 @@ internal sealed class ComparisonReportOptionsDialog : Window
         var decoder = System.Windows.Media.Imaging.BitmapDecoder.Create(stream, System.Windows.Media.Imaging.BitmapCreateOptions.DelayCreation, System.Windows.Media.Imaging.BitmapCacheOption.OnDemand);
         var sourceWidth = decoder.Frames[0].PixelWidth;
         var sourceHeight = decoder.Frames[0].PixelHeight;
+        var orientation = 1;
+        if (decoder is System.Windows.Media.Imaging.JpegBitmapDecoder &&
+            decoder.Frames[0].Metadata is System.Windows.Media.Imaging.BitmapMetadata metadata &&
+            metadata.GetQuery("/app1/ifd/{ushort=274}") is ushort value)
+            orientation = value;
         if ((long)sourceWidth * sourceHeight > 40_000_000) throw new InvalidDataException("Bild ist zu groß; bitte auf höchstens 40 Megapixel verkleinern.");
         stream.Position = 0;
         var image = new System.Windows.Media.Imaging.BitmapImage();
@@ -126,7 +131,7 @@ internal sealed class ComparisonReportOptionsDialog : Window
         var rgb = new System.Windows.Media.Imaging.FormatConvertedBitmap(rendered, System.Windows.Media.PixelFormats.Rgb24, null, 0);
         var bytes = new byte[width * height * 3];
         rgb.CopyPixels(bytes, width * 3, 0);
-        return new(caption, width, height, bytes);
+        return CardReportImageOrientation.Apply(new(caption, width, height, bytes), orientation);
     }
 
     public ComparisonReportOptionsDialog()

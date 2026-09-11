@@ -1,4 +1,4 @@
-# Autonome Weiterarbeit - Stand 2026-09-10
+# Autonome Weiterarbeit - Stand 2026-09-11
 
 ## Autorisierung und Ziel
 Der Benutzer hat autonome, tokensparsame Fertigstellung einschließlich automatischer
@@ -12,25 +12,24 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 58 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 59 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Optionale Kartenbilder bei allen PDF-Exporten integriert: bis zwei PNG/JPEG auswählen
-oder entfernen, proportional maximal 1280 Pixel je Kante aufbereiten, Transparenz auf
-Weiß. Export enthält RGB-Pixel, keine eingebetteten Bildmetadaten/Quellpfade. Keine
-Auswahl/abgewählte Dokumentation erzeugt keinen Bildbereich. RGB-Länge, Abmessungen
-und Anzahl validiert; Bilder auch im Kompaktbericht bewusst auswählbar.
-58/58 Tests und CLI/WPF-Build bestanden (tmp/card-images-ci.log). Einseitiges
-output/pdf/Kartenbilder-Synthetische-Abnahme.pdf gerendert und visuell geprüft.
-Isolierter Publish preview.8 unter artifacts/ui-card-images-check/Studio;
-WPF-Smoke OK (tmp/card-images-smoke/), synthetisches PNG durch tatsächlichen Loader,
-Farben/Seitenverhältnis und Freigabe der Quelldatei geprüft. Native Auswahlkette und
-EXIF-Orientierung realer Kamerafotos noch nicht praktisch abgenommen; explizite
-EXIF-Rotation ist aktuell nicht implementiert. Kein neues ZIP/Release/Hardwaretest.
-
+EXIF-Ausrichtung für optionale JPEG-Kartenbilder implementiert, einschließlich aller
+Spiegelungen. RGB-Pixel werden nach dem Laden normalisiert; bei Ausrichtung 5–8
+werden Breite/Höhe getauscht. Fehlende/unbekannte Orientierung bleibt unverändert.
+Quellbilder bleiben unverändert, Metadaten werden weiterhin nicht ins PDF eingebettet.
+59/59 Regressionstests bestanden (tmp/image-orientation-ci.log), einschließlich
+aller acht Pixelabbildungen. CLI-Build erfolgreich; WPF-Build nach SDK-Zugriffsfehler
+mit erforderlicher Sandbox-Eskalation erfolgreich (tmp/image-orientation-wpf-build.log).
+Isolierter Publish preview.9 unter artifacts/ui-orientation-check/Studio;
+WPF-Smoke OK (tmp/orientation-smoke/): tatsächlicher PNG-Import sowie synthetische
+JPEG-Dateien ohne/mit allen acht EXIF-Angaben, RGB-Ergebnis und Dateifreigabe geprüft.
+Native Dateidialoge und reale Kamerafotos bleiben praktisch abzunehmen.
+Kein neues ZIP/Release und keine Hardwareabnahme.
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes Bildorientierung und PDF-/UI-Randfälle abschließen, Gesamt-Funktionsabgleich und internes Testpaket vorbereiten.
+1. Als Nächstes Gesamt-Funktionsabgleich und PDF-/UI-Randfälle abschließen, internes Testpaket vorbereiten.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und

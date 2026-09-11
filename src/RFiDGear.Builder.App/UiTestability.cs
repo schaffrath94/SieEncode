@@ -296,6 +296,31 @@ public partial class MainWindow
                 File.Delete(imagePath);
                 if (picture.Width != 2 || picture.Height != 1 || !picture.Rgb.SequenceEqual(new byte[] { 255, 0, 0, 0, 0, 255 }))
                     throw new InvalidOperationException("Kartenbild verliert Farbe, Seitenverhältnis oder Freigabe der Quelldatei.");
+                var jpegPixels = new byte[32 * 16 * 3];
+                for (var i = 0; i < 32 * 16; i++)
+                {
+                    jpegPixels[i * 3] = (byte)(i % 32 * 8);
+                    jpegPixels[i * 3 + 1] = (byte)(i / 32 * 16);
+                }
+                var jpegSource = System.Windows.Media.Imaging.BitmapSource.Create(32, 16, 96, 96,
+                    System.Windows.Media.PixelFormats.Rgb24, null, jpegPixels, 32 * 3);
+                RFiDGear.Builder.RfPrj.CardReportImage? normalJpeg = null;
+                for (ushort orientation = 0; orientation <= 8; orientation++)
+                {
+                    var metadata = new System.Windows.Media.Imaging.BitmapMetadata("jpg");
+                    if (orientation > 0) metadata.SetQuery("/app1/ifd/{ushort=274}", orientation);
+                    var jpeg = new System.Windows.Media.Imaging.JpegBitmapEncoder { QualityLevel = 95 };
+                    jpeg.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(jpegSource, null, metadata, null));
+                    var jpegPath = Path.Combine(fixture, "synthetic-oriented.jpg");
+                    using (var imageStream = File.Create(jpegPath)) jpeg.Save(imageStream);
+                    var oriented = ComparisonReportOptionsDialog.LoadPicture(jpegPath, "Synthetic");
+                    File.Delete(jpegPath);
+                    normalJpeg ??= oriented;
+                    var expected = RFiDGear.Builder.RfPrj.CardReportImageOrientation.Apply(normalJpeg, orientation);
+                    if (oriented.Width != expected.Width || oriented.Height != expected.Height || !oriented.Rgb.SequenceEqual(expected.Rgb))
+                        throw new InvalidOperationException($"JPEG-EXIF-Ausrichtung {orientation} wurde nicht korrekt übernommen.");
+                }
+                checks.Add("Kartenbilder: PNG-Farben und JPEG-Import ohne/mit allen acht EXIF-Ausrichtungen geprüft.");
                 if (reportOptions.Documentation is not null) throw new InvalidOperationException("Optionale Dokumentation ist unerwartet vorausgewählt.");
                 if (reportOptions.Detail != RFiDGear.Builder.RfPrj.CardReportDetail.Full) throw new InvalidOperationException("Vollbericht-Standard fehlt.");
                 ((StackPanel)reportOptions.Content).Children.OfType<RadioButton>().Last().IsChecked = true;
