@@ -12,6 +12,7 @@ namespace RFiDGear.Builder.App;
 internal sealed class TeamVaultWindow : Window
 {
     private readonly TeamVaultRecipientStore store;
+    private readonly Func<IReadOnlyList<WindowsVaultIdentity>> loadIdentities;
     private readonly ObservableCollection<VaultRecipientChoice> recipients = [];
     private readonly ObservableCollection<WindowsVaultIdentity> identities = [];
     private readonly ListBox recipientList = new() { MinHeight = 135, DisplayMemberPath = nameof(VaultRecipientChoice.Label) };
@@ -19,9 +20,10 @@ internal sealed class TeamVaultWindow : Window
     private readonly TextBlock setupStatus = new() { TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.SemiBold };
     private readonly TextBlock identityFingerprint = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, FontFamily = new FontFamily("Consolas"), FontSize = 11 };
 
-    public TeamVaultWindow(Window owner, string projectsDirectory, bool initialSetup = false)
+    public TeamVaultWindow(Window owner, string projectsDirectory, bool initialSetup = false, Func<IReadOnlyList<WindowsVaultIdentity>>? identityProvider = null)
     {
         Owner = owner;
+        loadIdentities = identityProvider ?? WindowsVaultIdentityService.List;
         store = new TeamVaultRecipientStore(projectsDirectory);
         Title = initialSetup ? "Vault-Ersteinrichtung für mehrere Nutzer" : "Vault-Teamzugriff verwalten";
         Width = 780; MaxHeight = 760; SizeToContent = SizeToContent.Height;
@@ -69,6 +71,7 @@ internal sealed class TeamVaultWindow : Window
         footer.Children.Add(ActionButton("Abbrechen", (_, _) => DialogResult = false));
         footer.Children.Add(ActionButton("Einrichtung speichern", Save, true)); root.Children.Add(footer);
         Content = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = root };
+        MainWindow.InitializeAutomationContract(this, "TeamVault");
         UpdateStatus();
     }
 
@@ -93,7 +96,7 @@ internal sealed class TeamVaultWindow : Window
     private void ReloadIdentities()
     {
         foreach (var row in identities) row.Certificate.Dispose(); identities.Clear();
-        foreach (var row in WindowsVaultIdentityService.List()) identities.Add(row);
+        foreach (var row in loadIdentities()) identities.Add(row);
         identityList.SelectedIndex = identities.Count > 0 ? 0 : -1; UpdateStatus();
     }
 

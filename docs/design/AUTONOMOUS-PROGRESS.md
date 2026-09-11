@@ -16,23 +16,24 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Dynamische Dialoge für Application-Tiefenanalyse und Transponderformatierung
-scrollbar gemacht; Formatierwarnung bricht nun um. Beide erhalten eindeutige
-Automation-IDs. Bisherige Handler/Bestätigungen und Kartenlogik bleiben erhalten.
-Neuer WPF-Smoke löst tatsächliche Click-Ereignisse mit leerem Schlüssel aus:
-Validierung sichtbar, keine Kartenanforderung erzeugt. Bei 540x180 Inhaltsfläche
-ist die Aktionsleiste nach ScrollToEnd innerhalb des Viewports erreichbar.
-Publish preview.10 unter artifacts/ui-dialog-check/Studio erfolgreich
-(tmp/dialog-publish.log); vollständiger WPF-Smoke OK (tmp/dialog-smoke/),
-einschließlich bestehender Modus-/Navigations-/Projektprüfungen und Bildimport.
-Preview enthält jetzt auch Sollreport-Scope-Korrektur f3cbc6b. Kein ZIP/Release.
-61 Regressionstests zuletzt im vorigen Abschnitt bestanden; für reine WPF-Änderung
-gezielt Publish und erweiterten UI-Smoke ausgeführt. Reale DPI-/Hardwareabnahme offen.
-Von den 12 historischen dynamischen Bindungen wurden hier die zwei Start-/Vorbereitungs-
-Callbacks praktisch negativ geprüft; Cancel, Team-/Vaultaktionen und übrige Bindungen
-benötigen noch gezielte Bediennachweise. Kein vollständiger Paritätsabschluss.
+Projekt-Vaultdialog scrollbar und vergrößerbar gemacht (max. Ausgangshöhe 760).
+Team-/Vaultdialoge erhalten eindeutige Automation-IDs. Optionaler interner
+Identitätsprovider ermöglicht isolierte UI-Tests; Produktion nutzt unverändert
+den WindowsVaultIdentityService. Tests greifen nicht auf den Zertifikatsspeicher zu.
+Synthetische RSA-3072-Einladung in temporärer Teamliste: tatsächliche Entfernen-
+Clicks in beiden Dialogen geprüft; gespeicherte Liste unverändert, keine Freigabe
+ohne Bestätigung. Aktionsleisten bei 640x220 Inhaltsfläche nach Scrollen erreichbar.
+Expertennavigation Profile/Taskplan/Vergleich/Abnahme über echte Click-Ereignisse
+und sichtbare Vorfahren geprüft, Zielseite jeweils korrekt.
+Publish preview.11 unter artifacts/ui-vault-check/Studio erfolgreich; vollständiger
+WPF-Smoke OK (tmp/vault-ui-smoke/). Testfixture zunächst wegen RSA-2048 korrekt
+abgewiesen, auf vorgeschriebene 3072 Bit korrigiert; keine Sicherheitsregel geändert.
+61 Regressionstests zuletzt bestanden; hier nur relevante WPF-Prüfung wiederholt.
+Offen: positive Import-/Export-/Speicherdialoge, Cancel, Identitätsauswahl und übrige
+dynamische Editorbindungen sowie reale DPI-/Hardware-/Zweitbenutzerabnahme.
+Kein ZIP/Release; nächstes internes Paket auf aktuellem Softwarestand vorbereiten.
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes verbleibende dynamische Team-/Vaultbindungen und Experten-Navigationszugänge gezielt prüfen; internes Testpaket vorbereiten.
+1. Als Nächstes verbleibende dynamische Editorbindungen und Abbruchpfade gezielt prüfen; aktuelles internes Testpaket vorbereiten.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und

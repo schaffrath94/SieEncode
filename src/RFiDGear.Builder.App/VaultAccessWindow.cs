@@ -21,6 +21,7 @@ internal sealed class VaultRecipientChoice : IDisposable
 
 internal sealed class VaultAccessWindow : Window
 {
+    private readonly Func<IReadOnlyList<WindowsVaultIdentity>> loadIdentities;
     private readonly ObservableCollection<VaultRecipientChoice> recipients = [];
     private readonly ObservableCollection<WindowsVaultIdentity> identities = [];
     private readonly ListBox recipientList = new() { MinHeight = 150, DisplayMemberPath = nameof(VaultRecipientChoice.Label) };
@@ -29,10 +30,11 @@ internal sealed class VaultAccessWindow : Window
     private readonly PasswordBox confirmation = new() { MinWidth = 360 };
     private IReadOnlyList<(X509Certificate2 Certificate, string DisplayName)> acceptedRecipients = [];
 
-    public VaultAccessWindow(Window owner, KeyVaultDocument? existing = null, IEnumerable<VaultRecipientInvitation>? teamRecipients = null)
+    public VaultAccessWindow(Window owner, KeyVaultDocument? existing = null, IEnumerable<VaultRecipientInvitation>? teamRecipients = null, Func<IReadOnlyList<WindowsVaultIdentity>>? identityProvider = null)
     {
-        Owner = owner; Title = "Vault-Zugriff für mehrere Benutzer"; Width = 680; SizeToContent = SizeToContent.Height;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner; ResizeMode = ResizeMode.NoResize;
+        loadIdentities = identityProvider ?? WindowsVaultIdentityService.List;
+        Owner = owner; Title = "Vault-Zugriff für mehrere Benutzer"; Width = 680; MaxHeight = 760; SizeToContent = SizeToContent.Height;
+        WindowStartupLocation = WindowStartupLocation.CenterOwner; ResizeMode = ResizeMode.CanResizeWithGrip;
         recipientList.ItemsSource = recipients; identityList.ItemsSource = identities;
         ReloadIdentities();
         if (existing is { Version: KeyVaultService.CertificateVersion })
@@ -69,7 +71,9 @@ internal sealed class VaultAccessWindow : Window
         var footer = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right };
         footer.Children.Add(Button("Abbrechen", (_, _) => { DialogResult = false; }));
         var save = Button("Vault sicher freigeben", (_, _) => Accept()); save.Style = (Style)FindResource("PrimaryButton"); save.IsDefault = true; footer.Children.Add(save);
-        root.Children.Add(footer); Content = root;
+        root.Children.Add(footer);
+        Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        MainWindow.InitializeAutomationContract(this, "VaultAccess");
     }
 
     public string RecoveryPassphrase => recovery.Password;
@@ -80,7 +84,7 @@ internal sealed class VaultAccessWindow : Window
     private void ReloadIdentities()
     {
         foreach (var row in identities) row.Certificate.Dispose(); identities.Clear();
-        foreach (var row in WindowsVaultIdentityService.List()) identities.Add(row);
+        foreach (var row in loadIdentities()) identities.Add(row);
         identityList.SelectedIndex = identities.Count > 0 ? 0 : -1;
     }
     private void CreateIdentity()

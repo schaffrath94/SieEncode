@@ -119,3 +119,16 @@ angezeigt, Request bleibt null. Die Aktionsleiste ist bei 540x180 Inhaltsfläche
 nach Scrollen erreichbar. Das ersetzt keine positive Hardwareausführung, Cancel-
 Abnahme, Prüfung der übrigen dynamischen Bindungen oder reale DPI-Abnahme.
 Nachweis: tmp/dialog-smoke/SieEncode/ui-smoke/ui-smoke-result.json (lokal).
+
+### Team-/Vaultdialoge und Expertennavigation – preview.11
+
+Synthetische öffentliche RSA-3072-Einladung, temporäre Teamliste, leerer interner
+Identitätsprovider: tatsächliche Entfernen-Clicks in TeamVaultWindow und
+VaultAccessWindow ändern nur den Entwurf. Gespeicherte Teamliste unverändert,
+keine bestätigten Empfänger ohne Freigabe. Beide Aktionsleisten bei 640x220
+Inhaltsfläche erreichbar, Automation-IDs eindeutig. Windows-Zertifikatsspeicher
+nicht verwendet. Expertenzugänge Profile/Taskplan/Vergleich/Abnahme über Click
+und sichtbare Vorfahren geprüft. Vollständiger WPF-Smoke bestanden:
+tmp/vault-ui-smoke/SieEncode/ui-smoke/ui-smoke-result.json (lokal).
+Positive Speicher-/Import-/Exportabläufe, Cancel, Identitätsauswahl und praktische
+Zweitbenutzer-/Hardwareabnahme bleiben offen; keine vollständige Paritätsfreigabe.

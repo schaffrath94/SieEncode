@@ -94,6 +94,8 @@ public partial class MainWindow
         VerifyPreflightPresentationContract(checks);
         VerifyNavigationContract(checks);
         VerifyDynamicCardDialogs(checks);
+        VerifyVaultDialogContract(checks);
+        VerifyExpertNavigationClicks(checks);
         VerifyWorkspaceStateContract(checks);
         VerifyConstrainedLayoutContract(checks);
         VerifyIsolatedProjectFlows(checks);
