@@ -47,6 +47,10 @@ public partial class MainWindow
                     var bottom = save.TranslatePoint(new Point(0, save.ActualHeight), scroll).Y;
                     if (scroll.ScrollableHeight <= 0 || bottom <= 0 || bottom > scroll.ActualHeight + 1)
                         throw new InvalidOperationException("Vault-Aktionsleiste ist im kurzen Fenster nicht erreichbar.");
+                    VerifyCancelClick(dialog);
+                    if (!File.ReadAllBytes(store.Path).SequenceEqual(original) ||
+                        dialog is VaultAccessWindow cancelled && cancelled.TakeRecipients().Count != 0)
+                        throw new InvalidOperationException("Abbrechen speichert oder bestätigt den Vault-Entwurf.");
                 }
                 finally { dialog.Close(); }
             }
@@ -76,5 +80,44 @@ public partial class MainWindow
             checks.Add("Expertennavigation: Profile, Taskplan, Vergleich und Abnahme über tatsächliche Button-Clicks und sichtbare Vorfahren geprüft.");
         }
         finally { settings.ExpertMode = originalMode; ApplyOperatingMode(); Navigate(originalPage, false); }
+    }
+
+    private static void VerifyCancelClick(Window dialog)
+    {
+        var cancel = DescendantsAndSelf(dialog).OfType<Button>().Single(button => button.Content.ToString() == "Abbrechen");
+        if (!cancel.IsCancel) throw new InvalidOperationException("Escape-Zuordnung fehlt: " + dialog.Title);
+        dialog.Opacity = 0; dialog.ShowInTaskbar = false; dialog.ShowActivated = false;
+        var timedOut = false;
+        var timeout = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        timeout.Tick += (_, _) => { timedOut = true; dialog.Close(); };
+        dialog.Loaded += (_, _) => dialog.Dispatcher.BeginInvoke(new Action(() => cancel.RaiseEvent(new RoutedEventArgs(Button.ClickEvent))));
+        timeout.Start();
+        try
+        {
+            if (dialog.ShowDialog() != false || timedOut)
+                throw new InvalidOperationException("Abbrechen schließt den Dialog nicht ohne Freigabe: " + dialog.Title);
+        }
+        finally { timeout.Stop(); }
+    }
+
+    private void VerifyPiccFlagBindings(List<string> checks)
+    {
+        var controls = new[] { editorPiccChangeMasterKey, editorPiccListApplications, editorPiccCreateDelete, editorPiccConfigurationChange };
+        var original = Convert.ToInt32(editorProject!.Productive.PiccKeySettings, 16);
+        for (var index = 0; index < controls.Length; index++)
+        {
+            var control = controls[index];
+            var initial = control.IsChecked == true;
+            foreach (var value in new[] { !initial, initial })
+            {
+                editorKeysPersisted = true; editorVaultVerified = true; editorDirty = false;
+                control.IsChecked = value;
+                var expected = value ? original | (1 << index) : original & ~(1 << index);
+                if (Convert.ToInt32(editorProject.Productive.PiccKeySettings, 16) != expected ||
+                    !editorDirty || editorKeysPersisted || editorVaultVerified)
+                    throw new InvalidOperationException("Dynamische PICC-Rechteänderung verliert Modell- oder Vault-Prüfstatus.");
+            }
+        }
+        checks.Add("PICC-Editor: alle vier Checked-/Unchecked-Bindungen aktualisieren Modell, Änderungsmarkierung und Vault-Prüfstatus.");
     }
 }

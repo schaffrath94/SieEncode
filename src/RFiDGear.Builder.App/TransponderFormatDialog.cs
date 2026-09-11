@@ -36,7 +36,7 @@ public sealed class TransponderFormatDialog : Window
         root.Children.Add(keyValue);
         root.Children.Add(validation);
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 18, 0, 0) };
-        var cancel = new Button { Content = "Abbrechen", MinWidth = 100, Margin = new Thickness(4) };
+        var cancel = new Button { Content = "Abbrechen", IsCancel = true, MinWidth = 100, Margin = new Thickness(4) };
         cancel.Click += (_, _) => DialogResult = false;
         var confirm = new Button { Content = "Formatierung vorbereiten", MinWidth = 170, Margin = new Thickness(4), FontWeight = FontWeights.SemiBold };
         confirm.Click += (_, _) => Confirm();

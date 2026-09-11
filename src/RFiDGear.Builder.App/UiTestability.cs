@@ -158,6 +158,10 @@ public partial class MainWindow
                 var bottom = action.TranslatePoint(new Point(0, action.ActualHeight), scroll).Y;
                 if (bottom > scroll.ActualHeight + 1 || bottom <= 0)
                     throw new InvalidOperationException("Dialogaktion ist nach Scrollen nicht im sichtbaren Bereich.");
+                VerifyCancelClick(dialog);
+                if (dialog is ApplicationInspectionDialog cancelledInspection && cancelledInspection.Request is not null ||
+                    dialog is TransponderFormatDialog cancelledFormat && cancelledFormat.Request is not null)
+                    throw new InvalidOperationException("Abbrechen erzeugt eine Kartenanforderung.");
             }
             finally { dialog.Close(); }
         }
@@ -467,6 +471,7 @@ public partial class MainWindow
             ProjectJson.Save(collisionPath, ProjectJson.WithoutProductiveSecrets(collisionProject));
             var collisionBefore = File.ReadAllBytes(collisionPath);
             LoadEditor(ProjectDraftFactory.Create(library, collisionName), "");
+            VerifyPiccFlagBindings(checks);
             var collisionRejected = false;
             try { SaveEditorProject(saveAs: false); }
             catch (InvalidOperationException exception) when (exception.Message.Contains("niemals still überschrieben", StringComparison.Ordinal)) { collisionRejected = true; }

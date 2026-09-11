@@ -80,7 +80,7 @@ internal sealed class VaultAccessWindow : Window
     public IReadOnlyList<(X509Certificate2 Certificate, string DisplayName)> TakeRecipients()
         => acceptedRecipients;
 
-    private static Button Button(string text, RoutedEventHandler click) { var button = new Button { Content = text }; button.Click += click; return button; }
+    private static Button Button(string text, RoutedEventHandler click) { var button = new Button { Content = text, IsCancel = text == "Abbrechen" }; button.Click += click; return button; }
     private void ReloadIdentities()
     {
         foreach (var row in identities) row.Certificate.Dispose(); identities.Clear();

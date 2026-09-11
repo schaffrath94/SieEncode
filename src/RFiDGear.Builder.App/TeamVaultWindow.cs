@@ -88,7 +88,7 @@ internal sealed class TeamVaultWindow : Window
 
     private Button ActionButton(string text, RoutedEventHandler click, bool primary = false)
     {
-        var button = new Button { Content = text }; button.Click += click;
+        var button = new Button { Content = text, IsCancel = text == "Abbrechen" }; button.Click += click;
         if (primary && Application.Current.TryFindResource("PrimaryButton") is Style style) button.Style = style;
         return button;
     }

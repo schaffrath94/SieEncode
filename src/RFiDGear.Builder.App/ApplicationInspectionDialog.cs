@@ -42,7 +42,7 @@ public sealed class ApplicationInspectionDialog : Window
         root.Children.Add(Label("Application-/Leseschlüssel (Hex)", new Thickness(0, 10, 0, 0))); root.Children.Add(keyValue);
         root.Children.Add(readContent); root.Children.Add(validation);
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 18, 0, 0) };
-        var cancel = new Button { Content = "Abbrechen", MinWidth = 100, Margin = new Thickness(4) }; cancel.Click += (_, _) => DialogResult = false;
+        var cancel = new Button { Content = "Abbrechen", IsCancel = true, MinWidth = 100, Margin = new Thickness(4) }; cancel.Click += (_, _) => DialogResult = false;
         var start = new Button { Content = "Nur-Lese-Analyse starten", MinWidth = 190, Margin = new Thickness(4), FontWeight = FontWeights.SemiBold }; start.Click += (_, _) => Confirm();
         buttons.Children.Add(cancel); buttons.Children.Add(start); root.Children.Add(buttons);
         Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
