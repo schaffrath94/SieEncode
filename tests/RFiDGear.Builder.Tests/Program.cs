@@ -49,6 +49,7 @@ var tests = new (string Name, Action Run)[]
     ("Project validation and secret sanitizing", TestProject),
     ("Key-free multipage PDF card report", TestCardReportPdf),
     ("Full target report preserves long payloads and fields", TestFullTargetReport),
+    ("Target report respects production variable scopes and validation", TestTargetReportVariableScopes),
     ("Optional PDF documentation is explicit and paginated", TestReportDocumentation),
     ("Optional PDF card images preserve RGB and validate dimensions", TestReportImages),
     ("Card images normalize all eight EXIF orientations", TestReportImageOrientation),
@@ -683,6 +684,33 @@ static void TestReportDocumentation()
         Assert(!System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(Path.Combine(root, "plain.pdf"))).Contains("Unterschrift"), "Unselected signature block must be absent.");
     }
     finally { Directory.Delete(root, true); }
+}
+
+static void TestTargetReportVariableScopes()
+{
+    var definition = new ProfileDefinition
+    {
+        Profile = new ProfileMetadata { Id = "SYNTH-SCOPES", Kind = "base" },
+        Variables = [new VariableDefinition { Id = "serial", Scope = "card", Required = true },
+            new VariableDefinition { Id = "site", Scope = "project", Required = true, Type = "digits", Length = 2, Default = "42" }],
+        Applications = [new ApplicationDefinition { Id = "A1B2C3", Files = [
+            new FileDefinition { Id = 1, Size = 2, Coding = new CodingDefinition { Output = "card.hex", Recipe = [new RecipeStep { Op = "asciiDigits", Source = "serial", Width = 2 }] } },
+            new FileDefinition { Id = 2, Size = 2, Coding = new CodingDefinition { Output = "site.hex", Recipe = [new RecipeStep { Op = "asciiDigits", Source = "site", Width = 2 }] } },
+            new FileDefinition { Id = 3, Size = 1, Coding = new CodingDefinition { Output = "fixed.hex", Recipe = [new RecipeStep { Op = "fixedHex", Value = "AA" }] } }
+        ] }]
+    };
+    var project = new ProjectDefinition { Profiles = new ProfileSelection { Base = "SYNTH-SCOPES" },
+        Values = new Dictionary<string, string> { ["serial"] = "99", ["site"] = "" } };
+    var analysis = new ProjectAnalysisReport { Applications = [new ProjectAnalysisApplication("A1B2C3", "Synthetic", "AES", 1, "0B", "0F", "",
+        Enumerable.Range(1, 3).Select(id => new ProjectAnalysisFile(id, "File", "StdDataFile", 2, "CM_PLAIN", "", null, "", "")).ToArray())] };
+    var report = new CardReportFactory().FromProject(project, analysis, "synthetic", ProfileLibrary.FromProfiles([definition]));
+    var files = report.Applications.Single().Files;
+    Assert(files[0].HexDump.StartsWith("nicht verfuegbar"), "Project value must not substitute missing card input.");
+    Assert(files[1].HexDump == "34 32", "Empty project value uses the production default.");
+    Assert(files[2].HexDump == "AA", "Missing unrelated card input must not hide fixed payloads.");
+    project.Values["site"] = "4";
+    report = new CardReportFactory().FromProject(project, analysis, "synthetic", ProfileLibrary.FromProfiles([definition]));
+    Assert(report.Applications[0].Files[1].HexDump.StartsWith("nicht verfuegbar"), "Invalid values must not produce expected bytes.");
 }
 
 static void TestFullTargetReport()

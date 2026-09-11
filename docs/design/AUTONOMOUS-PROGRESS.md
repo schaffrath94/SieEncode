@@ -12,22 +12,21 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 59 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 60 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-EXIF-Ausrichtung für optionale JPEG-Kartenbilder implementiert, einschließlich aller
-Spiegelungen. RGB-Pixel werden nach dem Laden normalisiert; bei Ausrichtung 5–8
-werden Breite/Höhe getauscht. Fehlende/unbekannte Orientierung bleibt unverändert.
-Quellbilder bleiben unverändert, Metadaten werden weiterhin nicht ins PDF eingebettet.
-59/59 Regressionstests bestanden (tmp/image-orientation-ci.log), einschließlich
-aller acht Pixelabbildungen. CLI-Build erfolgreich; WPF-Build nach SDK-Zugriffsfehler
-mit erforderlicher Sandbox-Eskalation erfolgreich (tmp/image-orientation-wpf-build.log).
-Isolierter Publish preview.9 unter artifacts/ui-orientation-check/Studio;
-WPF-Smoke OK (tmp/orientation-smoke/): tatsächlicher PNG-Import sowie synthetische
-JPEG-Dateien ohne/mit allen acht EXIF-Angaben, RGB-Ergebnis und Dateifreigabe geprüft.
-Native Dateidialoge und reale Kamerafotos bleiben praktisch abzunehmen.
-Kein neues ZIP/Release und keine Hardwareabnahme.
+Sollreport-Payloaderzeugung an die produktive Variablenauswertung angeglichen.
+Projektwerte können fehlende kartenspezifische Werte nicht mehr versehentlich ersetzen.
+Leere Werte verwenden Profildefaults; Typ-/Längenregeln werden vor Erzeugung geprüft.
+Auswertung je Datei: fehlende Kartenwerte verbergen keine unabhängigen festen Inhalte.
+Nicht erzeugbare Bytes sind als nicht verfügbar mit Rezept-/Wertehinweis markiert.
+60/60 Regressionstests bestanden (tmp/target-scope-tests.log), Testbuild fehlerfrei
+(tmp/target-scope-build.log). Neuer Test prüft getrennte Scopes, Default bei leerem
+Projektwert, unabhängige feste Datei und Ablehnung einer falschen Variablenlänge.
+Keine Layoutänderung und kein neues Testpaket. Letzte isolierte UI bleibt preview.9
+(40276f2, EXIF-Ausrichtung und WPF-Smoke geprüft); diese Korrektur ist dort noch nicht
+enthalten. Hardware-/Zweitbenutzer-Abnahme und native Dateidialoge bleiben offen.
 ## Nächster Abschnitt - tatsächlich implementieren
 1. Als Nächstes Gesamt-Funktionsabgleich und PDF-/UI-Randfälle abschließen, internes Testpaket vorbereiten.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.

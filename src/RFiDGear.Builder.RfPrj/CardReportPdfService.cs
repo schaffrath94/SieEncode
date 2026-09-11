@@ -79,8 +79,8 @@ public sealed class CardReportFactory
                 file.Id, file.Name, file.Type, file.Size, file.Communication, file.Access,
                 file.CreationSettings ?? "identisch zum Endzustand", file.Initialization,
                 string.IsNullOrWhiteSpace(file.CodingOutput) ? "keine Kodierausgabe" : file.CodingOutput,
-                payloads.TryGetValue((application.Aid, file.Id), out var bytes) ? HexDump(bytes) : "nicht verfuegbar - variable Kartendaten fehlen",
-                payloads.TryGetValue((application.Aid, file.Id), out bytes) ? AsciiDump(bytes) : "nicht verfuegbar - variable Kartendaten fehlen")).ToArray())).ToArray();
+                payloads.TryGetValue((application.Aid, file.Id), out var bytes) ? HexDump(bytes) : "nicht verfuegbar - Rezept oder erforderliche Projekt-/Kartenwerte prüfen",
+                payloads.TryGetValue((application.Aid, file.Id), out bytes) ? AsciiDump(bytes) : "nicht verfuegbar - Rezept oder erforderliche Projekt-/Kartenwerte prüfen")).ToArray())).ToArray();
         return new CardReport("1.0", "project-plan", "SieEncode Kartenreport", project.Project.Name,
             ParseGeneratedAt(analysis.GeneratedAt), source, general, fields, applications, analysis.Issues);
     }
@@ -96,14 +96,19 @@ public sealed class CardReportFactory
         try
         {
             var composition = library.Compose(project.Profiles.Base, project.Profiles.Customers);
-            var values = composition.Variables.ToDictionary(variable => variable.Id,
-                variable => project.Values.GetValueOrDefault(variable.Id, variable.Default ?? ""), StringComparer.Ordinal);
             foreach (var application in composition.Applications)
             {
                 var aid = ProfileValidator.NormalizeAid(application.Id);
                 foreach (var file in application.Files.Where(file => file.Coding is not null))
                 {
-                    try { result[(aid, file.Id)] = PayloadEngine.Build(file, values, aid); }
+                    try
+                    {
+                        var sources = file.Coding!.Recipe.Where(step => step.Source is not null).Select(step => step.Source!).ToHashSet(StringComparer.Ordinal);
+                        var scoped = new ComposedProfiles(composition.Profiles,
+                            [new ApplicationDefinition { Id = application.Id, Files = [file] }],
+                            composition.Variables.Where(variable => sources.Contains(variable.Id)).ToArray());
+                        result[(aid, file.Id)] = PayloadEngine.BuildAll(scoped, project.Values, new Dictionary<string, string>()).Single().Bytes;
+                    }
                     catch (InvalidDataException) { /* Kartendaten werden erst in der Kodierstation erhoben. */ }
                 }
             }
