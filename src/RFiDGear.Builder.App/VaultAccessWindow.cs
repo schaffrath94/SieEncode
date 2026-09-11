@@ -81,10 +81,16 @@ internal sealed class VaultAccessWindow : Window
         => acceptedRecipients;
 
     private static Button Button(string text, RoutedEventHandler click) { var button = new Button { Content = text, IsCancel = text == "Abbrechen" }; button.Click += click; return button; }
-    private void ReloadIdentities()
+    internal void ReloadIdentities()
     {
-        foreach (var row in identities) row.Certificate.Dispose(); identities.Clear();
+        // Drop the selected certificate before releasing its native handle.
+        identityList.SelectedItem = null;
+        identityList.ItemsSource = null;
+        var previous = identities.ToArray();
+        identities.Clear();
+        foreach (var row in previous) row.Certificate.Dispose();
         foreach (var row in loadIdentities()) identities.Add(row);
+        identityList.ItemsSource = identities;
         identityList.SelectedIndex = identities.Count > 0 ? 0 : -1;
     }
     private void CreateIdentity()

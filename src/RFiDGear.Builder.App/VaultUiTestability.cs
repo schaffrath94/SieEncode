@@ -54,6 +54,65 @@ public partial class MainWindow
                 }
                 finally { dialog.Close(); }
             }
+            using var ownCertificate = new X509Certificate2(certificate);
+            IReadOnlyList<WindowsVaultIdentity> OwnIdentity() => [new("Synthetic UI Recipient", CertificateVaultService.Fingerprint(ownCertificate), new X509Certificate2(ownCertificate))];
+            var conflicting = new TeamVaultWindow(this, fixture, identityProvider: OwnIdentity);
+            try
+            {
+                var add = DescendantsAndSelf(conflicting).OfType<Button>().Single(button => button.Content.ToString() == "Eigene Identität zum Team hinzufügen");
+                for (var attempt = 0; attempt < 3; attempt++)
+                {
+                    conflicting.ReloadIdentities();
+                    add.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                }
+                var identity = (WindowsVaultIdentity)DescendantsAndSelf(conflicting).OfType<ComboBox>().Single().SelectedItem;
+                if (identity.Certificate.RawData.Length == 0 || DescendantsAndSelf(conflicting).OfType<ListBox>().Single().Items.Count != 1 ||
+                    DescendantsAndSelf(conflicting).OfType<TextBlock>().Any(text => text.Text.Contains("Aktion nicht abgeschlossen", StringComparison.Ordinal)))
+                    throw new InvalidOperationException("Wiederholtes Hinzufügen beschädigt die ausgewählte Identität.");
+                store.Save([CertificateVaultService.ExportInvitation(certificate, "Changed by another user")]);
+                var changedBytes = File.ReadAllBytes(store.Path);
+                var save = DescendantsAndSelf(conflicting).OfType<Button>().Single(button => button.Content.ToString() == "Einrichtung speichern");
+                save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                if (conflicting.DialogResult is not null || !File.ReadAllBytes(store.Path).SequenceEqual(changedBytes) ||
+                    !DescendantsAndSelf(conflicting).OfType<TextBlock>().Any(text => text.Text.Contains("nicht überschrieben", StringComparison.Ordinal)))
+                    throw new InvalidOperationException("Team-Speicherkonflikt wird nicht ohne Überschreiben im Dialog angezeigt.");
+            }
+            finally { conflicting.Close(); }
+            var accessReload = new VaultAccessWindow(this, teamRecipients: [invitation], identityProvider: OwnIdentity);
+            try
+            {
+                var add = DescendantsAndSelf(accessReload).OfType<Button>().Single(button => button.Content.ToString() == "Zur Empfängerliste hinzufügen");
+                for (var attempt = 0; attempt < 3; attempt++)
+                {
+                    accessReload.ReloadIdentities();
+                    add.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    var selected = (WindowsVaultIdentity)DescendantsAndSelf(accessReload).OfType<ComboBox>().Single().SelectedItem;
+                    if (selected.Certificate.RawData.Length == 0 || DescendantsAndSelf(accessReload).OfType<ListBox>().Single().Items.Count != 1)
+                        throw new InvalidOperationException("Projekt-Vault verliert Identitätsauswahl beim Neuladen.");
+                }
+            }
+            finally { accessReload.Close(); }
+            var reopened = new TeamVaultWindow(this, fixture, identityProvider: OwnIdentity);
+            try
+            {
+                reopened.Opacity = 0; reopened.ShowInTaskbar = false; reopened.ShowActivated = false;
+                var timedOut = false;
+                var timeout = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+                timeout.Tick += (_, _) => { timedOut = true; reopened.Close(); };
+                reopened.Loaded += (_, _) => reopened.Dispatcher.BeginInvoke(new Action(() =>
+                    DescendantsAndSelf(reopened).OfType<Button>().Single(button => button.Content.ToString() == "Einrichtung speichern")
+                        .RaiseEvent(new RoutedEventArgs(Button.ClickEvent))));
+                timeout.Start();
+                try
+                {
+                    if (reopened.ShowDialog() != true || timedOut || new TeamVaultRecipientStore(fixture).Load().Recipients.Count != 1)
+                        throw new InvalidOperationException("Erneut geöffnete Teamliste lässt sich nicht sicher speichern.");
+                }
+                finally { timeout.Stop(); }
+            }
+            finally { reopened.Close(); }
+            checks.Add("Team-Speicherung: konkurrierende Änderung bleibt erhalten, Fehler im Dialog sichtbar; erneutes Öffnen und Speichern synthetisch erfolgreich.");
+            checks.Add("Vault-Identitätsauswahl: dreifaches Neuladen/Hinzufügen in beiden Dialogen erhält gültige Zertifikatshandles ohne doppelte Empfänger.");
             checks.Add("Team-/Vaultdialoge: synthetische Empfänger per Click entfernt, Entwurf nicht gespeichert/freigegeben, Aktionsleiste scrollbar; Windows-Zertifikatsspeicher nicht verwendet.");
         }
         finally { Directory.Delete(fixture, true); }

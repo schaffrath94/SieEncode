@@ -18,6 +18,7 @@ internal sealed class TeamVaultWindow : Window
     private readonly ListBox recipientList = new() { MinHeight = 135, DisplayMemberPath = nameof(VaultRecipientChoice.Label) };
     private readonly ComboBox identityList = new() { MinWidth = 390, DisplayMemberPath = nameof(WindowsVaultIdentity.DisplayName) };
     private readonly TextBlock setupStatus = new() { TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.SemiBold };
+    private readonly TextBlock actionError = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.Firebrick };
     private readonly TextBlock identityFingerprint = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, FontFamily = new FontFamily("Consolas"), FontSize = 11 };
 
     public TeamVaultWindow(Window owner, string projectsDirectory, bool initialSetup = false, Func<IReadOnlyList<WindowsVaultIdentity>>? identityProvider = null)
@@ -67,6 +68,7 @@ internal sealed class TeamVaultWindow : Window
         saveContent.Children.Add(new TextBlock { Text = "Das Entfernen eines Mitglieds wirkt nicht rückwirkend auf bereits erzeugte Vaults. Diese müssen zur Sperrung neu verschlüsselt und gespeichert werden.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DarkGoldenrod, Margin = new Thickness(0, 7, 0, 0) });
         root.Children.Add(Step("4", "Gemeinsame Liste speichern", $"Speicherort: {store.Path}", saveContent));
 
+        root.Children.Add(actionError);
         var footer = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 12, 0, 0) };
         footer.Children.Add(ActionButton("Abbrechen", (_, _) => DialogResult = false));
         footer.Children.Add(ActionButton("Einrichtung speichern", Save, true)); root.Children.Add(footer);
@@ -88,15 +90,33 @@ internal sealed class TeamVaultWindow : Window
 
     private Button ActionButton(string text, RoutedEventHandler click, bool primary = false)
     {
-        var button = new Button { Content = text, IsCancel = text == "Abbrechen" }; button.Click += click;
+        var button = new Button { Content = text, IsCancel = text == "Abbrechen" };
+        button.Click += (sender, e) =>
+        {
+            actionError.Text = "";
+            try { click(sender, e); }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or System.Security.Cryptography.CryptographicException or ArgumentException or InvalidOperationException)
+            {
+                actionError.Text = exception is ConcurrentFileChangeException
+                    ? "Die Teamliste wurde zwischenzeitlich geändert und nicht überschrieben. Bitte diesen Dialog schließen, erneut öffnen und die aktuelle Liste prüfen."
+                    : $"Aktion nicht abgeschlossen: {exception.Message}";
+                actionError.BringIntoView();
+            }
+        };
         if (primary && Application.Current.TryFindResource("PrimaryButton") is Style style) button.Style = style;
         return button;
     }
 
-    private void ReloadIdentities()
+    internal void ReloadIdentities()
     {
-        foreach (var row in identities) row.Certificate.Dispose(); identities.Clear();
+        // Detach selection before disposing: equal replacement records can retain a stale SelectedItem.
+        identityList.SelectedItem = null;
+        identityList.ItemsSource = null;
+        var previous = identities.ToArray();
+        identities.Clear();
+        foreach (var row in previous) row.Certificate.Dispose();
         foreach (var row in loadIdentities()) identities.Add(row);
+        identityList.ItemsSource = identities;
         identityList.SelectedIndex = identities.Count > 0 ? 0 : -1; UpdateStatus();
     }
 
