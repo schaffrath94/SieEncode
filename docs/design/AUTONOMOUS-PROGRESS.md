@@ -10,25 +10,27 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
 - Studio: codex/workspace-ui; drei Arbeitsbereiche, Anwendungskontext, Task- und Dateidetails.
 - Runtime: codex/upstream-key-context, c959bd4; selektiver Key-Kontext-Port,
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
-- UI-Paket: artifacts/SieEncode-UI-Test-20260911-win-x64.zip, 71.2 MiB,
+- UI-Paket: artifacts/SieEncode-UI-Test-preview13-win-x64.zip, ca. 71.2 MiB,
   494 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
 - Standard-Studio: 61 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-PICC-Editor: alle vier Checked-/Unchecked-Bindungen aktualisieren das Projektmodell
-und setzen Dirty-/Vaultprüfstatus korrekt. Abbrechen in vier Karten-/Vaultdialogen
-per modalem Click geprüft, keine Kartenanforderung/Empfängerfreigabe/Teamspeicherung.
-Escape-Zuordnung IsCancel ergänzt und geprüft; physische Escape-Taste nicht simuliert.
-Codecommit 24890cef51d8fa85e929bb6b5411b11b4b2bcec8.
-Internes UI-Testpaket preview.12 fertig: artifacts/SieEncode-UI-Test-20260911-win-x64.zip.
-74.629.192 Bytes; SHA256 9AF78E84666D2FE9BC317C86DC4A11BD50733901A6EC8B07C8DE441EC7F045F1.
-494 ZIP-Dateien gegen Manifest geprüft (+ Manifest selbst). Paket-EXE bestand den
-vollständigen WPF-Smoke (tmp/ui-package-smoke/); BUILD-IDENTITY und UI-SMOKE beiliegend.
-Anleitung, synthetisches Profil, .NET und Lizenzbeilagen enthalten. Keine RFID-Runtime,
-keine echten Vaults/Schlüssel/Kartendaten; keine RC15-Ersetzung oder Hardwarefreigabe.
-61 Regressionstests zuletzt bestanden; gezielt erweiterte WPF-Tests ausgeführt.
-
+Benutzer meldete Invalid Handle/Absturz bei Vault-Einrichtung/Speichern.
+Windows-Ereignis 1026 am 11.09.2026 15:23:23 lokal gelesen: CryptographicException
+m_safeCertContext is an invalid handle in TeamVaultWindow.AddSelectedIdentity/
+AddRecipient. Derselbe Fehler mit synthetischem Neuladen der Identitäten reproduziert.
+Ursache: ComboBox behält freigegebene Auswahl beim Austausch gleichwertiger Einträge.
+Beide Dialoge lösen nun Auswahl/ItemsSource vor Zertifikatsfreigabe und Neuaufbau.
+Team-Aktionsfehler werden im Dialog angezeigt; Konflikthinweis verlangt erneutes Öffnen.
+Quellcommit 8d89570. WPF-Smoke: dreimal Neuladen/Hinzufügen pro Dialog, keine ungültigen
+Handles/Dubletten; Konflikt überschreibt Teamliste nicht; erneutes Öffnen/Speichern OK.
+Windows-Speicher nur lesend geprüft: zwei gültige SieEncode-Zertifikate, nichts geändert,
+keine privaten Schlüssel exportiert. Alle Regressionen hierzu verwenden synthetische Daten.
+Korrigiertes Paket preview.13 erstellt, konkrete Paket-EXE bestand vollständigen
+WPF-Smoke (tmp/preview13-smoke/). Paketnachweis: UI-PREVIEW-PACKAGE-preview13.md.
+preview.12 wegen reproduziertem Vault-Fehler nicht mehr als aktuelle Empfehlung verwenden.
+Realer Benutzer-Bedienlauf mit preview.13 sowie Hardware-/Zweitbenutzerabnahme offen.
 ## Nächster Abschnitt - tatsächlich implementieren
 1. Verbleibende dynamische Dialoge gezielt prüfen: TextEntryPrompt/PassphrasePrompt
    (Bestätigen/Abbrechen), Identitätsauswahl und Statusaktualisierung mit synthetischen

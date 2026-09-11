@@ -143,3 +143,13 @@ Freigabe oder Teamspeicherung. IsCancel-Zuordnung geprüft; kein physischer Tast
 Paket-EXE aus Commit 24890ce bestand den vollständigen WPF-Smoke.
 TextEntryPrompt/PassphrasePrompt, Identitätsauswahl und positive Dateidialogabläufe
 bleiben offen. Paketnachweis: UI-PREVIEW-PACKAGE-2026-09-11.md.
+
+### Vault-Absturzkorrektur – preview.13
+
+Benutzermeldung durch Windows-Ereignis 1026 (Invalid Handle in AddSelectedIdentity)
+und synthetische Reproduktion bestätigt. Auswahl/ItemsSource werden in Team- und
+Projekt-Vault vor Freigabe der alten Zertifikate gelöst. Dreimaliges Neuladen und
+Hinzufügen pro Dialog bleibt gültig und ohne doppelte Empfänger. Team-Speicherkonflikt
+zeigt Fehler ohne Überschreiben; nach erneutem Öffnen ist Speichern erfolgreich.
+Paket-EXE-WPF-Smoke bestanden; keine echten Zertifikate/Vaults geändert.
+Positive Neuanlage einer Windows-Identität und Benutzer-Bedienabnahme weiter offen.
