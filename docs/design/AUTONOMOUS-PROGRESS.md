@@ -12,23 +12,23 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
 - UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
   492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 60 Regressionstests bestanden. Preview-Build nutzt
+- Standard-Studio: 61 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Sollreport-Payloaderzeugung an die produktive Variablenauswertung angeglichen.
-Projektwerte können fehlende kartenspezifische Werte nicht mehr versehentlich ersetzen.
-Leere Werte verwenden Profildefaults; Typ-/Längenregeln werden vor Erzeugung geprüft.
-Auswertung je Datei: fehlende Kartenwerte verbergen keine unabhängigen festen Inhalte.
-Nicht erzeugbare Bytes sind als nicht verfügbar mit Rezept-/Wertehinweis markiert.
-60/60 Regressionstests bestanden (tmp/target-scope-tests.log), Testbuild fehlerfrei
-(tmp/target-scope-build.log). Neuer Test prüft getrennte Scopes, Default bei leerem
-Projektwert, unabhängige feste Datei und Ablehnung einer falschen Variablenlänge.
-Keine Layoutänderung und kein neues Testpaket. Letzte isolierte UI bleibt preview.9
-(40276f2, EXIF-Ausrichtung und WPF-Smoke geprüft); diese Korrektur ist dort noch nicht
-enthalten. Hardware-/Zweitbenutzer-Abnahme und native Dateidialoge bleiben offen.
+RC15-XAML-Verdrahtung als Regressionstest in Test-CI.ps1/GitHub CI abgesichert:
+286 gespeicherte Flächen nach Typ, Name, Ereignissen und Dispatch-Tag verglichen.
+Drei bewusste Hauptnavigations-Zuordnungen Navigate_Click -> Workspace_Click
+explizit geprüft/dokumentiert (letzte Unterseite je Arbeitsbereich).
+Negative Kontrollen erkennen entfernte Click-Bindung, entferntes Feld und falschen
+Dispatch-Tag in Speicherkopien; keine Quell- oder Kundendaten dafür verändert.
+61/61 Tests bestanden (tmp/ui-wiring-tests.log), Build ohne Warnungen/Fehler
+(tmp/ui-wiring-build.log). Keine fehlenden XAML-Flächen nach diesen Zuordnungen.
+Dies ersetzt weder dynamische Bindungsprüfung noch praktische UI-/Hardwareabnahme.
+Kein Produktverhalten geändert, keine neue UI-Version/kein ZIP gebaut. Letzte UI
+bleibt preview.9; Sollreport-Scope-Korrektur f3cbc6b muss ins nächste Paket einfließen.
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes Gesamt-Funktionsabgleich und PDF-/UI-Randfälle abschließen, internes Testpaket vorbereiten.
+1. Als Nächstes dynamische Bindungen und Experten-Erreichbarkeit gezielt prüfen; internes Testpaket mit aktuellem Sollreport vorbereiten.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und

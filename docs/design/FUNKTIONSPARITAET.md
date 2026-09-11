@@ -86,6 +86,22 @@ Kontrollflussprüfungen, Keywechsel-/Recovery-Gates und unverändert schlüsself
 
 ## Werkzeuge
 
+Der Regressionstest `UiWiringParity.Verify` prüft zusätzlich alle 286 gespeicherten
+XAML-Flächen gegen die aktuellen Dateien: Elementtyp, vorhandenen Namen, jedes
+gespeicherte Ereignis und den Dispatch-Tag. Mehrfach vorhandene Aktionen werden
+einzeln gezählt. Beschriftungen und Anordnung dürfen sich ändern. Drei explizite
+Zuordnungen gelten in MainWindow.xaml: NavProjectsButton, NavStationButton und
+NavTestStationButton verwenden statt Navigate_Click jetzt Workspace_Click.
+Dieser ruft Navigate mit der letzten Unterseite des jeweiligen Arbeitsbereichs
+auf; der WPF-Smoke prüft den Erhalt von Verlauf und ungespeichertem Editor.
+Negative
+Kontrollen entfernen eine Click-Bindung/ein Feld oder ändern einen Dispatch-Tag
+in einer Speicherkopie; alle drei müssen erkannt werden. Der Test läuft durch
+`Test-CI.ps1` auch in GitHub CI, ohne Reader oder zusätzliche Python-Abhängigkeit.
+Stand 11.09.2026: keine fehlende XAML-Verdrahtung erkannt. Dies bestätigt weder
+Laufzeit-Sichtbarkeit/Erreichbarkeit noch dynamische Bindungen, Fachverhalten oder
+Hardwarefreigabe; dafür bleiben die Bedien- und Hardwareabnahmen erforderlich.
+
 `python tools/inventory_rc15.py --check` prüft die gespeicherte Inventur gegen
 den unveränderten Tag und meldet fehlende benannte UI-/CLI-/Start-Einstiege.
 Absichtliche Umbenennungen benötigen eine geprüfte Zuordnung; sie sind keine

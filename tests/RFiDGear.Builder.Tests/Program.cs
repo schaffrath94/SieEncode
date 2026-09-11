@@ -53,6 +53,7 @@ var tests = new (string Name, Action Run)[]
     ("Optional PDF documentation is explicit and paginated", TestReportDocumentation),
     ("Optional PDF card images preserve RGB and validate dimensions", TestReportImages),
     ("Card images normalize all eight EXIF orientations", TestReportImageOrientation),
+    ("RC15 XAML controls retain event wiring and dispatch targets", UiWiringParity.Verify),
     ("Project draft profile synchronization", TestProjectDraft),
     ("Managed multi-base profile library", TestManagedBaseProfiles),
     ("Pinned profile identity and version history", TestProfileBindingAndHistory),
