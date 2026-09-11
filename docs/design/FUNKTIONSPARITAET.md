@@ -109,3 +109,13 @@ automatische Freigabe. Dynamische Lambdaaktionen sind erfasst und manuell zu pr�
 
 Die Quellinventur ist kein Beleg für einen bitidentischen RC15-Neubau.
 Hardwaretests werden in diesem Konzeptschritt nicht gestartet.
+
+## Dynamische Kartendialoge – Softwarecheck 11.09.2026
+
+ApplicationInspectionDialog und TransponderFormatDialog besitzen Scrollzugang
+und eindeutige Automation-IDs. Der WPF-Smoke preview.10 prüft beide tatsächlichen
+Start-/Vorbereitungs-Clickbindungen mit leerer Schlüsseleingabe: Validierung wird
+angezeigt, Request bleibt null. Die Aktionsleiste ist bei 540x180 Inhaltsfläche
+nach Scrollen erreichbar. Das ersetzt keine positive Hardwareausführung, Cancel-
+Abnahme, Prüfung der übrigen dynamischen Bindungen oder reale DPI-Abnahme.
+Nachweis: tmp/dialog-smoke/SieEncode/ui-smoke/ui-smoke-result.json (lokal).

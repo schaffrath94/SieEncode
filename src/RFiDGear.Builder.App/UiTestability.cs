@@ -93,6 +93,7 @@ public partial class MainWindow
         VerifyOperatingModeContract(checks);
         VerifyPreflightPresentationContract(checks);
         VerifyNavigationContract(checks);
+        VerifyDynamicCardDialogs(checks);
         VerifyWorkspaceStateContract(checks);
         VerifyConstrainedLayoutContract(checks);
         VerifyIsolatedProjectFlows(checks);
@@ -123,6 +124,42 @@ public partial class MainWindow
     {
         var count = VerifyAutomationContract(this);
         checks.Add($"Automation-Vertrag: {count} interaktive Elemente vollständig und eindeutig adressierbar");
+    }
+
+    private static void VerifyDynamicCardDialogs(List<string> checks)
+    {
+        foreach (var dialog in new Window[] { new ApplicationInspectionDialog(["A1B2C3"]), new TransponderFormatDialog() })
+        {
+            try
+            {
+                VerifyAutomationContract(dialog);
+                var elements = DescendantsAndSelf(dialog).OfType<FrameworkElement>().ToArray();
+                var password = elements.OfType<PasswordBox>().Single();
+                password.Password = "";
+                var action = elements.OfType<Button>().Single(button => (string)button.Content != "Abbrechen");
+                action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                if (dialog is ApplicationInspectionDialog inspection && inspection.Request is not null ||
+                    dialog is TransponderFormatDialog format && format.Request is not null)
+                    throw new InvalidOperationException("Ungültige Dialogeingabe erzeugt eine Kartenanforderung.");
+                if (!elements.OfType<TextBlock>().Any(text => text.Text.Contains("Hex-Zeichen", StringComparison.Ordinal)))
+                    throw new InvalidOperationException("Dynamische Dialogaktion erreicht die Eingabeprüfung nicht.");
+                if (dialog.Content is not ScrollViewer scroll || scroll.VerticalScrollBarVisibility != ScrollBarVisibility.Auto)
+                    throw new InvalidOperationException("Dynamischer Kartendialog besitzt keinen vertikalen Scrollzugang.");
+                // Deliberately short viewport models the space remaining under display scaling.
+                scroll.Measure(new Size(540, 180));
+                scroll.Arrange(new Rect(0, 0, 540, 180));
+                scroll.UpdateLayout();
+                if (scroll.ScrollableHeight <= 0)
+                    throw new InvalidOperationException("Dialoginhalt ist im kleinen Fenster nicht scrollbar.");
+                scroll.ScrollToEnd();
+                scroll.UpdateLayout();
+                var bottom = action.TranslatePoint(new Point(0, action.ActualHeight), scroll).Y;
+                if (bottom > scroll.ActualHeight + 1 || bottom <= 0)
+                    throw new InvalidOperationException("Dialogaktion ist nach Scrollen nicht im sichtbaren Bereich.");
+            }
+            finally { dialog.Close(); }
+        }
+        checks.Add("Dynamische Kartendialoge: Automation-IDs, tatsächliche Click-Validierung ohne Kartenanforderung und scrollbare Aktionsleiste bei geringer Höhe geprüft.");
     }
 
     private void VerifyNavigationContract(List<string> checks)

@@ -16,19 +16,23 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-RC15-XAML-Verdrahtung als Regressionstest in Test-CI.ps1/GitHub CI abgesichert:
-286 gespeicherte Flächen nach Typ, Name, Ereignissen und Dispatch-Tag verglichen.
-Drei bewusste Hauptnavigations-Zuordnungen Navigate_Click -> Workspace_Click
-explizit geprüft/dokumentiert (letzte Unterseite je Arbeitsbereich).
-Negative Kontrollen erkennen entfernte Click-Bindung, entferntes Feld und falschen
-Dispatch-Tag in Speicherkopien; keine Quell- oder Kundendaten dafür verändert.
-61/61 Tests bestanden (tmp/ui-wiring-tests.log), Build ohne Warnungen/Fehler
-(tmp/ui-wiring-build.log). Keine fehlenden XAML-Flächen nach diesen Zuordnungen.
-Dies ersetzt weder dynamische Bindungsprüfung noch praktische UI-/Hardwareabnahme.
-Kein Produktverhalten geändert, keine neue UI-Version/kein ZIP gebaut. Letzte UI
-bleibt preview.9; Sollreport-Scope-Korrektur f3cbc6b muss ins nächste Paket einfließen.
+Dynamische Dialoge für Application-Tiefenanalyse und Transponderformatierung
+scrollbar gemacht; Formatierwarnung bricht nun um. Beide erhalten eindeutige
+Automation-IDs. Bisherige Handler/Bestätigungen und Kartenlogik bleiben erhalten.
+Neuer WPF-Smoke löst tatsächliche Click-Ereignisse mit leerem Schlüssel aus:
+Validierung sichtbar, keine Kartenanforderung erzeugt. Bei 540x180 Inhaltsfläche
+ist die Aktionsleiste nach ScrollToEnd innerhalb des Viewports erreichbar.
+Publish preview.10 unter artifacts/ui-dialog-check/Studio erfolgreich
+(tmp/dialog-publish.log); vollständiger WPF-Smoke OK (tmp/dialog-smoke/),
+einschließlich bestehender Modus-/Navigations-/Projektprüfungen und Bildimport.
+Preview enthält jetzt auch Sollreport-Scope-Korrektur f3cbc6b. Kein ZIP/Release.
+61 Regressionstests zuletzt im vorigen Abschnitt bestanden; für reine WPF-Änderung
+gezielt Publish und erweiterten UI-Smoke ausgeführt. Reale DPI-/Hardwareabnahme offen.
+Von den 12 historischen dynamischen Bindungen wurden hier die zwei Start-/Vorbereitungs-
+Callbacks praktisch negativ geprüft; Cancel, Team-/Vaultaktionen und übrige Bindungen
+benötigen noch gezielte Bediennachweise. Kein vollständiger Paritätsabschluss.
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes dynamische Bindungen und Experten-Erreichbarkeit gezielt prüfen; internes Testpaket mit aktuellem Sollreport vorbereiten.
+1. Als Nächstes verbleibende dynamische Team-/Vaultbindungen und Experten-Navigationszugänge gezielt prüfen; internes Testpaket vorbereiten.
    Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
    Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
    Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und
