@@ -132,3 +132,14 @@ und sichtbare Vorfahren geprüft. Vollständiger WPF-Smoke bestanden:
 tmp/vault-ui-smoke/SieEncode/ui-smoke/ui-smoke-result.json (lokal).
 Positive Speicher-/Import-/Exportabläufe, Cancel, Identitätsauswahl und praktische
 Zweitbenutzer-/Hardwareabnahme bleiben offen; keine vollständige Paritätsfreigabe.
+
+### Editorbindungen und Abbrechen – preview.12
+
+Alle vier PICC-Rechteschalter mit Checked und Unchecked am synthetischen Editor
+geprüft: Modell, Änderungsmarkierung und Zurücksetzen der Vaultprüfzustände.
+ApplicationInspectionDialog, TransponderFormatDialog, TeamVaultWindow und
+VaultAccessWindow modal geöffnet und über Abbrechen geschlossen: keine Anfrage,
+Freigabe oder Teamspeicherung. IsCancel-Zuordnung geprüft; kein physischer Tastentest.
+Paket-EXE aus Commit 24890ce bestand den vollständigen WPF-Smoke.
+TextEntryPrompt/PassphrasePrompt, Identitätsauswahl und positive Dateidialogabläufe
+bleiben offen. Paketnachweis: UI-PREVIEW-PACKAGE-2026-09-11.md.

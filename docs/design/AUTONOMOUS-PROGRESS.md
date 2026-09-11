@@ -10,47 +10,35 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
 - Studio: codex/workspace-ui; drei Arbeitsbereiche, Anwendungskontext, Task- und Dateidetails.
 - Runtime: codex/upstream-key-context, c959bd4; selektiver Key-Kontext-Port,
   193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
-- UI-Paket: artifacts/SieEncode-UI-Test-20260908-win-x64.zip, 88.1 MiB,
-  492 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
+- UI-Paket: artifacts/SieEncode-UI-Test-20260911-win-x64.zip, 71.2 MiB,
+  494 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
 - Standard-Studio: 61 Regressionstests bestanden. Preview-Build nutzt
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Projekt-Vaultdialog scrollbar und vergrößerbar gemacht (max. Ausgangshöhe 760).
-Team-/Vaultdialoge erhalten eindeutige Automation-IDs. Optionaler interner
-Identitätsprovider ermöglicht isolierte UI-Tests; Produktion nutzt unverändert
-den WindowsVaultIdentityService. Tests greifen nicht auf den Zertifikatsspeicher zu.
-Synthetische RSA-3072-Einladung in temporärer Teamliste: tatsächliche Entfernen-
-Clicks in beiden Dialogen geprüft; gespeicherte Liste unverändert, keine Freigabe
-ohne Bestätigung. Aktionsleisten bei 640x220 Inhaltsfläche nach Scrollen erreichbar.
-Expertennavigation Profile/Taskplan/Vergleich/Abnahme über echte Click-Ereignisse
-und sichtbare Vorfahren geprüft, Zielseite jeweils korrekt.
-Publish preview.11 unter artifacts/ui-vault-check/Studio erfolgreich; vollständiger
-WPF-Smoke OK (tmp/vault-ui-smoke/). Testfixture zunächst wegen RSA-2048 korrekt
-abgewiesen, auf vorgeschriebene 3072 Bit korrigiert; keine Sicherheitsregel geändert.
-61 Regressionstests zuletzt bestanden; hier nur relevante WPF-Prüfung wiederholt.
-Offen: positive Import-/Export-/Speicherdialoge, Cancel, Identitätsauswahl und übrige
-dynamische Editorbindungen sowie reale DPI-/Hardware-/Zweitbenutzerabnahme.
-Kein ZIP/Release; nächstes internes Paket auf aktuellem Softwarestand vorbereiten.
-## Nächster Abschnitt - tatsächlich implementieren
-1. Als Nächstes verbleibende dynamische Editorbindungen und Abbruchpfade gezielt prüfen; aktuelles internes Testpaket vorbereiten.
-   Metadatenvergleich separat nach Evidenzstatus; kein Zugriff ist keine Abweichung.
-   Neue UI-Zustände mit synthetischer Inventur im WPF-Bediencheck abdecken.
-   Expertenseiten der drei Arbeitsbereiche anhand FUNKTIONSPARITAET.md und
-   UI-PDF-KONZEPT.md ausarbeiten: vollständige Anwendungen/Dateirechte,
-   Schlüsselkontext, Datenrezepte, geordnete Taskpläne, detaillierte Istbefunde.
-   Vorhandene Editoren und Modelle erweitern; keine parallele zweite Fachlogik.
-2. Produktions-Berichtsdatenmodell für Soll, Ist und Vergleich; kein Zugriff,
-   nicht geprüft und Abweichung getrennt. Vollständige Rohdaten mit Pagination,
-   keine stille Kürzung, keine Schlüsselwerte. Kompakt/vollständig unabhängig
-   vom UI-Modus; optional Notizen/Bilder/Datum/Ort/Unterschrift.
-3. UI-Export integrieren, gezielte Regressionen und WPF-Smoke durchführen,
-   alle finalen PDF-Seiten rendern/prüfen, altes Funktionsangebot erhalten.
-4. Neues isoliertes internes Paket mit synthetischem Grundprofil, Identität,
-   Anleitung und Prüfsummen bauen; als nicht hardwareabgenommen kennzeichnen.
-5. Ergebnis liefern und Weiterarbeits-Automation pausieren. Bei tatsächlich
-   unauflösbarer Blockade ebenfalls pausieren statt endlos erneut prüfen.
+PICC-Editor: alle vier Checked-/Unchecked-Bindungen aktualisieren das Projektmodell
+und setzen Dirty-/Vaultprüfstatus korrekt. Abbrechen in vier Karten-/Vaultdialogen
+per modalem Click geprüft, keine Kartenanforderung/Empfängerfreigabe/Teamspeicherung.
+Escape-Zuordnung IsCancel ergänzt und geprüft; physische Escape-Taste nicht simuliert.
+Codecommit 24890cef51d8fa85e929bb6b5411b11b4b2bcec8.
+Internes UI-Testpaket preview.12 fertig: artifacts/SieEncode-UI-Test-20260911-win-x64.zip.
+74.629.192 Bytes; SHA256 9AF78E84666D2FE9BC317C86DC4A11BD50733901A6EC8B07C8DE441EC7F045F1.
+494 ZIP-Dateien gegen Manifest geprüft (+ Manifest selbst). Paket-EXE bestand den
+vollständigen WPF-Smoke (tmp/ui-package-smoke/); BUILD-IDENTITY und UI-SMOKE beiliegend.
+Anleitung, synthetisches Profil, .NET und Lizenzbeilagen enthalten. Keine RFID-Runtime,
+keine echten Vaults/Schlüssel/Kartendaten; keine RC15-Ersetzung oder Hardwarefreigabe.
+61 Regressionstests zuletzt bestanden; gezielt erweiterte WPF-Tests ausgeführt.
 
+## Nächster Abschnitt - tatsächlich implementieren
+1. Verbleibende dynamische Dialoge gezielt prüfen: TextEntryPrompt/PassphrasePrompt
+   (Bestätigen/Abbrechen), Identitätsauswahl und Statusaktualisierung mit synthetischen
+   Identitäten. Keine erneute Gesamtinventur und kein unverändertes Paket neu bauen.
+2. Positive Import-/Export-/Speicherabläufe und abschließenden UI-/PDF-Funktionsabgleich
+   soweit synthetisch möglich abschließen. Native Dateidialoge, reale DPI-/Hardware-
+   und Zweitbenutzerabnahme klar als offene praktische Release-Gates dokumentieren.
+3. Nach Abschluss des Softwareumfangs Paket nur bei relevanten Änderungen aktualisieren,
+   Ergebnis liefern und Automation pausieren. Aktuell verbleiben Softwareprüfungen;
+   das fertige interne Zwischenpaket ist kein vollständiger Paritätsabschluss.
 ## Arbeitsweise
 Pro Lauf einen sinnvollen Abschnitt fertigstellen, prüfen und private Branches
 sichern. Diesen Stand kurz ersetzen/aktualisieren (erledigt, Testnachweis, nächster
