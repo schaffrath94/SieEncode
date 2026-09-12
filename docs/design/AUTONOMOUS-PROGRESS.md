@@ -1,4 +1,4 @@
-# Autonome Weiterarbeit - Stand 2026-09-11
+# Autonome Weiterarbeit - Stand 2026-09-12
 
 ## Autorisierung und Ziel
 Der Benutzer hat autonome, tokensparsame Fertigstellung einschließlich automatischer
@@ -16,21 +16,18 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Benutzer meldete Invalid Handle/Absturz bei Vault-Einrichtung/Speichern.
-Windows-Ereignis 1026 am 11.09.2026 15:23:23 lokal gelesen: CryptographicException
-m_safeCertContext is an invalid handle in TeamVaultWindow.AddSelectedIdentity/
-AddRecipient. Derselbe Fehler mit synthetischem Neuladen der Identitäten reproduziert.
-Ursache: ComboBox behält freigegebene Auswahl beim Austausch gleichwertiger Einträge.
-Beide Dialoge lösen nun Auswahl/ItemsSource vor Zertifikatsfreigabe und Neuaufbau.
-Team-Aktionsfehler werden im Dialog angezeigt; Konflikthinweis verlangt erneutes Öffnen.
-Quellcommit 8d89570. WPF-Smoke: dreimal Neuladen/Hinzufügen pro Dialog, keine ungültigen
-Handles/Dubletten; Konflikt überschreibt Teamliste nicht; erneutes Öffnen/Speichern OK.
-Windows-Speicher nur lesend geprüft: zwei gültige SieEncode-Zertifikate, nichts geändert,
-keine privaten Schlüssel exportiert. Alle Regressionen hierzu verwenden synthetische Daten.
-Korrigiertes Paket preview.13 erstellt, konkrete Paket-EXE bestand vollständigen
-WPF-Smoke (tmp/preview13-smoke/). Paketnachweis: UI-PREVIEW-PACKAGE-preview13.md.
-preview.12 wegen reproduziertem Vault-Fehler nicht mehr als aktuelle Empfehlung verwenden.
-Realer Benutzer-Bedienlauf mit preview.13 sowie Hardware-/Zweitbenutzerabnahme offen.
+Empfängervorbelegung korrigiert: Beim Öffnen eines bestehenden Zertifikats-Vaults
+wurden bisher erneut alle zentralen Teammitglieder ergänzt, darunter zuvor aus
+diesem Vault entfernte Empfänger. Jetzt gelten dessen gespeicherte Empfänger;
+Ergänzungen sind ausdrücklich per Hinzufügen/Import möglich. Teamdefaults bleiben
+für neue Vaults und Umstellung von v2 auf Zertifikate erhalten. UI erklärt den Unterschied.
+WPF-Smoke mit synthetischen Zertifikaten prüft bestehenden v3-Vault mit einem
+Empfänger gegen Teamliste mit zwei Empfängern, Neuanlage, v2-Umstellung und Abbruch.
+Vollständiger WPF-Smoke OK (tmp/recipient-ui-smoke/); isolierter Publish preview.14
+unter artifacts/ui-recipient-check/Studio (tmp/recipient-ui-publish.log).
+Kein neuer ZIP-Download: bisher geliefertes preview.13 enthält diese Korrektur noch
+nicht. Keine realen Vaults/Teamlisten geändert. Der Invalid-Handle-Hotfix bleibt enthalten.
+61 Regressionstests zuletzt bestanden; gezielt geänderte WPF-Funktionen geprüft.
 ## Nächster Abschnitt - tatsächlich implementieren
 1. Verbleibende dynamische Dialoge gezielt prüfen: TextEntryPrompt/PassphrasePrompt
    (Bestätigen/Abbrechen), Identitätsauswahl und Statusaktualisierung mit synthetischen

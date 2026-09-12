@@ -92,6 +92,28 @@ public partial class MainWindow
                 }
             }
             finally { accessReload.Close(); }
+            var secondRequest = new CertificateRequest("CN=Synthetic Removed Recipient", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            using var secondCertificate = secondRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
+            var removedInvitation = CertificateVaultService.ExportInvitation(secondCertificate, "Synthetic Removed Recipient");
+            var existingVault = new KeyVaultDocument { Version = KeyVaultService.CertificateVersion,
+                Recipients = [new KeyVaultRecipient { Certificate = invitation.Certificate, DisplayName = invitation.DisplayName }] };
+            foreach (var state in new[] { "existing", "new", "legacy" })
+            {
+                var existing = state == "existing" ? existingVault : state == "legacy" ? new KeyVaultDocument { Version = 2 } : null;
+                var selection = new VaultAccessWindow(this, existing, [invitation, removedInvitation], () => []);
+                try
+                {
+                    var rows = DescendantsAndSelf(selection).OfType<ListBox>().Single().Items.Cast<VaultRecipientChoice>().ToArray();
+                    if (rows.Length != (state == "existing" ? 1 : 2) ||
+                        state == "existing" && rows[0].Fingerprint != invitation.Fingerprint)
+                        throw new InvalidOperationException("Teamvorgaben überschreiben bestehende Vault-Empfänger oder fehlen bei Neuanlage.");
+                    VerifyCancelClick(selection);
+                    if (selection.TakeRecipients().Count != 0 || existingVault.Recipients.Count != 1)
+                        throw new InvalidOperationException("Empfängervorschau verändert oder bestätigt den bestehenden Vault.");
+                }
+                finally { selection.Close(); }
+            }
+            checks.Add("Vault-Empfänger: bestehende Freigaben bleiben beim Öffnen unverändert; Teamvorgaben nur für Neuanlage/v2-Umstellung, Abbruch ohne Übernahme.");
             var reopened = new TeamVaultWindow(this, fixture, identityProvider: OwnIdentity);
             try
             {

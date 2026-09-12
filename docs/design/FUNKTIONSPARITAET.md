@@ -153,3 +153,12 @@ Hinzufügen pro Dialog bleibt gültig und ohne doppelte Empfänger. Team-Speiche
 zeigt Fehler ohne Überschreiben; nach erneutem Öffnen ist Speichern erfolgreich.
 Paket-EXE-WPF-Smoke bestanden; keine echten Zertifikate/Vaults geändert.
 Positive Neuanlage einer Windows-Identität und Benutzer-Bedienabnahme weiter offen.
+
+### Empfängervorbelegung – 12.09.2026
+
+Bestehende v3-Vaults übernehmen beim erneuten Öffnen ausschließlich ihre eigenen
+Empfänger; keine automatische Wiederaufnahme entfernter Mitglieder aus Teamdefaults.
+Neue Vaults und v2-Umstellungen erhalten weiterhin Teamdefaults. Synthetischer
+WPF-Smoke preview.14 prüft alle drei Fälle und Abbruch ohne Bestätigung/Änderung.
+Nachweis tmp/recipient-ui-smoke/. Kein neuer Paketdownload, keine realen Daten geändert.
+Alte Vaultkopien bleiben durch diese UI-Korrektur unverändert und weiter zugänglich.

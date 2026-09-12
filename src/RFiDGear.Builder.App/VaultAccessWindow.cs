@@ -40,7 +40,8 @@ internal sealed class VaultAccessWindow : Window
         if (existing is { Version: KeyVaultService.CertificateVersion })
             foreach (var row in existing.Recipients.Where(row => !string.IsNullOrWhiteSpace(row.Certificate)))
                 AddRecipient(new X509Certificate2(Convert.FromBase64String(row.Certificate)), row.DisplayName);
-        if (teamRecipients is not null)
+        // Team defaults seed a new certificate vault; they must not re-add removed recipients.
+        if (teamRecipients is not null && existing is not { Version: KeyVaultService.CertificateVersion })
             foreach (var invitation in teamRecipients)
             {
                 var imported = CertificateVaultService.ImportInvitation(invitation);
@@ -49,7 +50,9 @@ internal sealed class VaultAccessWindow : Window
 
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(new TextBlock { Text = "Mehrbenutzerzugriff", FontSize = 22, FontWeight = FontWeights.SemiBold });
-        root.Children.Add(new TextBlock { Text = "Die zentrale Teamliste ist bereits übernommen. Jeder freigegebene Benutzer öffnet den Vault mit seiner persönlichen Windows-Identität. Öffentliche Einladungsdateien enthalten keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 16), Foreground = System.Windows.Media.Brushes.DimGray });
+        root.Children.Add(new TextBlock { Text = existing is { Version: KeyVaultService.CertificateVersion }
+            ? "Die Empfänger dieses Vaults sind übernommen. Weitere Benutzer können Sie ausdrücklich hinzufügen oder importieren. Änderungen der zentralen Teamliste ändern diesen Vault nicht automatisch."
+            : "Die zentrale Teamliste ist bereits übernommen. Jeder freigegebene Benutzer öffnet den Vault mit seiner persönlichen Windows-Identität. Öffentliche Einladungsdateien enthalten keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 16), Foreground = System.Windows.Media.Brushes.DimGray });
         root.Children.Add(new TextBlock { Text = "Eigene Windows-Identität", FontWeight = FontWeights.SemiBold });
         root.Children.Add(identityList);
         var identityButtons = new WrapPanel();
