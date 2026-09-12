@@ -16,20 +16,19 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-Empfängervorbelegung korrigiert: Beim Öffnen eines bestehenden Zertifikats-Vaults
-wurden bisher erneut alle zentralen Teammitglieder ergänzt, darunter zuvor aus
-diesem Vault entfernte Empfänger. Jetzt gelten dessen gespeicherte Empfänger;
-Ergänzungen sind ausdrücklich per Hinzufügen/Import möglich. Teamdefaults bleiben
-für neue Vaults und Umstellung von v2 auf Zertifikate erhalten. UI erklärt den Unterschied.
-WPF-Smoke mit synthetischen Zertifikaten prüft bestehenden v3-Vault mit einem
-Empfänger gegen Teamliste mit zwei Empfängern, Neuanlage, v2-Umstellung und Abbruch.
-Vollständiger WPF-Smoke OK (tmp/recipient-ui-smoke/); isolierter Publish preview.14
-unter artifacts/ui-recipient-check/Studio (tmp/recipient-ui-publish.log).
-Kein neuer ZIP-Download: bisher geliefertes preview.13 enthält diese Korrektur noch
-nicht. Keine realen Vaults/Teamlisten geändert. Der Invalid-Handle-Hotfix bleibt enthalten.
-61 Regressionstests zuletzt bestanden; gezielt geänderte WPF-Funktionen geprüft.
+PasswordPrompt verbessert: Validierungsfehler direkt im Dialog statt zusätzlicher
+MessageBox, begrenzte Breite, scrollbarer/vergrößerbarer Dialog, Automation-IDs.
+Expliziter Abbruch-Click und unveränderte Passphrase-Rückgabe; Show-Einstieg bleibt erhalten.
+Neue Passwortregeln unverändert, bestehende kurze Entsperrpassphrasen weiterhin erlaubt.
+Synthetischer WPF-Smoke prüft leer, Bestätigung abweichend, zu kurz, gleichförmig,
+Abbruch sowie positive Neuanlage-/Entsperreingaben ohne echte Vaults/Schlüssel.
+Testfixture zunächst zu gleichförmig und deshalb korrekt abgewiesen; korrigiert.
+Vollständiger WPF-Smoke OK (tmp/password-ui-smoke/), Publish preview.15 unter
+artifacts/ui-password-check/Studio. Kein neues ZIP; gelieferte preview.13 enthält
+Empfängervorbelegung b595a5b und diese Dialogverbesserung noch nicht.
+61 Regressionstests zuletzt bestanden; nur relevante WPF-Prüfungen wiederholt.
 ## Nächster Abschnitt - tatsächlich implementieren
-1. Verbleibende dynamische Dialoge gezielt prüfen: TextEntryPrompt/PassphrasePrompt
+1. Verbleibende dynamische Dialoge gezielt prüfen: TextEntryPrompt
    (Bestätigen/Abbrechen), Identitätsauswahl und Statusaktualisierung mit synthetischen
    Identitäten. Keine erneute Gesamtinventur und kein unverändertes Paket neu bauen.
 2. Positive Import-/Export-/Speicherabläufe und abschließenden UI-/PDF-Funktionsabgleich

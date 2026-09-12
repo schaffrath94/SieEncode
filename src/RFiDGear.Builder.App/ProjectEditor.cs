@@ -1100,6 +1100,12 @@ internal static class PasswordPrompt
 {
     public static string? Show(Window owner, string title, string prompt, bool confirm = false)
     {
+        var (dialog, password) = Create(owner, title, prompt, confirm);
+        return dialog.ShowDialog() == true ? password.Password : null;
+    }
+
+    internal static (Window Dialog, PasswordBox Password) Create(Window owner, string title, string prompt, bool confirm)
+    {
         var password = new PasswordBox { MinWidth = 390, Margin = new Thickness(0, 4, 0, 8) };
         var confirmation = new PasswordBox { MinWidth = 390, Margin = new Thickness(0, 4, 0, 8), Visibility = confirm ? Visibility.Visible : Visibility.Collapsed };
         var ok = new Button { Content = "OK", IsDefault = true, MinWidth = 90, Margin = new Thickness(4) };
@@ -1115,19 +1121,24 @@ internal static class PasswordPrompt
             panel.Children.Add(confirmation);
         }
         panel.Children.Add(new TextBlock { Text = confirm ? $"Mindestens {KeyVaultService.MinimumNewPassphraseLength} Zeichen. Empfohlen: zufällig in KeePass erzeugen. Die Passphrase wird nicht gespeichert und kann nicht wiederhergestellt werden." : "Die Passphrase wird nicht gespeichert und kann nicht wiederhergestellt werden.", Foreground = System.Windows.Media.Brushes.DimGray, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 8) });
+        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = System.Windows.Media.Brushes.Firebrick };
+        panel.Children.Add(error);
         panel.Children.Add(buttons);
-        var dialog = new Window { Owner = owner, Title = title, Content = panel, SizeToContent = SizeToContent.WidthAndHeight, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.NoResize };
+        var dialog = new Window { Owner = owner, Title = title, Width = 480, MaxHeight = 600, Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, SizeToContent = SizeToContent.Height, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.CanResizeWithGrip };
+        cancel.Click += (_, _) => dialog.DialogResult = false;
         ok.Click += (_, _) =>
         {
-            if (string.IsNullOrWhiteSpace(password.Password)) { MessageBox.Show(dialog, "Bitte eine Passphrase eingeben.", title, MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-            if (confirm && password.Password != confirmation.Password) { MessageBox.Show(dialog, "Die Passphrasen stimmen nicht überein.", title, MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            error.Text = "";
+            if (string.IsNullOrWhiteSpace(password.Password)) { error.Text = "Bitte eine Passphrase eingeben."; return; }
+            if (confirm && password.Password != confirmation.Password) { error.Text = "Die Passphrasen stimmen nicht überein."; return; }
             if (confirm)
             {
                 try { KeyVaultService.ValidateNewPassphrase(password.Password); }
-                catch (ArgumentException exception) { MessageBox.Show(dialog, exception.Message, title, MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+                catch (ArgumentException exception) { error.Text = exception.Message; return; }
             }
             dialog.DialogResult = true;
         };
-        return dialog.ShowDialog() == true ? password.Password : null;
+        MainWindow.InitializeAutomationContract(dialog, "PasswordPrompt");
+        return (dialog, password);
     }
 }

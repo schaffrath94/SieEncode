@@ -162,3 +162,11 @@ Neue Vaults und v2-Umstellungen erhalten weiterhin Teamdefaults. Synthetischer
 WPF-Smoke preview.14 prüft alle drei Fälle und Abbruch ohne Bestätigung/Änderung.
 Nachweis tmp/recipient-ui-smoke/. Kein neuer Paketdownload, keine realen Daten geändert.
 Alte Vaultkopien bleiben durch diese UI-Korrektur unverändert und weiter zugänglich.
+
+### Passphrase-Dialog – preview.15
+
+Leere, abweichende, zu kurze und gleichförmige neue Passphrasen werden direkt
+im Dialog abgelehnt. Gültige neue sowie kurze bestehende Entsperrpassphrasen
+unverändert übernommen; Abbruch ohne Freigabe. Bestehende Regeln bleiben erhalten.
+Vollständiger WPF-Smoke mit synthetischen Eingaben bestanden (tmp/password-ui-smoke/).
+Keine echten Vaults geöffnet/geschrieben; noch kein aktualisiertes ZIP.

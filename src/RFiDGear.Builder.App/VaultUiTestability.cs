@@ -11,6 +11,7 @@ public partial class MainWindow
 {
     private void VerifyVaultDialogContract(List<string> checks)
     {
+        VerifyPasswordPrompt(checks);
         var fixture = Path.Combine(Path.GetTempPath(), "SieEncode-VaultUi-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(fixture);
         try
@@ -161,6 +162,56 @@ public partial class MainWindow
             checks.Add("Expertennavigation: Profile, Taskplan, Vergleich und Abnahme über tatsächliche Button-Clicks und sichtbare Vorfahren geprüft.");
         }
         finally { settings.ExpertMode = originalMode; ApplyOperatingMode(); Navigate(originalPage, false); }
+    }
+
+    private void VerifyPasswordPrompt(List<string> checks)
+    {
+        foreach (var confirm in new[] { false, true })
+        {
+            var (dialog, password) = PasswordPrompt.Create(this, "Synthetic passphrase", "Synthetic input", confirm);
+            try
+            {
+                VerifyAutomationContract(dialog);
+                var elements = DescendantsAndSelf(dialog).OfType<FrameworkElement>().ToArray();
+                var ok = elements.OfType<Button>().Single(button => button.IsDefault);
+                void Reject(string expected)
+                {
+                    ok.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    if (dialog.DialogResult is not null || !elements.OfType<TextBlock>().Any(text => text.Text.Contains(expected, StringComparison.Ordinal)))
+                        throw new InvalidOperationException("Passphraseprüfung lehnt ungültige Eingabe nicht im Dialog ab.");
+                }
+                Reject("Bitte eine Passphrase");
+                if (confirm)
+                {
+                    password.Password = "synthetic";
+                    Reject("nicht überein");
+                    elements.OfType<PasswordBox>().Last().Password = password.Password;
+                    Reject("Zeichen");
+                    password.Password = new string('x', KeyVaultService.MinimumNewPassphraseLength);
+                    elements.OfType<PasswordBox>().Last().Password = password.Password;
+                    Reject("gleichförmig");
+                }
+                VerifyCancelClick(dialog);
+            }
+            finally { dialog.Close(); }
+            var (accepted, value) = PasswordPrompt.Create(this, "Synthetic acceptance", "Synthetic input", confirm);
+            try
+            {
+                // Legacy unlock must continue accepting short existing passphrases.
+                var expected = confirm ? "Synthetic-Only-7x!A9-bC3-kL5" : "old";
+                foreach (var field in DescendantsAndSelf(accepted).OfType<PasswordBox>()) field.Password = expected;
+                accepted.Opacity = 0; accepted.ShowInTaskbar = false; accepted.ShowActivated = false;
+                var timeout = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+                timeout.Tick += (_, _) => accepted.Close();
+                accepted.Loaded += (_, _) => accepted.Dispatcher.BeginInvoke(new Action(() =>
+                    DescendantsAndSelf(accepted).OfType<Button>().Single(button => button.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent))));
+                timeout.Start();
+                try { if (accepted.ShowDialog() != true || value.Password != expected) throw new InvalidOperationException("Gültige Passphrase wird nicht unverändert übernommen."); }
+                finally { timeout.Stop(); }
+            }
+            finally { accepted.Close(); }
+        }
+        checks.Add("Passphrase: leer/abweichend/zu kurz abgelehnt, Abbrechen ohne Freigabe, gültige neue und kurze bestehende Passphrase übernommen.");
     }
 
     private static void VerifyCancelClick(Window dialog)
