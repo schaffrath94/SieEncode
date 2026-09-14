@@ -87,6 +87,12 @@ public partial class MainWindow
     {
         RunSelfTest();
         var checks = new List<string>();
+        var startupRoot = Path.GetDirectoryName(settingsStore.SettingsPath)!;
+        if (!Path.GetFileName(startupRoot).StartsWith("startup-test-", StringComparison.Ordinal) ||
+            new[] { projectsDirectory, settingsStore.ResolveProfilesDirectory(settings), settings.VaultBackup.Directory }
+                .Any(path => !Path.GetFullPath(path).StartsWith(startupRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("UI-Smoke benötigt vollständig isolierte Startpfade.");
+        checks.Add("Teststart: Einstellungen, Projektbibliothek, Profile und Vault-Backups in eigenem Testverzeichnis; keine Migration produktiver Einstellungen.");
         checks.Add("Nebenfenster: Profil-Editor, Profilhistorie und rfPrj-Import initialisiert, versioniert und automatisierbar");
         VerifyAutomationContract(checks);
         VerifyDesignContract(checks);
@@ -116,6 +122,7 @@ public partial class MainWindow
             version = Version,
             generatedAt = DateTimeOffset.Now,
             status = "OK",
+            startupSettingsPath = settingsStore.SettingsPath,
             checks,
             compatibilityMatrix = new { status = "OK", scenarios = matrix.Report.Scenarios.Count, matrix.TextPath, matrix.JsonPath, hardwareEvidence = false }
         }, new JsonSerializerOptions { WriteIndented = true }));

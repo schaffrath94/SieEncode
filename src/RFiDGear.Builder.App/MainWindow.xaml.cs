@@ -73,6 +73,11 @@ public partial class MainWindow : Window
     private readonly CheckBox editorPiccConfigurationChange = new() { Content = "Konfiguration ändern" };
 
     public MainWindow(string startupPage = "Home")
+        : this(startupPage, new BuilderSettingsStore(null, Path.Combine(AppContext.BaseDirectory, "builder.settings.json")))
+    {
+    }
+
+    internal MainWindow(string startupPage, BuilderSettingsStore startupSettingsStore)
     {
         this.startupPage = startupPage;
         InitializeComponent();
@@ -83,7 +88,7 @@ public partial class MainWindow : Window
         AppVersionText.Text = string.Equals(startupPage, "Station", StringComparison.OrdinalIgnoreCase)
             ? $"Station · {Version}"
             : $"Studio · {Version}";
-        settingsStore = new BuilderSettingsStore(null, Path.Combine(AppContext.BaseDirectory, "builder.settings.json"));
+        settingsStore = startupSettingsStore;
         profileStore = CreateProfileStore(new BuilderSettings());
         pages = new Dictionary<string, FrameworkElement>(StringComparer.Ordinal)
         {

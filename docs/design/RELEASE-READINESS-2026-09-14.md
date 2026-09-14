@@ -48,3 +48,24 @@ Lokale Logs: tmp/release-readiness-ci.log, tmp/release-readiness-runtime.log,
 tmp/release-readiness-package-fixed.log, tmp/release-readiness-msi-admin-fixed.log.
 Lokales Pruefergebnis: artifacts/releasecheck-20260914-fixed/package-verification.json.
 Naechste Arbeit und Autorisierung: AUTONOMOUS-PROGRESS.md.
+
+## Nachtrag: isolierter Produktionsstart
+Regulaerer Publish 1.1.0-releasecheck.20260914.2 ohne Preview-Flag unter
+artifacts/release-startcheck-20260914/Studio. Studio-DLL SHA256:
+ACC0B14B355784E803198D1AF4D9611F84588B961A0F4D31EED837FB9B312599.
+Runtime-DLL unveraendert FFF3C419DE115BFDA2EF3AE31C971D66441E79F6B39DEB6CED55055D1B7C7AA7.
+CI: 62/62 Tests und CLI/WPF-Build erfolgreich (tmp/isolated-start-ci.log).
+UI-Smoke Exit 0: 31 Checks, 5/5 synthetische Kodierszenarien; gebuendelte Runtime
+erkannt. --self-test fuer Studio-/Stationskonstruktion ebenfalls Exit 0.
+Nachweise: tmp/release-startcheck-smoke2/SieEncode/ui-smoke/ui-smoke-result.json,
+stdout.log, stderr.log und selftest-stderr.log im selben Smoke-Hauptordner.
+
+Testmodus erzeugt vor dem Fenster einen expliziten SettingsStore mit separaten
+Projekt-/Profil-/Backup-Pfaden und synthetischem Basisprofil. Der UI-Test wartet
+nun auf Loaded und prueft die Startpfade. Erster Versuch zeigte eine bisherige
+Luecke: Show/UpdateLayout allein garantierte nicht die abgeschlossene Initialisierung.
+Der normale Start behaelt seinen bisherigen SettingsStore samt Migration.
+Die Pruefung bestaetigt Softwareablaeufe, keine Kartenaktionen oder volle native
+Bedienabnahme. Die oben genannten MSI-/ZIP-Hashes bleiben unveraendert; sie enthalten
+diese neue Teststartkorrektur noch nicht. Erst zum naechsten sinnvollen Paketstand
+neu paketieren. Hardware-/Upgrade-/Zweitbenutzerfreigaben bleiben offen.

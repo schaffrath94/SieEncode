@@ -32,15 +32,27 @@ Keine unbekannten Karten beschreiben. Fehlende praktische Nachweise offen lassen
 - Korrigierter Kandidat: artifacts/releasecheck-20260914-fixed;
   Log tmp/release-readiness-package-fixed.log; Exit 0. Alle drei Paketmanifest-Hashes korrekt; 1024/1024 Dateien im Portable-ZIP und im administrativ extrahierten MSI hashgleich zum Build. VERSION korrekt. Details: RELEASE-READINESS-2026-09-14.md.
 
+## Neuer Startnachweis
+Regulaerer Publish ohne Preview-Flag: artifacts/release-startcheck-20260914/Studio,
+Version 1.1.0-releasecheck.20260914.2. Runtime unveraendert beigelegt/erkannt.
+62/62 CI-Tests und CLI/WPF-Build erfolgreich; Publish, --ui-smoke-test und
+--self-test Exit 0. Bericht tmp/release-startcheck-smoke2/SieEncode/ui-smoke/
+ui-smoke-result.json dokumentiert den tatsaechlichen isolierten Settingspfad.
+Der erste Testversuch zeigte: bisheriges Show/UpdateLayout wartete nicht auf
+Loaded; jetzt explizites Warten. Produktionsstart ohne Testargument bleibt
+unveraendert. Kein neuer MSI-/ZIP-Build; bestehender fixed-Kandidat enthaelt
+diese Teststartkorrektur noch nicht. Details RELEASE-READINESS-2026-09-14.md.
+
 ## Naechste Arbeiten / Freigabekriterien
 1. Korrigierter MSI-/Portable-/Abnahme-Kit-Lauf ist abgeschlossen; Archive,
    Versionsangaben und Hashmanifeste sind geprueft. Keine unveraenderten Gesamtlaeufe.
 2. Produktionsbuild mit isolierten Testdaten starten und Import/Speichern/
    Export sowie Vault-Neuanlage, Wiederoeffnen, Sicherung/Wiederherstellung,
-   Empfaengeraenderung durchgaengig pruefen. Derzeit sind die synthetischen
-   WPF-Pruefungen auf Preview-Builds belegt, nicht auf dem Produktionspaket.
-   --ui-smoke-test allein isoliert Produktionspfade NICHT: Window_Loaded
-   laedt Benutzereinstellungen. APPDATA-Umleitung nicht ungeprueft voraussetzen.
+   Empfaengeraenderung durchgaengig pruefen. Regulärer Produktionsbuild hat jetzt
+   den isolierten UI-Smoke bestanden (31 Checks, 5 Kodierszenarien). Teststart
+   nutzt expliziten SettingsStore mit vorab gespeicherten Testpfaden; wartet
+   auf Loaded. Keine APPDATA-Umleitung als Isolation vorausgesetzt. Native
+   Dateidialoge und vollstaendige Vault-UI-Kette bleiben gesondert offen.
 3. Installieren/Upgrade/Deinstallieren in echter isolierter Windows-Umgebung.
    MajorUpgrade nutzt gleiche UpgradeCode wie RC15: auf diesem produktiven Host
    keinen /i-Test mit bloss geaendertem INSTALLFOLDER durchfuehren.
