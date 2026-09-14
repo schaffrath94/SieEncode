@@ -1,4 +1,4 @@
-# Autonome Weiterarbeit - Stand 2026-09-12
+# Autonome Weiterarbeit - Stand 2026-09-14
 
 ## Autorisierung und Ziel
 Der Benutzer hat autonome, tokensparsame Fertigstellung einschließlich automatischer
@@ -16,17 +16,17 @@ beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen auswe
   -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
 
 ## Erledigt im aktuellen Abschnitt
-PasswordPrompt verbessert: Validierungsfehler direkt im Dialog statt zusätzlicher
-MessageBox, begrenzte Breite, scrollbarer/vergrößerbarer Dialog, Automation-IDs.
-Expliziter Abbruch-Click und unveränderte Passphrase-Rückgabe; Show-Einstieg bleibt erhalten.
-Neue Passwortregeln unverändert, bestehende kurze Entsperrpassphrasen weiterhin erlaubt.
-Synthetischer WPF-Smoke prüft leer, Bestätigung abweichend, zu kurz, gleichförmig,
-Abbruch sowie positive Neuanlage-/Entsperreingaben ohne echte Vaults/Schlüssel.
-Testfixture zunächst zu gleichförmig und deshalb korrekt abgewiesen; korrigiert.
-Vollständiger WPF-Smoke OK (tmp/password-ui-smoke/), Publish preview.15 unter
-artifacts/ui-password-check/Studio. Kein neues ZIP; gelieferte preview.13 enthält
-Empfängervorbelegung b595a5b und diese Dialogverbesserung noch nicht.
-61 Regressionstests zuletzt bestanden; nur relevante WPF-Prüfungen wiederholt.
+TextEntryPrompt verbessert: leere/Whitespace-Namen zeigen Hinweis mit Eingabefokus,
+expliziter Abbruch, Automation-IDs, begrenzte Breite und Scrollzugang. Show-Signatur,
+Vorbelegung und Trim-Rückgabe bleiben erhalten. Synthetische WPF-Prüfung bestätigt
+Vorbelegung, Leerzeichen-Ablehnung, Abbruch und positive Namensbestätigung.
+Vollständiger WPF-Smoke OK (tmp/name-ui-smoke/); keine Windows-Identität erzeugt.
+Isolierter Publish preview.16 unter artifacts/ui-name-check/Studio. SDK jetzt
+8.0.425; Standard-Publish scheiterte an fehlenden Offline-Runtimepaketen 8.0.31.
+Für diesen lokalen Test explizit -p:RuntimeFrameworkVersion=8.0.30 verwendet;
+keine Projekt-/Releasevorgaben geändert. Vor nächstem Paket SDK/Runtime festlegen.
+Kein neues ZIP. Gelieferte preview.13 enthält nachfolgende Empfänger-/Dialogfixes
+noch nicht; vor endgültiger Übergabe ein aktualisiertes Paket erforderlich.
 ## Nächster Abschnitt - tatsächlich implementieren
 1. Verbleibende dynamische Dialoge gezielt prüfen: TextEntryPrompt
    (Bestätigen/Abbrechen), Identitätsauswahl und Statusaktualisierung mit synthetischen

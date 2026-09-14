@@ -161,12 +161,26 @@ internal static class TextEntryPrompt
 {
     public static string? Show(Window owner, string title, string prompt, string initial)
     {
+        var (dialog, input) = Create(owner, title, prompt, initial);
+        return dialog.ShowDialog() == true ? input.Text.Trim() : null;
+    }
+
+    internal static (Window Dialog, TextBox Input) Create(Window owner, string title, string prompt, string initial)
+    {
         var input = new TextBox { Text = initial, MinWidth = 380 };
         var ok = new Button { Content = "OK", IsDefault = true }; var cancel = new Button { Content = "Abbrechen", IsCancel = true };
         var buttons = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right }; buttons.Children.Add(cancel); buttons.Children.Add(ok);
-        var panel = new StackPanel { Margin = new Thickness(18) }; panel.Children.Add(new TextBlock { Text = prompt, TextWrapping = TextWrapping.Wrap }); panel.Children.Add(input); panel.Children.Add(buttons);
-        var dialog = new Window { Owner = owner, Title = title, Content = panel, SizeToContent = SizeToContent.WidthAndHeight, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.NoResize };
-        ok.Click += (_, _) => { if (!string.IsNullOrWhiteSpace(input.Text)) dialog.DialogResult = true; };
-        return dialog.ShowDialog() == true ? input.Text.Trim() : null;
+        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = System.Windows.Media.Brushes.Firebrick };
+        var panel = new StackPanel { Margin = new Thickness(18) }; panel.Children.Add(new TextBlock { Text = prompt, TextWrapping = TextWrapping.Wrap }); panel.Children.Add(input); panel.Children.Add(error); panel.Children.Add(buttons);
+        var dialog = new Window { Owner = owner, Title = title, Width = 480, MaxHeight = 600, Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, SizeToContent = SizeToContent.Height, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.CanResizeWithGrip };
+        ok.Click += (_, _) =>
+        {
+            error.Text = "";
+            if (string.IsNullOrWhiteSpace(input.Text)) { error.Text = "Bitte einen Namen eingeben."; input.Focus(); return; }
+            dialog.DialogResult = true;
+        };
+        cancel.Click += (_, _) => dialog.DialogResult = false;
+        MainWindow.InitializeAutomationContract(dialog, "TextEntryPrompt");
+        return (dialog, input);
     }
 }

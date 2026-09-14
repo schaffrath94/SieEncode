@@ -170,3 +170,11 @@ im Dialog abgelehnt. Gültige neue sowie kurze bestehende Entsperrpassphrasen
 unverändert übernommen; Abbruch ohne Freigabe. Bestehende Regeln bleiben erhalten.
 Vollständiger WPF-Smoke mit synthetischen Eingaben bestanden (tmp/password-ui-smoke/).
 Keine echten Vaults geöffnet/geschrieben; noch kein aktualisiertes ZIP.
+
+### Namensdialog – preview.16, 14.09.2026
+
+TextEntryPrompt: Vorbelegung, Hinweis bei Leerzeichen, Abbruch und gültige
+Bestätigung synthetisch geprüft. Öffentliche Show-Signatur/Trim-Rückgabe erhalten.
+WPF-Smoke bestanden (tmp/name-ui-smoke/). Keine Windows-Identität erzeugt.
+Lokaler Testpublish mit SDK 8.0.425 und explizitem RuntimeFrameworkVersion=8.0.30,
+da 8.0.31-Pakete offline fehlen. Noch kein aktualisierter ZIP-Download.

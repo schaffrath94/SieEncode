@@ -12,6 +12,7 @@ public partial class MainWindow
     private void VerifyVaultDialogContract(List<string> checks)
     {
         VerifyPasswordPrompt(checks);
+        VerifyTextEntryPrompt(checks);
         var fixture = Path.Combine(Path.GetTempPath(), "SieEncode-VaultUi-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(fixture);
         try
@@ -162,6 +163,36 @@ public partial class MainWindow
             checks.Add("Expertennavigation: Profile, Taskplan, Vergleich und Abnahme über tatsächliche Button-Clicks und sichtbare Vorfahren geprüft.");
         }
         finally { settings.ExpertMode = originalMode; ApplyOperatingMode(); Navigate(originalPage, false); }
+    }
+
+    private void VerifyTextEntryPrompt(List<string> checks)
+    {
+        var (dialog, input) = TextEntryPrompt.Create(this, "Synthetic name", "Name", "Synthetic default");
+        try
+        {
+            VerifyAutomationContract(dialog);
+            if (input.Text != "Synthetic default") throw new InvalidOperationException("Namensvorbelegung fehlt.");
+            input.Text = "   ";
+            DescendantsAndSelf(dialog).OfType<Button>().Single(button => button.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            if (dialog.DialogResult is not null || !DescendantsAndSelf(dialog).OfType<TextBlock>().Any(text => text.Text == "Bitte einen Namen eingeben."))
+                throw new InvalidOperationException("Leere Namenseingabe bleibt ohne sichtbare Validierung.");
+            VerifyCancelClick(dialog);
+        }
+        finally { dialog.Close(); }
+        var (accepted, value) = TextEntryPrompt.Create(this, "Synthetic name", "Name", "  Synthetic Operator  ");
+        try
+        {
+            accepted.Opacity = 0; accepted.ShowInTaskbar = false; accepted.ShowActivated = false;
+            var timeout = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            timeout.Tick += (_, _) => accepted.Close();
+            accepted.Loaded += (_, _) => accepted.Dispatcher.BeginInvoke(new Action(() =>
+                DescendantsAndSelf(accepted).OfType<Button>().Single(button => button.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent))));
+            timeout.Start();
+            try { if (accepted.ShowDialog() != true || value.Text.Trim() != "Synthetic Operator") throw new InvalidOperationException("Gültige Namenseingabe wird nicht bestätigt."); }
+            finally { timeout.Stop(); }
+        }
+        finally { accepted.Close(); }
+        checks.Add("Namensdialog: Vorbelegung erhalten, Leerzeichen abgelehnt mit Hinweis, Abbrechen ohne Freigabe, gültiger Name bestätigt; keine Identität erzeugt.");
     }
 
     private void VerifyPasswordPrompt(List<string> checks)
