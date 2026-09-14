@@ -13,6 +13,7 @@ public partial class MainWindow
     {
         VerifyPasswordPrompt(checks);
         VerifyTextEntryPrompt(checks);
+        VerifyVaultAccessRoundTrip(checks);
         var fixture = Path.Combine(Path.GetTempPath(), "SieEncode-VaultUi-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(fixture);
         try
@@ -140,6 +141,84 @@ public partial class MainWindow
             checks.Add("Team-/Vaultdialoge: synthetische Empfänger per Click entfernt, Entwurf nicht gespeichert/freigegeben, Aktionsleiste scrollbar; Windows-Zertifikatsspeicher nicht verwendet.");
         }
         finally { Directory.Delete(fixture, true); }
+    }
+
+    private void VerifyVaultAccessRoundTrip(List<string> checks)
+    {
+        var root = Path.Combine(Path.GetTempPath(), "SieEncode-VaultAccess-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        using var ownerKey = RSA.Create(3072);
+        using var colleagueKey = RSA.Create(3072);
+        using var owner = new CertificateRequest("CN=Synthetic UI Owner", ownerKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+            .CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
+        using var colleague = new CertificateRequest("CN=Synthetic UI Colleague", colleagueKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+            .CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
+        var team = new[] { CertificateVaultService.ExportInvitation(owner, "Owner"), CertificateVaultService.ExportInvitation(colleague, "Colleague") };
+        var vaultPath = Path.Combine(root, "Synthetic.keys.vault.json");
+        var payload = new ProjectKeyVaultPayload { ProductivePicc = new KeyReference { Type = "DF_KEY_AES", Value = new string('A', 32) } };
+        try
+        {
+            foreach (var changeRecipients in new[] { false, true })
+            {
+                var existing = changeRecipients ? System.Text.Json.JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(vaultPath), ProjectJson.Options) : null;
+                var dialog = new VaultAccessWindow(this, existing, team, () => []);
+                var passphrase = changeRecipients ? "Synthetic-UI-Recovery-Changed-2026!" : "Synthetic-UI-Recovery-Initial-2026!";
+                Exception? failure = null;
+                var timedOut = false;
+                dialog.Opacity = 0; dialog.ShowInTaskbar = false; dialog.ShowActivated = false;
+                var timeout = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+                timeout.Tick += (_, _) => { timedOut = true; dialog.Close(); };
+                dialog.Loaded += (_, _) => dialog.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        var elements = DescendantsAndSelf(dialog).OfType<FrameworkElement>().ToArray();
+                        var list = elements.OfType<ListBox>().Single();
+                        if (list.Items.Count != 2) throw new InvalidOperationException("Vault-Neuanlage oder erneutes Öffnen verliert Empfänger.");
+                        if (changeRecipients)
+                        {
+                            list.SelectedItem = list.Items.Cast<VaultRecipientChoice>().Single(row => row.Fingerprint == team[1].Fingerprint);
+                            elements.OfType<Button>().Single(button => button.Content.ToString() == "Ausgewählten Empfänger entfernen")
+                                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        }
+                        foreach (var box in elements.OfType<PasswordBox>()) box.Password = passphrase;
+                        elements.OfType<Button>().Single(button => button.IsDefault).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    }
+                    catch (Exception exception) { failure = exception; dialog.Close(); }
+                }));
+                try
+                {
+                    timeout.Start();
+                    if (dialog.ShowDialog() != true || timedOut || failure is not null)
+                        throw new InvalidOperationException("Vault-Freigabe über den positiven Dialogablauf fehlgeschlagen.", failure);
+                    var accepted = dialog.TakeRecipients();
+                    try
+                    {
+                        // OnClosed already disposed dialog-owned certificates. Returned copies must remain usable.
+                        if (accepted.Count != (changeRecipients ? 1 : 2) || accepted.Any(row => row.Certificate.RawData.Length == 0))
+                            throw new InvalidOperationException("Geschlossener Freigabedialog liefert ungültige Empfängerhandles.");
+                        ProjectKeyVault.SaveForRecipients(vaultPath, payload, dialog.RecoveryPassphrase, accepted, ConcurrentFileWriter.Capture(vaultPath));
+                    }
+                    finally { foreach (var recipient in accepted) recipient.Certificate.Dispose(); }
+                    if (ProjectKeyVault.LoadWithCertificates(vaultPath, [owner]).ProductivePicc.Value != payload.ProductivePicc.Value ||
+                        ProjectKeyVault.Load(vaultPath, passphrase).ProductivePicc.Value != payload.ProductivePicc.Value)
+                        throw new InvalidOperationException("Nach Dialogfreigabe gespeicherter Vault verliert Identitäts- oder Recovery-Zugang.");
+                    if (!changeRecipients && ProjectKeyVault.LoadWithCertificates(vaultPath, [colleague]).ProductivePicc.Value != payload.ProductivePicc.Value)
+                        throw new InvalidOperationException("Zweiter freigegebener Empfänger kann den gespeicherten Vault nicht öffnen.");
+                }
+                finally { timeout.Stop(); dialog.Close(); }
+            }
+            var removedCanOpen = false;
+            try { ProjectKeyVault.LoadWithCertificates(vaultPath, [colleague]); removedCanOpen = true; }
+            catch (CryptographicException) { }
+            if (removedCanOpen) throw new InvalidOperationException("Im Dialog entfernter Empfänger kann den neuen Vault weiter öffnen.");
+            var oldRecoveryWorks = false;
+            try { ProjectKeyVault.Load(vaultPath, "Synthetic-UI-Recovery-Initial-2026!"); oldRecoveryWorks = true; }
+            catch (CryptographicException) { }
+            if (oldRecoveryWorks) throw new InvalidOperationException("Alte Recovery-Passphrase bleibt nach Dialogänderung gültig.");
+            checks.Add("Vault-Freigabe: Dialog mit zwei synthetischen Empfängern bestätigt, nach Schließen gespeichert und geöffnet; Empfänger im erneut geöffneten Dialog entfernt, Recovery geändert und alte Zugänge am neuen Vault abgelehnt. Kein Windows-Mehrbenutzernachweis.");
+        }
+        finally { Directory.Delete(root, true); }
     }
 
     private void VerifyExpertNavigationClicks(List<string> checks)

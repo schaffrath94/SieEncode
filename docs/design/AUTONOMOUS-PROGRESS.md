@@ -43,6 +43,22 @@ Loaded; jetzt explizites Warten. Produktionsstart ohne Testargument bleibt
 unveraendert. Kein neuer MSI-/ZIP-Build; bestehender fixed-Kandidat enthaelt
 diese Teststartkorrektur noch nicht. Details RELEASE-READINESS-2026-09-14.md.
 
+## Neuer Vault-Dialognachweis
+Regulaerer Build 1.1.0-releasecheck.20260914.3 unter
+artifacts/vault-access-check-20260914/Studio, unveraenderte Runtime beigelegt.
+32 UI-Pruefungen und 5 Kodierszenarien bestanden, Prozess Exit 0.
+Neuanlage im VaultAccessWindow mit zwei synthetischen Empfaengern positiv
+bestaetigt; zurueckgegebene Zertifikate nach OnClosed zum Speichern verwendet.
+Gespeicherten Vault per beiden Empfaengern und Recovery geoeffnet, denselben
+Vault erneut im Dialog geoeffnet, zweiten Empfaenger per Click entfernt,
+Recovery gewechselt, gespeichert und alte Zugaenge am neuen Vault abgewiesen.
+Kein Produktfehler in diesem Ablauf gefunden; nur Testabdeckung erweitert.
+Log/JSON: tmp/vault-access-smoke/. Keine Windows-Identitaeten erzeugt.
+Die Persistierung wird im Test gezielt ueber ProjectKeyVault ausgefuehrt;
+der komplette Editor-Speichern-/Entsperren-Clickpfad und native Datei-Dialoge
+sind damit noch nicht abgeschlossen. Keine reale Mehrbenutzerabnahme.
+Keine erneute unveraenderte Core-CI/Runtime-Pruefung oder MSI-Paketierung.
+
 ## Naechste Arbeiten / Freigabekriterien
 1. Korrigierter MSI-/Portable-/Abnahme-Kit-Lauf ist abgeschlossen; Archive,
    Versionsangaben und Hashmanifeste sind geprueft. Keine unveraenderten Gesamtlaeufe.

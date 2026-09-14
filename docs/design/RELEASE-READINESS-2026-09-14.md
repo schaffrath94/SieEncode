@@ -69,3 +69,21 @@ Die Pruefung bestaetigt Softwareablaeufe, keine Kartenaktionen oder volle native
 Bedienabnahme. Die oben genannten MSI-/ZIP-Hashes bleiben unveraendert; sie enthalten
 diese neue Teststartkorrektur noch nicht. Erst zum naechsten sinnvollen Paketstand
 neu paketieren. Hardware-/Upgrade-/Zweitbenutzerfreigaben bleiben offen.
+
+## Nachtrag: positive Vault-Dialogfreigabe
+Build 1.1.0-releasecheck.20260914.3, artifacts/vault-access-check-20260914/Studio.
+Studio-DLL SHA256: 0FE12365590C56C435F621BD25C3E5F7E73AE6D84F44FB5C7EA74A5FC13FDC7A.
+Regulaerer Publish erfolgreich, UI-Smoke Exit 0, 32 Checks und 5/5 Szenarien.
+Bericht: tmp/vault-access-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+
+VaultAccessWindow positiv bestaetigt: zwei getrennte synthetische RSA-Identitaeten,
+Passphrase bestaetigt, OnClosed ausgefuehrt, kopierte Empfaengerzertifikate danach
+zum Speichern verwendet. Beide Zertifikate und Recovery oeffnen den gespeicherten
+Vault. Beim Wiedereroeffnen beide Empfaenger vorhanden; zweiten per Dialog-Click
+entfernt, neue Recovery bestaetigt. Erneutes Speichern erlaubt verbleibende
+Identitaet/neue Recovery und verweigert entfernte Identitaet/alte Recovery.
+Kein Produktfehler festgestellt. Nur Testabdeckung erweitert.
+
+Grenze: Test ruft nach dem echten Dialog den Persistenzdienst direkt auf;
+der durchgaengige Editor-Buttonpfad ist noch separat zu pruefen. Kein nativer
+Dateidialog-, Zweitbenutzer- oder Hardware-Nachweis. Vorhandene Pakete unveraendert.
