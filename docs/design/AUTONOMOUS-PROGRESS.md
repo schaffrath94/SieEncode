@@ -1,59 +1,62 @@
 # Autonome Weiterarbeit - Stand 2026-09-14
 
-## Autorisierung und Ziel
-Der Benutzer hat autonome, tokensparsame Fertigstellung einschließlich automatischer
-Weiterarbeit autorisiert. Keine Bestätigungen für gewöhnliche Implementierung,
-Tests, private Branch-Pushes oder lokale Testpakete nötig. Keine echten Karten
-beschreiben und RC15 nicht ersetzen. Hardware/Zweitbenutzer-Abnahmen offen ausweisen.
+## Auftrag
+PDF-Weiterentwicklung und visuelle PDF-Abnahme sind auf ausdruecklichen Wunsch
+zurueckgestellt. Bestehende Funktionen bleiben erhalten. Alle anderen Arbeiten
+bis zum geprueften internen Release autonom und tokensparsam fortsetzen.
+Normale Implementierung, Tests, private Branch-Pushes und isolierte Testpakete
+sind autorisiert. Produktive Daten, Vaults und installierte RC15 nicht ersetzen.
+Keine unbekannten Karten beschreiben. Fehlende praktische Nachweise offen lassen.
 
-## Ausgangsstand
-- Studio: codex/workspace-ui; drei Arbeitsbereiche, Anwendungskontext, Task- und Dateidetails.
-- Runtime: codex/upstream-key-context, c959bd4; selektiver Key-Kontext-Port,
-  193 Tests nach dokumentiertem Dispatcher-Flake bestanden. Noch keine Hardwareabnahme.
-- UI-Paket: artifacts/SieEncode-UI-Test-preview13-win-x64.zip, ca. 71.2 MiB,
-  494 Dateien per SHA256 geprüft; Paket-Smoke-Test bestanden.
-- Standard-Studio: 61 Regressionstests bestanden. Preview-Build nutzt
-  -p:SieEncodeUiPreview=true und eigene ../Testdaten-Pfade. Nicht als RC16 ausgeben.
+## Verifizierter Stand
+- Studio codex/workspace-ui: 61/61 Tests sowie CLI-/WPF-Build erfolgreich;
+  tmp/release-readiness-ci.log.
+- Runtime codex/upstream-key-context, c959bd4: 193/193 Tests, kein Skip;
+  tmp/release-readiness-runtime.log. Neue Runtime unter
+  artifacts/runtime-releasecheck-20260914 mit BUILD-IDENTITY.json.
+  sourceHadUncommittedChanges=true wegen bestehendem Runtime-Arbeitsstand;
+  keine Bereinigung fremder Aenderungen vorgenommen.
+- Vault-Invalid-Handle-Fix, bestehende Empfaenger nicht wieder automatisch
+  hinzufuegen, Passwort-/Namensdialogvalidierung bereits implementiert und
+  synthetisch im WPF-Smoke geprueft. Preview13 enthaelt nicht alle Folgefixes.
+- Erster gemeinsamer Kandidat artifacts/releasecheck-20260914:
+  MSI-Vertrag geprueft, administrative Extraktion Exit 0, Studio-/Runtime-EXE
+  und DLL jeweils hashgleich zum Build. Das ist keine Installation/Upgrade-Abnahme.
+  Paketlauf scheiterte anschliessend an der nur fuer rc-Suffixe geeigneten
+  Versionspruefung des Abnahme-Kits.
+- Build-Release.ps1 korrigiert: separates ArtifactsPath unter artifacts,
+  VERSION im Paket aus PackageVersion, allgemeine Vorabversionssuffixe,
+  Pruefsummen nur im erzeugten Abnahme-Kit statt im Quellordner.
+  Versionsmuster fuer stabil/rc/releasecheck geprueft (3/3).
+- Korrigierter Kandidat: artifacts/releasecheck-20260914-fixed;
+  Log tmp/release-readiness-package-fixed.log; Exit 0. Alle drei Paketmanifest-Hashes korrekt; 1024/1024 Dateien im Portable-ZIP und im administrativ extrahierten MSI hashgleich zum Build. VERSION korrekt. Details: RELEASE-READINESS-2026-09-14.md.
 
-## Erledigt im aktuellen Abschnitt
-TextEntryPrompt verbessert: leere/Whitespace-Namen zeigen Hinweis mit Eingabefokus,
-expliziter Abbruch, Automation-IDs, begrenzte Breite und Scrollzugang. Show-Signatur,
-Vorbelegung und Trim-Rückgabe bleiben erhalten. Synthetische WPF-Prüfung bestätigt
-Vorbelegung, Leerzeichen-Ablehnung, Abbruch und positive Namensbestätigung.
-Vollständiger WPF-Smoke OK (tmp/name-ui-smoke/); keine Windows-Identität erzeugt.
-Isolierter Publish preview.16 unter artifacts/ui-name-check/Studio. SDK jetzt
-8.0.425; Standard-Publish scheiterte an fehlenden Offline-Runtimepaketen 8.0.31.
-Für diesen lokalen Test explizit -p:RuntimeFrameworkVersion=8.0.30 verwendet;
-keine Projekt-/Releasevorgaben geändert. Vor nächstem Paket SDK/Runtime festlegen.
-Kein neues ZIP. Gelieferte preview.13 enthält nachfolgende Empfänger-/Dialogfixes
-noch nicht; vor endgültiger Übergabe ein aktualisiertes Paket erforderlich.
-## Nächster Abschnitt - tatsächlich implementieren
-1. Verbleibende dynamische Dialoge gezielt prüfen: TextEntryPrompt
-   (Bestätigen/Abbrechen), Identitätsauswahl und Statusaktualisierung mit synthetischen
-   Identitäten. Keine erneute Gesamtinventur und kein unverändertes Paket neu bauen.
-2. Positive Import-/Export-/Speicherabläufe und abschließenden UI-/PDF-Funktionsabgleich
-   soweit synthetisch möglich abschließen. Native Dateidialoge, reale DPI-/Hardware-
-   und Zweitbenutzerabnahme klar als offene praktische Release-Gates dokumentieren.
-3. Nach Abschluss des Softwareumfangs Paket nur bei relevanten Änderungen aktualisieren,
-   Ergebnis liefern und Automation pausieren. Aktuell verbleiben Softwareprüfungen;
-   das fertige interne Zwischenpaket ist kein vollständiger Paritätsabschluss.
+## Naechste Arbeiten / Freigabekriterien
+1. Korrigierter MSI-/Portable-/Abnahme-Kit-Lauf ist abgeschlossen; Archive,
+   Versionsangaben und Hashmanifeste sind geprueft. Keine unveraenderten Gesamtlaeufe.
+2. Produktionsbuild mit isolierten Testdaten starten und Import/Speichern/
+   Export sowie Vault-Neuanlage, Wiederoeffnen, Sicherung/Wiederherstellung,
+   Empfaengeraenderung durchgaengig pruefen. Derzeit sind die synthetischen
+   WPF-Pruefungen auf Preview-Builds belegt, nicht auf dem Produktionspaket.
+   --ui-smoke-test allein isoliert Produktionspfade NICHT: Window_Loaded
+   laedt Benutzereinstellungen. APPDATA-Umleitung nicht ungeprueft voraussetzen.
+3. Installieren/Upgrade/Deinstallieren in echter isolierter Windows-Umgebung.
+   MajorUpgrade nutzt gleiche UpgradeCode wie RC15: auf diesem produktiven Host
+   keinen /i-Test mit bloss geaendertem INSTALLFOLDER durchfuehren.
+4. Zweiter Windows-Benutzer/Rechner fuer Mehrbenutzer-Vault und Wiederherstellung.
+   Reader/Testtransponder fuer ChangeFileSettings und kompletten Bedienlauf.
+   Geeignete Umgebung bisher nicht bestaetigt. Die neue Runtime-Binaeridentitaet
+   besitzt keine uebertragbare Hardwarefreigabe; Hashschutz nicht aufweichen.
+5. RC15-Funktionsparitaet als Anwenderablauf abschliessen. Der vorhandene
+   XAML-Vertragscheck ist kein vollstaendiger Bediennachweis. Physische DPI-
+   und native Dateidialogtests bleiben praktische Abnahme.
+6. Erst nach belegten Kriterien finales internes Release benennen. PDF bewusst
+   separat; Code-Signing und externer Pilot weiter zurueckgestellt.
+
 ## Arbeitsweise
-Pro Lauf einen sinnvollen Abschnitt fertigstellen, prüfen und private Branches
-sichern. Diesen Stand kurz ersetzen/aktualisieren (erledigt, Testnachweis, nächster
-Schritt); keine wachsenden Vollprotokolle. Keine unveränderten Gesamtinventuren,
-unnötige Testwiederholungen, neuen Aufgaben oder weiteren Automationen.
-Nur bei wesentlichem fertigem Meilenstein, fertigem Paket oder notwendiger
-Benutzeraktion knapp informieren. Keine Routine-Zusammenfassungen ohne Änderung.
-
-## Lokale Hinweise
-.NET 8 vorhanden. Tests: Test-CI.ps1 (Konsolenharness, nicht dotnet test).
-Windows SDK kann Sandbox-Eskalation benötigen. Gebündelte Python/Node-Runtimes:
-C:/Users/z003t1jh/.cache/codex-runtimes/codex-primary-runtime/dependencies/.
-PDF-Skill bei PDF-Arbeit lesen. WPF-Smoke über veröffentlichte EXE mit
---ui-smoke-test. Für saubere Umgebung synthetisches Grundprofil
-pilot-testkit/fixtures/Synthetic-AES-Mixed.base.json unter assets/profiles/base
-mitliefern. Keine installierten Kundenprofile als Testvoraussetzung verwenden.
-Preview-Publish-Befehl in UI-PREVIEW-PACKAGE-2026-09-08.md. Hardwareaktionen ohne
-Runtime bleiben gesperrt. Es gibt keinen Produktquellcode im Elternrepository.
-
-Automation: sieencode-ui-und-pdf-fertigstellen; stündlicher Heartbeat dieser Aufgabe.
+Nur kanonische Repositories verwenden, RC15/Historie unberuehrt lassen.
+Keine privaten Profile, Schluessel, Zertifikate oder reale Kartenevidenz committen.
+Pro Abschnitt sinnvolle Arbeit fertigstellen, Nachweise aktualisieren und sichern.
+Keine neuen Aufgaben, keine doppelten Automationen, keine Routine-Benachrichtigungen.
+Automation sieencode-ui-und-pdf-fertigstellen wurde am 14.09. auf
+SieEncode Release selbststaendig absichern umgestellt; stuendlicher Heartbeat.

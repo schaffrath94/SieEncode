@@ -1,6 +1,7 @@
 ﻿[CmdletBinding()]
 param(
     [string]$RuntimeSource = '',
+    [string]$ArtifactsPath = '',
     [string]$WixBin = $env:WIX_BIN,
     [string]$PackageVersion = '1.1.0-rc15',
     [string]$MsiProductVersion = '1.1.14',
@@ -17,6 +18,13 @@ if ([string]::IsNullOrWhiteSpace($RuntimeSource)) {
 }
 $RuntimeSource = [IO.Path]::GetFullPath($RuntimeSource)
 $artifacts = [IO.Path]::GetFullPath((Join-Path $root 'artifacts'))
+if (-not [string]::IsNullOrWhiteSpace($ArtifactsPath)) {
+    $candidateArtifacts = [IO.Path]::GetFullPath($ArtifactsPath)
+    if (-not $candidateArtifacts.StartsWith($artifacts + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'ArtifactsPath muss ein Unterordner des Repository-Artefaktordners sein.'
+    }
+    $artifacts = $candidateArtifacts
+}
 $release = [IO.Path]::GetFullPath((Join-Path $artifacts 'release'))
 $package = [IO.Path]::GetFullPath((Join-Path $artifacts 'package'))
 $studio = Join-Path $release 'Studio'
@@ -106,6 +114,7 @@ Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination (Join-Path $studio 
 foreach ($releaseDocument in @('VERSION','README.md','PARITY.md','MIGRATION.md','RUNTIME.md')) {
     Copy-Item -LiteralPath (Join-Path $root $releaseDocument) -Destination (Join-Path $studio $releaseDocument)
 }
+$PackageVersion | Set-Content -LiteralPath (Join-Path $studio 'VERSION') -Encoding UTF8
 foreach ($requiredReleaseDocument in @('VERSION','README.md','PARITY.md','MIGRATION.md','RUNTIME.md','Docs\GRUNDPROFILE.md','Docs\HARDWARE-ABNAHME.md','Docs\DATENBAUSTEINE.md')) {
     if (-not (Test-Path -LiteralPath (Join-Path $studio $requiredReleaseDocument) -PathType Leaf)) {
         throw "Release-Dokument fehlt im publizierten Studio: $requiredReleaseDocument"
@@ -207,16 +216,16 @@ $pilotPackageHashLines = @("SieEncode $PackageVersion – interne Releasepakete"
 $pilotPackageHashLines += foreach ($file in @($msi, $zip)) {
     '{0}  {1}' -f (Get-FileHash -Algorithm SHA256 -LiteralPath $file).Hash, [IO.Path]::GetFileName($file)
 }
-$pilotPackageHashLines | Set-Content -LiteralPath (Join-Path $root 'pilot-testkit\PACKAGE-SHA256.txt') -Encoding UTF8
 
 $testKitParent = Join-Path $artifacts 'pilot-testkit-package'
 $testKitRoot = Join-Path $testKitParent 'SieEncode-Abnahme-Kit'
 Remove-DirectoryWithRetry $testKitParent
 New-Item -ItemType Directory -Path $testKitRoot | Out-Null
 foreach ($name in @('README.md','DATENSCHUTZ-UND-SICHERHEIT.txt','MEHRKARTEN-TESTBOGEN.csv','USABILITY-TESTBOGEN.md',
-        'Collect-PilotEvidence.ps1','Merge-PilotEvidence.ps1','Run-FiveCardUiSeries.ps1','START_PILOTTEST.cmd','START_MEHRKARTENTEST.cmd','PACKAGE-SHA256.txt')) {
+        'Collect-PilotEvidence.ps1','Merge-PilotEvidence.ps1','Run-FiveCardUiSeries.ps1','START_PILOTTEST.cmd','START_MEHRKARTENTEST.cmd')) {
     Copy-Item -LiteralPath (Join-Path $root ('pilot-testkit\' + $name)) -Destination (Join-Path $testKitRoot $name)
 }
+$pilotPackageHashLines | Set-Content -LiteralPath (Join-Path $testKitRoot 'PACKAGE-SHA256.txt') -Encoding UTF8
 Copy-Item -LiteralPath (Join-Path $root 'pilot-testkit\Automation') -Destination (Join-Path $testKitRoot 'Automation') -Recurse
 Copy-Item -LiteralPath (Join-Path $root 'pilot-testkit\fixtures') -Destination (Join-Path $testKitRoot 'fixtures') -Recurse
 New-Item -ItemType Directory -Path (Join-Path $testKitRoot 'Evidenz') | Out-Null
@@ -224,7 +233,7 @@ $unexpectedVersions = @(Get-ChildItem -LiteralPath $testKitRoot -Recurse -File |
     $_.Extension -in @('.md','.txt','.ps1','.cmd','.csv')
 } | ForEach-Object {
     $path = $_.FullName
-    [regex]::Matches([IO.File]::ReadAllText($path), 'SieEncode\s+(?<version>\d+\.\d+\.\d+(?:-rc[0-9A-Za-z.]+)?)') | ForEach-Object {
+    [regex]::Matches([IO.File]::ReadAllText($path), 'SieEncode\s+(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)') | ForEach-Object {
         if ($_.Groups['version'].Value -ne $PackageVersion) {
             [pscustomobject]@{ File=$path; Version=$_.Groups['version'].Value }
         }
