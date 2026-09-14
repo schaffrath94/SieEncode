@@ -46,6 +46,7 @@ var tests = new (string Name, Action Run)[]
     ("Certificate recipient vault and recovery", TestCertificateVault),
     ("Project vault payload and path compatibility", TestProjectVault),
     ("Verified independent vault recovery backup", TestVaultRecoveryBackup),
+    ("Certificate vault lifecycle: save, recipient change and recovery", TestCertificateVaultLifecycle),
     ("Project validation and secret sanitizing", TestProject),
     ("Key-free multipage PDF card report", TestCardReportPdf),
     ("Full target report preserves long payloads and fields", TestFullTargetReport),
@@ -556,6 +557,75 @@ static void TestVaultRecoveryBackup()
         AssertThrows<InvalidDataException>(() => new VaultBackupService().Create(projectPath, vaultPath, backupDirectory, verified));
     }
     finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+}
+
+static void TestCertificateVaultLifecycle()
+{
+    var root = Path.Combine(Path.GetTempPath(), "sieencode-vault-lifecycle-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    using var ownerKey = RSA.Create(3072); using var removedKey = RSA.Create(3072);
+    using var owner = SelfSigned("Lifecycle owner", ownerKey);
+    using var removed = SelfSigned("Lifecycle removed", removedKey);
+    const string recovery = "Synthetic-Recovery-Before-2026!";
+    const string rotatedRecovery = "Synthetic-Recovery-After-2026!";
+    try
+    {
+        var project = ValidProject();
+        project.Project.Name = "Lifecycle";
+        project.Productive.PiccKey = new KeyReference { Type = "DF_KEY_AES", Value = new string('A', 32) };
+        project.Productive.ApplicationKeys["F482D0"] = Enumerable.Range(0, 5).Select(index => new string((char)('B' + index), 32)).ToList();
+        var projectPath = Path.Combine(root, "Lifecycle.project.json");
+        var vaultPath = ProjectKeyVault.GetPath(projectPath);
+        ProjectJson.Save(projectPath, ProjectJson.WithoutAllSecrets(project));
+        var payload = ProjectKeyVault.FromProject(project);
+        var revision = ProjectKeyVault.SaveForRecipients(vaultPath, payload, recovery,
+            [(owner, "Owner"), (removed, "Removed")], ConcurrentFileWriter.Capture(vaultPath));
+        var oldCopy = File.ReadAllBytes(vaultPath);
+        Assert(JsonEquivalent(JsonSerializer.Serialize(payload), JsonSerializer.Serialize(ProjectKeyVault.LoadWithCertificates(vaultPath, [removed]))),
+            "Zweiter synthetischer Empfänger kann den initial gespeicherten Projekt-Vault nicht vollständig öffnen.");
+
+        payload.ProductivePicc.Value = new string('F', 32);
+        revision = ProjectKeyVault.UpdateForExistingRecipients(vaultPath, payload, [owner], revision);
+        Assert(ProjectKeyVault.Load(vaultPath, recovery).ProductivePicc.Value == new string('F', 32) &&
+               ProjectKeyVault.LoadWithCertificates(vaultPath, [removed]).ProductivePicc.Value == new string('F', 32),
+            "Speichern verliert bestehende Empfänger oder Recovery-Zugang.");
+        var staleRevision = revision;
+        revision = ProjectKeyVault.SaveForRecipients(vaultPath, payload, rotatedRecovery, [(owner, "Owner")], revision);
+        AssertThrows<CryptographicException>(() => ProjectKeyVault.LoadWithCertificates(vaultPath, [removed]));
+        AssertThrows<CryptographicException>(() => ProjectKeyVault.Load(vaultPath, recovery));
+        AssertThrows<ConcurrentFileChangeException>(() => ProjectKeyVault.UpdateForExistingRecipients(vaultPath, payload, [owner], staleRevision));
+        Assert(ConcurrentFileWriter.Capture(vaultPath) == revision, "Veraltete Sitzung überschreibt neue Empfängerfreigabe.");
+
+        // Removing a recipient cannot revoke their access to a previously retained copy.
+        var historical = JsonSerializer.Deserialize<KeyVaultDocument>(oldCopy, ProjectJson.Options)!;
+        Assert(CertificateVaultService.UnprotectWithCertificate(historical, [removed]).Contains(new string('A', 32), StringComparison.Ordinal),
+            "Historischer Zugangsvertrag wird fälschlich als rückwirkend gesperrt behandelt.");
+        var verified = ProjectKeyVault.LoadWithCertificates(vaultPath, [owner]);
+        var backup = new VaultBackupService().Create(projectPath, vaultPath, Path.Combine(root, "backup"), verified);
+        File.Delete(projectPath);
+        File.Delete(vaultPath);
+        var restoredDirectory = Path.Combine(root, "restored");
+        Directory.CreateDirectory(restoredDirectory);
+        var restoredProject = Path.Combine(restoredDirectory, Path.GetFileName(backup.ProjectPath));
+        var restoredVault = ProjectKeyVault.GetPath(restoredProject);
+        File.Copy(backup.ProjectPath, restoredProject);
+        File.Copy(backup.VaultPath, restoredVault);
+        var recovered = ProjectKeyVault.Load(restoredVault, rotatedRecovery);
+        Assert(JsonEquivalent(JsonSerializer.Serialize(verified), JsonSerializer.Serialize(recovered)) &&
+               JsonEquivalent(JsonSerializer.Serialize(recovered), JsonSerializer.Serialize(ProjectKeyVault.LoadWithCertificates(restoredVault, [owner]))),
+            "Wiederherstellung ohne Quelldateien verliert Schlüssel oder Zertifikatszugang.");
+        AssertThrows<CryptographicException>(() => ProjectKeyVault.LoadWithCertificates(restoredVault, [removed]));
+        AssertThrows<CryptographicException>(() => ProjectKeyVault.Load(restoredVault, recovery));
+        var restoredDefinition = JsonSerializer.Deserialize<ProjectDefinition>(File.ReadAllText(restoredProject), ProjectJson.Options)!;
+        var hydrated = ProjectKeyVault.Apply(restoredDefinition, recovered);
+        Assert(hydrated.Productive.PiccKey.Value == new string('F', 32) && hydrated.Productive.ApplicationKeys["F482D0"].Count == 5,
+            "Wiederhergestellter Vault lässt sich nicht auf das gesicherte Projekt anwenden.");
+        var manifest = JsonSerializer.Deserialize<VaultBackupManifest>(File.ReadAllText(backup.ManifestPath), ProjectJson.Options)!;
+        Assert(manifest.VaultSha256 == Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(restoredVault))) &&
+               manifest.ProjectSha256 == Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(restoredProject))),
+            "Wiederhergestellte Dateien weichen vom Recovery-Manifest ab.");
+    }
+    finally { Directory.Delete(root, true); }
 }
 
 static void TestCertificateVault()

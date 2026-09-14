@@ -16,6 +16,7 @@ Keine unbekannten Karten beschreiben. Fehlende praktische Nachweise offen lassen
   artifacts/runtime-releasecheck-20260914 mit BUILD-IDENTITY.json.
   sourceHadUncommittedChanges=true wegen bestehendem Runtime-Arbeitsstand;
   keine Bereinigung fremder Aenderungen vorgenommen.
+- Neuer synthetischer Core-Gesamtablauf: Vault anlegen, mit bestehender Freigabe speichern, Empfaenger entfernen/Recovery-Passphrase wechseln, veralteten Schreibzugriff ablehnen, Sicherung erstellen, Quelldateien entfernen und in anderem Ordner wiederherstellen. Beide zulaessigen Zugaenge, verweigerte alte Zugaenge und Manifest-Hashes geprueft. Alte Vaultkopien bleiben ausdruecklich mit alten Berechtigungen lesbar. 62/62 Regressionstests erfolgreich. Nachweis tmp/vault-lifecycle-regression.log; keine Windows-Mehrbenutzer- oder UI-Abnahme daraus ableiten.
 - Vault-Invalid-Handle-Fix, bestehende Empfaenger nicht wieder automatisch
   hinzufuegen, Passwort-/Namensdialogvalidierung bereits implementiert und
   synthetisch im WPF-Smoke geprueft. Preview13 enthaelt nicht alle Folgefixes.
