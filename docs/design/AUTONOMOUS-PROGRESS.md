@@ -43,6 +43,15 @@ Testcleanup korrigiert, finaler Lauf komplett OK. Keine weitere Wiederholung noe
   Enthaelt die neueren Start-/Recovery-Korrekturen noch NICHT. Keine Installation.
 Historische Details/Hashwerte: RELEASE-READINESS-2026-09-14.md.
 
+## Aktuelles gemeinsames Paket 15.09.
+artifacts/releasecheck-20260915/package ist fertig und geprueft, Version
+1.1.0-releasecheck.20260915. Enthaelt aktuelle Vault-/Recovery-Korrekturen.
+Studio f8df5c9, Runtime unveraendert wiederverwendet. Build Exit 0, 35 UI-Checks
+und 5 Kodierszenarien mit exakt diesem Studio/Runtime-Kandidaten bestanden.
+MSI administrative Extraktion Exit 0; 1025 Dateien dort und im Portable-ZIP
+hashgleich zum Releasebaum. Alle drei Paketmanifeste geprueft. Keine Installation.
+Details/Hashes: RELEASE-CANDIDATE-2026-09-15.md. Kein erneuter unveraenderter Build.
+
 ## Native Dialogabnahme: vorbereitet, noch nicht ausgefuehrt
 Interaktiver Modus --ui-test-workspace verwendet denselben isolierten SettingsStore
 und synthetischen Profilbestand wie der Smoke-Test; Fenster mit Zusatz Testdaten.
@@ -56,8 +65,8 @@ alternativer UI-Automation umgehen und nicht stündlich dieselbe Anfrage wiederh
 Testfenster kann weiterhin offen sein; nur anhand frischer Fensterauswahl verwenden.
 Get-Command fand keine WindowsSandbox.exe/vmconnect.exe/VBoxManage.exe/docker.exe;
 das ist noch kein vollstaendiger Nachweis, dass keine Test-VM existiert.
-Naechste unabhaengige Arbeit: aktuelles gemeinsames Testpaket samt Hashnachweis
-vorbereiten. Echte Installation/Upgrade weiterhin nur in isolierter Umgebung.
+Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
+Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
 1. Native Import-/Export-/Speicherdateidialoge und UI-Paritaet als Anwenderablauf
