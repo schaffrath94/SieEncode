@@ -815,6 +815,16 @@ public partial class MainWindow
                 var identities = loadEditorVaultIdentities();
                 try
                 {
+                    var existing = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options)
+                        ?? throw new InvalidDataException("Key-Vault ist leer.");
+                    var hasRecipientIdentity = identities.Any(identity => identity.Certificate.HasPrivateKey && existing.Recipients.Any(recipient =>
+                        string.Equals(recipient.Id, CertificateVaultService.Fingerprint(identity.Certificate), StringComparison.OrdinalIgnoreCase)));
+                    if (!hasRecipientIdentity)
+                    {
+                        // Recovery sessions can save through explicit reauthorization of the existing recipients.
+                        ManageVaultAccess_Click(sender, e);
+                        return;
+                    }
                     editorVaultRevision = ProjectKeyVault.UpdateForExistingRecipients(path, CreateVaultPayload(), identities.Select(identity => identity.Certificate), editorVaultRevision);
                     VerifyLoadedVaultPayload(ProjectKeyVault.LoadWithCertificates(path, identities.Select(identity => identity.Certificate)));
                 }

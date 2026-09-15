@@ -243,7 +243,7 @@ public partial class MainWindow
             ProjectJson.Save(path, ProjectJson.WithoutAllSecrets(project));
             LoadEditor(project, path);
             Navigate("Editor", false);
-            void ClickWithPassphrase(Button button, string title)
+            void ClickWithPassphrase(Button button, string title, bool cancel = false)
             {
                 var answered = false;
                 var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
@@ -254,7 +254,7 @@ public partial class MainWindow
                     timer.Stop();
                     foreach (var box in DescendantsAndSelf(prompt).OfType<PasswordBox>()) box.Password = passphrase;
                     answered = true;
-                    DescendantsAndSelf(prompt).OfType<Button>().Single(candidate => candidate.IsDefault)
+                    DescendantsAndSelf(prompt).OfType<Button>().Single(candidate => cancel ? candidate.IsCancel : candidate.IsDefault)
                         .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 };
                 try
@@ -308,12 +308,28 @@ public partial class MainWindow
                 !EditorVaultStatus.Text.Contains("Recovery-Zugang", StringComparison.Ordinal))
                 throw new InvalidOperationException("Editor stellt den v3-Vault ohne lokale Identität nicht über Recovery wieder her.");
             checks.Add("Editor-Vault v3: Freigabe/migrieren, automatisch per synthetischer Identität entsperren, Schlüsseländerung mit Identität speichern und ohne Identität per Recovery entsperren über Editor-Clicks geprüft; Windows-Zertifikatsspeicher nicht verändert.");
+            var recoveryUpdatedKey = KeyVaultService.GenerateKey("DF_KEY_AES");
+            EditorProductivePiccKey.Text = recoveryUpdatedKey;
+            var beforeRecoverySave = File.ReadAllBytes(vault);
+            ClickWithPassphrase(EditorSaveVaultButton, "Vault-Zugriff für mehrere Benutzer", cancel: true);
+            if (!File.ReadAllBytes(vault).SequenceEqual(beforeRecoverySave) || editorVaultVerified)
+                throw new InvalidOperationException("Abgebrochene Recovery-Freigabe überschreibt den Vault oder bestätigt ungespeicherte Schlüssel.");
+            ClickWithPassphrase(EditorSaveVaultButton, "Vault-Zugriff für mehrere Benutzer");
+            var recoverySaved = System.Text.Json.JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(vault), ProjectJson.Options)!;
+            if (!editorVaultVerified || editorVaultVersion != KeyVaultService.CertificateVersion || recoverySaved.Recipients.Count != 1 ||
+                recoverySaved.Recipients[0].Id != CertificateVaultService.Fingerprint(identityCertificate) ||
+                ProjectKeyVault.LoadWithCertificates(vault, [identityCertificate]).ProductivePicc.Value != recoveryUpdatedKey ||
+                ProjectKeyVault.Load(vault, passphrase).ProductivePicc.Value != recoveryUpdatedKey)
+                throw new InvalidOperationException("Speichern nach Recovery verliert Schlüssel, Empfänger oder Recovery-Zugang.");
+            checks.Add("Recovery-Sitzung ohne Identität: Editor-Speichern öffnet vorhandene Freigabe, erhält Empfänger und speichert den geänderten Schlüssel nach Passphrasebestätigung; Identitäts-/Recovery-Zugang danach erfolgreich.");
         }
         finally
         {
             projectsDirectory = oldProjects;
             settings.VaultBackup.Directory = oldBackup;
             loadEditorVaultIdentities = oldIdentities;
+            // Only synthetic editor state remains here; do not prompt to save it when the test window closes.
+            editorDirty = false;
             if (Directory.Exists(root)) Directory.Delete(root, true);
         }
     }

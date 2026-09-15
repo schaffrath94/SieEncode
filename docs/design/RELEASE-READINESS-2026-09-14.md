@@ -124,3 +124,26 @@ Dieser Lauf ohne beigelegte Runtime; kein neuer Hardware-/MSI-Nachweis.
 Noch gezielt offen: weiteres Speichern/Freigeben nach ausschliesslichem Recovery-
 Entsperren ohne Identitaet. Der erfolgreich getestete Save-v3-Pfad hatte eine
 freigegebene Identitaet. Dies nicht mit einem Recovery-Speichern gleichsetzen.
+
+## Nachtrag 15.09.: Speichern nach Recovery ohne Identitaet
+Bedienluecke korrigiert: SaveVault verwendete auch nach Recovery-Unlock ausschliesslich
+Zertifikatszugriff. Ohne passende lokale Empfaengeridentitaet startet Save nun die
+bestehende Freigabe mit uebernommenen Empfaengern und expliziter Recovery-Bestaetigung.
+Keine neue Kryptografie und keine dauerhaft gespeicherte Recovery-Passphrase.
+
+CI: 62/62 Tests, CLI/WPF erfolgreich. Regulaerer Build 1.1.0-releasecheck.20260915.2,
+artifacts/recovery-save-check-20260915/Studio. Finale Studio-DLL SHA256:
+EE96A35AEBA21065CE3A09D6F1F468109C7B92F83A8BD42A70A303F80952377A.
+35 UI-Checks und 5/5 Szenarien, Prozess Exit 0, stderr leer. Bericht:
+tmp/recovery-save-smoke-final/SieEncode/ui-smoke/ui-smoke-result.json.
+
+Geprueft: Recovery-Unlock ohne Identitaet, Key aendern, Save-Click, Freigabe abbrechen
+(Vaultbytes unveraendert, kein Verifikationsstatus), Save erneut bestaetigen,
+Empfaenger unveraendert, neuer Key ueber Empfaengerzertifikat und Recovery lesbar.
+Erster Lauf scheiterte an einer Dateisperre beim Matrix-Cleanup und lief ins Timeout.
+Zweiter Lauf hatte 35 Checks OK, blieb aber an der Abschlussfrage fuer synthetische
+Editor-Aenderungen haengen. Testcleanup setzt seinen synthetischen Dirty-Zustand
+jetzt zurueck; finaler Lauf endet korrekt. Normale Abschlussfrage unveraendert.
+Vorheriger Buildhash BF94271EB7D5F7DB0364DB269FAD35440D39DBA9690CECB711CB608B3924B3E0
+ist durch die Testcleanup-Korrektur ersetzt, kein freigegebener finaler Kandidat.
+Kein neues MSI/ZIP und kein neuer Hardware-/Mehrbenutzernachweis.
