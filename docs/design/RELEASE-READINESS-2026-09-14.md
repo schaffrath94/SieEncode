@@ -87,3 +87,21 @@ Kein Produktfehler festgestellt. Nur Testabdeckung erweitert.
 Grenze: Test ruft nach dem echten Dialog den Persistenzdienst direkt auf;
 der durchgaengige Editor-Buttonpfad ist noch separat zu pruefen. Kein nativer
 Dateidialog-, Zweitbenutzer- oder Hardware-Nachweis. Vorhandene Pakete unveraendert.
+
+## Nachtrag 15.09.: Editor-Vault v2
+Der am 14.09. vorbereitete Build 1.1.0-releasecheck.20260914.4 hat am 15.09.
+den UI-Smoke bestanden: 33 Checks, 5/5 Kodierszenarien, Prozess Exit 0.
+Artefakt: artifacts/editor-vault-check-20260914/Studio, ohne beigelegte Runtime.
+Studio-DLL SHA256: 5925A4F17498BC4A6A9021C3A6DE6A486AC5132B8EC83096EC6F63265DDBF382.
+Nachweis: tmp/editor-vault-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+
+SaveVault- und UnlockVault-Handler durch Clicks auf die Editor-Buttons ausgefuehrt;
+Passwortdialoge mit synthetischer Passphrase bestaetigt. Der gespeicherte v2-Vault
+wird durch den Produktcode verifiziert und unabhaengig gesichert. Die Sicherung
+laesst sich oeffnen und hat dieselbe Keyset-Identitaet. Erneutes Laden der keyfreien
+Projektdefinition setzt die Freigabe zurueck; der Unlock-Click stellt Keys und
+Verifikationsstatus wieder her. Kein Produktfehler festgestellt.
+
+Grenzen: dieser Nachweis betrifft den v2-Passphrasenpfad. v3-Editoraktionen,
+native Datei-Dialoge, Installations-/Upgrade- und reale Mehrbenutzer-/Hardware-
+Abnahme bleiben offen. Vorhandene MSI-/ZIP-Pakete unveraendert.

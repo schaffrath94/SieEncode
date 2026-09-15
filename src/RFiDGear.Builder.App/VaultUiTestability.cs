@@ -221,6 +221,73 @@ public partial class MainWindow
         finally { Directory.Delete(root, true); }
     }
 
+    private void VerifyEditorVaultButtons(List<string> checks)
+    {
+        var root = Path.Combine(Path.GetTempPath(), "SieEncode-EditorVault-" + Guid.NewGuid().ToString("N"));
+        var oldProjects = projectsDirectory;
+        var oldBackup = settings.VaultBackup.Directory;
+        const string passphrase = "Synthetic-Editor-Recovery-2026!";
+        try
+        {
+            projectsDirectory = Path.Combine(root, "projects");
+            settings.VaultBackup.Directory = Path.Combine(root, "backup");
+            Directory.CreateDirectory(projectsDirectory);
+            var library = LoadProfileLibrary();
+            var project = ProjectDraftFactory.Create(library, "Synthetic-EditorVault");
+            project.Productive.PiccKey.Value = KeyVaultService.GenerateKey(project.Productive.PiccKey.Type);
+            foreach (var app in library.Compose(project.Profiles.Base, project.Profiles.Customers).Applications)
+                project.Productive.ApplicationKeys[ProfileValidator.NormalizeAid(app.Id)] = Enumerable.Range(0, app.KeyCount)
+                    .Select(_ => KeyVaultService.GenerateKey(app.KeyType)).ToList();
+            var path = Path.Combine(projectsDirectory, "Synthetic-EditorVault.project.json");
+            ProjectJson.Save(path, ProjectJson.WithoutAllSecrets(project));
+            LoadEditor(project, path);
+            Navigate("Editor", false);
+            void ClickWithPassphrase(Button button, string title)
+            {
+                var answered = false;
+                var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
+                timer.Tick += (_, _) =>
+                {
+                    var prompt = OwnedWindows.Cast<Window>().FirstOrDefault(window => window.Title == title);
+                    if (prompt is null) return;
+                    timer.Stop();
+                    foreach (var box in DescendantsAndSelf(prompt).OfType<PasswordBox>()) box.Password = passphrase;
+                    answered = true;
+                    DescendantsAndSelf(prompt).OfType<Button>().Single(candidate => candidate.IsDefault)
+                        .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                };
+                try
+                {
+                    if (!button.IsEnabled) throw new InvalidOperationException("Vault-Editoraktion ist unerwartet gesperrt: " + button.Name);
+                    timer.Start();
+                    button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    if (!answered) throw new InvalidOperationException("Vault-Editoraktion öffnet den erwarteten Passwortdialog nicht.");
+                }
+                finally { timer.Stop(); }
+            }
+            ClickWithPassphrase(EditorSaveVaultButton, "Keys verschlüsselt speichern");
+            var vault = ProjectKeyVault.GetPath(path);
+            if (!File.Exists(vault) || !editorVaultVerified || !editorKeysPersisted || editorVaultVersion != 2)
+                throw new InvalidOperationException("Vault-Speichern per Editor-Click schließt die Verifikation nicht ab.");
+            var backups = Directory.GetFiles(settings.VaultBackup.Directory, "*.keys.vault.json", SearchOption.AllDirectories);
+            if (backups.Length != 1 || KeySetIdentityService.Compute(ProjectKeyVault.Load(backups[0], passphrase)) != KeySetIdentityService.Compute(ProjectKeyVault.FromProject(project)))
+                throw new InvalidOperationException("Editor-Speichern erstellt keine unabhängig wieder öffnungsfähige Vault-Sicherung.");
+            LoadEditor(ProjectJson.Load(path), path);
+            if (editorVaultVerified || !string.IsNullOrEmpty(editorProject!.Productive.PiccKey.Value))
+                throw new InvalidOperationException("Erneutes Laden übernimmt unerwartet entschlüsselte Schlüssel.");
+            ClickWithPassphrase(EditorUnlockVaultButton, "Vault entsperren");
+            if (!editorVaultVerified || !editorKeysPersisted || KeySetIdentityService.Compute(ProjectKeyVault.FromProject(editorProject!)) != KeySetIdentityService.Compute(ProjectKeyVault.FromProject(project)))
+                throw new InvalidOperationException("Vault-Entsperren per Editor-Click stellt den gespeicherten Schlüsselsatz nicht wieder her.");
+            checks.Add("Editor-Vault v2: Speichern und Entsperren über tatsächliche Editor-Clicks/Passwortdialoge; automatische unabhängige Sicherung wieder geöffnet, Sitzung nach erneutem Projektladen erst durch Entsperren freigegeben. Synthetische Daten.");
+        }
+        finally
+        {
+            projectsDirectory = oldProjects;
+            settings.VaultBackup.Directory = oldBackup;
+            if (Directory.Exists(root)) Directory.Delete(root, true);
+        }
+    }
+
     private void VerifyExpertNavigationClicks(List<string> checks)
     {
         var originalMode = settings.ExpertMode;

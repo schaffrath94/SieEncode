@@ -1,4 +1,4 @@
-# Autonome Weiterarbeit - Stand 2026-09-14
+# Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag
 PDF-Weiterentwicklung und visuelle PDF-Abnahme sind auf ausdruecklichen Wunsch
@@ -58,6 +58,21 @@ Die Persistierung wird im Test gezielt ueber ProjectKeyVault ausgefuehrt;
 der komplette Editor-Speichern-/Entsperren-Clickpfad und native Datei-Dialoge
 sind damit noch nicht abgeschlossen. Keine reale Mehrbenutzerabnahme.
 Keine erneute unveraenderte Core-CI/Runtime-Pruefung oder MSI-Paketierung.
+
+## Editor-Vault-v2-Nachweis vom 15.09.
+Der vorbereitete Test ist abgeschlossen: 33 UI-Checks und 5 Kodierszenarien,
+Exit 0; Bericht tmp/editor-vault-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Regulaerer Build 1.1.0-releasecheck.20260914.4 unter
+artifacts/editor-vault-check-20260914/Studio (dieser Lauf ohne beigelegte Runtime).
+Speichern und Entsperren ueber die tatsaechlichen Editor-Buttons und Passwort-
+dialoge bestaetigt, einschliesslich automatisch erzeugter unabhaengiger Sicherung.
+Nach erneutem Laden der keyfreien Projektdefinition bleiben Keys gesperrt;
+erst Entsperren stellt den urspruenglichen Schluesselsatz und Verifikationsstatus her.
+Keine Produktkorrektur notwendig, nur neue Testabdeckung. Keine erneute Core-CI
+oder Runtime-Pruefung bei unveraenderter Implementierung. Kein neues MSI/ZIP.
+Weiter offen: v3-Editorpfad (Windows-Identitaet/Recovery/Empfaengerverwaltung),
+native Datei-Dialoge sowie Installation/Upgrade und reale Mehrbenutzer/Hardware.
+Nicht den erfolgreich abgeschlossenen v2-Clickpfad erneut inventarisieren.
 
 ## Naechste Arbeiten / Freigabekriterien
 1. Korrigierter MSI-/Portable-/Abnahme-Kit-Lauf ist abgeschlossen; Archive,

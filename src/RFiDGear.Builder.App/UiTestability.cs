@@ -105,6 +105,7 @@ public partial class MainWindow
         VerifyWorkspaceStateContract(checks);
         VerifyConstrainedLayoutContract(checks);
         VerifyIsolatedProjectFlows(checks);
+        VerifyEditorVaultButtons(checks);
 
         var reportDirectory = Path.Combine(Path.GetTempPath(), "SieEncode", "ui-smoke");
         Directory.CreateDirectory(reportDirectory);
