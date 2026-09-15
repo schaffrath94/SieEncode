@@ -42,6 +42,17 @@ public partial class App : Application
             catch (Exception exception) { Console.Error.WriteLine(exception); Shutdown(1); }
             return;
         }
+        if (e.Args.Contains("--ui-test-workspace", StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var window = CreateIsolatedTestWindow("Home");
+                window.Title += " · Testdaten";
+                window.Show();
+            }
+            catch (Exception exception) { Console.Error.WriteLine(exception); Shutdown(1); }
+            return;
+        }
         var hardwareIndex = Array.FindIndex(e.Args, argument => argument.Equals("--hardware-smoke-test", StringComparison.OrdinalIgnoreCase));
         if (hardwareIndex >= 0)
         {

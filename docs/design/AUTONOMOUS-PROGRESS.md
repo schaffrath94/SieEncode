@@ -43,6 +43,22 @@ Testcleanup korrigiert, finaler Lauf komplett OK. Keine weitere Wiederholung noe
   Enthaelt die neueren Start-/Recovery-Korrekturen noch NICHT. Keine Installation.
 Historische Details/Hashwerte: RELEASE-READINESS-2026-09-14.md.
 
+## Native Dialogabnahme: vorbereitet, noch nicht ausgefuehrt
+Interaktiver Modus --ui-test-workspace verwendet denselben isolierten SettingsStore
+und synthetischen Profilbestand wie der Smoke-Test; Fenster mit Zusatz Testdaten.
+Build 1.1.0-releasecheck.20260915.3 unter artifacts/native-dialog-check-20260915/Studio
+veroeffentlicht und gestartet; getrennte Settings unter tmp/native-dialog-check,
+stderr leer. Fenster durch Computer Use list_windows eindeutig gefunden.
+Computer Use get_window/get_window_state wurde jedoch mit
+"Computer Use app approval timed out" abgebrochen. Keine native Dialogaktion
+wurde ausgefuehrt; keine Abnahme behaupten. App-Freigabe benoetigt, nicht per
+alternativer UI-Automation umgehen und nicht stündlich dieselbe Anfrage wiederholen.
+Testfenster kann weiterhin offen sein; nur anhand frischer Fensterauswahl verwenden.
+Get-Command fand keine WindowsSandbox.exe/vmconnect.exe/VBoxManage.exe/docker.exe;
+das ist noch kein vollstaendiger Nachweis, dass keine Test-VM existiert.
+Naechste unabhaengige Arbeit: aktuelles gemeinsames Testpaket samt Hashnachweis
+vorbereiten. Echte Installation/Upgrade weiterhin nur in isolierter Umgebung.
+
 ## Naechste sinnvolle Arbeiten
 1. Native Import-/Export-/Speicherdateidialoge und UI-Paritaet als Anwenderablauf
    abschliessen; synthetische Source-/Buttonpruefungen nicht als Vollabnahme ausgeben.
