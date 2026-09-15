@@ -105,3 +105,22 @@ Verifikationsstatus wieder her. Kein Produktfehler festgestellt.
 Grenzen: dieser Nachweis betrifft den v2-Passphrasenpfad. v3-Editoraktionen,
 native Datei-Dialoge, Installations-/Upgrade- und reale Mehrbenutzer-/Hardware-
 Abnahme bleiben offen. Vorhandene MSI-/ZIP-Pakete unveraendert.
+
+## Nachtrag 15.09.: v3-Editoraktionen
+Regulaerer Build 1.1.0-releasecheck.20260915.1 unter artifacts/editor-v3-check-20260915/Studio.
+Studio-DLL SHA256: EB0FCBA469182A5251394DC199E97E5860ADEA8974CAC580A9266F20D4134281.
+Studio-CI bestanden: 62/62 Tests, CLI/WPF. UI-Smoke Exit 0 mit 34 Checks und
+5/5 Kodierszenarien (tmp/editor-v3-smoke/SieEncode/ui-smoke/ui-smoke-result.json).
+
+Editor-Identitaetsquelle ist fuer den synthetischen Test austauschbar; Default
+bleibt WindowsVaultIdentityService.List. Kein Schreiben in den Zertifikatsspeicher.
+Ueber Editor-Clicks geprueft: v2-Vault mit Freigabedialog nach v3 migrieren,
+keyfreies Projekt laden, mit synthetischer Identitaet automatisch entsperren,
+PICC-Key aendern, Verifikation zuruecksetzen, mit Identitaet speichern, neuen
+Schluessel ueber Identitaet und unveraenderten Recovery-Zugang oeffnen.
+Ohne Identitaet anschliessend Recovery-Prompt und erfolgreiche Editor-Freigabe.
+Dieser Lauf ohne beigelegte Runtime; kein neuer Hardware-/MSI-Nachweis.
+
+Noch gezielt offen: weiteres Speichern/Freigeben nach ausschliesslichem Recovery-
+Entsperren ohne Identitaet. Der erfolgreich getestete Save-v3-Pfad hatte eine
+freigegebene Identitaet. Dies nicht mit einem Recovery-Speichern gleichsetzen.

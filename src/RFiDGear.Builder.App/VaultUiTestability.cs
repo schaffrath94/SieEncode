@@ -226,6 +226,7 @@ public partial class MainWindow
         var root = Path.Combine(Path.GetTempPath(), "SieEncode-EditorVault-" + Guid.NewGuid().ToString("N"));
         var oldProjects = projectsDirectory;
         var oldBackup = settings.VaultBackup.Directory;
+        var oldIdentities = loadEditorVaultIdentities;
         const string passphrase = "Synthetic-Editor-Recovery-2026!";
         try
         {
@@ -279,11 +280,40 @@ public partial class MainWindow
             if (!editorVaultVerified || !editorKeysPersisted || KeySetIdentityService.Compute(ProjectKeyVault.FromProject(editorProject!)) != KeySetIdentityService.Compute(ProjectKeyVault.FromProject(project)))
                 throw new InvalidOperationException("Vault-Entsperren per Editor-Click stellt den gespeicherten Schlüsselsatz nicht wieder her.");
             checks.Add("Editor-Vault v2: Speichern und Entsperren über tatsächliche Editor-Clicks/Passwortdialoge; automatische unabhängige Sicherung wieder geöffnet, Sitzung nach erneutem Projektladen erst durch Entsperren freigegeben. Synthetische Daten.");
+            using var identityKey = RSA.Create(3072);
+            using var identityCertificate = new CertificateRequest("CN=Synthetic Editor Identity", identityKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+                .CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
+            loadEditorVaultIdentities = () => [new("Synthetic Editor Identity", CertificateVaultService.Fingerprint(identityCertificate), new X509Certificate2(identityCertificate))];
+            new TeamVaultRecipientStore(projectsDirectory).Save([CertificateVaultService.ExportInvitation(identityCertificate, "Synthetic Editor Identity")]);
+            ClickWithPassphrase(EditorManageVaultAccessButton, "Vault-Zugriff für mehrere Benutzer");
+            if (editorVaultVersion != KeyVaultService.CertificateVersion || !editorVaultVerified ||
+                ProjectKeyVault.LoadWithCertificates(vault, [identityCertificate]).ProductivePicc.Value != project.Productive.PiccKey.Value)
+                throw new InvalidOperationException("Editor-Freigabe migriert den v2-Vault nicht verlustfrei zum Identitätszugriff.");
+            LoadEditor(ProjectJson.Load(path), path);
+            EditorUnlockVaultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            if (!editorVaultVerified || !EditorVaultStatus.Text.Contains("Windows-Identität", StringComparison.Ordinal))
+                throw new InvalidOperationException("Editor entsperrt den v3-Vault nicht automatisch mit der freigegebenen Identität.");
+            var updatedKey = KeyVaultService.GenerateKey("DF_KEY_AES");
+            EditorProductivePiccKey.Text = updatedKey;
+            if (editorVaultVerified || !EditorSaveVaultButton.IsEnabled)
+                throw new InvalidOperationException("Geänderter Schlüssel setzt den Vault-Nachweis nicht zurück oder lässt sich nicht speichern.");
+            EditorSaveVaultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            if (!editorVaultVerified || ProjectKeyVault.LoadWithCertificates(vault, [identityCertificate]).ProductivePicc.Value != updatedKey ||
+                ProjectKeyVault.Load(vault, passphrase).ProductivePicc.Value != updatedKey)
+                throw new InvalidOperationException("Editor-Speichern mit Identität verliert neue Schlüssel oder Recovery-Zugang.");
+            loadEditorVaultIdentities = () => [];
+            LoadEditor(ProjectJson.Load(path), path);
+            ClickWithPassphrase(EditorUnlockVaultButton, "Vault wiederherstellen");
+            if (!editorVaultVerified || editorProject!.Productive.PiccKey.Value != updatedKey ||
+                !EditorVaultStatus.Text.Contains("Recovery-Zugang", StringComparison.Ordinal))
+                throw new InvalidOperationException("Editor stellt den v3-Vault ohne lokale Identität nicht über Recovery wieder her.");
+            checks.Add("Editor-Vault v3: Freigabe/migrieren, automatisch per synthetischer Identität entsperren, Schlüsseländerung mit Identität speichern und ohne Identität per Recovery entsperren über Editor-Clicks geprüft; Windows-Zertifikatsspeicher nicht verändert.");
         }
         finally
         {
             projectsDirectory = oldProjects;
             settings.VaultBackup.Directory = oldBackup;
+            loadEditorVaultIdentities = oldIdentities;
             if (Directory.Exists(root)) Directory.Delete(root, true);
         }
     }

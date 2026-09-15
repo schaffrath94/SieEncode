@@ -30,6 +30,7 @@ public partial class MainWindow
     private int editorVaultVersion;
     private ProjectKeyVaultPayload? editorVaultPayload;
     private bool suppressEditorChanges;
+    private Func<IReadOnlyList<WindowsVaultIdentity>> loadEditorVaultIdentities = WindowsVaultIdentityService.List;
 
     private void InitializeProjectEditor()
     {
@@ -708,7 +709,7 @@ public partial class MainWindow
             var windowsIdentity = false;
             if (document.Version == KeyVaultService.CertificateVersion)
             {
-                var identities = WindowsVaultIdentityService.List();
+                var identities = loadEditorVaultIdentities();
                 try
                 {
                     payload = ProjectKeyVault.LoadWithCertificates(path, identities.Select(identity => identity.Certificate));
@@ -811,7 +812,7 @@ public partial class MainWindow
             var path = ProjectKeyVault.GetPath(editorSourcePath);
             if (editorVaultVersion >= KeyVaultService.CertificateVersion)
             {
-                var identities = WindowsVaultIdentityService.List();
+                var identities = loadEditorVaultIdentities();
                 try
                 {
                     editorVaultRevision = ProjectKeyVault.UpdateForExistingRecipients(path, CreateVaultPayload(), identities.Select(identity => identity.Certificate), editorVaultRevision);
@@ -857,7 +858,7 @@ public partial class MainWindow
             KeyVaultDocument? existing = null;
             if (File.Exists(path)) existing = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options);
             var teamRecipients = new TeamVaultRecipientStore(projectsDirectory).Load().Recipients;
-            var dialog = new VaultAccessWindow(this, existing, teamRecipients);
+            var dialog = new VaultAccessWindow(this, existing, teamRecipients, loadEditorVaultIdentities);
             if (dialog.ShowDialog() != true) return;
             var recipients = dialog.TakeRecipients();
             try { editorVaultRevision = ProjectKeyVault.SaveForRecipients(path, CreateVaultPayload(), dialog.RecoveryPassphrase, recipients, editorVaultRevision); }

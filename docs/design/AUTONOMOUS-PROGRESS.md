@@ -74,6 +74,22 @@ Weiter offen: v3-Editorpfad (Windows-Identitaet/Recovery/Empfaengerverwaltung),
 native Datei-Dialoge sowie Installation/Upgrade und reale Mehrbenutzer/Hardware.
 Nicht den erfolgreich abgeschlossenen v2-Clickpfad erneut inventarisieren.
 
+## Aktuell: v3-Editorablauf abgeschlossen
+Stand 15.09.: regulaerer Build 1.1.0-releasecheck.20260915.1 unter
+artifacts/editor-v3-check-20260915/Studio, ohne beigelegte Runtime in diesem Lauf.
+34 UI-Checks, 5 Kodierszenarien und 62/62 Core-Regressionstests bestanden;
+CLI/WPF-Build erfolgreich. UI-Prozess Exit 0, stderr leer.
+Editor verwaltet Identitaetsquelle jetzt ueber Delegate mit unveraendertem
+Windows-Standard. Synthetischer Test prueft per Editor-Click: v2 zu v3 freigeben,
+mit Identitaet entsperren, Schluessel aendern (Verifikation erlischt), mit Identitaet
+speichern (Recovery bleibt nutzbar) und ohne Identitaet per Recovery entsperren.
+Nachweise tmp/editor-v3-ci.log und tmp/editor-v3-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Kein echter Windows-Mehrbenutzernachweis. Kein neuer MSI-/ZIP-Build.
+Naechster gezielter Abschnitt: nach ausschliesslichem Recovery-Entsperren ohne
+Identitaet den Speichern-/Freigabe-Anwenderablauf pruefen; v3-Save nutzt derzeit
+weiterhin Zertifikatszugriff. Nicht den bereits bestandenen Identitaetspfad wiederholen.
+Danach native Import/Export-Dateidialoge und isolierte Installer-/Upgrade-Umgebung.
+
 ## Naechste Arbeiten / Freigabekriterien
 1. Korrigierter MSI-/Portable-/Abnahme-Kit-Lauf ist abgeschlossen; Archive,
    Versionsangaben und Hashmanifeste sind geprueft. Keine unveraenderten Gesamtlaeufe.
