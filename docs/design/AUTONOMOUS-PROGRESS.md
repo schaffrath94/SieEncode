@@ -79,6 +79,18 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Profilauswahl-Korrektur 16.09.: Refresh aktualisiert nun auch Grund-/Zusatzprofil-
+Auswahllisten im bereits offenen Editor (zuvor nur dynamische Felder).
+Gemeinsamer Auswahlaufbau bei Laden und Refresh, mit unterdrueckten Change-Events;
+bestehende Auswahl wird aus dem Projekt wiederhergestellt. Regression importiert
+ein synthetisches Grundprofil in die isolierte Bibliothek und prueft sofortige
+Verfuegbarkeit sowie unveraenderte Auswahl, Bindung und clean-Status.
+WPF-Build Exit 0, 0 Warnungen/Fehler; UI-Smoke Exit 0, 37 Checks/5 Szenarien,
+stderr leer. Nachweise: tmp/profile-choices-build.log und
+tmp/profile-choices-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Entwicklungsbuild mit Defaultkennung 1.1.0-rc15, kein neues Releasepaket.
+Kandidat vom 15.09. enthaelt diese Korrektur noch nicht.
+
 Profil-Refresh-Korrektur 16.09.: Nach unveraenderter Synchronisierung bleibt ein
 sauberes Projekt sauber. Vorbestehende Aenderungen bleiben erhalten; tatsaechliche
 Synchronisierungsaenderungen werden weiterhin speicherpflichtig. Ursache der

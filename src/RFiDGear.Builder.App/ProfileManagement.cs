@@ -215,7 +215,11 @@ public partial class MainWindow
         var changed = !System.Text.Json.Nodes.JsonNode.DeepEquals(before,
             JsonSerializer.SerializeToNode(editorProject, ProjectJson.Options));
         suppressEditorChanges = true;
-        try { PopulateDynamicEditorFields(); }
+        try
+        {
+            RefreshEditorProfileChoices(library);
+            PopulateDynamicEditorFields();
+        }
         finally { suppressEditorChanges = false; }
         SetEditorDirty(editorDirty || changed);
         RefreshProfileBindingStatus();

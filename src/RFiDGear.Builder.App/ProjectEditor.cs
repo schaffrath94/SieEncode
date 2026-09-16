@@ -143,12 +143,7 @@ public partial class MainWindow
             editorVaultVersion = ReadVaultVersion(editorSourcePath);
             editorVaultPayload = string.IsNullOrWhiteSpace(editorSourcePath) ? ProjectKeyVault.FromProject(editorProject) : null;
 
-            var bases = library.Profiles.Where(profile => profile.Profile.Kind == "base")
-                .Select(profile => new ProfileChoice(profile.Profile.Id, $"{profile.Profile.Name} · {profile.Profile.Version} ({profile.Profile.Id})")).ToArray();
-            var customers = library.Profiles.Where(profile => profile.Profile.Kind == "customer")
-                .OrderBy(profile => profile.Profile.Name).Select(profile => new ProfileChoice(profile.Profile.Id, $"{profile.Profile.Name} · {profile.Profile.Version} ({profile.Profile.Id})")).ToArray();
-            EditorBaseProfile.ItemsSource = bases;
-            EditorCustomerProfiles.ItemsSource = customers;
+            RefreshEditorProfileChoices(library);
 
             EditorProjectName.Text = editorProject.Project.Name;
             EditorCardMode.ItemsSource = new[]
@@ -160,10 +155,6 @@ public partial class MainWindow
             EditorOutputDirectory.Text = editorProject.Project.OutputDirectory;
             EditorBuildMastering.IsChecked = editorProject.Project.Build.Contains("Mastering", StringComparer.OrdinalIgnoreCase);
             EditorBuildCoding.IsChecked = editorProject.Project.Build.Contains("Coding", StringComparer.OrdinalIgnoreCase);
-            EditorBaseProfile.SelectedValue = editorProject.Profiles.Base;
-            EditorCustomerProfiles.SelectedItems.Clear();
-            foreach (var choice in customers.Where(choice => editorProject.Profiles.Customers.Contains(choice.Id, StringComparer.Ordinal)))
-                EditorCustomerProfiles.SelectedItems.Add(choice);
             SetComboValue(EditorTransportPiccType, editorProject.Transport.PiccKey.Type);
             EditorTransportPiccKey.Text = editorProject.Transport.PiccKey.Value;
             SetComboValue(EditorProductivePiccType, editorProject.Productive.PiccKey.Type);
@@ -190,6 +181,21 @@ public partial class MainWindow
             SetEditorDirty(false);
         }
         finally { suppressEditorChanges = false; }
+    }
+
+    private void RefreshEditorProfileChoices(ProfileLibrary library)
+    {
+        if (editorProject is null) return;
+        var bases = library.Profiles.Where(profile => profile.Profile.Kind == "base")
+            .Select(profile => new ProfileChoice(profile.Profile.Id, $"{profile.Profile.Name} · {profile.Profile.Version} ({profile.Profile.Id})")).ToArray();
+        var customers = library.Profiles.Where(profile => profile.Profile.Kind == "customer")
+            .OrderBy(profile => profile.Profile.Name).Select(profile => new ProfileChoice(profile.Profile.Id, $"{profile.Profile.Name} · {profile.Profile.Version} ({profile.Profile.Id})")).ToArray();
+        EditorBaseProfile.ItemsSource = bases;
+        EditorBaseProfile.SelectedValue = editorProject.Profiles.Base;
+        EditorCustomerProfiles.ItemsSource = customers;
+        EditorCustomerProfiles.SelectedItems.Clear();
+        foreach (var choice in customers.Where(choice => editorProject.Profiles.Customers.Contains(choice.Id, StringComparer.Ordinal)))
+            EditorCustomerProfiles.SelectedItems.Add(choice);
     }
 
     private void PopulateDynamicEditorFields()

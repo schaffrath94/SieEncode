@@ -133,12 +133,29 @@ public partial class MainWindow
 
     private void VerifyProfileRefreshDirtyState(List<string> checks)
     {
+        string? importedPath = null;
         try
         {
             LoadEditor(ProjectDraftFactory.Create(LoadEditorLibrary(), "Synthetic refresh"), "");
             SetEditorDirty(false);
             ReloadProfiles_Click(this, new RoutedEventArgs());
             if (editorDirty) throw new InvalidOperationException("Unverändertes Projekt nach Profil-Refresh als geändert markiert.");
+
+            var originalBase = editorProject!.Profiles.Base;
+            var originalBindings = JsonSerializer.Serialize(editorProject.Profiles.Bindings, ProjectJson.Options);
+            var imported = JsonSerializer.Deserialize<ProfileDefinition>(
+                JsonSerializer.Serialize(LoadEditorLibrary().Profiles.First(profile => profile.Profile.Id == originalBase), ProjectJson.Options),
+                ProjectJson.Options)!;
+            imported.Profile.Id = "SYNTHETIC-REFRESH-" + Guid.NewGuid().ToString("N");
+            imported.Profile.Name = "Synthetic imported profile";
+            importedPath = profileStore.SaveBase(imported);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (!EditorBaseProfile.Items.Cast<ProfileChoice>().Any(choice => choice.Id == imported.Profile.Id))
+                throw new InvalidOperationException("Importiertes Profil fehlt in der geöffneten Editorauswahl.");
+            if (EditorBaseProfile.SelectedValue as string != originalBase || editorProject.Profiles.Base != originalBase ||
+                JsonSerializer.Serialize(editorProject.Profiles.Bindings, ProjectJson.Options) != originalBindings || editorDirty)
+                throw new InvalidOperationException("Profilimport verändert Auswahl, Bindung oder Änderungsstatus des offenen Projekts.");
+            checks.Add("Profilimport: neues Grundprofil sofort im offenen Editor verfügbar; bisherige Auswahl und Profilbindung unverändert.");
 
             SetEditorDirty(true);
             ReloadProfiles_Click(this, new RoutedEventArgs());
@@ -152,7 +169,11 @@ public partial class MainWindow
                 throw new InvalidOperationException("Tatsächliche Projektsynchronisierung nicht als Änderung erkannt.");
             checks.Add("Profil-Refresh: unverändertes Projekt bleibt sauber; bestehende und synchronisierte Änderungen bleiben speicherpflichtig.");
         }
-        finally { SetEditorDirty(false); }
+        finally
+        {
+            if (importedPath is not null && File.Exists(importedPath)) File.Delete(importedPath);
+            SetEditorDirty(false);
+        }
     }
 
     private void VerifyAutomationContract(List<string> checks)
