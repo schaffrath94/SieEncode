@@ -52,17 +52,20 @@ MSI administrative Extraktion Exit 0; 1025 Dateien dort und im Portable-ZIP
 hashgleich zum Releasebaum. Alle drei Paketmanifeste geprueft. Keine Installation.
 Details/Hashes: RELEASE-CANDIDATE-2026-09-15.md. Kein erneuter unveraenderter Build.
 
-## Native Dialogabnahme: vorbereitet, noch nicht ausgefuehrt
+## Native Dialogabnahme: Teilabnahme 16.09. bestanden
 Interaktiver Modus --ui-test-workspace verwendet denselben isolierten SettingsStore
 und synthetischen Profilbestand wie der Smoke-Test; Fenster mit Zusatz Testdaten.
 Build 1.1.0-releasecheck.20260915.3 unter artifacts/native-dialog-check-20260915/Studio
 veroeffentlicht und gestartet; getrennte Settings unter tmp/native-dialog-check,
 stderr leer. Fenster durch Computer Use list_windows eindeutig gefunden.
-Computer Use get_window/get_window_state wurde jedoch mit
-"Computer Use app approval timed out" abgebrochen. Keine native Dialogaktion
-wurde ausgefuehrt; keine Abnahme behaupten. App-Freigabe benoetigt, nicht per
-alternativer UI-Automation umgehen und nicht stündlich dieselbe Anfrage wiederholen.
-Testfenster kann weiterhin offen sein; nur anhand frischer Fensterauswahl verwenden.
+Die fruehere Computer-Use-Freigabeblockade ist behoben. Am 16.09. wurden echte
+Windows-Dateidialoge bedient: Projekt Speichern unter, erneutes Oeffnen/Abbrechen,
+keywertfreier Kodiervorschrift-Export und kontrollierter JSON-Grundprofilimport.
+Dateien im isolierten Testordner nachgeprueft; Projekt nach Abbruch hashgleich.
+Testfenster anschliessend geschlossen, stderr leer. Details und Grenzen:
+NATIVE-DIALOG-ACCEPTANCE-2026-09-16.md. Keine vollstaendige UI-Paritaetsabnahme.
+Gefundene falsche Vault-Erfolgsmeldung beim Projektspeichern im Source korrigiert;
+Kandidat vom 15.09. enthaelt diese reine Textkorrektur noch nicht.
 Get-Command fand keine WindowsSandbox.exe/vmconnect.exe/VBoxManage.exe/docker.exe;
 das ist noch kein vollstaendiger Nachweis, dass keine Test-VM existiert.
 Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/

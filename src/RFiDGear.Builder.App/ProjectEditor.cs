@@ -652,7 +652,7 @@ public partial class MainWindow
         editorVaultRevision = ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(editorSourcePath));
         EditorSourcePath.Text = editorSourcePath;
         SetEditorDirty(false);
-        EditorValidation.Text = "Gespeichert und validiert. Transport- und Produktivschlüssel wurden ausschließlich im Vault abgelegt.";
+        EditorValidation.Text = "Projektdefinition gespeichert und validiert. Sie enthält keine Schlüsselwerte. Änderungen an Schlüsseln müssen separat im Vault gespeichert werden.";
         RefreshProjects();
         var entry = projects.FirstOrDefault(item => string.Equals(item.SourcePath, editorSourcePath, StringComparison.OrdinalIgnoreCase));
         if (entry is not null) { SelectProject(entry); ProjectsGrid.SelectedItem = entry; }
