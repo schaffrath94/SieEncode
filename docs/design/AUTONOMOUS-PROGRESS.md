@@ -68,6 +68,13 @@ Gefundene falsche Vault-Erfolgsmeldung beim Projektspeichern im Source korrigier
 Kandidat vom 15.09. enthaelt diese reine Textkorrektur noch nicht.
 Get-Command fand keine WindowsSandbox.exe/vmconnect.exe/VBoxManage.exe/docker.exe;
 das ist noch kein vollstaendiger Nachweis, dass keine Test-VM existiert.
+Gezielte Folgepruefung 16.09.: VirtualBox 7.2.16r174877 ist unter
+C:/Program Files/Oracle/VirtualBox installiert (nicht im PATH). VBoxManage
+list vms/list runningvms lief erfolgreich, beide Listen leer. Im Workspace
+keine ISO/OVA/VBOX/VDI/VHDX gefunden. Keine VM angelegt oder gestartet.
+PnP meldet Gemalto Virtual PCSC Multi-slots Reader und Alcor Micro USB Smart
+Card Reader mit Status OK. Das belegt weder einen passenden kontaktlosen
+DESFire-Reader noch eine geeignete Testkarte; keine Kartenkommunikation gestartet.
 Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
