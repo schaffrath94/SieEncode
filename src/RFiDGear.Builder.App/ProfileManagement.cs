@@ -210,11 +210,14 @@ public partial class MainWindow
     {
         if (editorProject is null) return;
         var library = LoadEditorLibrary();
+        var before = JsonSerializer.SerializeToNode(editorProject, ProjectJson.Options);
         ProjectDraftFactory.Synchronize(editorProject, library);
+        var changed = !System.Text.Json.Nodes.JsonNode.DeepEquals(before,
+            JsonSerializer.SerializeToNode(editorProject, ProjectJson.Options));
         suppressEditorChanges = true;
         try { PopulateDynamicEditorFields(); }
         finally { suppressEditorChanges = false; }
-        SetEditorDirty(true);
+        SetEditorDirty(editorDirty || changed);
         RefreshProfileBindingStatus();
     }
 

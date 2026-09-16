@@ -79,6 +79,18 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Profil-Refresh-Korrektur 16.09.: Nach unveraenderter Synchronisierung bleibt ein
+sauberes Projekt sauber. Vorbestehende Aenderungen bleiben erhalten; tatsaechliche
+Synchronisierungsaenderungen werden weiterhin speicherpflichtig. Ursache der
+unnoetigen Schliessen-Nachfrage aus der nativen Importabnahme behoben.
+WPF Release-Build Exit 0, 0 Warnungen/Fehler; isolierter UI-Smoke Exit 0,
+36 Checks und 5 synthetische Kodierszenarien, stderr leer. Neue Regression prueft
+unveraenderten Refresh, bestehendes dirty und wiederhergestelltes Pflichtfeld.
+Nachweise: tmp/profile-refresh-build.log und
+tmp/profile-refresh-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Entwicklungsbuild traegt mangels Versionsoverride 1.1.0-rc15; kein neues RC15-Paket
+und keine Hardwarefreigabe. Kandidat vom 15.09. enthaelt diesen Fix noch nicht.
+
 1. Native Import-/Export-/Speicherdateidialoge und UI-Paritaet als Anwenderablauf
    abschliessen; synthetische Source-/Buttonpruefungen nicht als Vollabnahme ausgeben.
 2. Isolierte Windows-Installation/Upgrade/Deinstallation: passende Umgebung bisher

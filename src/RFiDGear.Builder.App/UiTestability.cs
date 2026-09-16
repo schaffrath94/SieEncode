@@ -105,6 +105,7 @@ public partial class MainWindow
         VerifyWorkspaceStateContract(checks);
         VerifyConstrainedLayoutContract(checks);
         VerifyIsolatedProjectFlows(checks);
+        VerifyProfileRefreshDirtyState(checks);
         VerifyEditorVaultButtons(checks);
 
         var reportDirectory = Path.Combine(Path.GetTempPath(), "SieEncode", "ui-smoke");
@@ -128,6 +129,30 @@ public partial class MainWindow
             compatibilityMatrix = new { status = "OK", scenarios = matrix.Report.Scenarios.Count, matrix.TextPath, matrix.JsonPath, hardwareEvidence = false }
         }, new JsonSerializerOptions { WriteIndented = true }));
         return reportPath;
+    }
+
+    private void VerifyProfileRefreshDirtyState(List<string> checks)
+    {
+        try
+        {
+            LoadEditor(ProjectDraftFactory.Create(LoadEditorLibrary(), "Synthetic refresh"), "");
+            SetEditorDirty(false);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (editorDirty) throw new InvalidOperationException("Unverändertes Projekt nach Profil-Refresh als geändert markiert.");
+
+            SetEditorDirty(true);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (!editorDirty) throw new InvalidOperationException("Profil-Refresh verwirft bestehenden Änderungsstatus.");
+
+            var variable = editorProject!.Values.Keys.First();
+            editorProject.Values.Remove(variable);
+            SetEditorDirty(false);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (!editorDirty || !editorProject.Values.ContainsKey(variable))
+                throw new InvalidOperationException("Tatsächliche Projektsynchronisierung nicht als Änderung erkannt.");
+            checks.Add("Profil-Refresh: unverändertes Projekt bleibt sauber; bestehende und synchronisierte Änderungen bleiben speicherpflichtig.");
+        }
+        finally { SetEditorDirty(false); }
     }
 
     private void VerifyAutomationContract(List<string> checks)
