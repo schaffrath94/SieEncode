@@ -43,7 +43,17 @@ Testcleanup korrigiert, finaler Lauf komplett OK. Keine weitere Wiederholung noe
   Enthaelt die neueren Start-/Recovery-Korrekturen noch NICHT. Keine Installation.
 Historische Details/Hashwerte: RELEASE-READINESS-2026-09-14.md.
 
-## Aktuelles gemeinsames Paket 15.09.
+## Aktuelles gemeinsames Paket 17.09.
+artifacts/releasecheck-20260917/package, 1.1.0-releasecheck.20260917 (MSI 1.1.17),
+Studio 977741b, unveraenderte getestete Runtime. Enthaelt alle nachfolgend
+beschriebenen UI-Korrekturen vom 16.09. Build Exit 0; exakter Kandidat im
+UI-Smoke Exit 0, 37 Checks/5 Szenarien, stderr leer. ZIP und administrativ
+extrahiertes MSI jeweils 1027 Dateien hashgleich, drei Paketmanifeste geprueft.
+RELEASE-CANDIDATE-2026-09-17.md dokumentiert Hashwerte und offene Freigaben.
+Kein finales Release, keine Installation. Versuch vom 16.09. war vor fertiger
+Paketierung unterbrochen; nicht ausliefern. Unveraenderten Kandidaten nicht neu bauen.
+
+## Vorheriges gemeinsames Paket 15.09.
 artifacts/releasecheck-20260915/package ist fertig und geprueft, Version
 1.1.0-releasecheck.20260915. Enthaelt aktuelle Vault-/Recovery-Korrekturen.
 Studio f8df5c9, Runtime unveraendert wiederverwendet. Build Exit 0, 35 UI-Checks
