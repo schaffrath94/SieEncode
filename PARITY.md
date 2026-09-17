@@ -1,5 +1,20 @@
 # Funktionsparität zu PowerShell v10.39
 
+## Geltungsbereich des aktuellen Kandidaten
+
+Der Kandidat `1.1.0-releasecheck.20260917` ist softwareseitig mit 37 UI-Prüfungen,
+fünf synthetischen Kodierszenarien und einem Dateivergleich von MSI/ZIP geprüft.
+Die nachstehende Matrix dokumentiert ältere Funktions- und Abnahmenachweise.
+Insbesondere „Erfüllt“ bei realem Bedienlauf, Mehrbenutzerbetrieb oder Hardware
+erteilt dem aktuellen Studio-/Runtime-Build keine praktische Freigabe.
+Seine offenen Prüfungen sind Installation/Upgrade/Deinstallation in isoliertem
+Windows, echter Zweitbenutzer-Vault, Reader/Testkarte einschließlich
+ChangeFileSettings und vollständige praktische UI-Parität.
+Siehe [aktuelle Kandidatenidentität und Nachweise](docs/design/RELEASE-CANDIDATE-2026-09-17.md).
+PDF-Weiterentwicklung und visuelle PDF-Abnahme sind zurückgestellt.
+
+## Historische Funktionsmatrix
+
 Stand: SieEncode 1.1.0-rc15 · 05.09.2026 · interner Abnahmekandidat
 
 Diese Matrix trennt fachliche Funktionsgleichheit von reiner Ähnlichkeit der
