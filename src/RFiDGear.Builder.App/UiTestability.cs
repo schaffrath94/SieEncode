@@ -134,6 +134,7 @@ public partial class MainWindow
     private void VerifyProfileRefreshDirtyState(List<string> checks)
     {
         string? importedPath = null;
+        string? customerPath = null;
         try
         {
             LoadEditor(ProjectDraftFactory.Create(LoadEditorLibrary(), "Synthetic refresh"), "");
@@ -168,10 +169,41 @@ public partial class MainWindow
             if (!editorDirty || !editorProject.Values.ContainsKey(variable))
                 throw new InvalidOperationException("Tatsächliche Projektsynchronisierung nicht als Änderung erkannt.");
             checks.Add("Profil-Refresh: unverändertes Projekt bleibt sauber; bestehende und synchronisierte Änderungen bleiben speicherpflichtig.");
+
+            var customer = new ProfileEditingService().CreateCustomer();
+            customer.Profile.Id = "SYNTHETIC-CUSTOMER-" + Guid.NewGuid().ToString("N");
+            customer.Variables.Add(new VariableDefinition
+            {
+                Id = "refreshCustomerText", Label = "Synthetic customer text", Scope = "project",
+                Type = "text", Length = 4, Default = "TEST"
+            });
+            customerPath = profileStore.SaveCustomer(customer);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            var choice = EditorCustomerProfiles.Items.Cast<ProfileChoice>().Single(item => item.Id == customer.Profile.Id);
+            EditorCustomerProfiles.SelectedItems.Add(choice);
+            if (!editorProject.Profiles.Customers.Contains(customer.Profile.Id) ||
+                !editorValues.Any(field => field.Id == "refreshCustomerText"))
+                throw new InvalidOperationException("Zusatzprofilauswahl übernimmt ihre Projektfelder nicht.");
+            var editedField = editorValues.First(field => field.Id != "refreshCustomerText");
+            var editedId = editedField.Id;
+            editedField.Value = "0043";
+            editorValues.Single(field => field.Id == "refreshCustomerText").Value = "EDIT";
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (!EditorCustomerProfiles.SelectedItems.Cast<ProfileChoice>().Any(item => item.Id == customer.Profile.Id) ||
+                editorValues.Single(field => field.Id == editedId).Value != "0043" ||
+                editorValues.Single(field => field.Id == "refreshCustomerText").Value != "EDIT" || !editorDirty)
+                throw new InvalidOperationException("Profil-Refresh verliert Zusatzprofilauswahl oder ungespeicherte Projektwerte.");
+            EditorCustomerProfiles.SelectedItems.Remove(EditorCustomerProfiles.SelectedItems.Cast<ProfileChoice>().Single(item => item.Id == customer.Profile.Id));
+            if (editorProject.Profiles.Customers.Contains(customer.Profile.Id) ||
+                editorValues.Any(field => field.Id == "refreshCustomerText") ||
+                editorValues.Single(field => field.Id == editedId).Value != "0043")
+                throw new InvalidOperationException("Zusatzprofil-Abwahl entfernt falsche Projektwerte.");
+            checks.Add("Zusatzprofile: Import, Auswahl, ungespeicherte Werte nach Refresh und gezielte Abwahl über Editor-Steuerelemente geprüft.");
         }
         finally
         {
             if (importedPath is not null && File.Exists(importedPath)) File.Delete(importedPath);
+            if (customerPath is not null && File.Exists(customerPath)) File.Delete(customerPath);
             SetEditorDirty(false);
         }
     }

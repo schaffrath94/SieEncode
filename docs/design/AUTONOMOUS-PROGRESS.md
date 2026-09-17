@@ -89,6 +89,18 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Zusatzprofil-Bedienregression 17.09.: synthetisches Kundenprofil in isolierter
+Bibliothek gespeichert, im offenen Editor ausgewaehlt, eigenes Projektfeld
+angezeigt; geaenderte Grund-/Zusatzprofilwerte und Auswahl bleiben beim Refresh
+erhalten. Abwahl entfernt nur das Zusatzprofilfeld, der andere Wert bleibt.
+WPF-Build erfolgreich; finaler UI-Smoke Exit 0, 38 Checks/5 Szenarien, stderr leer.
+Erster Lauf wies die unvollstaendige Testfixture wegen fehlender Laengenregel ab;
+Fixture korrigiert, kein Produktfehler. Logs: tmp/customer-flow-build-final.log,
+tmp/customer-flow-smoke-final/SieEncode/ui-smoke/ui-smoke-result.json.
+Nur Testcode erweitert, kein neues Paket erforderlich. Kandidat vom 17.09.
+bleibt unveraendert bei seinen dokumentierten 37 Checks. Kein nativer Importdialog
+und keine vollstaendige praktische UI-Abnahme durch diese Regression belegt.
+
 Profilauswahl-Korrektur 16.09.: Refresh aktualisiert nun auch Grund-/Zusatzprofil-
 Auswahllisten im bereits offenen Editor (zuvor nur dynamische Felder).
 Gemeinsamer Auswahlaufbau bei Laden und Refresh, mit unterdrueckten Change-Events;
