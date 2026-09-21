@@ -538,6 +538,9 @@ public partial class MainWindow
         var profilesOk = ProfileBindingService.Evaluate(editorProject, editorLibrary).All(status => status.IsMatch);
         var definitionIssues = ProjectContractValidator.Validate(editorProject, editorLibrary, requireProductiveSecrets: false);
         var valuesOk = definitionIssues.Count == 0;
+        var fieldIssues = definitionIssues.Where(issue =>
+            !issue.Code.StartsWith("TRANSPORT_", StringComparison.Ordinal) &&
+            !issue.Code.StartsWith("PRODUCTIVE_", StringComparison.Ordinal)).ToArray();
         var keyIssues = ProjectContractValidator.Validate(editorProject, editorLibrary, requireProductiveSecrets: true)
             .Where(issue => issue.Code.StartsWith("PRODUCTIVE", StringComparison.Ordinal)).ToArray();
         var keysLoaded = keyIssues.Length == 0;
@@ -558,16 +561,17 @@ public partial class MainWindow
         EditorAuditVaultButton.IsEnabled = vaultExists;
 
         EditorWorkflowProfile.Text = profilesOk ? "✓ Profile" : "! Profile prüfen";
-        EditorWorkflowValues.Text = valuesOk ? "✓ Pflichtfelder" : "! Pflichtfelder";
+        EditorWorkflowValues.Text = fieldIssues.Length == 0 ? "✓ Pflichtfelder" : "! Pflichtfelder";
         EditorWorkflowKeys.Text = keysSafe
             ? editorVaultVersion >= KeyVaultService.CertificateVersion ? "✓ Vault geprüft + gesichert" : "✓ Vault v2 geprüft + gesichert"
-            : keysLoaded && editorVaultVersion == 1 ? "! Vault v1 aktualisieren" : keysLoaded ? "! Vault speichern" : vaultExists ? "! Vault entsperren" : "! Schlüssel erzeugen";
+            : keysLoaded && editorVaultVersion == 1 ? "! Vault v1 aktualisieren" : keysLoaded ? "! Vault speichern" : vaultExists ? "! Vault entsperren" : existingDefinition ? "! Vault fehlt" : "! Schlüssel erzeugen";
         EditorWorkflowSaved.Text = saved ? "✓ Gespeichert" : "! Noch nicht gespeichert";
         EditorNextStep.Text = !profilesOk ? "Nächster Schritt: geänderte Profilstände prüfen und bewusst übernehmen."
-            : !valuesOk ? "Nächster Schritt: " + string.Join(" ", definitionIssues.Take(3).Select(issue => issue.Message))
+            : fieldIssues.Length > 0 ? "Nächster Schritt: " + string.Join(" ", fieldIssues.Take(3).Select(issue => issue.Message))
             : !keysLoaded && vaultExists ? "Nächster Schritt: vorhandenen Schlüsselspeicher für diese Sitzung entsperren."
             : !keysLoaded && existingDefinition ? "Nächster Schritt: Zu dieser bestehenden Definition fehlt der Vault. Vorhandene Build-Schlüssel sind nicht wiederherstellbar; neue Schlüssel nur für eine bewusst neue Schlüsselidentität erzeugen."
             : !keysLoaded ? "Nächster Schritt: Produktivschlüssel erzeugen, Projekt speichern und anschließend den Vault verschlüsselt sichern."
+            : !valuesOk ? "Nächster Schritt: Grundschlüssel prüfen. " + string.Join(" ", definitionIssues.Take(3).Select(issue => issue.Message))
             : editorVaultVersion == 1 ? "Nächster Schritt: alten Vault mit einer neuen starken Passphrase als Vault v2 speichern. Vorher bleibt der Neubau gesperrt."
             : !editorVaultVerified ? "Nächster Schritt: Vault speichern oder entsperren; SieEncode muss ihn erfolgreich wieder öffnen."
             : backupRequired && !backupReady ? "Nächster Schritt: Unter Einstellungen einen vom Projektordner unabhängigen Vault-Sicherungsort wählen. Mastering bleibt bis dahin gesperrt."

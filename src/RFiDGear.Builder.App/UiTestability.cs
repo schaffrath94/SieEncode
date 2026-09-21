@@ -106,6 +106,7 @@ public partial class MainWindow
         VerifyConstrainedLayoutContract(checks);
         VerifyIsolatedProjectFlows(checks);
         VerifyProfileRefreshDirtyState(checks);
+        VerifyMissingVaultGuidance(checks);
         VerifyEditorVaultButtons(checks);
 
         var reportDirectory = Path.Combine(Path.GetTempPath(), "SieEncode", "ui-smoke");
@@ -206,6 +207,25 @@ public partial class MainWindow
             if (customerPath is not null && File.Exists(customerPath)) File.Delete(customerPath);
             SetEditorDirty(false);
         }
+    }
+
+    private void VerifyMissingVaultGuidance(List<string> checks)
+    {
+        try
+        {
+            var project = ProjectJson.WithoutAllSecrets(ProjectDraftFactory.Create(LoadEditorLibrary(), "Synthetic missing vault"));
+            var path = Path.Combine(projectsDirectory, "missing-vault-" + Guid.NewGuid().ToString("N") + ".project.json");
+            LoadEditor(project, path);
+            if (EditorWorkflowValues.Text != "✓ Pflichtfelder" || EditorWorkflowKeys.Text != "! Vault fehlt" ||
+                !EditorNextStep.Text.Contains("fehlt der Vault", StringComparison.Ordinal) || EditorBuildButton.IsEnabled)
+                throw new InvalidOperationException("Fehlender Vault wird nicht getrennt von Pflichtfeldern angezeigt oder Neubau ist freigegeben.");
+            EditorProjectName.Text = "";
+            if (EditorWorkflowValues.Text != "! Pflichtfelder" ||
+                !EditorNextStep.Text.Contains("Projektname fehlt", StringComparison.Ordinal) || EditorBuildButton.IsEnabled)
+                throw new InvalidOperationException("Echter Pflichtfeldfehler wird durch Vault-Hinweis verdeckt.");
+            checks.Add("Fehlender Vault: eigene Schlüsselanzeige und konkrete Anleitung; echte Pflichtfeldfehler bleiben sichtbar, Neubau bleibt gesperrt.");
+        }
+        finally { SetEditorDirty(false); }
     }
 
     private void VerifyAutomationContract(List<string> checks)

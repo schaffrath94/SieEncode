@@ -89,6 +89,19 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Vault-Anzeige 21.09. korrigiert: Transport-/Produktiv-Keyfehler zaehlen fuer die
+Darstellung nicht mehr als Pflichtfeldfehler. Fehlender Vault bei bestehender
+Definition erhaelt eigene Statusanzeige und Wiederherstellungs-/Neuanlagehinweis.
+Echte Feldfehler bleiben priorisiert; geladene ungueltige Grundkeys werden weiter
+angezeigt. Vollstaendige definitionIssues bleiben unveraendert Teil der Bausperre.
+Regression: keyfreie bestehende Definition ohne Vault und danach leerer Name;
+korrekte Anzeige und gesperrter Build in beiden Faellen. WPF-Build Exit 0,
+0 Warnungen/Fehler; UI-Smoke Exit 0, 39 Checks/5 Szenarien, stderr leer.
+Logs: tmp/missing-vault-guidance-build.log und
+tmp/missing-vault-guidance-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Darstellungsbefund der praktischen Teilabnahme damit im Source behoben;
+Kandidat 20260917 unveraendert, enthaelt diese neue Korrektur noch nicht.
+
 Praktische UI-Teilabnahme 21.09. am unveraenderten Kandidaten 20260917:
 Neuer synthetischer Entwurf; Fensterschliessen zeigt Verlustwarnung, Nein erhaelt
 den Entwurf. Nach temporaerem Benutzerabbruch per Escape erst auf neues Weiter
