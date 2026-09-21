@@ -89,6 +89,20 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Praktische UI-Teilabnahme 21.09. am unveraenderten Kandidaten 20260917:
+Neuer synthetischer Entwurf; Fensterschliessen zeigt Verlustwarnung, Nein erhaelt
+den Entwurf. Nach temporaerem Benutzerabbruch per Escape erst auf neues Weiter
+fortgesetzt. Zwischenspeichern, Projekt schliessen, ueber Bibliothek Bearbeiten
+wieder oeffnen und Anwendung regulaer beenden erfolgreich. Korrigierte
+Speicherstatusmeldung sichtbar. Kein Vault/keine Karte verwendet, stderr leer.
+Projektdatei mit erhaltenen Werten und leeren PICC-Keywerten nachgeprueft:
+tmp/practical-close-20260921/SieEncode/startup-test-f12342bdfd5b4b4aaf9ee6839656cadb/
+projects/Neues Projekt/Neues Projekt.project.json, SHA256
+3857CE4D59966DD7223E39D650B9F3A4028606AE8FB6200BB16BC571E3131EBF.
+Neue Darstellungsauffaelligkeit fuer Folgepruefung: Wiedergeoeffnetes Projekt ohne
+Vault meldet Schluessellaengenfehler unter Pflichtfelder statt einer klaren
+Vault-Anweisung. Kein Datenverlust festgestellt; keine vollstaendige UI-Abnahme.
+
 Zusatzprofil-Bedienregression 17.09.: synthetisches Kundenprofil in isolierter
 Bibliothek gespeichert, im offenen Editor ausgewaehlt, eigenes Projektfeld
 angezeigt; geaenderte Grund-/Zusatzprofilwerte und Auswahl bleiben beim Refresh
