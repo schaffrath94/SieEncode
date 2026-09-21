@@ -89,6 +89,18 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Ergaenzende Vault-Anleitungsregression 21.09.: vorhandener gesperrter v2-Vault
+zeigt Entsperrhinweis statt Pflichtfeldfehler. Entsperrabbruch bewahrt Vaultbytes,
+gesperrten Status und Bausperre. Nach echtem synthetischem Unlock wird ein
+ungueltiger Grundschluessel separat angezeigt und verhindert Neubau. Originalkey
+wiederhergestellt und Vault erneut gespeichert; anschliessende v3-/Recoverykette
+weiter erfolgreich. Nur Tests ergaenzt, kein weiterer Produktfehler gefunden.
+Build Exit 0, 0 Warnungen/Fehler; UI-Smoke Exit 0, 40 Checks/5 Szenarien, stderr
+leer. Logs: tmp/locked-vault-guidance-build.log und
+tmp/locked-vault-guidance-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Kandidat vom 17.09. bleibt unveraendert; er enthaelt weder die Anzeigeaenderung
+vom 21.09. noch diese Tests. Keine praktische Mehrbenutzer-/Hardwarefreigabe.
+
 Vault-Anzeige 21.09. korrigiert: Transport-/Produktiv-Keyfehler zaehlen fuer die
 Darstellung nicht mehr als Pflichtfeldfehler. Fehlender Vault bei bestehender
 Definition erhaelt eigene Statusanzeige und Wiederherstellungs-/Neuanlagehinweis.

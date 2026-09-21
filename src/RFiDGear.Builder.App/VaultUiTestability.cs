@@ -276,9 +276,30 @@ public partial class MainWindow
             LoadEditor(ProjectJson.Load(path), path);
             if (editorVaultVerified || !string.IsNullOrEmpty(editorProject!.Productive.PiccKey.Value))
                 throw new InvalidOperationException("Erneutes Laden übernimmt unerwartet entschlüsselte Schlüssel.");
+            void VerifyLockedVaultGuidance()
+            {
+                if (EditorWorkflowValues.Text != "✓ Pflichtfelder" || EditorWorkflowKeys.Text != "! Vault entsperren" ||
+                    !EditorNextStep.Text.Contains("entsperren", StringComparison.Ordinal) ||
+                    EditorBuildButton.IsEnabled || !EditorUnlockVaultButton.IsEnabled)
+                    throw new InvalidOperationException("Gesperrter Vault zeigt falsche Pflichtfeld-/Entsperrhinweise oder erlaubt Neubau.");
+            }
+            VerifyLockedVaultGuidance();
+            var beforeUnlockCancel = File.ReadAllBytes(vault);
+            ClickWithPassphrase(EditorUnlockVaultButton, "Vault entsperren", cancel: true);
+            VerifyLockedVaultGuidance();
+            if (editorVaultVerified || !File.ReadAllBytes(vault).SequenceEqual(beforeUnlockCancel))
+                throw new InvalidOperationException("Abgebrochenes Entsperren verändert oder verifiziert den Vault.");
             ClickWithPassphrase(EditorUnlockVaultButton, "Vault entsperren");
             if (!editorVaultVerified || !editorKeysPersisted || KeySetIdentityService.Compute(ProjectKeyVault.FromProject(editorProject!)) != KeySetIdentityService.Compute(ProjectKeyVault.FromProject(project)))
                 throw new InvalidOperationException("Vault-Entsperren per Editor-Click stellt den gespeicherten Schlüsselsatz nicht wieder her.");
+            var initialKey = EditorTransportPiccKey.Text;
+            EditorTransportPiccKey.Text = "00";
+            if (EditorWorkflowValues.Text != "✓ Pflichtfelder" ||
+                !EditorNextStep.Text.Contains("Grundschlüssel prüfen", StringComparison.Ordinal) || EditorBuildButton.IsEnabled)
+                throw new InvalidOperationException("Ungültiger geladener Grundschlüssel wird nicht angezeigt oder erlaubt Neubau.");
+            EditorTransportPiccKey.Text = initialKey;
+            ClickWithPassphrase(EditorSaveVaultButton, "Keys verschlüsselt speichern");
+            checks.Add("Vault-Anleitung: gesperrter Vault und Entsperrabbruch erhalten Bausperre/Datei; ungültiger Grundschlüssel separat angezeigt und gesperrt.");
             checks.Add("Editor-Vault v2: Speichern und Entsperren über tatsächliche Editor-Clicks/Passwortdialoge; automatische unabhängige Sicherung wieder geöffnet, Sitzung nach erneutem Projektladen erst durch Entsperren freigegeben. Synthetische Daten.");
             using var identityKey = RSA.Create(3072);
             using var identityCertificate = new CertificateRequest("CN=Synthetic Editor Identity", identityKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
