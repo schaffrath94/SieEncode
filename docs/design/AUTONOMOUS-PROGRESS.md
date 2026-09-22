@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Release 1.2.1 am 22.09.2026 auf ausdruecklichen Benutzerauftrag gebaut:
+Source 06520fbdc5e60fc8b49caf9ab3926c1dcccf5115 (sauber), MSI-Version 1.2.1,
+unveraenderte getestete Runtime. Enthaelt die unten beschriebene Vault-Bedienhilfe.
+Build-Release Exit 0; exakter Release UI-Smoke Exit 0, 40 Checks/5 Szenarien,
+stderr leer. MSI /a Exit 0, alle 1030 Dateien hashgleich, zwei Paketmanifeste
+geprueft. Keine echte Installation durch diese Extraktion belegt.
+artifacts/release-1.2.1/package: MSI und Abnahme-Kit, kein Portable.
+MSI SHA256: 720C4EE587A354E177A270C07BCF7D366504F2ACBA19818372AAF07A6B85508C.
+Studio-DLL SHA256: C7FFB4E1A2DB661C6E33FEAA1C244000355C452525C3A3CE43B92E14D0776E77.
+Logs: tmp/release-1.2.1-package.log, tmp/release-1.2.1-msi-admin.log,
+tmp/release-1.2.1-smoke/SieEncode/ui-smoke/ui-smoke-result.json,
+artifacts/release-1.2.1/package-verification.json. Bekannte ICE40/ICE61;
+praktische Abnahmen weiterhin offen, siehe docs/RELEASE-1.2.1.md.
+Automatische Weiterarbeit bleibt bis zur Kollegenrueckmeldung pausiert.
+
 Aktualisierung 22.09.2026: Benutzer verlangt ausdruecklich regulaeren MSI-Release
 statt Portable; derzeit kein produktiver Betrieb, gemeinsame Kollegenabnahme
 folgt nach Auslieferung. Interner Release 1.2.0 gebaut aus 65dd9808e602e650945227b260a0532933c6f5c3,
