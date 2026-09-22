@@ -1,6 +1,22 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Aktualisierung 22.09.2026: Benutzer verlangt ausdruecklich regulaeren MSI-Release
+statt Portable; derzeit kein produktiver Betrieb, gemeinsame Kollegenabnahme
+folgt nach Auslieferung. Interner Release 1.2.0 gebaut aus 65dd9808e602e650945227b260a0532933c6f5c3,
+Runtime unveraendert c959bd4. Test-CI Exit 0 (62/62); exakter Release UI-Smoke
+Exit 0 (40 Checks, 5 Szenarien), stderr leer. MSI /a Exit 0, 1029 Dateien
+hashgleich. Keine tatsaechliche Installation durch /a belegt.
+Artefakte: artifacts/release-1.2.0/package, MSI und Abnahme-Kit, kein Portable.
+MSI SHA256: 57058E0CAE70142947BE5EBCC4813840ADA4B11ECC4066A9E0C4197B6D473F01.
+Studio-DLL SHA256: 831C1888B71B95257C7983C2FAAB5D386E14EA9A8C684E39B895A3B6D29E46B0.
+Nachweise: tmp/release-1.2.0-ci.log, tmp/release-1.2.0-package.log,
+tmp/release-1.2.0-smoke/SieEncode/ui-smoke/ui-smoke-result.json,
+tmp/release-1.2.0-msi-admin.log, artifacts/release-1.2.0/package-verification.json.
+Bekannte WiX ICE40/ICE61 bleiben; praktische Installation/Upgrade, Mehrbenutzer,
+Hardware und vollstaendige UI-Abnahme fuer Kollegen offen (docs/RELEASE-1.2.0.md).
+Diese bewusste interne Auslieferung ersetzt keine ausstehenden Abnahmen.
+
 Autonom und tokensparsam bis zum geprueften internen Release weiterarbeiten.
 PDF-Weiterentwicklung/visuelle Abnahme auf Benutzerwunsch zurueckgestellt;
 bestehende Funktionen erhalten. Nur kanonische private Repositories verwenden.
