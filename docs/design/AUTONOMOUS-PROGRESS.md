@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Neuer Auftrag 22.09.: Offline-Vaults mit zentral signierten Gruppen und getrennten
+Verwaltungsrechten entwickeln. Laut Benutzer keine produktiven Vaults; vorhandene
+Testdateien/Identitaeten trotzdem nicht ungefragt loeschen. Neuer Branch
+codex/offline-vault-groups, ab 1fe2e42; Release 1.2.1 unveraendert.
+Modell und Grenzen: OFFLINE-VAULT-GROUPS.md. Erster Core-Baustein implementiert:
+RSA-PSS-signierte Gruppenrichtlinien, externe Vertrauenswurzel, Bibliotheksbindung,
+Versions-/Konfliktpruefung, strikte Struktur- und Groessenpruefung. Vollstaendige
+CI Exit 0, 63/63 Tests, CLI/WPF-Build erfolgreich; tmp/offline-group-policy-ci.log.
+Noch keine App-/Vault-Anbindung und keine fertige Rollenverwaltung. Naechster
+Schritt: sichere Erstregistrierung und persistenter lokaler Vertrauensstand;
+danach Delegation, Projektbindung, Recovery und UI. Keine Hardwarefreigabe.
+
 Release 1.2.1 am 22.09.2026 auf ausdruecklichen Benutzerauftrag gebaut:
 Source 06520fbdc5e60fc8b49caf9ab3926c1dcccf5115 (sauber), MSI-Version 1.2.1,
 unveraenderte getestete Runtime. Enthaelt die unten beschriebene Vault-Bedienhilfe.
