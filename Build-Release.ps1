@@ -8,7 +8,8 @@ param(
     [string]$CodeSigningCertificateThumbprint = '',
     [string]$TimestampUrl = 'http://timestamp.digicert.com',
     [switch]$RequireSignature,
-    [switch]$AcceptanceCandidateRuntime
+    [switch]$AcceptanceCandidateRuntime,
+    [switch]$SkipPortable
 )
 
 $ErrorActionPreference = 'Stop'
@@ -203,6 +204,8 @@ $stationShortcut = @(Get-MsiValues "SELECT Shortcut FROM Shortcut WHERE Shortcut
 if ($stationShortcut.Count -ne 0) { throw 'MSI-Pruefung fehlgeschlagen: redundante Station-Verknuepfung ist noch enthalten.' }
 Write-Host 'OK: MSI-Startmenuevertrag entspricht dem bewaehrten RFiDGear-EXE-Muster.' -ForegroundColor Green
 
+$releasePackages = @($msi)
+if (-not $SkipPortable) {
 $portableParent = Join-Path $artifacts 'portable'
 $portableRoot = Join-Path $portableParent 'SieEncode'
 Remove-DirectoryWithRetry $portableParent
@@ -211,9 +214,11 @@ Copy-Item -LiteralPath $studio -Destination (Join-Path $portableRoot 'Studio') -
 Copy-Item -LiteralPath $runtime -Destination (Join-Path $portableRoot 'Runtime') -Recurse
 $zip = Join-Path $package ("SieEncode_{0}_internal_portable_x64.zip" -f $packageVersionFilePart)
 Compress-Archive -LiteralPath $portableRoot -DestinationPath $zip -CompressionLevel Optimal
+$releasePackages += $zip
+}
 
 $pilotPackageHashLines = @("SieEncode $PackageVersion – interne Releasepakete",'')
-$pilotPackageHashLines += foreach ($file in @($msi, $zip)) {
+$pilotPackageHashLines += foreach ($file in $releasePackages) {
     '{0}  {1}' -f (Get-FileHash -Algorithm SHA256 -LiteralPath $file).Hash, [IO.Path]::GetFileName($file)
 }
 
@@ -246,7 +251,7 @@ if ($unexpectedVersions.Count -gt 0) {
 $testKitZip = Join-Path $package ("SieEncode_{0}_internal_acceptance-testkit.zip" -f $packageVersionFilePart)
 Compress-Archive -LiteralPath $testKitRoot -DestinationPath $testKitZip -CompressionLevel Optimal
 
-$hashes = foreach ($file in @($msi, $zip, $testKitZip)) {
+$hashes = foreach ($file in ($releasePackages + @($testKitZip))) {
     $hash = Get-FileHash -Algorithm SHA256 -LiteralPath $file
     [pscustomobject]@{ File = [IO.Path]::GetFileName($file); SHA256 = $hash.Hash; Bytes = (Get-Item -LiteralPath $file).Length }
 }
