@@ -54,6 +54,16 @@ public partial class MainWindow
             RefreshOpenEditorAfterProfileLibraryChange();
             SetStatus("Grundprofil importiert und validiert: " + path);
         }
+        catch (JsonException exception)
+        {
+            var location = exception.LineNumber is long line
+                ? $" Fehler in Zeile {line + 1}."
+                : string.Empty;
+            ShowError(new InvalidDataException(
+                "Die ausgewählte Datei kann nicht als SieEncode-Grundprofil gelesen werden. " +
+                "Das JSON-Format oder ein enthaltenes Datenfeld ist ungültig." + location +
+                " Bitte prüfen Sie die Datei oder wählen Sie eine gültige Profildatei aus.", exception));
+        }
         catch (Exception exception) { ShowError(exception); }
     }
 

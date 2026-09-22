@@ -89,6 +89,16 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Importmeldung 22.09. im Source verbessert: ImportBaseProfile_Click behandelt
+JsonException mit deutschem Hinweis zu ungueltigem JSON/Datenfeld, optionaler
+1-basierter Fehlerzeile und Aufforderung, die Datei zu pruefen oder eine gueltige
+Profildatei auszuwaehlen. Parserexception bleibt als InnerException erhalten;
+ShowError zeigt nur den deutschen Kontext. Validierung/Speicherpfad unveraendert.
+Gezielter WPF Release-Build Exit 0, 0 Warnungen/Fehler:
+tmp/profile-import-message-build.log. Keine zusaetzlichen Tests fuer reine
+Meldungsaenderung; neue Meldung noch nicht visuell abgenommen. Bestehender
+Kandidat 20260917 unveraendert, enthaelt diese Verbesserung noch nicht.
+
 Praktische Import-Fehler-/Abbruchabnahme 22.09. am unveraenderten gemeinsamen
 Kandidaten 20260917 (Studio 977741b), --ui-test-workspace: Expertenansicht,
 Profile und Historie, Aus JSON importieren. Absichtlich syntaktisch ungueltige
