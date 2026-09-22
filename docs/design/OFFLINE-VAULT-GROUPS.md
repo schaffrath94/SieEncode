@@ -51,5 +51,23 @@ Unbekannte Felder, doppelte JSON-Felder, doppelte Gruppen/Mitglieder, falsche
 Bibliothek, bekannte alte Version und abweichender Inhalt derselben Version
 werden abgewiesen. Eingabegroesse ist begrenzt. Gruppen duerfen sich ueberlappen.
 
-Noch keine App-Anbindung, Delegation, Persistenz oder Aenderung bestehender Vaults.
+Dieser erste Baustein allein umfasst keine App-Anbindung, Delegation oder Persistenz.
+Bestehende Vaults werden nicht geaendert.
 Der Baustein ist keine fertige Zugriffskontrolle und kein neues Vaultformat.
+
+## Lokaler Vertrauensspeicher (zweiter Baustein)
+
+OfflineGroupTrustStore verlangt bei der Registrierung den unabhaengig bestaetigten
+SHA-256-Fingerabdruck des RSA-SPKI-Verwaltungsschluessels. Erstregistrierung kann
+eine bestehende Datei nicht ersetzen. Updates verwenden ausschliesslich die
+bereits registrierte Vertrauenswurzel und den lokal gespeicherten Hoechststand.
+Die letzte signierte Richtlinie bleibt offline verfuegbar und wird bei jedem
+Laden erneut geprueft. Speichern ist atomar mit Konflikterkennung anhand des
+tatsaechlich gelesenen Dateisnapshots. Lesefehler fuehren nicht zur Neuregistrierung.
+
+Die verpflichtende Schnittstelle ILocalGroupTrustProtection hat keinen Klartext-
+Fallback. Tests nutzen einen rein synthetischen authentisierten Protector.
+Die Windows-Benutzerbindung und der lokale AppData-Pfad werden in der App-Schicht
+angebunden; der Core-Baustein ist bis dahin nicht produktiv verwendbar.
+Ein komplettes Zuruecksetzen/Loeschen des lokalen Zustands durch dessen Besitzer
+oder einen Administrator bleibt ausserhalb der Ruecksprungerkennung.

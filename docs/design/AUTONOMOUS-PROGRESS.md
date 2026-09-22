@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Explizites aktives Ziel seit 22.09.: Offline-Gruppenverwaltung konsequent bis zur
+geprueften Integration entwickeln (create_goal, kein Tokenlimit). Zweiter Baustein:
+OfflineGroupTrustStore mit bestaetigtem SPKI-Fingerabdruck, atomarer Registrierung,
+signiertem Offlinecache, Wiederanlauf und konkurrierendem Update-Schutz.
+Verpflichtender authentisierender Protector ohne Klartextfallback; bisher nur
+synthetischer Testprotector, Windows-Benutzerbindung/App-Pfad noch anzubinden.
+Finale CI Exit 0, 64/64 Tests und CLI/WPF-Build erfolgreich:
+tmp/offline-group-trust-ci-final.log. Erster Lauf: erwartete InvalidDataException
+bei falscher Bibliothek war im Test nicht abgefangen; Testauswertung korrigiert.
+Naechster konkreter Schritt: Windows-geschuetzter lokaler Store und sichere
+Erstregistrierung anbinden, dann gruppenbegrenzte Delegation/Projekt-Vaultbindung.
+
 Neuer Auftrag 22.09.: Offline-Vaults mit zentral signierten Gruppen und getrennten
 Verwaltungsrechten entwickeln. Laut Benutzer keine produktiven Vaults; vorhandene
 Testdateien/Identitaeten trotzdem nicht ungefragt loeschen. Neuer Branch
