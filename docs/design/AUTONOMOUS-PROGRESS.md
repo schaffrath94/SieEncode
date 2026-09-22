@@ -89,6 +89,21 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Praktische Import-Fehler-/Abbruchabnahme 22.09. am unveraenderten gemeinsamen
+Kandidaten 20260917 (Studio 977741b), --ui-test-workspace: Expertenansicht,
+Profile und Historie, Aus JSON importieren. Absichtlich syntaktisch ungueltige
+synthetische Datei im nativen Dateidialog ausgewaehlt. Fehlerdialog erscheint,
+kein Absturz; nach OK erneut oeffnen und Escape kehrt zur Profilverwaltung zurueck.
+Regulaeres Fensterschliessen erfolgreich, Prozess 28688 beendet, stderr 0 Bytes.
+Isolierter Datenordner:
+tmp/practical-import-20260922/SieEncode/startup-test-bf968a5f8457441d92690cfcada6fcf1.
+Profilbestand danach ausschliesslich Synthetic-AES-Mixed.base.json, hashgleich
+zur Testfixture: 7A6CC7A9C8A646962EBEDB4A405462976D28F54832CE8BFF0F0442C1BEC8A66F.
+Keine importierte Teildatei, keine produktiven Daten/Karten verwendet.
+Offener Bedienhinweis: JSON-Fehlerdialog zeigt noch rohe englische Parsermeldung;
+verstaendlichen deutschen Kontext ergaenzen. Keine vollstaendige UI-Abnahme,
+kein Neubuild und keine Installation durch diesen Test belegt.
+
 Ergaenzende Vault-Anleitungsregression 21.09.: vorhandener gesperrter v2-Vault
 zeigt Entsperrhinweis statt Pflichtfeldfehler. Entsperrabbruch bewahrt Vaultbytes,
 gesperrten Status und Bausperre. Nach echtem synthetischem Unlock wird ein
