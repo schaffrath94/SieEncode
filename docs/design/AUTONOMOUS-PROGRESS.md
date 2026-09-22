@@ -105,6 +105,21 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Vault-Bedienhilfe 22.09. nach Benutzerfeedback: TeamVaultWindow erklaert getrennt
+lokale Identitaet, Teamvorlage und bestehende Vaultfreigaben. Aufklappbare Anleitung
+fuer Einzelbenutzer, Kollegen/Verantwortliche, bestehende Projekte und doppelte
+Identitaeten. Ausgewaehlter Zugang zeigt seine Zugehoerigkeit zur Teamliste.
+Status behauptet keine Mehrbenutzerbereitschaft allein wegen zweier Identitaeten.
+Entfernen aus Teamliste, Loeschen eines Zertifikats und verbleibender Zugriff auf
+alte Kopien werden unterschieden. VaultAccessWindow weist auf Wiederverwendung
+vorhandener Identitaeten und projektbezogenen Geltungsbereich hin.
+Keine Zugriffs-/Kryptoaenderung, keine echten Identitaeten oder Teamlisten geaendert.
+WPF-Build Exit 0, 0 Warnungen/Fehler; UI-Smoke Exit 0, 40 Checks/5 Szenarien,
+stderr leer. tmp/team-vault-guidance-build.log und
+tmp/team-vault-guidance-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Native visuelle Abnahme der neuen Hilfe offen. Veroeffentlichter Release 1.2.0
+bleibt unveraendert; diese Verbesserung ist noch nicht im Installer enthalten.
+
 Importmeldung 22.09. im Source verbessert: ImportBaseProfile_Click behandelt
 JsonException mit deutschem Hinweis zu ungueltigem JSON/Datenfeld, optionaler
 1-basierter Fehlerzeile und Aufforderung, die Datei zu pruefen oder eine gueltige

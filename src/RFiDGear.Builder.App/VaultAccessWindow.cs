@@ -55,6 +55,7 @@ internal sealed class VaultAccessWindow : Window
             : "Die zentrale Teamliste ist bereits übernommen. Jeder freigegebene Benutzer öffnet den Vault mit seiner persönlichen Windows-Identität. Öffentliche Einladungsdateien enthalten keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 16), Foreground = System.Windows.Media.Brushes.DimGray });
         root.Children.Add(new TextBlock { Text = "Eigene Windows-Identität", FontWeight = FontWeights.SemiBold });
         root.Children.Add(identityList);
+        root.Children.Add(new TextBlock { Text = "Vorhandene Identität auswählen und bei Bedarf zur Empfängerliste hinzufügen. Für Updates oder weitere Projekte keinen neuen Zugang anlegen. Diese Freigabe gilt nur für den aktuellen Vault.", TextWrapping = TextWrapping.Wrap, Foreground = System.Windows.Media.Brushes.DimGray, Margin = new Thickness(0, 5, 0, 5) });
         var identityButtons = new WrapPanel();
         identityButtons.Children.Add(Button("Neue Identität", (_, _) => CreateIdentity()));
         identityButtons.Children.Add(Button("Zur Empfängerliste hinzufügen", (_, _) => AddSelectedIdentity()));
