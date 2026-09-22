@@ -67,7 +67,11 @@ tatsaechlich gelesenen Dateisnapshots. Lesefehler fuehren nicht zur Neuregistrie
 
 Die verpflichtende Schnittstelle ILocalGroupTrustProtection hat keinen Klartext-
 Fallback. Tests nutzen einen rein synthetischen authentisierten Protector.
-Die Windows-Benutzerbindung und der lokale AppData-Pfad werden in der App-Schicht
-angebunden; der Core-Baustein ist bis dahin nicht produktiv verwendbar.
+WindowsGroupTrustProtection in der App-Schicht nutzt nun DPAPI CurrentUser mit
+bibliotheksspezifischer Anwendungsbindung. Der UI-Smoke prueft einen echten
+Windows-Roundtrip, erneutes Laden, falsche Bibliotheksbindung und manipulierte
+Datei in einem isolierten Testordner. Es werden keine Windows-Zertifikate erzeugt.
+Dies ist keine Zweitbenutzer-/Zweitrechnerabnahme. AppData-Pfad und gefuehrte
+Erstregistrierung sind noch anzubinden; noch keine produktive Vault-Anbindung.
 Ein komplettes Zuruecksetzen/Loeschen des lokalen Zustands durch dessen Besitzer
 oder einen Administrator bleibt ausserhalb der Ruecksprungerkennung.

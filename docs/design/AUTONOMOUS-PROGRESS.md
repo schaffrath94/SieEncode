@@ -1,6 +1,16 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Fortsetzung Offline-Gruppen 22.09.: WindowsGroupTrustProtection implementiert,
+DPAPI CurrentUser mit Anwendungs-/Bibliotheksbindung, ohne Klartextfallback.
+Echter Roundtrip nur fuer synthetischen Cache im isolierten Testordner;
+erneutes Laden OK, falsche Bindung und manipulierte Datei abgewiesen.
+WPF-Build Exit 0, keine Warnungen/Fehler; UI-Smoke Exit 0, 41 Checks/5 Szenarien,
+stderr leer. tmp/windows-group-trust-build.log und
+tmp/windows-group-trust-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Keine echte Zweitbenutzerabnahme. Naechster Schritt: gesicherte Erstregistrierung
+und lokaler AppData-Pfad in der Oberflaeche, danach Delegation/Projektbindung.
+
 Explizites aktives Ziel seit 22.09.: Offline-Gruppenverwaltung konsequent bis zur
 geprueften Integration entwickeln (create_goal, kein Tokenlimit). Zweiter Baustein:
 OfflineGroupTrustStore mit bestaetigtem SPKI-Fingerabdruck, atomarer Registrierung,

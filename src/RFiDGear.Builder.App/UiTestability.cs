@@ -101,6 +101,7 @@ public partial class MainWindow
         VerifyNavigationContract(checks);
         VerifyDynamicCardDialogs(checks);
         VerifyVaultDialogContract(checks);
+        VerifyWindowsGroupTrust(checks);
         VerifyExpertNavigationClicks(checks);
         VerifyWorkspaceStateContract(checks);
         VerifyConstrainedLayoutContract(checks);
