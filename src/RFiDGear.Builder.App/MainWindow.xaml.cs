@@ -2007,8 +2007,8 @@ public partial class MainWindow : Window
                 }
                 else
                 {
-                    VaultSetupStatusTitle.Text = "Mehrbenutzer-Vault eingerichtet";
-                    VaultSetupStatusText.Text = $"Dieser Arbeitsplatz ist registriert; {team.Count} Teammitglieder werden automatisch für neue Projekt-Vaults freigegeben.";
+                    VaultSetupStatusTitle.Text = "Teamvorlage eingerichtet";
+                    VaultSetupStatusText.Text = $"Eigener Zugang enthalten; {team.Count} Empfänger für neue Projekt-Vaults. Bestehende Vaults separat freigeben. Zugriff auf dem zweiten Rechner noch praktisch prüfen.";
                     VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.Honeydew;
                     VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.SeaGreen;
                 }
@@ -2052,6 +2052,16 @@ public partial class MainWindow : Window
             if (!File.Exists(executable)) throw new FileNotFoundException("Bitte zuerst eine vorhandene RFiDGear-Runtime auswählen.", executable);
             Process.Start(new ProcessStartInfo(executable) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(executable)! });
             SetStatus("RFiDGear ohne Projekt geöffnet. Reader auswählen, Einstellung speichern und RFiDGear danach schließen.");
+        }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
+    private void RefreshReaderSetup_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            UpdateRFiDGearVersion(RFiDGearExecutableText.Text.Trim());
+            SetStatus("Gespeicherte Leserkonfiguration neu gelesen. Keine Leser- oder Kartenverbindung geprüft.");
         }
         catch (Exception exception) { ShowError(exception); }
     }
@@ -2159,8 +2169,8 @@ public partial class MainWindow : Window
             capability.State switch { RFiDGearCapabilityState.Available => "Verfügbar", RFiDGearCapabilityState.Unavailable => "Nicht vorhanden", _ => "Unbekannt" },
             capability.Evidence)).ToArray();
         RFiDGearReaderText.Text = reader.IsConfigured
-            ? $"Reader: {reader.Provider}" + (string.IsNullOrWhiteSpace(reader.Port) ? "" : $" · Port {reader.Port}")
-            : "Reader: nicht konfiguriert · bitte zuerst in RFiDGear auswählen";
+            ? $"Gespeicherte Leserkonfiguration: {reader.Provider}" + (string.IsNullOrWhiteSpace(reader.Port) ? "" : $" · Port {reader.Port}") + " · Verbindung und Karte noch nicht geprüft"
+            : "Leserkonfiguration fehlt oder ist nicht lesbar: " + (reader.Error ?? "Bitte in RFiDGear auswählen und speichern.");
         var availableCount = rfidgearCapabilities.Capabilities.Count(capability => capability.State == RFiDGearCapabilityState.Available);
         HomeRFiDGearState.Text = $"{version.Version?.ToString() ?? "Version unbekannt"} · {availableCount}/{rfidgearCapabilities.Capabilities.Count}";
         StationOpenRFiDGearButton.IsEnabled = preparedSession is not null && rfidgearCapabilities.Has(RFiDGearCapabilityId.CustomProjectFile);

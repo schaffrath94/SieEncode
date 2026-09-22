@@ -120,6 +120,20 @@ Gemeinsames Testpaket ist inzwischen fertig (siehe oben). Echte Installation/
 Upgrade weiterhin nur in isolierter Umgebung.
 
 ## Naechste sinnvolle Arbeiten
+Arbeitsplatz-Einrichtung 22.09. auf Benutzerwunsch vereinfacht: Einstellungen
+zeigen vier Schritte fuer gemeinsame Ordner, eigene Identitaet/Team, lokale
+Leserkonfiguration und erstes Testprojekt samt Recovery. Neuer Button liest die
+gespeicherte Leserkonfiguration erneut, ohne Leser-/Kartenkommunikation.
+Providerwahl wird klar von gepruefter Verbindung unterschieden; Fehler aus der
+Konfigurationsinspektion sind sichtbar. Teamstatus behauptet keine vollstaendige
+Mehrbenutzerabnahme; unzutreffender Tooltip zur angeblich hardwaregeprueften
+gebuendelten Runtime entfernt. Keine automatische Konfigurationsaenderung.
+WPF-Build Exit 0, 0 Warnungen/Fehler; bestehender UI-Smoke Exit 0, 40 Checks und
+5 Szenarien, stderr leer. tmp/workplace-setup-build.log und
+tmp/workplace-setup-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Neue native visuelle Bedienabnahme und echter Readercheck noch offen. Kein
+weiteres Release gebaut; 1.2.1 bleibt unveraendert. Recovery weiterhin pro Vault.
+
 Vault-Bedienhilfe 22.09. nach Benutzerfeedback: TeamVaultWindow erklaert getrennt
 lokale Identitaet, Teamvorlage und bestehende Vaultfreigaben. Aufklappbare Anleitung
 fuer Einzelbenutzer, Kollegen/Verantwortliche, bestehende Projekte und doppelte
