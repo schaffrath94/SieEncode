@@ -40,6 +40,12 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
     }
 
     public GroupEnrollmentPackage UpdateGroups(OfflineVaultGroup[] groups, GroupPolicyCheckpoint expectedPolicy)
+        => Update(groups, null, expectedPolicy);
+
+    public GroupEnrollmentPackage UpdateDirectory(OfflineVaultPerson[] people, OfflineVaultGroup[] groups, GroupPolicyCheckpoint expectedPolicy)
+        => Update(groups, people ?? throw new ArgumentNullException(nameof(people)), expectedPolicy);
+
+    private GroupEnrollmentPackage Update(OfflineVaultGroup[] groups, OfflineVaultPerson[]? people, GroupPolicyCheckpoint expectedPolicy)
     {
         ArgumentNullException.ThrowIfNull(expectedPolicy);
         var (state, revision) = Load();
@@ -48,7 +54,8 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
             using var administrator = OpenKey(state);
             var current = OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId);
             if (current.Checkpoint != expectedPolicy) throw new ConcurrentFileChangeException(path);
-            var next = current.Policy with { Revision = checked(current.Policy.Revision + 1), Groups = groups };
+            var next = current.Policy with { Revision = checked(current.Policy.Revision + 1), Groups = groups,
+                Version = people is null ? current.Policy.Version : 2, People = people ?? current.Policy.People };
             var signed = OfflineGroupPolicyService.Sign(next, administrator);
             Save(state with { Policy = signed }, revision);
             return PublicPackage(administrator, signed);

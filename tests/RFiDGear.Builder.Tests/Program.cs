@@ -36,6 +36,7 @@ var tests = new (string Name, Action Run)[]
 {
     ("Offline group policy signatures, trust binding and rollback rejection", OfflineGroupPolicyTests.Verify),
     ("Offline trust enrollment, persistence and concurrent update protection", OfflineGroupTrustTests.Verify),
+    ("Signed people/device directory and overlapping access matrix", OfflineGroupDirectoryTests.Verify),
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),

@@ -40,7 +40,7 @@ internal static class OfflineGroupPolicyTests
         Reject(() => OfflineGroupPolicyService.Verify(signed, publicAdmin, library, new(0, "")));
         Reject(() => OfflineGroupPolicyService.Sign(policy with { Groups = [new("lokal", "Lokal", [a, a])] }, admin));
         Reject(() => OfflineGroupPolicyService.Sign(policy with { Groups = [policy.Groups[0], policy.Groups[0]] }, admin));
-        Reject(() => OfflineGroupPolicyService.Sign(policy with { Version = 2 }, admin));
+        Reject(() => OfflineGroupPolicyService.Sign(policy with { Version = 99 }, admin));
         using var weak = RSA.Create(2048);
         Reject(() => OfflineGroupPolicyService.Sign(policy, weak));
         Reject(() => OfflineGroupPolicyService.Verify(new(new byte[1024 * 1024 + 1], signed.Signature), publicAdmin, library));

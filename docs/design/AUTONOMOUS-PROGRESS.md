@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Personen-/Geraeteverzeichnis im Core ergaenzt: signierte Richtlinie v2 mit stabilen
+Personen-IDs, mehreren oeffentlichen Geraetezertifikaten, Aktivstatus und Gruppen
+als Personenlisten. Eindeutige Zertifikatszuordnung, DER/Public-only und SHA256-
+Bindung geprueft. Explizite Gruppenaufloesung liefert nur aktive gueltige Geraete;
+keine Ausweichfreigabe bei unbekannter/leerer Gruppe. UpdateDirectory speichert
+Verzeichnis und Gruppen zusammen, v1 bleibt lesbar ohne automatische Migration.
+CI Exit 0, 65/65 Tests, CLI/WPF gebaut, tmp/group-directory-ci.log.
+Neue Tests nutzen die Benutzer-Matrix (8 Personen/3 ueberlappende Gruppen) plus
+Mehrgeraete-/Deaktivierungs-/Zertifikatsnegativfaelle. Noch keine UI-Personenpflege
+oder Vaultintegration. Naechster Schritt: Personen/Geraete in Verwaltungsdialog
+integrieren und begrenzte Delegationen umsetzen.
+
 Gruppen-Verwaltungsdialog ergaenzt: neue lokale Verwaltung, Auswahl vorhandener
 Signierspeicher, Gruppenname/stabile ID, bestaetigter Einladungseintrag und
 Mitgliederentfernung im Entwurf, signiertes Speichern und oeffentlicher Export.

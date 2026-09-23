@@ -126,3 +126,26 @@ Speichern/Neuladen, externer Versionsfortschritt und Ablehnung des alten Entwurf
 Native Datei-/Bestaetigungsdialoge und visuelle Abnahme stehen noch aus. Die
 Personen-/Geraetezuordnung ist noch nicht vorhanden; aktuell Fingerabdruecke.
 Keine gruppenbasierte Vault-Anbindung, Delegation oder Admin-Recovery behauptet.
+
+## Personen und Geraete (Richtlinienversion 2)
+
+Signierte Richtlinien v2 enthalten Personen mit stabiler ID, Anzeigename und
+aktivem/inaktivem Zustand sowie deren oeffentliche Geraetezertifikate. Gruppen
+referenzieren Personen-IDs. Eine Person kann mehrere Geraete und Mitgliedschaften
+haben. Jedes Zertifikat darf genau einer Person gehoeren; Fingerabdruck und
+oeffentliches RSA-Zertifikat muessen zusammenpassen. PKCS12-/Private-Key-Archive
+werden bereits vor Zertifikatsimport abgewiesen. Nur eindeutiges DER akzeptiert.
+
+ResolveRecipients loest eine explizite Gruppe in aktive Geraete auf. Unbekannte
+Gruppen/Personen und Gruppen ohne aktive Empfaenger werden nicht still ersetzt.
+Aktive Zertifikate muessen zum uebergebenen Zeitpunkt gueltig sein. Das Lesen
+historischer signierter Richtlinien bleibt auch nach Zertifikatsablauf moeglich.
+Der Aufrufer muss zuerst die Signatur/Vertrauenswurzel pruefen; Aufloesen allein
+ist keine Berechtigungspruefung und noch keine Vault-Anbindung.
+
+UpdateDirectory schreibt Personen und Gruppen gemeinsam als signierte v2-Revision.
+Bestehende v1-Teststaende bleiben lesbar; keine automatische Umdeutung von
+Zertifikats-Fingerabdruecken zu Personen-IDs. Personenpflege in der UI folgt noch.
+Core-Test deckt die gewuenschte Acht-Personen-/Drei-Gruppen-Matrix ab, inklusive
+zweitem Geraet einer Person, Deaktivierung, doppelten Zuordnungen, falschen
+Fingerabdruecken, unbekannten Mitgliedern und Zeitgueltigkeit.

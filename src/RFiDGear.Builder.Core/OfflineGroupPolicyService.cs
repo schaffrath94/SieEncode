@@ -5,7 +5,12 @@ using System.Text.Json.Serialization;
 namespace RFiDGear.Builder.Core;
 
 public sealed record OfflineVaultGroup(string Id, string Name, string[] Members);
-public sealed record OfflineGroupPolicy(string Format, int Version, Guid LibraryId, long Revision, OfflineVaultGroup[] Groups);
+public sealed record OfflineVaultDevice(string Name, string Fingerprint, string Certificate, bool Enabled);
+public sealed record OfflineVaultPerson(string Id, string Name, bool Enabled, OfflineVaultDevice[] Devices);
+public sealed record OfflineGroupPolicy(string Format, int Version, Guid LibraryId, long Revision, OfflineVaultGroup[] Groups)
+{
+    public OfflineVaultPerson[] People { get; init; } = [];
+}
 public sealed record SignedGroupPolicy(byte[] Payload, byte[] Signature);
 public sealed record GroupPolicyCheckpoint(long Revision, string PayloadSha256);
 public sealed record VerifiedGroupPolicy(OfflineGroupPolicy Policy, GroupPolicyCheckpoint Checkpoint);
@@ -70,8 +75,9 @@ public static class OfflineGroupPolicyService
     private static void Validate(OfflineGroupPolicy policy)
     {
         ArgumentNullException.ThrowIfNull(policy);
-        if (policy.Format != Format || policy.Version != 1 || policy.LibraryId == Guid.Empty || policy.Revision < 1 || policy.Groups is null || policy.Groups.Length > 1000)
+        if (policy.Format != Format || policy.Version is not (1 or 2) || policy.LibraryId == Guid.Empty || policy.Revision < 1 || policy.Groups is null || policy.Groups.Length > 1000)
             throw new InvalidDataException("Gruppenrichtlinie hat ein ungültiges Format.");
+        var people = OfflineGroupDirectory.Validate(policy);
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var group in policy.Groups)
         {
@@ -82,7 +88,7 @@ public static class OfflineGroupPolicyService
                 throw new InvalidDataException("Gruppe ist ungültig oder doppelt vorhanden.");
             var members = new HashSet<string>(StringComparer.Ordinal);
             foreach (var member in group.Members)
-                if (!IsFingerprint(member) || !members.Add(member)) throw new InvalidDataException("Gruppenmitglied ist ungültig oder doppelt vorhanden.");
+                if (!(policy.Version == 1 ? IsFingerprint(member) : member is not null && people.Contains(member)) || !members.Add(member)) throw new InvalidDataException("Gruppenmitglied fehlt im Verzeichnis, ist ungültig oder doppelt vorhanden.");
         }
     }
 
