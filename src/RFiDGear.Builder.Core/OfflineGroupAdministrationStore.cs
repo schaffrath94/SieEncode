@@ -49,6 +49,10 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         => Transform(expectedPolicy, current => current.Policy with { Revision = checked(current.Policy.Revision + 1),
             Delegations = delegations ?? throw new ArgumentNullException(nameof(delegations)) });
 
+    public GroupEnrollmentPackage UpdateRecoveryDevices(OfflineVaultDevice[] devices, GroupPolicyCheckpoint expectedPolicy)
+        => Transform(expectedPolicy, current => current.Policy with { Revision = checked(current.Policy.Revision + 1),
+            RecoveryDevices = devices ?? throw new ArgumentNullException(nameof(devices)) });
+
     public GroupEnrollmentPackage ApplyDelegatedChange(SignedGroupChange change, GroupPolicyCheckpoint expectedPolicy)
         => Transform(expectedPolicy, current => OfflineGroupDelegationService.Apply(change, current));
 

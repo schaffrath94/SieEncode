@@ -61,7 +61,7 @@ public static class OfflineGroupDirectory
     }
 
     private static bool Id(string? value) => !string.IsNullOrWhiteSpace(value) && value.Length <= 128 && value.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-');
-    private static X509Certificate2 ReadPublicCertificate(string value)
+    internal static X509Certificate2 ReadPublicCertificate(string value)
     {
         var bytes = Convert.FromBase64String(value);
         if (X509Certificate2.GetCertContentType(bytes) != X509ContentType.Cert)

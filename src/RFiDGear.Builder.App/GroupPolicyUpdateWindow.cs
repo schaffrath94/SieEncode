@@ -64,6 +64,7 @@ internal sealed class GroupPolicyUpdateWindow : Window
                 foreach (var device in person.Devices) lines.Add($"  Gerät {device.Name}: {(device.Enabled ? "aktiv" : "inaktiv")} · {device.Fingerprint}");
             }
             foreach (var grant in policy.Delegations) lines.Add($"Vollmacht {grant.Id}: {grant.PersonId} · {(grant.Enabled ? "aktiv" : "entzogen")} · {string.Join(", ", grant.GroupIds)} · Schlüssel {OfflineGroupTrustStore.AdministratorFingerprint(grant.SigningPublicKey)}");
+            foreach (var device in policy.RecoveryDevices) lines.Add($"Separater Recovery-Zugang {device.Name}: {(device.Enabled ? "aktiv" : "inaktiv")} · {device.Fingerprint}");
         }
         AddPolicy("BISHER", before); lines.Add(""); AddPolicy("NEUER STAND", after);
         return string.Join(Environment.NewLine, lines);

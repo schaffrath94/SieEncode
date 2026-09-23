@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,6 +12,7 @@ public sealed record OfflineGroupPolicy(string Format, int Version, Guid Library
 {
     public OfflineVaultPerson[] People { get; init; } = [];
     public OfflineGroupDelegation[] Delegations { get; init; } = [];
+    public OfflineVaultDevice[] RecoveryDevices { get; init; } = [];
 }
 public sealed record SignedGroupPolicy(byte[] Payload, byte[] Signature);
 public sealed record GroupPolicyCheckpoint(long Revision, string PayloadSha256);
@@ -31,6 +33,7 @@ public static class OfflineGroupPolicyService
     {
         Validate(policy);
         RequireKey(administrator);
+        RequireSeparateAuthorityKey(policy, administrator);
         var payload = JsonSerializer.SerializeToUtf8Bytes(policy, Options);
         if (payload.Length > MaximumPayloadBytes) throw new InvalidDataException("Gruppenrichtlinie ist zu groß.");
         return new(payload, administrator.SignData(payload, HashAlgorithmName.SHA256, RSASignaturePadding.Pss));
@@ -57,12 +60,27 @@ public static class OfflineGroupPolicyService
         var policy = JsonSerializer.Deserialize<OfflineGroupPolicy>(payload, Options)
             ?? throw new InvalidDataException("Gruppenrichtlinie fehlt.");
         Validate(policy);
+        RequireSeparateAuthorityKey(policy, trustedAdministrator);
         if (policy.LibraryId != expectedLibraryId) throw new CryptographicException("Gruppenfreigabe gehört zu einer anderen Bibliothek.");
         var digest = Convert.ToHexString(SHA256.HashData(payload));
         if (previous is not null && (policy.Revision < previous.Revision ||
             policy.Revision == previous.Revision && !string.Equals(digest, previous.PayloadSha256, StringComparison.Ordinal)))
             throw new CryptographicException("Veraltete oder widersprüchliche Gruppenfreigabe.");
         return new(policy, new(policy.Revision, digest));
+    }
+
+    private static void RequireSeparateAuthorityKey(OfflineGroupPolicy policy, RSA administrator)
+    {
+        var key = administrator.ExportSubjectPublicKeyInfo();
+        if (policy.Delegations.Any(g => g.SigningPublicKey.SequenceEqual(key)))
+            throw new CryptographicException("Hauptverwaltung und Delegation benötigen getrennte Schlüssel.");
+        foreach (var device in policy.People.SelectMany(p => p.Devices).Concat(policy.RecoveryDevices))
+        {
+            using var certificate = OfflineGroupDirectory.ReadPublicCertificate(device.Certificate);
+            using var recipient = certificate.GetRSAPublicKey()!;
+            if (recipient.ExportSubjectPublicKeyInfo().SequenceEqual(key))
+                throw new CryptographicException("Hauptverwaltung und Entschlüsselung benötigen getrennte Schlüssel.");
+        }
     }
 
     private static void RequireKey(RSA key)
@@ -92,6 +110,7 @@ public static class OfflineGroupPolicyService
                 if (!(policy.Version == 1 ? IsFingerprint(member) : member is not null && people.Contains(member)) || !members.Add(member)) throw new InvalidDataException("Gruppenmitglied fehlt im Verzeichnis, ist ungültig oder doppelt vorhanden.");
         }
         OfflineGroupDelegationService.ValidateDelegations(policy);
+        OfflineGroupRecovery.Validate(policy);
     }
 
     internal static void RejectDuplicateProperties(JsonElement element)

@@ -3,6 +3,42 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Gruppen-Vault-Kern und separate Recovery
+
+Neues getrenntes Format SieEncode-Group-Vault (Version 1), noch ohne Anbindung
+an Projektdateien/Editor. Bestehende v2/v3-Vaults und deren Funktionen bleiben
+unveraendert. AES-256-GCM authentisiert Projekt-ID, Bibliothek, Gruppen-ID,
+Richtlinien-Checkpoint, zufaellige Schluesselgeneration und saemtliche Rollen/
+Fingerabdruecke/RSA-OAEP-SHA256-Schluesselhuellen gemeinsam mit dem Nutzinhalt.
+Ein Austausch von Metadaten, Huellen oder Nutzdaten schlaegt bei der Pruefung fehl.
+
+Neue Vaults erhalten ausschliesslich die aktiven gueltigen Geraete der expliziten
+Gruppe plus zentral signierte separate Recovery-Geraete. RecoveryDevices sind
+Bestandteil der Hauptverwaltungsrichtlinie, nicht delegiert aenderbar. Recovery
+erfordert andere Schluessel als normale Geraete und Delegaten; auch der
+Hauptverwaltungsschluessel darf weder Delegaten- noch Entschluesselungsschluessel
+sein. Mindestens ein aktiver Recovery-Zugang ist fuer neue Gruppen-Vaults Pflicht.
+Keine pro Projekt einzugebende Recovery-Passphrase in diesem neuen Format.
+
+Entschluesseln verlangt einen verifizierten lokalen Richtlinienstand und die
+vom Aufrufer erwartete stabile Projekt-/Gruppenidentitaet. Normale und Recovery-
+Zugaenge sind explizit getrennt. Neuere Vault-Richtlinienstaende erfordern zuerst
+ein lokales Update. Nach bekanntem Entzug gibt der normale Client keinen Zugriff
+mehr frei. Separate aktive Recovery kann auch nach Entfernung der alten Gruppe
+retten. Abgelaufene Zertifikate bleiben zum Lesen alter Daten verwendbar; fuer
+neue Verschluesselung muessen aktive Zertifikate zeitlich gueltig sein.
+
+Jeder Protect-Aufruf erzeugt einen frischen zufaelligen Inhaltsschluessel. Der
+Test weist frische Schluessel bei geaenderter Mitgliedschaft nach. Ein alter Vault
+mit alter Richtlinie bleibt mit seinem alten privaten Schluessel entschluesselbar.
+Die AEAD-Bindung ist kein unabhaengiger Herkunftsnachweis gegen berechtigte
+Schluesselbesitzer; diese koennen Klartext/Schluessel weitergeben. Der Aufrufer muss
+die Projektidentitaet korrekt verwalten und echte Vertrauensregistrierung nutzen.
+
+Noch offen: stabile Projekt-ID/Zuordnungsmodell, Editor-/Stationsintegration,
+Recovery-Einrichtung und -Sicherung, kontrollierter atomarer Empfaengerabgleich
+und Rotation realer Projektdateien. Die Core-Tests sind ausschliesslich synthetisch.
+
 ## Arbeitsplatz fuer Gruppenverwalter
 
 Einstellungen enthaelt einen getrennten Gruppenverwaltungsplatz. Er laedt eine

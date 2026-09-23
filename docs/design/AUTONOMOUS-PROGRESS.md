@@ -1,6 +1,24 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Gruppen-Vault-Kern als separates Format implementiert (noch keine Editoranbindung):
+AES-GCM bindet Projekt/Bibliothek/Gruppe/Richtliniencheckpoint/Schluesselgeneration
+und komplette RSA-OAEP-Empfaengerhuellen. Normale Gruppe und separate signierte
+RecoveryDevices, verpflichtender aktiver Recoveryzugang fuer neue Vaults.
+Schluesseltrennung zwischen Hauptverwaltung, Delegation, Geraeten und Recovery;
+Recovery bleibt bei entfernter Gruppe moeglich, normaler Zugang wird verweigert.
+Neue Verschluesselung erzeugt frische Inhaltsschluessel. Alte Kopien bleiben mit
+altem Stand entschluesselbar; dies wird explizit getestet und nicht als Widerruf
+ausgegeben. Geaenderte Projekt-/Gruppenangaben auch bei passender geaenderter
+Erwartung, manipulierte Huellen/Nutzdaten, falsche Rolle und veralteter Stand
+negativ getestet. Recoveryinformationen erscheinen in Richtlinienupdate-Vorschau.
+CI Exit 0, 68/68, CLI/WPF ohne Warnungen/Fehler;
+tmp/group-vault-core-ci-verified.log. UI-Smoke Exit 0, 47 Checks/5 Szenarien,
+stderr leer; tmp/group-vault-core-ui-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Naechste Schritte: stabile Projekt-ID/Zuordnung, Recovery-Einrichtung/-Sicherung,
+kontrollierter atomarer Empfaengerabgleich und Vaultrotation, Editor-/Stations-
+integration. Kein Release und keine echte Hardware-/Mehrbenutzerabnahme.
+
 Delegaten-Arbeitsplatz integriert: registrierte Bibliothek/Person laden,
 Schluessel ausdruecklich erzeugen, oeffentliche Einladung/Fingerabdruck exportieren,
 nur erlaubte Gruppen bearbeiten und signierte Aenderung weitergeben. Personen,
