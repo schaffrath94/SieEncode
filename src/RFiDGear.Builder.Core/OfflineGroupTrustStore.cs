@@ -66,6 +66,33 @@ public sealed class OfflineGroupTrustStore
         return next;
     }
 
+    public VerifiedGroupPolicy PreviewPackageUpdate(GroupEnrollmentPackage package, GroupPolicyCheckpoint expected)
+    {
+        var (state, _) = Load();
+        return VerifyPackageUpdate(package, expected, state);
+    }
+
+    public VerifiedGroupPolicy AcceptPackageUpdate(GroupEnrollmentPackage package, GroupPolicyCheckpoint expected)
+    {
+        var candidate = GroupEnrollmentPackages.Read(GroupEnrollmentPackages.Write(package));
+        var (state, revision) = Load();
+        var next = VerifyPackageUpdate(candidate, expected, state);
+        Save(state with { SignedPolicy = candidate.Policy }, revision);
+        return next;
+    }
+
+    private VerifiedGroupPolicy VerifyPackageUpdate(GroupEnrollmentPackage package, GroupPolicyCheckpoint expected, State state)
+    {
+        ArgumentNullException.ThrowIfNull(package);
+        using var administrator = OpenAdministrator(state.AdministratorPublicKey);
+        var current = OfflineGroupPolicyService.Verify(state.SignedPolicy, administrator, libraryId);
+        if (current.Checkpoint != expected) throw new ConcurrentFileChangeException(path);
+        if (package.Format != GroupEnrollmentPackages.Format || package.Version != 1 || package.LibraryId != libraryId ||
+            package.AdministratorPublicKey is null || !package.AdministratorPublicKey.SequenceEqual(state.AdministratorPublicKey))
+            throw new CryptographicException("Aktualisierung passt nicht zur registrierten Bibliothek oder zum bestätigten Verwaltungsschlüssel.");
+        return OfflineGroupPolicyService.Verify(package.Policy, administrator, libraryId, current.Checkpoint);
+    }
+
     private (State State, FileRevision Revision) Load()
     {
         // Hash precisely the read snapshot; a concurrent update must not be overwritten.

@@ -9,6 +9,19 @@ public partial class MainWindow
 {
     private readonly string localGroupTrustDirectory;
 
+    private void UpdateOfflineGroups_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var dialog = new OpenFileDialog { Title = "Neuen signierten Gruppenstand wählen", Filter = "Gruppenregistrierung (*.group-enrollment.json)|*.group-enrollment.json" };
+            if (dialog.ShowDialog(this) != true) return;
+            var package = GroupEnrollmentPackages.Read(GroupDelegationTransport.ReadFile(dialog.FileName));
+            if (new GroupPolicyUpdateWindow(this, package, localGroupTrustDirectory).ShowDialog() == true)
+                SetStatus("Registrierter Gruppenstand aktualisiert. Bestehende Vault-Dateien wurden nicht verändert.");
+        }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
     private void ManageOfflineGroups_Click(object sender, RoutedEventArgs e)
     {
         try { new GroupAdministrationWindow(this, localGroupTrustDirectory).ShowDialog(); }

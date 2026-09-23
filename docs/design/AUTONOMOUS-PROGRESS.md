@@ -1,6 +1,17 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Registrierte Richtlinien lassen sich jetzt in Einstellungen aktualisieren:
+gegen fest registrierten Schluessel/Bibliothek/Checkpoint gepruefte eingefrorene
+Vorschau, alter/neuer Stand inkl. Personen/Geraete/Vollmachten, Bestaetigung vor
+atomarer Uebernahme. Veraltete Bestaetigung und Schluesselaustausch abgewiesen.
+CI Exit 0, 67/67, CLI/WPF ohne Fehler; tmp/group-policy-update-ci.log.
+UI-Smoke Exit 0, 46 Checks/5 Szenarien, stderr leer;
+tmp/group-policy-update-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Native Dateiauswahl/visuelle Dialogabnahme bleibt offen. Naechster Schritt ist
+der Delegaten-Arbeitsplatz (Identitaetseinladung exportieren, eigene Gruppen
+bearbeiten, signierte Aenderung exportieren), danach Projekt-/Vault-/Recoverybindung.
+
 Vollmachtvergabe in Hauptverwaltung und strikter oeffentlicher Dateitransport
 integriert: versionierte Einladungen/Aenderungen, Groessen-/JSON-/SPKI-Pruefung;
 Freigabe ausgewaehlter Gruppen nur mit unabhaengig eingegebenem Fingerabdruck.

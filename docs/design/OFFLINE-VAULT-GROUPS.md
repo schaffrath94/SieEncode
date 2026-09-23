@@ -3,6 +3,19 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Aktualisierung registrierter Richtlinien
+
+Einstellungen bietet jetzt die Aktualisierung einer vorhandenen Registrierung.
+Der Update-Dialog friert die Eingabedatei ein und prueft sie gegen den bereits
+lokal bestaetigten Verwaltungsschluessel, die Bibliothek und den Versionsstand.
+Ein Schluessel aus der Aktualisierungsdatei ersetzt niemals die Vertrauenswurzel.
+Vorschau zeigt vorher/nachher mit Gruppen, Personen, Geraete-Aktivstatus und
+Fingerabdruecken sowie Vollmachten. Ohne ausdrueckliche Bestaetigung keine Aenderung.
+Die Uebernahme prueft erneut den beim Anzeigen gelesenen exakten Stand und schreibt
+atomar mit Dateikonflikterkennung. Gleiche bereits registrierte Version benoetigt
+keinen erneuten Import. Aktualisierung ist keine Neuregistrierung und veraendert
+keine Vault-Dateien. Ein global aktueller Stand ist offline nicht beweisbar.
+
 ## Vollmachtvergabe und oeffentlicher Dateiaustausch
 
 GroupDelegationTransport transportiert versionierte oeffentliche Einladungen und

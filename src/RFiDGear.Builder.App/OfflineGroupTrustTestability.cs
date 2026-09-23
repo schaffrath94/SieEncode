@@ -111,6 +111,23 @@ public partial class MainWindow
                 if (stored.Policy.LibraryId != library) throw new Exception("Wrong library enrolled.");
             }
             finally { registration.Close(); }
+            var updatePackage = package with { Policy = OfflineGroupPolicyService.Sign(policy with { Revision = 2 }, administrator) };
+            var updateWindow = new GroupPolicyUpdateWindow(this, updatePackage, registrationDirectory);
+            try
+            {
+                VerifyAutomationContract(updateWindow);
+                try { updateWindow.Accept(false); throw new Exception("Unconfirmed policy update accepted."); }
+                catch (InvalidOperationException) { }
+                var updateStore = new OfflineGroupTrustStore(Path.Combine(registrationDirectory, library.ToString("N") + ".trust.bin"), library, new WindowsGroupTrustProtection(library));
+                if (updateStore.LoadOffline().Policy.Revision != 1) throw new Exception("Policy preview wrote state.");
+                updatePackage.Policy.Signature[0] ^= 1; // Dialog must use its frozen verified candidate.
+                updateWindow.Accept(true);
+                if (updateStore.LoadOffline().Policy.Revision != 2) throw new Exception("Policy update not persisted.");
+                try { updateWindow.Accept(true); throw new Exception("Stale policy confirmation accepted."); }
+                catch (ConcurrentFileChangeException) { }
+            }
+            finally { updateWindow.Close(); }
+            checks.Add("Gruppenaktualisierung: geprüfte Vorschau ohne Schreiben, Bestätigung erforderlich, eingefrorener Kandidat übernommen und veraltete Bestätigung abgewiesen.");
             checks.Add("Gruppen-Erstregistrierung: ohne Bestätigung/falscher Fingerabdruck ohne Schreibzugriff; bestätigte Registrierung Windows-geschützt lesbar; erneute Registrierung überschreibt nicht.");
             var path = Path.Combine(directory, "trust.bin");
             new OfflineGroupTrustStore(path, library, new WindowsGroupTrustProtection(library))

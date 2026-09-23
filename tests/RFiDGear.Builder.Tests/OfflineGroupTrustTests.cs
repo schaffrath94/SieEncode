@@ -27,6 +27,17 @@ internal static class OfflineGroupTrustTests
             var restarted = new OfflineGroupTrustStore(path, library, protection);
             if (restarted.LoadOffline().Policy.Revision != 1) throw new Exception("Offline restart lost policy.");
             var updated = OfflineGroupPolicyService.Sign(policy with { Revision = 2 }, admin);
+            var initialCheckpoint = restarted.LoadOffline().Checkpoint;
+            var package = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1, library, key, updated);
+            var unchanged = File.ReadAllBytes(path);
+            restarted.PreviewPackageUpdate(package, initialCheckpoint);
+            if (!unchanged.SequenceEqual(File.ReadAllBytes(path))) throw new Exception("Preview persisted unconfirmed update.");
+            Reject(() => restarted.AcceptPackageUpdate(package with { AdministratorPublicKey = other.ExportSubjectPublicKeyInfo() }, initialCheckpoint));
+            Reject(() => restarted.AcceptPackageUpdate(package with { LibraryId = Guid.NewGuid() }, initialCheckpoint));
+            Reject(() => restarted.PreviewPackageUpdate(package with { AdministratorPublicKey = other.ExportSubjectPublicKeyInfo() }, initialCheckpoint));
+            if (!unchanged.SequenceEqual(File.ReadAllBytes(path))) throw new Exception("Rejected package changed pinned trust.");
+            restarted.AcceptPackageUpdate(package, initialCheckpoint);
+            Reject(() => restarted.AcceptPackageUpdate(package, initialCheckpoint));
             restarted.AcceptUpdate(updated);
             var before = File.ReadAllBytes(path);
             Reject(() => restarted.AcceptUpdate(signed));
