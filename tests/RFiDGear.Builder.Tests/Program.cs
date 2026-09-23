@@ -38,6 +38,7 @@ var tests = new (string Name, Action Run)[]
     ("Offline trust enrollment, persistence and concurrent update protection", OfflineGroupTrustTests.Verify),
     ("Signed people/device directory and overlapping access matrix", OfflineGroupDirectoryTests.Verify),
     ("Scoped delegation, signed changes, revocation and atomic authority updates", OfflineGroupDelegationTests.Verify),
+    ("Protected delegate key restart, enrolled scope and revocation checks", OfflineGroupDelegateStoreTests.Verify),
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),

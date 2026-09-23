@@ -3,6 +3,28 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Lokaler Delegatenschluessel
+
+OfflineGroupDelegateStore erzeugt einen eigenen RSA-3072-Schluessel und schreibt
+ihn ausschliesslich ueber einen verpflichtenden authentisierten lokalen Protector.
+WindowsGroupDelegateProtection nutzt DPAPI CurrentUser mit separatem Zweck sowie
+Bibliotheks- und Personenbindung. Der oeffentliche Export enthaelt nur Bibliothek,
+Personen-ID und SPKI; er ist noch keine Vollmacht. Erneutes Create ersetzt nichts.
+
+SignChange laedt den registrierten Vertrauensspeicher neu, vergleicht den genauen
+Entwurfsstand, prueft Personen-/Schluesselzuordnung der Vollmacht und validiert die
+exakten signierten Aenderungsbytes gegen Aktivstatus und Gruppenumfang. Vor der
+Rueckgabe wird ein zwischenzeitlicher lokaler Richtlinienwechsel abgefangen.
+Die empfangende Verwaltung muss weiterhin ihren eigenen aktuellen Stand pruefen;
+ein offline zurueckgehaltener Widerruf wird dadurch nicht global erkennbar.
+Private Bytepuffer werden nach Nutzung geloescht, keine Zertifikatsstore-Eintraege.
+
+Core-Tests decken Neustart, falsche Person/Bibliothek/Protector, beschaedigte Datei,
+ueberholten Entwurf, fremden Schluessel, falschen Gruppenbereich und Entzug ab.
+Der App-Smoke prueft reale Windows-DPAPI-Zwecktrennung in einem Tempordner, nicht
+den Betrieb unter einem zweiten Windows-Benutzer. Noch fehlen Dialog und sichere
+Einladungs-/Vollmacht-/Aenderungsdateien fuer den gemeinsamen Offline-Bedienablauf.
+
 ## Aktueller Delegationsbaustein
 
 Die signierte v2-Richtlinie bindet Vollmacht-ID, Person, separaten oeffentlichen

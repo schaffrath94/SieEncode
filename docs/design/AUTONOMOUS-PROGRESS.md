@@ -1,6 +1,19 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Lokaler Delegatenschluessel implementiert: eigener RSA-3072-Speicher, oeffentlicher
+Export und Signieren ausschliesslich gegen neu geladenen registrierten Stand mit
+passender Person, Schluessel, Vollmacht und Gruppenumfang. Windows-DPAPI-Zweck ist
+von Hauptverwaltung/Trust getrennt und an Bibliothek/Person gebunden. Keine
+Zertifikatsspeicher-Aenderung oder Ueberschreibung vorhandener Schluessel.
+CI Exit 0, 67/67, CLI/WPF gebaut; tmp/group-delegate-key-ci.log.
+UI-Smoke Exit 0, 45 Checks/5 Kompatibilitaetsszenarien, stderr leer;
+tmp/group-delegate-key-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Synthetischer Windows-DPAPI-Nachweis, keine zweite Benutzerumgebung behauptet.
+Naechster Schritt: gefuehrter Delegatendialog und striktes oeffentliches
+Einladungs-/Aenderungstransportformat, Vollmachtvergabe in Hauptverwaltung und
+Aktualisierung des registrierten Standes. Vault-/Recoveryintegration bleibt offen.
+
 Gruppenbegrenzte Delegationen im Core umgesetzt: hauptsignierte Vollmachten mit
 separatem Signierschluessel, Person/Aktivstatus und erlaubten Gruppen. Signierte
 Aenderungen binden Bibliothek und exakten Ausgangs-Checkpoint. Nur Namen und

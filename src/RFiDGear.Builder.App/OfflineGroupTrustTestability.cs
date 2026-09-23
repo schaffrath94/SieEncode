@@ -14,6 +14,17 @@ public partial class MainWindow
         {
             using var administrator = RSA.Create(3072);
             var library = Guid.NewGuid();
+            var delegatePath = Path.Combine(directory, "delegate.bin");
+            var delegateProtection = new WindowsGroupDelegateProtection(library, "synthetic-person");
+            var delegateInvitation = new OfflineGroupDelegateStore(delegatePath, library, "synthetic-person", delegateProtection).Create();
+            var delegateRestart = new OfflineGroupDelegateStore(delegatePath, library, "synthetic-person", new WindowsGroupDelegateProtection(library, "synthetic-person"));
+            if (!delegateRestart.ExportPublic().SigningPublicKey.SequenceEqual(delegateInvitation.SigningPublicKey)) throw new Exception("Delegate key lost after restart.");
+            var protectedDelegate = File.ReadAllBytes(delegatePath);
+            Reject(() => new WindowsGroupDelegateProtection(library, "different-person").Unprotect(protectedDelegate));
+            Reject(() => new WindowsGroupDelegateProtection(Guid.NewGuid(), "synthetic-person").Unprotect(protectedDelegate));
+            Reject(() => new WindowsGroupTrustProtection(library).Unprotect(protectedDelegate));
+            Reject(() => new WindowsGroupTrustProtection(library, signingAuthority: true).Unprotect(protectedDelegate));
+            checks.Add("Delegatenschlüssel: Windows-DPAPI-Neuladen erfolgreich; falsche Person, Bibliothek sowie Trust-/Hauptverwalterzweck abgewiesen. Kein Zertifikatsspeichereingriff.");
             var adminPath = Path.Combine(directory, "administration.bin");
             var adminStore = new OfflineGroupAdministrationStore(adminPath, library, new WindowsGroupTrustProtection(library, signingAuthority: true));
             var publicAdministration = adminStore.Create();
