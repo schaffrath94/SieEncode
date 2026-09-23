@@ -3,6 +3,31 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Arbeitsplatz fuer Gruppenverwalter
+
+Einstellungen enthaelt einen getrennten Gruppenverwaltungsplatz. Er laedt eine
+registrierte Bibliothek und die eigene Person, erzeugt den separaten lokalen
+Signierschluessel erst auf ausdrueckliche Aktion und exportiert die oeffentliche
+Verwaltungseinladung samt unabhaengig weiterzugebendem Fingerabdruck. Die Auswahl
+einer Person allein verleiht keinerlei Rechte; die Hauptverwaltung muss deren
+konkreten Schluessel bestaetigen und eine Vollmacht erteilen.
+
+Nach Import des freigegebenen Richtlinienstandes sind ausschliesslich die Gruppen
+der aktiven, zum lokalen Schluessel passenden Vollmacht sichtbar/bearbeitbar.
+Namen und Personenzuordnungen werden als Entwurf gepflegt. Personen, Geraete und
+Vollmachten koennen hier nicht veraendert werden. Der Export signiert nur geaenderte
+Gruppen, prueft den aktuellen registrierten Stand erneut und uebertraegt keine
+privaten Schluessel. Ungespeicherte/nicht exportierte Entwuerfe erfordern beim
+Wechsel oder Schliessen eine Verwerfbestaetigung.
+
+Die Hauptverwaltung uebernimmt die Aenderungsdatei nach gepruefter Vorschau und
+verteilt den neuen signierten Gesamtstand. Export alleine aktualisiert keine
+Registrierung und keinen Vault. Entzug wird beim Signieren wirksam, sobald der
+neuere registrierte Stand lokal vorliegt. Der synthetische App-Test deckt diesen
+Ablauf einschliesslich Mitgliederauswahl ueber ein ListBox-Ereignis und Ablehnung
+eines alten Entwurfs ab. Native Dateidialoge, visuelle Abnahme und echter zweiter
+Windows-Benutzer bleiben offen.
+
 ## Aktualisierung registrierter Richtlinien
 
 Einstellungen bietet jetzt die Aktualisierung einer vorhandenen Registrierung.

@@ -9,6 +9,12 @@ public partial class MainWindow
 {
     private readonly string localGroupTrustDirectory;
 
+    private void OpenGroupDelegate_Click(object sender, RoutedEventArgs e)
+    {
+        try { new GroupDelegateWindow(this, localGroupTrustDirectory).ShowDialog(); }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
     private void UpdateOfflineGroups_Click(object sender, RoutedEventArgs e)
     {
         try

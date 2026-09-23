@@ -12,6 +12,7 @@ public partial class MainWindow
         Directory.CreateDirectory(directory);
         try
         {
+            VerifyGroupDelegateWindow(checks, directory);
             using var administrator = RSA.Create(3072);
             var library = Guid.NewGuid();
             var delegatePath = Path.Combine(directory, "delegate.bin");

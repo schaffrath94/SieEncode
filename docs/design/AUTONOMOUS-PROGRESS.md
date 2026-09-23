@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Delegaten-Arbeitsplatz integriert: registrierte Bibliothek/Person laden,
+Schluessel ausdruecklich erzeugen, oeffentliche Einladung/Fingerabdruck exportieren,
+nur erlaubte Gruppen bearbeiten und signierte Aenderung weitergeben. Personen,
+Geraete und Vollmachten bleiben dort schreibgeschuetzt. Export aendert noch keinen
+Vault/registrierten Stand; Hauptverwaltung uebernimmt und verteilt Gesamtstand.
+CI Exit 0, 67/67, CLI/WPF ohne Warnungen/Fehler;
+tmp/group-delegate-workplace-ci.log. UI-Smoke Exit 0, 47 Checks/5 Szenarien,
+stderr leer; tmp/group-delegate-workplace-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Synthetischer Ablauf: Einladung -> Vollmacht -> Richtlinienupdate -> Mitgliederauswahl
+im Dialog -> signierte Datei -> Uebernahme -> Entzug; alter Entwurf abgewiesen,
+nach Neuladen keine bearbeitbare Gruppe. Keine echte Zweitbenutzer-/native Abnahme.
+Naechster Schwerpunkt: authentisierte Projekt-/Gruppenzuordnung und neue
+Vault-/Recoverybindung, kontrollierter Empfaengerabgleich. Visuelle/native
+Abnahme und Vereinfachung des integrierten Einrichtungsablaufs bleiben offen.
+
 Registrierte Richtlinien lassen sich jetzt in Einstellungen aktualisieren:
 gegen fest registrierten Schluessel/Bibliothek/Checkpoint gepruefte eingefrorene
 Vorschau, alter/neuer Stand inkl. Personen/Geraete/Vollmachten, Bestaetigung vor
