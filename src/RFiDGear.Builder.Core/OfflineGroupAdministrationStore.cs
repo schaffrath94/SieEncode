@@ -52,6 +52,25 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
     public GroupEnrollmentPackage ApplyDelegatedChange(SignedGroupChange change, GroupPolicyCheckpoint expectedPolicy)
         => Transform(expectedPolicy, current => OfflineGroupDelegationService.Apply(change, current));
 
+    public GroupEnrollmentPackage GrantDelegation(GroupDelegateInvitation invitation, string confirmedFingerprint,
+        string delegationId, string[] groupIds, GroupPolicyCheckpoint expectedPolicy)
+    {
+        // Freeze the candidate before the trust check and the eventual policy write.
+        var candidate = GroupDelegationTransport.ReadInvitation(GroupDelegationTransport.WriteInvitation(invitation));
+        if (candidate.LibraryId != libraryId || GroupDelegationTransport.InvitationFingerprint(candidate) != confirmedFingerprint)
+            throw new CryptographicException("Einladung passt nicht zur Bibliothek oder zum unabhängig bestätigten Fingerabdruck.");
+        var scope = groupIds.ToArray();
+        return Transform(expectedPolicy, current =>
+        {
+            if (!current.Policy.People.Any(p => p.Id == candidate.PersonId && p.Enabled))
+                throw new CryptographicException("Aktive Person für die Vollmacht fehlt.");
+            if (current.Policy.Delegations.Any(g => g.Id == delegationId))
+                throw new InvalidDataException("Vorhandene Vollmacht darf durch einen Einladungsimport nicht ersetzt werden.");
+            return current.Policy with { Revision = checked(current.Policy.Revision + 1), Delegations =
+                [.. current.Policy.Delegations, new(delegationId, candidate.PersonId, candidate.SigningPublicKey, scope, true)] };
+        });
+    }
+
     private GroupEnrollmentPackage Transform(GroupPolicyCheckpoint expectedPolicy, Func<VerifiedGroupPolicy, OfflineGroupPolicy> transform)
     {
         ArgumentNullException.ThrowIfNull(expectedPolicy);

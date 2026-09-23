@@ -14,6 +14,14 @@ internal static class OfflineGroupDelegateStoreTests
             var protection = new OfflineGroupTrustTests.TestProtection();
             var signer = new OfflineGroupDelegateStore(path, library, "alice", protection);
             var invitation = signer.Create();
+            var invitationBytes = GroupDelegationTransport.WriteInvitation(invitation);
+            invitation = GroupDelegationTransport.ReadInvitation(invitationBytes);
+            var json = System.Text.Encoding.UTF8.GetString(invitationBytes);
+            Reject(() => GroupDelegationTransport.ReadInvitation(System.Text.Encoding.UTF8.GetBytes(json.Insert(1, "\"Version\":1,"))));
+            Reject(() => GroupDelegationTransport.ReadInvitation(System.Text.Encoding.UTF8.GetBytes(json.Insert(1, "\"PrivateKey\":\"bad\","))));
+            Reject(() => GroupDelegationTransport.ReadInvitation(new byte[GroupDelegationTransport.MaximumBytes + 1]));
+            using (var privateCandidate = RSA.Create(3072))
+                Reject(() => GroupDelegationTransport.WriteInvitation(invitation with { SigningPublicKey = privateCandidate.ExportPkcs8PrivateKey() }));
             var before = File.ReadAllBytes(path);
             Reject(() => signer.Create());
             if (!before.SequenceEqual(File.ReadAllBytes(path))) throw new Exception("Existing signing identity overwritten.");
@@ -33,6 +41,8 @@ internal static class OfflineGroupDelegateStoreTests
             var key = root.ExportSubjectPublicKeyInfo();
             var current = trust.Enroll(key, OfflineGroupTrustStore.AdministratorFingerprint(key), OfflineGroupPolicyService.Sign(policy, root));
             var signed = signer.SignChange(trust, "grant", current.Checkpoint, [new("lokal", "Updated", [])]);
+            signed = GroupDelegationTransport.ReadChange(GroupDelegationTransport.WriteChange(signed));
+            Reject(() => GroupDelegationTransport.ReadChange(invitationBytes));
             if (OfflineGroupDelegationService.Apply(signed, current).Groups[0].Name != "Updated") throw new Exception("Delegate signature unusable.");
             Reject(() => signer.SignChange(trust, "grant", current.Checkpoint, [new("other", "Escalation", [])]));
             Reject(() => signer.SignChange(trust, "unknown", current.Checkpoint, [new("lokal", "Updated", [])]));
@@ -51,7 +61,7 @@ internal static class OfflineGroupDelegateStoreTests
     private static void Reject(Action action)
     {
         try { action(); }
-        catch (Exception e) when (e is CryptographicException or IOException or InvalidDataException) { return; }
+        catch (Exception e) when (e is CryptographicException or IOException or InvalidDataException or System.Text.Json.JsonException) { return; }
         throw new Exception("Invalid delegate key operation succeeded.");
     }
 }

@@ -3,6 +3,25 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Vollmachtvergabe und oeffentlicher Dateiaustausch
+
+GroupDelegationTransport transportiert versionierte oeffentliche Einladungen und
+signierte Aenderungen getrennt. Grenzen fuer Datei-/Nutzdatengroesse und JSON-Tiefe,
+unbekannte/doppelte Felder sowie reine kanonische SPKI-Schluessel werden geprueft.
+Das Einlesen prueft Struktur; Berechtigung entsteht erst aus bestaetigter Vergabe
+beziehungsweise Signatur-/Umfangspruefung gegen den gespeicherten Verwaltungsstand.
+
+Die Hauptverwaltungsoberflaeche bietet Freigabe fuer ausgewaehlte Gruppen mit
+manuell eingegebenem unabhaengigem Fingerabdruck, eine Vollmachtenliste und Entzug.
+Einladungen ersetzen keine vorhandene Vollmacht. Offene Tabellenentwuerfe sperren
+diese Aktionen. Eingehende Aenderungen werden vor Bestaetigung geprueft und als
+Gruppenname sowie hinzugefuegte/entfernte Personen mit stabilen IDs dargestellt.
+Die abschliessende Speicherung prueft weiterhin den exakten Ausgangsstand.
+
+Der Delegaten-Arbeitsplatz zum Erstellen/Exportieren der Einladung und Bearbeiten
+seiner Gruppen sowie das Aktualisieren registrierter Richtlinien fehlen noch.
+Die nativen Datei-/Bestaetigungsdialoge sind noch visuell und interaktiv abzunehmen.
+
 ## Lokaler Delegatenschluessel
 
 OfflineGroupDelegateStore erzeugt einen eigenen RSA-3072-Schluessel und schreibt

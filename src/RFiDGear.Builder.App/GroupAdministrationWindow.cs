@@ -75,6 +75,7 @@ internal sealed partial class GroupAdministrationWindow : Window
             { group.Members.Remove(selected.Id); dirty = true; RefreshMemberLabels(); }
         }));
         root.Children.Add(memberActions);
+        AddDelegationControls(root);
         var actions = new WrapPanel();
         actions.Children.Add(Action("Gruppen signiert speichern", SaveGroups));
         actions.Children.Add(Action("Gespeicherten Stand öffentlich exportieren", ExportPublic));
@@ -109,6 +110,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         store = candidate; checkpoint = verified.Checkpoint; currentLibrary = id;
         loading = true; libraries.SelectedItem = id; loading = false; dirty = false;
         RefreshMemberLabels();
+        RefreshDelegations(verified.Policy);
         status.Text = $"Bibliothek: {id:D}\nGespeicherte Revision: {checkpoint.Revision}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}";
     }
 

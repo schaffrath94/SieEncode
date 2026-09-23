@@ -75,13 +75,21 @@ public partial class MainWindow
                 if (external.Policy.Version != 2 || external.Policy.People.Single().Devices.Length != 2 ||
                     OfflineGroupDirectory.ResolveRecipients(external.Policy, draft.Id, DateTimeOffset.UtcNow).Length != 2)
                     throw new Exception("Person/device UI did not persist a usable signed directory.");
-                uiStore.UpdateGroups(external.Policy.Groups, external.Checkpoint);
+                var delegationInvitation = new GroupDelegateInvitation(uiLibrary, person.Id, administrator.ExportSubjectPublicKeyInfo());
+                Reject(() => administrationWindow.GrantInvitation(delegationInvitation, new string('0', 64), [draft.Id]));
+                administrationWindow.GrantInvitation(delegationInvitation, GroupDelegationTransport.InvitationFingerprint(delegationInvitation), [draft.Id]);
+                external = GroupEnrollmentPackages.Validate(uiStore.ExportPublic());
+                if (external.Policy.Delegations.Single().PersonId != person.Id || external.Policy.Delegations.Single().GroupIds.Single() != draft.Id)
+                    throw new Exception("Administrative UI did not persist scoped grant.");
+                var publicChange = OfflineGroupDelegationService.Sign(new(OfflineGroupDelegationService.Format, 1, uiLibrary,
+                    external.Policy.Delegations.Single().Id, external.Checkpoint, [new(draft.Id, "Delegiert geändert", [person.Id])]), administrator);
+                uiStore.ApplyDelegatedChange(GroupDelegationTransport.ReadChange(GroupDelegationTransport.WriteChange(publicChange)), external.Checkpoint);
                 try { administrationWindow.SaveGroups(); throw new Exception("Stale UI overwrote group policy."); }
                 catch (ConcurrentFileChangeException) { }
                 administrationWindow.LoadAdministration(uiLibrary);
             }
             finally { administrationWindow.Close(); }
-            checks.Add("Gruppen-Verwaltungsdialog: Person mit zwei Geräten, doppelte Zuordnung abgewiesen, Gruppe per Button, signiertes Personenverzeichnis nach Neuladen verwendbar; veralteter Entwurf abgewiesen.");
+            checks.Add("Gruppen-Verwaltungsdialog: Person mit zwei Geräten, signiertes Verzeichnis, Vollmacht nur mit bestätigtem Fingerabdruck und Gruppe; delegierte Änderung über Transport geprüft; veralteter Entwurf abgewiesen.");
             var key = administrator.ExportSubjectPublicKeyInfo();
             var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 1, library, 1, []);
             var signed = OfflineGroupPolicyService.Sign(policy, administrator);

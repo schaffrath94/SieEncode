@@ -87,7 +87,7 @@ public static class OfflineGroupDelegationService
         return next;
     }
 
-    private static RSA OpenPublicKey(byte[] bytes)
+    internal static RSA OpenPublicKey(byte[] bytes)
     {
         if (bytes is null || bytes.Length is 0 or > 4096) throw new InvalidDataException("Öffentlicher Verwaltungsschlüssel fehlt.");
         var rsa = RSA.Create();

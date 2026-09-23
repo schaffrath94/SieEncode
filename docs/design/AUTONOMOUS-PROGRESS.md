@@ -1,6 +1,20 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Vollmachtvergabe in Hauptverwaltung und strikter oeffentlicher Dateitransport
+integriert: versionierte Einladungen/Aenderungen, Groessen-/JSON-/SPKI-Pruefung;
+Freigabe ausgewaehlter Gruppen nur mit unabhaengig eingegebenem Fingerabdruck.
+Vollmachtenliste/Entzug und signaturgepruefte Aenderungsvorschau mit Personen-IDs.
+Offene Entwuerfe und veraltete Richtlinien sperren die Uebernahme.
+CI Exit 0, 67/67, CLI/WPF 0 Fehler; tmp/group-delegation-transport-ci.log.
+UI-Smoke Exit 0, 45 Checks/5 Szenarien, stderr leer;
+tmp/group-delegation-transport-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Dialogmethoden mit synthetischer Person/Vollmacht und transportierter delegierter
+Aenderung geprueft. Native Datei-/Bestaetigungsdialoge noch nicht abgenommen.
+Naechster Schritt: Delegaten-Arbeitsplatz (Einladung erzeugen/exportieren, eigene
+Gruppen bearbeiten/Aenderung exportieren) und Updates registrierter Richtlinien;
+anschliessend authentisierte Projekt-/Vaultbindung und separater Recoveryzugang.
+
 Lokaler Delegatenschluessel implementiert: eigener RSA-3072-Speicher, oeffentlicher
 Export und Signieren ausschliesslich gegen neu geladenen registrierten Stand mit
 passender Person, Schluessel, Vollmacht und Gruppenumfang. Windows-DPAPI-Zweck ist
