@@ -149,3 +149,22 @@ Zertifikats-Fingerabdruecken zu Personen-IDs. Personenpflege in der UI folgt noc
 Core-Test deckt die gewuenschte Acht-Personen-/Drei-Gruppen-Matrix ab, inklusive
 zweitem Geraet einer Person, Deaktivierung, doppelten Zuordnungen, falschen
 Fingerabdruecken, unbekannten Mitgliedern und Zeitgueltigkeit.
+
+## Personenpflege im Verwaltungsdialog
+
+Personen und Geraete haben eigene Tabellen mit bearbeitbaren Namen und Aktivstatus.
+Geraete werden einer ausgewaehlten Person ueber eine bestaetigte oeffentliche
+Einladung zugeordnet; doppelte Geraetezuordnung wird abgewiesen. Gruppen zeigen
+Personennamen und erlauben Mehrfachmitgliedschaften. Speichern signiert Personen,
+Geraete und Gruppen gemeinsam als v2. Tabellenbearbeitung wird vorher explizit
+abgeschlossen; Export verweigert offene Entwuerfe.
+
+Leere neue Verwaltungen verwenden das Personenmodell. Alte v1-Testgruppen werden
+nicht still umgedeutet: Umstellung erst nach bestaetigter vollstaendiger Zuordnung
+aller bisherigen Geraete zu Personen; Fehler laesst den Entwurf unveraendert.
+Der gemeinsame Einladungsimport weist jetzt ebenfalls Private-Key-Archive vor
+dem Zertifikatsimport ab und gibt Zertifikate bei Validierungsfehlern frei.
+
+Synthetische UI-Abnahme: Person mit zwei Geraeten, doppelte Zuordnung abgewiesen,
+signiertes v2-Verzeichnis nach Neuladen aufloesbar, veralteter Entwurf abgewiesen.
+Native Import-/Umstellungsdialoge und visuelle Pruefung weiterhin offen.

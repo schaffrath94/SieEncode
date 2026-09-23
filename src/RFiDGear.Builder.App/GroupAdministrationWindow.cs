@@ -16,7 +16,7 @@ internal sealed class GroupAdministrationDraft
     public ObservableCollection<string> Members { get; } = [];
 }
 
-internal sealed class GroupAdministrationWindow : Window
+internal sealed partial class GroupAdministrationWindow : Window
 {
     private readonly string localDirectory;
     private readonly ComboBox libraries = new() { MinWidth = 360 };
@@ -55,22 +55,24 @@ internal sealed class GroupAdministrationWindow : Window
             if (ConfirmDiscard() && MessageBox.Show(this, "Eine neue unabhängige Bibliothek mit eigenem Verwaltungsschlüssel erstellen? Für bestehende Teams deren Registrierung verwenden. Der neue Schlüssel bleibt lokal; seine Wiederherstellung ist noch nicht eingerichtet.", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 CreateAdministration();
         }));
+        AddPeopleControls(root);
         grid.Columns.Add(new DataGridTextColumn { Header = "Gruppe", Binding = new Binding(nameof(GroupAdministrationDraft.Name)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
         grid.Columns.Add(new DataGridTextColumn { Header = "Stabile Gruppen-ID", Binding = new Binding(nameof(GroupAdministrationDraft.Id)), IsReadOnly = true, Width = new DataGridLength(2, DataGridLengthUnitType.Star) });
         grid.ItemsSource = groups;
         grid.CellEditEnding += (_, e) => { if (e.EditAction == DataGridEditAction.Commit) dirty = true; };
-        grid.SelectionChanged += (_, _) => members.ItemsSource = (grid.SelectedItem as GroupAdministrationDraft)?.Members;
+        grid.SelectionChanged += (_, _) => RefreshMemberLabels();
         root.Children.Add(grid);
         root.Children.Add(Action("Gruppe hinzufügen", () => { RequireStore(); var group = new GroupAdministrationDraft(); groups.Add(group); grid.SelectedItem = group; dirty = true; }));
-        root.Children.Add(Note("Mitglieder der ausgewählten Gruppe: Zertifikats-Fingerabdrücke. Ein Zugang darf in mehreren Gruppen stehen. Namen und Personen-/Gerätezuordnung folgen im nächsten Ausbauschritt."));
+        root.Children.Add(Note("Mitglieder der ausgewählten Gruppe. Eine Person darf mehreren Gruppen angehören; ihre Geräte werden zentral bei der Person gepflegt."));
         root.Children.Add(members);
         var memberActions = new WrapPanel();
+        memberActions.Children.Add(Action("Ausgewählte Person zur Gruppe hinzufügen", AddSelectedPerson));
         memberActions.Children.Add(Action("Öffentliche Einladung hinzufügen", ImportMember));
         memberActions.Children.Add(Action("Mitglied aus Gruppe entfernen", () =>
         {
-            if (grid.SelectedItem is GroupAdministrationDraft group && members.SelectedItem is string fingerprint &&
+            if (grid.SelectedItem is GroupAdministrationDraft group && members.SelectedItem is GroupMemberLabel selected &&
                 MessageBox.Show(this, "Diesen Zugang aus dem Gruppenentwurf entfernen? Alte Vaultkopien bleiben zugänglich.", Title, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            { group.Members.Remove(fingerprint); dirty = true; }
+            { group.Members.Remove(selected.Id); dirty = true; RefreshMemberLabels(); }
         }));
         root.Children.Add(memberActions);
         var actions = new WrapPanel();
@@ -96,6 +98,7 @@ internal sealed class GroupAdministrationWindow : Window
         var candidate = Store(id);
         var package = candidate.ExportPublic();
         var verified = GroupEnrollmentPackages.Validate(package);
+        LoadPeople(verified.Policy);
         groups.Clear();
         foreach (var group in verified.Policy.Groups)
         {
@@ -105,20 +108,25 @@ internal sealed class GroupAdministrationWindow : Window
         }
         store = candidate; checkpoint = verified.Checkpoint; currentLibrary = id;
         loading = true; libraries.SelectedItem = id; loading = false; dirty = false;
+        RefreshMemberLabels();
         status.Text = $"Bibliothek: {id:D}\nGespeicherte Revision: {checkpoint.Revision}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}";
     }
 
     internal void SaveGroups()
     {
-        RequireStore(); grid.CommitEdit(DataGridEditingUnit.Cell, true); grid.CommitEdit(DataGridEditingUnit.Row, true);
-        var package = store!.UpdateGroups(groups.Select(g => new OfflineVaultGroup(g.Id, g.Name, g.Members.ToArray())).ToArray(), checkpoint!);
+        RequireStore(); CommitEdits();
+        var groupRows = groups.Select(g => new OfflineVaultGroup(g.Id, g.Name, g.Members.ToArray())).ToArray();
+        if (!personMode && people.Count > 0) throw new InvalidOperationException("Bitte zuerst die bisherigen Gruppen auf Personen umstellen.");
+        var package = personMode ? store!.UpdateDirectory(PersonRows(), groupRows, checkpoint!) : store!.UpdateGroups(groupRows, checkpoint!);
         checkpoint = GroupEnrollmentPackages.Validate(package).Checkpoint;
         dirty = false; status.Text = $"Bibliothek: {package.LibraryId:D} · Revision {checkpoint.Revision} signiert gespeichert. Zum Weitergeben den gespeicherten Stand exportieren.";
+        RefreshMemberLabels();
     }
 
     private void ExportPublic()
     {
         RequireStore();
+        CommitEdits();
         if (dirty) throw new InvalidOperationException("Bitte Änderungen zuerst signiert speichern oder den Dialog neu laden.");
         var bytes = GroupEnrollmentPackages.Write(store!.ExportPublic());
         var dialog = new SaveFileDialog { Title = "Nur öffentliche Verwaltungsdaten exportieren", Filter = "Gruppenregistrierung (*.group-enrollment.json)|*.group-enrollment.json", FileName = currentLibrary!.Value.ToString("N") + ".group-enrollment.json" };
@@ -130,6 +138,7 @@ internal sealed class GroupAdministrationWindow : Window
 
     private void ImportMember()
     {
+        if (personMode) { ImportPersonDevice(); return; }
         if (grid.SelectedItem is not GroupAdministrationDraft group) throw new InvalidOperationException("Bitte zuerst eine Gruppe auswählen.");
         var dialog = new OpenFileDialog { Filter = "Empfängereinladung (*.recipient.json)|*.recipient.json" };
         if (dialog.ShowDialog(this) != true) return;
@@ -137,7 +146,7 @@ internal sealed class GroupAdministrationWindow : Window
         using var certificate = invitation.Certificate;
         var fingerprint = CertificateVaultService.Fingerprint(certificate);
         if (MessageBox.Show(this, $"{invitation.DisplayName}\n{fingerprint}\n\nFingerabdruck unabhängig mit der Person abgeglichen?", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-        if (!group.Members.Contains(fingerprint)) { group.Members.Add(fingerprint); dirty = true; }
+        if (!group.Members.Contains(fingerprint)) { group.Members.Add(fingerprint); dirty = true; RefreshMemberLabels(); }
     }
 
     private OfflineGroupAdministrationStore Store(Guid id) => new(Path.Combine(localDirectory, id.ToString("N") + ".admin.bin"), id, new WindowsGroupTrustProtection(id, signingAuthority: true));

@@ -1,6 +1,19 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Personen-/Geraeteoberflaeche integriert: Namen/Aktivstatus, bestaetigte
+Geraeteeinladungen, Personen als Gruppenmitglieder, signiertes v2-Speichern.
+Neue leere Verwaltungen nutzen Personenmodell; bestehende v1-Testgruppen nur
+explizit mit vollstaendiger Geraetezuordnung umstellbar. Export uebernimmt keine
+offenen Tabellenentwuerfe. Gemeinsamer Einladungsimport jetzt Public-DER-only,
+keine PFX-Importierung und korrekte Zertifikatsfreigabe bei Fehler.
+CI Exit 0, 65/65, CLI/WPF erfolgreich; UI-Smoke Exit 0, 44 Checks/5 Szenarien,
+stderr leer. Nachweise tmp/group-people-ui-ci.log und
+tmp/group-people-ui-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Native Import-/Umstellungs-/visuelle Abnahme noch offen. Naechster Schritt:
+signierte gruppenbegrenzte Delegationen und wirksame Rollenpruefung, danach
+authentisierte Projektzuordnung/Vault-/Recoveryanbindung.
+
 Personen-/Geraeteverzeichnis im Core ergaenzt: signierte Richtlinie v2 mit stabilen
 Personen-IDs, mehreren oeffentlichen Geraetezertifikaten, Aktivstatus und Gruppen
 als Personenlisten. Eindeutige Zertifikatszuordnung, DER/Public-only und SHA256-

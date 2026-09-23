@@ -40,6 +40,11 @@ internal static class OfflineGroupDirectoryTests
             Reject(() => OfflineGroupPolicyService.Sign(policy with { People = forged }, administrator));
             var pfx = people.ToArray(); pfx[0] = people[0] with { Devices = [Device(1) with { Certificate = Convert.ToBase64String(certificates[0].Export(X509ContentType.Pfx)) }] };
             Reject(() => OfflineGroupPolicyService.Sign(policy with { People = pfx }, administrator));
+            Reject(() => CertificateVaultService.ImportInvitation(new VaultRecipientInvitation
+            {
+                Certificate = pfx[0].Devices[0].Certificate,
+                Fingerprint = CertificateVaultService.Fingerprint(certificates[0]), DisplayName = "Private archive must not be imported"
+            }));
         }
         finally { foreach (var certificate in certificates) certificate.Dispose(); }
     }

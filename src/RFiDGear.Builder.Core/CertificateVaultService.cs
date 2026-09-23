@@ -152,10 +152,22 @@ public static class CertificateVaultService
     public static (X509Certificate2 Certificate, string DisplayName) ImportInvitation(VaultRecipientInvitation invitation)
     {
         if (invitation.Format != "SieEncode-Vault-Recipient" || invitation.Version != 1) throw new InvalidDataException("Unbekanntes Empfängerformat.");
-        var certificate = new X509Certificate2(Convert.FromBase64String(invitation.Certificate));
-        ValidateRecipientCertificate(certificate);
-        if (!string.Equals(Fingerprint(certificate), invitation.Fingerprint, StringComparison.OrdinalIgnoreCase)) { certificate.Dispose(); throw new CryptographicException("Der Fingerabdruck der Empfängerdatei stimmt nicht."); }
-        return (certificate, invitation.DisplayName);
+        if (string.IsNullOrWhiteSpace(invitation.Certificate) || invitation.Certificate.Length > 32768)
+            throw new InvalidDataException("Empfängerzertifikat fehlt oder ist zu groß.");
+        var bytes = Convert.FromBase64String(invitation.Certificate);
+        if (X509Certificate2.GetCertContentType(bytes) != X509ContentType.Cert)
+            throw new CryptographicException("Einladungen dürfen nur öffentliche Zertifikate enthalten, keine Schlüsselarchive.");
+        var certificate = new X509Certificate2(bytes);
+        try
+        {
+            ValidateRecipientCertificate(certificate);
+            if (!certificate.RawData.SequenceEqual(bytes) || certificate.HasPrivateKey)
+                throw new CryptographicException("Einladung enthält kein eindeutiges öffentliches DER-Zertifikat.");
+            if (!string.Equals(Fingerprint(certificate), invitation.Fingerprint, StringComparison.OrdinalIgnoreCase))
+                throw new CryptographicException("Der Fingerabdruck der Empfängerdatei stimmt nicht.");
+            return (certificate, invitation.DisplayName);
+        }
+        catch { certificate.Dispose(); throw; }
     }
 
     public static string Fingerprint(X509Certificate2 certificate) => Convert.ToHexString(SHA256.HashData(certificate.RawData));

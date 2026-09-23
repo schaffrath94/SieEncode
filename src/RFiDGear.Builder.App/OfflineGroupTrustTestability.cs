@@ -41,24 +41,36 @@ public partial class MainWindow
             {
                 VerifyAutomationContract(administrationWindow);
                 var uiLibrary = administrationWindow.CreateAdministration();
-                var uiGrid = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.DataGrid>().Single();
+                var uiGrid = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.DataGrid>().Single(table => table.Columns.Any(column => Equals(column.Header, "Gruppe")));
                 var add = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.Button>().Single(button => Equals(button.Content, "Gruppe hinzufügen"));
                 add.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
                 var draft = uiGrid.Items.Cast<GroupAdministrationDraft>().Single();
-                draft.Name = "Lokal"; draft.Members.Add(a); draft.Members.Add(b);
+                var person = administrationWindow.AddPerson("Synthetische Person");
+                using var deviceKey = RSA.Create(3072);
+                using var firstDevice = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=Synthetic workstation one", deviceKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+                using var secondDevice = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=Synthetic workstation two", deviceKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+                var firstInvitation = CertificateVaultService.ExportInvitation(firstDevice, "Testrechner 1");
+                administrationWindow.AddDevice(person.Id, firstInvitation);
+                administrationWindow.AddDevice(person.Id, CertificateVaultService.ExportInvitation(secondDevice, "Testrechner 2"));
+                try { administrationWindow.AddDevice(person.Id, firstInvitation); throw new Exception("Duplicate device accepted by UI."); }
+                catch (InvalidOperationException) { }
+                draft.Name = "Lokal"; draft.Members.Add(person.Id);
                 administrationWindow.SaveGroups();
                 administrationWindow.LoadAdministration(uiLibrary);
                 var reread = uiGrid.Items.Cast<GroupAdministrationDraft>().Single();
-                if (reread.Name != "Lokal" || reread.Members.Count != 2) throw new Exception("Administrative UI lost group members.");
+                if (reread.Name != "Lokal" || reread.Members.Single() != person.Id) throw new Exception("Administrative UI lost group members.");
                 var uiStore = new OfflineGroupAdministrationStore(Path.Combine(uiDirectory, "Administrations", uiLibrary.ToString("N") + ".admin.bin"), uiLibrary, new WindowsGroupTrustProtection(uiLibrary, signingAuthority: true));
                 var external = GroupEnrollmentPackages.Validate(uiStore.ExportPublic());
+                if (external.Policy.Version != 2 || external.Policy.People.Single().Devices.Length != 2 ||
+                    OfflineGroupDirectory.ResolveRecipients(external.Policy, draft.Id, DateTimeOffset.UtcNow).Length != 2)
+                    throw new Exception("Person/device UI did not persist a usable signed directory.");
                 uiStore.UpdateGroups(external.Policy.Groups, external.Checkpoint);
                 try { administrationWindow.SaveGroups(); throw new Exception("Stale UI overwrote group policy."); }
                 catch (ConcurrentFileChangeException) { }
                 administrationWindow.LoadAdministration(uiLibrary);
             }
             finally { administrationWindow.Close(); }
-            checks.Add("Gruppen-Verwaltungsdialog: neue synthetische Verwaltung, Gruppe per Button, signiertes Speichern/Neuladen und Ablehnung eines veralteten UI-Entwurfs erfolgreich.");
+            checks.Add("Gruppen-Verwaltungsdialog: Person mit zwei Geräten, doppelte Zuordnung abgewiesen, Gruppe per Button, signiertes Personenverzeichnis nach Neuladen verwendbar; veralteter Entwurf abgewiesen.");
             var key = administrator.ExportSubjectPublicKeyInfo();
             var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 1, library, 1, []);
             var signed = OfflineGroupPolicyService.Sign(policy, administrator);
