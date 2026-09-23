@@ -91,3 +91,21 @@ Der isolierte Startup-/UI-Testmodus injiziert einen getrennten Testpfad. Die neu
 UI-Regressionspruefung registriert ausschliesslich synthetische Daten in Temp.
 Native Dateiauswahl/visuelle Abnahme noch offen. Erstellung einer neuen Verwaltung,
 Delegation, Gruppen-/Personenverwaltung und Projekt-Vault-Anbindung folgen noch.
+
+## Lokaler Verwaltungsschluessel
+
+OfflineGroupAdministrationStore erzeugt einen separaten RSA-3072-Signierschluessel
+und eine anfangs leere signierte Richtlinie. Privater PKCS8-Schluessel und Stand
+werden zusammen authentisiert lokal gespeichert. Windows verwendet einen anderen
+DPAPI-Zweck als fuer den lesenden Vertrauenscache. Der oeffentliche Export enthaelt
+nur SPKI und signierte Richtlinie und ist direkt als Registrierung transportierbar.
+Gruppenaktualisierung verlangt den gelesenen Richtlinien-Checkpoint und eine
+unveraenderte Datei; die neue Revision wird automatisch erhoeht. Bestehende
+Verwaltung kann nicht durch Create ersetzt werden. Kein globaler Rueckrollschutz
+gegen einen Besitzer, der die komplette lokale Datei zuruecksetzt.
+
+Synthetischer Windows-Test: anlegen, ueberlappende Gruppen signieren, erneut laden,
+oeffentlichen Export verifizieren, falschen DPAPI-Zweck/veralteten Checkpoint und
+erneutes Create ablehnen, unveraenderte Datei nach Ablehnung pruefen.
+Noch kein Verwaltungsdialog, keine Delegation und keine Sicherung/Wiederherstellung
+des Verwaltungsschluessels. Testschluessel werden nur im isolierten Temp angelegt.

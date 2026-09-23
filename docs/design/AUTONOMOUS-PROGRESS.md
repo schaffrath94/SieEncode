@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Fortsetzung Verwaltungsgrundlage: OfflineGroupAdministrationStore implementiert
+mit separatem lokal geschuetztem RSA-Signierschluessel, signierter Gruppenrevision
+und oeffentlichem Registrierungs-Export. DPAPI-Zweck fuer Signierer getrennt vom
+Vertrauenscache. Veraltete Richtlinienentwuerfe und konkurrierende Dateiaenderungen
+werden abgewiesen, Create ersetzt keine vorhandene Verwaltung.
+WPF-Build Exit 0, 0 Warnungen/Fehler; UI-Smoke Exit 0, 43 Checks/5 Szenarien,
+stderr leer. tmp/group-administration-build.log und
+tmp/group-administration-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Nur synthetische Verwaltung im Testordner. Naechster Schritt: Verwaltungsdialog
+mit Erstellen/Export/Gruppenpflege, danach Delegationen und Personen/Geraete.
+Verwaltungsschluessel-Recovery und neue Vault-Anbindung weiterhin offen.
+
 Fortsetzung 23.09.: oeffentliches GroupEnrollmentPackage mit striktem Parser und
 Signatur-/Bibliothekspruefung; GroupEnrollmentWindow in Einstellungen (klar als
 Entwicklung markiert). Unabhaengigen Fingerabdruck eingeben und Bibliotheks-ID

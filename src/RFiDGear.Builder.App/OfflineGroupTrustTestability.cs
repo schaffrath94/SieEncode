@@ -14,6 +14,27 @@ public partial class MainWindow
         {
             using var administrator = RSA.Create(3072);
             var library = Guid.NewGuid();
+            var adminPath = Path.Combine(directory, "administration.bin");
+            var adminStore = new OfflineGroupAdministrationStore(adminPath, library, new WindowsGroupTrustProtection(library, signingAuthority: true));
+            var publicAdministration = adminStore.Create();
+            var original = GroupEnrollmentPackages.Validate(publicAdministration);
+            var a = new string('A', 64); var b = new string('B', 64);
+            var updatedAdministration = adminStore.UpdateGroups([new("lokal", "Lokal", [a, b]), new("lokal-2", "Lokal 2", [b])], original.Checkpoint);
+            var adminRestart = new OfflineGroupAdministrationStore(adminPath, library, new WindowsGroupTrustProtection(library, signingAuthority: true));
+            var exported = GroupEnrollmentPackages.Read(GroupEnrollmentPackages.Write(adminRestart.ExportPublic()));
+            if (GroupEnrollmentPackages.Validate(exported).Policy.Revision != 2 ||
+                !exported.AdministratorPublicKey.SequenceEqual(publicAdministration.AdministratorPublicKey))
+                throw new InvalidOperationException("Verwaltungsstand oder Schlüssel nach Neustart verändert.");
+            Reject(() => new WindowsGroupTrustProtection(library).Unprotect(File.ReadAllBytes(adminPath)));
+            var before = File.ReadAllBytes(adminPath);
+            try { adminRestart.UpdateGroups([], original.Checkpoint); throw new Exception("Stale administration update accepted."); }
+            catch (ConcurrentFileChangeException) { }
+            try { adminRestart.Create(); throw new Exception("Existing administrator overwritten."); }
+            catch (ConcurrentFileChangeException) { }
+            if (!before.SequenceEqual(File.ReadAllBytes(adminPath))) throw new Exception("Rejected administration update changed file.");
+            var exportJson = System.Text.Encoding.UTF8.GetString(GroupEnrollmentPackages.Write(updatedAdministration));
+            if (exportJson.Contains("PrivateKey", StringComparison.Ordinal)) throw new Exception("Public package contains private key field.");
+            checks.Add("Gruppenverwaltung: eigener DPAPI-Signierspeicher, überlappende Gruppen signiert, öffentlicher Export nach Neustart gültig; falscher Schutzzweck und veraltete Änderung abgewiesen.");
             var key = administrator.ExportSubjectPublicKeyInfo();
             var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 1, library, 1, []);
             var signed = OfflineGroupPolicyService.Sign(policy, administrator);
