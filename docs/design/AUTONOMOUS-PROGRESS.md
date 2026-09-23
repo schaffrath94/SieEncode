@@ -1,6 +1,22 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Kontrollierter Gruppen-Vault-Empfaengerabgleich im Core umgesetzt: authentisierte
+schreibfreie Vorschau, exakte Quell-/Richtlinienbindung, erneute Zugriffskontrolle,
+frischer Inhaltsschluessel und gepruefte bytegleiche verschluesselte Sicherung vor
+Dateiaustausch. Dateischreiber prueft jetzt auch nach Tempdateischreiben nochmals
+gegen Fremdaenderungen. Alte Sicherungen bleiben mit alten Schluesseln zugaenglich;
+keine globale Transaktion mit Richtliniencache/Cloud-Sync behauptet.
+Tests: Entzug/Zugangszuwachs, neuer Empfaenger ohne Altzugang abgewiesen,
+Preview ohne Schreiben, veraltete Datei/Richtlinie, erfolgreiche Recovery-Rotation,
+Sicherungswiederherstellung und spaete Fremdaenderung ohne Ueberschreiben.
+CI Exit 0, 68/68, CLI/WPF ohne Fehler; tmp/group-vault-reconciliation-ci.log.
+UI-Smoke Exit 0, 47 Checks/5 Szenarien, stderr leer;
+tmp/group-vault-reconciliation-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Naechster Schritt: stabile Projekt-ID/Zuordnung und Integration des neuen
+Vaultformats/Abgleichs in Projektverwaltung; Recovery-Einrichtung und Sicherung
+der privaten Recovery-/Verwaltungsschluessel sind ebenfalls noch offen.
+
 Gruppen-Vault-Kern als separates Format implementiert (noch keine Editoranbindung):
 AES-GCM bindet Projekt/Bibliothek/Gruppe/Richtliniencheckpoint/Schluesselgeneration
 und komplette RSA-OAEP-Empfaengerhuellen. Normale Gruppe und separate signierte

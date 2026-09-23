@@ -78,11 +78,60 @@ internal static class GroupVaultTests
         var newKey = bobKey.Decrypt(rotated.Header.Recipients.Single(r => r.Role == "member").WrappedKey, RSAEncryptionPadding.OaepSHA256);
         try { if (oldKey.SequenceEqual(newKey)) throw new Exception("Rotation reused the content key."); }
         finally { CryptographicOperations.ZeroMemory(oldKey); CryptographicOperations.ZeroMemory(newKey); }
+        VerifyReconciliation(vault, policy, nextPolicy, root, project, alice, bob, recovery, now, payload);
+    }
+
+    private static void VerifyReconciliation(GroupVaultDocument original, OfflineGroupPolicy oldPolicy, OfflineGroupPolicy targetPolicy,
+        RSA root, Guid project, X509Certificate2 alice, X509Certificate2 bob, X509Certificate2 recovery, DateTimeOffset now, string payload)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "SieEncode-group-rotation-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var path = Path.Combine(directory, "project.group-vault.json");
+            var source = GroupVaultService.Write(original); File.WriteAllBytes(path, source);
+            var trust = new OfflineGroupTrustStore(Path.Combine(directory, "trust.bin"), targetPolicy.LibraryId, new OfflineGroupTrustTests.TestProtection());
+            var publicKey = root.ExportSubjectPublicKeyInfo();
+            trust.Enroll(publicKey, OfflineGroupTrustStore.AdministratorFingerprint(publicKey), OfflineGroupPolicyService.Sign(targetPolicy, root));
+            Reject(() => GroupVaultReconciliation.Preview(path, trust, project, "lokal", [alice], now));
+            Reject(() => GroupVaultReconciliation.Preview(path, trust, project, "lokal", [bob], now)); // New member cannot decrypt the old vault.
+            var plan = GroupVaultReconciliation.Preview(path, trust, project, "lokal", [recovery], now, recovery: true);
+            if (plan.Added.Single() != new GroupVaultAccess("member", CertificateVaultService.Fingerprint(bob)) ||
+                plan.Removed.Single() != new GroupVaultAccess("member", CertificateVaultService.Fingerprint(alice)) ||
+                !File.ReadAllBytes(path).SequenceEqual(source) || Directory.Exists(Path.Combine(directory, "GroupVaultBackups")))
+                throw new Exception("Reconciliation preview changed a file or misreported recipient changes.");
+            File.WriteAllBytes(path, source.Concat(new byte[] { 32 }).ToArray());
+            Reject(() => GroupVaultReconciliation.Apply(plan, trust, [recovery], now));
+            File.WriteAllBytes(path, source);
+            trust.AcceptUpdate(OfflineGroupPolicyService.Sign(targetPolicy with { Revision = targetPolicy.Revision + 1 }, root));
+            Reject(() => GroupVaultReconciliation.Apply(plan, trust, [recovery], now));
+            if (!File.ReadAllBytes(path).SequenceEqual(source)) throw new Exception("Stale preview overwrote source.");
+            plan = GroupVaultReconciliation.Preview(path, trust, project, "lokal", [recovery], now, recovery: true);
+            var result = GroupVaultReconciliation.Apply(plan, trust, [recovery], now);
+            var rotated = GroupVaultService.Read(File.ReadAllBytes(path));
+            if (!File.ReadAllBytes(result.EncryptedBackupPath).SequenceEqual(source) || result.KeyGeneration == original.Header.KeyGeneration ||
+                result.Revision != ConcurrentFileWriter.Capture(path) || result.AppliedPolicy != trust.LoadOffline().Checkpoint ||
+                GroupVaultService.Unprotect(rotated, trust.LoadOffline(), project, "lokal", [bob]) != payload ||
+                GroupVaultService.Unprotect(rotated, trust.LoadOffline(), project, "lokal", [recovery], recovery: true) != payload)
+                throw new Exception("Atomic recipient reconciliation or encrypted backup failed.");
+            Reject(() => GroupVaultReconciliation.Apply(plan, trust, [recovery], now));
+            var oldTrusted = OfflineGroupPolicyService.Verify(OfflineGroupPolicyService.Sign(oldPolicy, root), root, oldPolicy.LibraryId);
+            if (GroupVaultService.Unprotect(GroupVaultService.Read(File.ReadAllBytes(result.EncryptedBackupPath)), oldTrusted, project, "lokal", [alice]) != payload)
+                throw new Exception("Encrypted backup did not retain historical access.");
+            var external = source.Concat(new byte[] { 32, 32 }).ToArray();
+            Reject(() => ConcurrentFileWriter.Write(path, result.Revision, temporary =>
+            {
+                File.WriteAllBytes(temporary, source);
+                File.WriteAllBytes(path, external); // Simulate a writer not participating in the application lock.
+            }));
+            if (!File.ReadAllBytes(path).SequenceEqual(external)) throw new Exception("Late external update overwritten.");
+        }
+        finally { Directory.Delete(directory, true); }
     }
     private static void Reject(Action action)
     {
         try { action(); }
-        catch (Exception e) when (e is CryptographicException or InvalidDataException or InvalidOperationException or JsonException) { return; }
+        catch (Exception e) when (e is CryptographicException or InvalidDataException or InvalidOperationException or JsonException or IOException) { return; }
         throw new Exception("Invalid group vault operation accepted.");
     }
 }

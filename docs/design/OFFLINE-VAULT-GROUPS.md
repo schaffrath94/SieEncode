@@ -3,6 +3,29 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Kontrollierter Empfaengerabgleich (Core)
+
+GroupVaultReconciliation.Preview authentisiert den vorhandenen Vault mit einem
+aktuell freigegebenen normalen oder ausdruecklichen Recovery-Zugang. Sie zeigt
+hinzukommende/entfernte Rollen und Fingerabdruecke gegen den registrierten Stand,
+ohne Dateien zu schreiben. Ein neuer Empfaenger ohne bisherigen Zugang kann den
+alten Vault nicht selbst umschluesseln. Der Plan bindet exakte Quelldatei und
+Richtliniencheckpoint; frei vom Aufrufer gelieferte Empfaengerlisten gibt es nicht.
+
+Apply prueft Quelldatei und Richtlinienstand erneut, entschluesselt authentisiert,
+verschluesselt mit frischem Inhaltsschluessel und erhaelt vor dem Austausch eine
+gepruefte bytegleiche verschluesselte Sicherung in GroupVaultBackups. Vorhandene
+abweichende Sicherungen werden nicht ersetzt. Der neue Vault wird ueber den
+bestehenden Dateischreiber mit Anwendungslock/Tempdatei gespeichert; der Schreiber
+prueft nun auch nach dem Tempdateischreiben erneut auf Fremdaenderungen.
+
+Dies ist keine verteilte Transaktion mit Richtliniencache und Cloud-Synchronisation:
+der neue Vault dokumentiert den konkret angewendeten Richtlinienstand. Spaetere
+Updates erfordern erneuten Abgleich. Nicht kooperierende Fremdschreiber unmittelbar
+zwischen letzter Pruefung und Rename sind durch den lokalen Anwendungslock nicht
+global ausgeschlossen. Alte Sicherungen bleiben mit alten Schluesseln zugaenglich.
+Bedienvorschau/Einbindung in Projektverwaltung stehen noch aus.
+
 ## Gruppen-Vault-Kern und separate Recovery
 
 Neues getrenntes Format SieEncode-Group-Vault (Version 1), noch ohne Anbindung
