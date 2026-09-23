@@ -109,3 +109,20 @@ oeffentlichen Export verifizieren, falschen DPAPI-Zweck/veralteten Checkpoint un
 erneutes Create ablehnen, unveraenderte Datei nach Ablehnung pruefen.
 Noch kein Verwaltungsdialog, keine Delegation und keine Sicherung/Wiederherstellung
 des Verwaltungsschluessels. Testschluessel werden nur im isolierten Temp angelegt.
+
+## Verwaltungsdialog (Entwicklungsstand)
+
+GroupAdministrationWindow ist in Einstellungen erreichbar. Lokale Verwaltungen
+werden aus dem isolierbaren Administrations-Unterordner gewaehlt; Anlegen erzeugt
+eine neue Bibliotheks-ID. Gruppen haben stabile IDs und bearbeitbare Namen.
+Oeffentliche Empfaengereinladungen werden erst nach Fingerabdruckbestaetigung
+einer Gruppe hinzugefuegt. Dieselbe Identitaet darf in mehreren Gruppen stehen.
+Signiertes Speichern verwendet den beim Laden gemerkten Checkpoint. Export bietet
+nur den gespeicherten oeffentlichen Stand an, nicht ungespeicherte Entwuerfe.
+Schliessen/Wechsel mit offenen Aenderungen verlangt eine Verwerfbestaetigung.
+
+Synthetischer UI-Test: Erstellen, Gruppe per Button, Mitglieder, signiertes
+Speichern/Neuladen, externer Versionsfortschritt und Ablehnung des alten Entwurfs.
+Native Datei-/Bestaetigungsdialoge und visuelle Abnahme stehen noch aus. Die
+Personen-/Geraetezuordnung ist noch nicht vorhanden; aktuell Fingerabdruecke.
+Keine gruppenbasierte Vault-Anbindung, Delegation oder Admin-Recovery behauptet.

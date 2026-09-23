@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Gruppen-Verwaltungsdialog ergaenzt: neue lokale Verwaltung, Auswahl vorhandener
+Signierspeicher, Gruppenname/stabile ID, bestaetigter Einladungseintrag und
+Mitgliederentfernung im Entwurf, signiertes Speichern und oeffentlicher Export.
+Ungespeicherte Entwuerfe nicht exportierbar; Verwerfabfrage bei Wechsel/Schliessen;
+fehlgeschlagener Verwaltungswechsel stellt die vorige Auswahl wieder her.
+WPF-Build Exit 0; UI-Smoke Exit 0, 44 Checks/5 Szenarien, stderr leer.
+tmp/group-administration-ui-final-build.log und
+tmp/group-administration-ui-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Nur synthetischer UI-Ablauf, native Dialog-/visuelle Abnahme noch offen.
+Naechster Schritt: signiertes Personen-/Geraeteverzeichnis und Delegationen;
+danach authentisierte Projektzuordnung und neues Vault-/Recoverymodell.
+
 Fortsetzung Verwaltungsgrundlage: OfflineGroupAdministrationStore implementiert
 mit separatem lokal geschuetztem RSA-Signierschluessel, signierter Gruppenrevision
 und oeffentlichem Registrierungs-Export. DPAPI-Zweck fuer Signierer getrennt vom

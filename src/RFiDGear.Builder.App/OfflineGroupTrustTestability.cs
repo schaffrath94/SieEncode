@@ -35,6 +35,30 @@ public partial class MainWindow
             var exportJson = System.Text.Encoding.UTF8.GetString(GroupEnrollmentPackages.Write(updatedAdministration));
             if (exportJson.Contains("PrivateKey", StringComparison.Ordinal)) throw new Exception("Public package contains private key field.");
             checks.Add("Gruppenverwaltung: eigener DPAPI-Signierspeicher, überlappende Gruppen signiert, öffentlicher Export nach Neustart gültig; falscher Schutzzweck und veraltete Änderung abgewiesen.");
+            var uiDirectory = Path.Combine(directory, "administration-ui");
+            var administrationWindow = new GroupAdministrationWindow(this, uiDirectory);
+            try
+            {
+                VerifyAutomationContract(administrationWindow);
+                var uiLibrary = administrationWindow.CreateAdministration();
+                var uiGrid = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.DataGrid>().Single();
+                var add = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.Button>().Single(button => Equals(button.Content, "Gruppe hinzufügen"));
+                add.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+                var draft = uiGrid.Items.Cast<GroupAdministrationDraft>().Single();
+                draft.Name = "Lokal"; draft.Members.Add(a); draft.Members.Add(b);
+                administrationWindow.SaveGroups();
+                administrationWindow.LoadAdministration(uiLibrary);
+                var reread = uiGrid.Items.Cast<GroupAdministrationDraft>().Single();
+                if (reread.Name != "Lokal" || reread.Members.Count != 2) throw new Exception("Administrative UI lost group members.");
+                var uiStore = new OfflineGroupAdministrationStore(Path.Combine(uiDirectory, "Administrations", uiLibrary.ToString("N") + ".admin.bin"), uiLibrary, new WindowsGroupTrustProtection(uiLibrary, signingAuthority: true));
+                var external = GroupEnrollmentPackages.Validate(uiStore.ExportPublic());
+                uiStore.UpdateGroups(external.Policy.Groups, external.Checkpoint);
+                try { administrationWindow.SaveGroups(); throw new Exception("Stale UI overwrote group policy."); }
+                catch (ConcurrentFileChangeException) { }
+                administrationWindow.LoadAdministration(uiLibrary);
+            }
+            finally { administrationWindow.Close(); }
+            checks.Add("Gruppen-Verwaltungsdialog: neue synthetische Verwaltung, Gruppe per Button, signiertes Speichern/Neuladen und Ablehnung eines veralteten UI-Entwurfs erfolgreich.");
             var key = administrator.ExportSubjectPublicKeyInfo();
             var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 1, library, 1, []);
             var signed = OfflineGroupPolicyService.Sign(policy, administrator);
