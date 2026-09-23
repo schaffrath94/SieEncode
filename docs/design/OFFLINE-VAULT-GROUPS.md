@@ -75,3 +75,19 @@ Dies ist keine Zweitbenutzer-/Zweitrechnerabnahme. AppData-Pfad und gefuehrte
 Erstregistrierung sind noch anzubinden; noch keine produktive Vault-Anbindung.
 Ein komplettes Zuruecksetzen/Loeschen des lokalen Zustands durch dessen Besitzer
 oder einen Administrator bleibt ausserhalb der Ruecksprungerkennung.
+
+## Gefuehrte Erstregistrierung
+
+Einstellungen enthalten einen ausdruecklich als Entwicklung gekennzeichneten
+Einstieg. GroupEnrollmentPackages prueft Format/Groesse, doppelte/unbekannte Felder,
+SPKI-Schluessel, Richtliniensignatur und Bibliotheksbindung. Das belegt nur
+Konsistenz, noch kein Vertrauen. GroupEnrollmentWindow verlangt den unabhaengig
+erhaltenen Fingerabdruck und Bestaetigung der Bibliotheks-ID. Der Kandidat wird
+beim Oeffnen als private Kopie eingefroren. Ohne Bestaetigung/falscher Fingerabdruck
+kein Schreibzugriff; bestehende Registrierung wird nicht ersetzt.
+
+Normaler Speicherort: LocalApplicationData/SieEncode/GroupTrust/<LibraryId>.trust.bin.
+Der isolierte Startup-/UI-Testmodus injiziert einen getrennten Testpfad. Die neue
+UI-Regressionspruefung registriert ausschliesslich synthetische Daten in Temp.
+Native Dateiauswahl/visuelle Abnahme noch offen. Erstellung einer neuen Verwaltung,
+Delegation, Gruppen-/Personenverwaltung und Projekt-Vault-Anbindung folgen noch.

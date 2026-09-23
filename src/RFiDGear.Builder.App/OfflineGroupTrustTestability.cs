@@ -6,7 +6,7 @@ namespace RFiDGear.Builder.App;
 
 public partial class MainWindow
 {
-    private static void VerifyWindowsGroupTrust(List<string> checks)
+    private void VerifyWindowsGroupTrust(List<string> checks)
     {
         var directory = Path.Combine(Path.GetTempPath(), "SieEncode-WindowsTrust-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
@@ -17,6 +17,25 @@ public partial class MainWindow
             var key = administrator.ExportSubjectPublicKeyInfo();
             var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 1, library, 1, []);
             var signed = OfflineGroupPolicyService.Sign(policy, administrator);
+            var registrationDirectory = Path.Combine(directory, "registration");
+            var package = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1, library, key, signed);
+            var registration = new GroupEnrollmentWindow(this, package, registrationDirectory);
+            try
+            {
+                VerifyAutomationContract(registration);
+                var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(key);
+                try { registration.Register(fingerprint, false); throw new Exception("Unconfirmed registration accepted."); }
+                catch (InvalidDataException) { }
+                Reject(() => registration.Register(new string('0', 64), true));
+                if (Directory.Exists(registrationDirectory)) throw new Exception("Rejected enrollment wrote local state.");
+                registration.Register(fingerprint.ToLowerInvariant(), true);
+                try { registration.Register(fingerprint, true); throw new Exception("Existing enrollment overwritten."); }
+                catch (ConcurrentFileChangeException) { }
+                var stored = new OfflineGroupTrustStore(Path.Combine(registrationDirectory, library.ToString("N") + ".trust.bin"), library, new WindowsGroupTrustProtection(library)).LoadOffline();
+                if (stored.Policy.LibraryId != library) throw new Exception("Wrong library enrolled.");
+            }
+            finally { registration.Close(); }
+            checks.Add("Gruppen-Erstregistrierung: ohne Bestätigung/falscher Fingerabdruck ohne Schreibzugriff; bestätigte Registrierung Windows-geschützt lesbar; erneute Registrierung überschreibt nicht.");
             var path = Path.Combine(directory, "trust.bin");
             new OfflineGroupTrustStore(path, library, new WindowsGroupTrustProtection(library))
                 .Enroll(key, OfflineGroupTrustStore.AdministratorFingerprint(key), signed);

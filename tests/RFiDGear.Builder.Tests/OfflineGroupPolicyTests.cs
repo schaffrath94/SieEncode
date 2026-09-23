@@ -17,6 +17,14 @@ internal static class OfflineGroupPolicyTests
             [new("lokal", "Lokal", [a, b]), new("lokal-2", "Lokal 2", [b])]);
         var signed = OfflineGroupPolicyService.Sign(policy, admin);
         var verified = OfflineGroupPolicyService.Verify(signed, publicAdmin, library);
+        var package = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1, library, admin.ExportSubjectPublicKeyInfo(), signed);
+        var packageBytes = GroupEnrollmentPackages.Write(package);
+        var decoded = GroupEnrollmentPackages.Read(packageBytes);
+        if (decoded.LibraryId != library) throw new Exception("Enrollment transport lost library binding.");
+        Reject(() => GroupEnrollmentPackages.Validate(package with { LibraryId = Guid.NewGuid() }));
+        Reject(() => GroupEnrollmentPackages.Validate(package with { AdministratorPublicKey = stranger.ExportSubjectPublicKeyInfo() }));
+        Reject(() => GroupEnrollmentPackages.Read(new byte[GroupEnrollmentPackages.MaximumBytes + 1]));
+        Reject(() => GroupEnrollmentPackages.Read(Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(packageBytes).Insert(1, "\"Version\":1,"))));
         if (verified.Policy.Groups[1].Members.Single() != b) throw new Exception("Overlapping membership lost.");
         OfflineGroupPolicyService.Verify(signed, publicAdmin, library, verified.Checkpoint);
         Reject(() => OfflineGroupPolicyService.Verify(signed, stranger, library));

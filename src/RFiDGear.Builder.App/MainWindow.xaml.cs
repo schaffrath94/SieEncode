@@ -77,8 +77,9 @@ public partial class MainWindow : Window
     {
     }
 
-    internal MainWindow(string startupPage, BuilderSettingsStore startupSettingsStore)
+    internal MainWindow(string startupPage, BuilderSettingsStore startupSettingsStore, string? groupTrustDirectory = null)
     {
+        localGroupTrustDirectory = Path.GetFullPath(groupTrustDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SieEncode", "GroupTrust"));
         this.startupPage = startupPage;
         InitializeComponent();
         InitializePiccSettingsFlags();

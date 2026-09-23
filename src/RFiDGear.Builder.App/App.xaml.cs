@@ -99,6 +99,6 @@ public partial class App : Application
         Directory.CreateDirectory(baseProfiles);
         File.Copy(Path.Combine(AppContext.BaseDirectory, "assets", "test-fixtures", "Synthetic-AES-Mixed.base.json"),
             Path.Combine(baseProfiles, "Synthetic-AES-Mixed.base.json"));
-        return new MainWindow(startupPage, store);
+        return new MainWindow(startupPage, store, Path.Combine(root, "group-trust"));
     }
 }

@@ -1,6 +1,20 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Fortsetzung 23.09.: oeffentliches GroupEnrollmentPackage mit striktem Parser und
+Signatur-/Bibliothekspruefung; GroupEnrollmentWindow in Einstellungen (klar als
+Entwicklung markiert). Unabhaengigen Fingerabdruck eingeben und Bibliotheks-ID
+bestaetigen, erst dann lokale DPAPI-Registrierung. Kandidatkopie gegen Austausch
+nach Dialogoeffnung; keine Ueberschreibung bestehender Registrierung.
+Normaler LocalApplicationData-Pfad, explizit isolierter Pfad fuer Startup-Tests.
+CI Exit 0, 64/64; anschliessender WPF-Isolationsbuild Exit 0, keine Warnungen/Fehler;
+UI-Smoke Exit 0, 42 Checks/5 Szenarien, stderr leer. Nachweise:
+tmp/group-enrollment-ci.log, tmp/group-enrollment-isolation-build.log,
+tmp/group-enrollment-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Native Dialogabnahme offen. Naechster Schritt: Verwaltung erstellen/exportieren,
+delegierte gruppenbegrenzte Rollen und Personen-/Geraeteverzeichnis. Registrierung
+allein ist noch keine Vaultfreigabe; neues Vaultformat und Projektbindung fehlen.
+
 Fortsetzung Offline-Gruppen 22.09.: WindowsGroupTrustProtection implementiert,
 DPAPI CurrentUser mit Anwendungs-/Bibliotheksbindung, ohne Klartextfallback.
 Echter Roundtrip nur fuer synthetischen Cache im isolierten Testordner;
