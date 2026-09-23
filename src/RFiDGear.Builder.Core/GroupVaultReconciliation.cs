@@ -45,6 +45,10 @@ public static class GroupVaultReconciliation
 
     public static GroupVaultReconciliationResult Apply(GroupVaultReconciliationPlan plan, OfflineGroupTrustStore trust,
         IEnumerable<X509Certificate2> identities, DateTimeOffset now)
+        => ApplyPayload(plan, trust, identities, now, null);
+
+    public static GroupVaultReconciliationResult ApplyPayload(GroupVaultReconciliationPlan plan, OfflineGroupTrustStore trust,
+        IEnumerable<X509Certificate2> identities, DateTimeOffset now, string? replacementPayloadJson)
     {
         ArgumentNullException.ThrowIfNull(plan);
         if (ConcurrentFileWriter.Capture(plan.Path) != plan.VaultRevision) throw new ConcurrentFileChangeException(plan.Path);
@@ -52,7 +56,7 @@ public static class GroupVaultReconciliation
         if (current.Checkpoint != plan.PolicyCheckpoint) throw new CryptographicException("Gruppenstand seit der Vorschau geändert. Bitte neu prüfen.");
         var old = GroupVaultService.Read(plan.Source);
         var payload = GroupVaultService.Unprotect(old, current, plan.ProjectId, plan.GroupId, identities, plan.Recovery);
-        var next = GroupVaultService.Protect(payload, current, plan.ProjectId, plan.GroupId, now);
+        var next = GroupVaultService.Protect(replacementPayloadJson ?? payload, current, plan.ProjectId, plan.GroupId, now);
         var bytes = GroupVaultService.Write(next);
         var backup = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(plan.Path)!, "GroupVaultBackups", plan.VaultRevision.Sha256 + ".group-vault.json");
         var revision = ConcurrentFileWriter.Write(plan.Path, plan.VaultRevision, temporary =>

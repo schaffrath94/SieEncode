@@ -1,6 +1,22 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Stabile Projektidentitaet und typisierte Gruppen-Vault-Projektanbindung im Core:
+neue Entwuerfe erhalten ID, alte Projekte erst bei expliziter Zuordnung auf Kopie.
+ID/Bibliothek/Gruppe bleiben beim schluesselfreien Speichern und Anwenden von
+Schluesseln erhalten. Erstellen prueft eigenen Entschluesselungszugang und ersetzt
+keine vorhandenen Vaults; Laden prueft authentisierte Bindung und Nutzdatentyp.
+Aktualisieren mit Sicherung/frischem Schluessel; geaenderte Empfaenger sperren
+normales Speichern bis zum separaten kontrollierten Abgleich.
+Synthetische Tests fuer Projekt-Roundtrip, falsche ID/Gruppe, unberechtigten
+Ersteller ohne Dateischreibzugriff, Update/Recovery/Sicherung und alte Revision.
+CI Exit 0, 68/68, CLI/WPF ohne Warnungen/Fehler;
+tmp/project-group-binding-ci.log. UI-Smoke Exit 0, 47 Checks/5 Szenarien;
+tmp/project-group-binding-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Naechster Schritt: Editor-/Stationsintegration mit konsistentem Erstellen und
+Speichern von Projekt plus Vault, explizite Migration, Recovery-Einrichtung und
+geschuetzte Sicherung der privaten Verwaltungs-/Recovery-Schluessel.
+
 Kontrollierter Gruppen-Vault-Empfaengerabgleich im Core umgesetzt: authentisierte
 schreibfreie Vorschau, exakte Quell-/Richtlinienbindung, erneute Zugriffskontrolle,
 frischer Inhaltsschluessel und gepruefte bytegleiche verschluesselte Sicherung vor

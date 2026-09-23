@@ -79,6 +79,62 @@ internal static class GroupVaultTests
         try { if (oldKey.SequenceEqual(newKey)) throw new Exception("Rotation reused the content key."); }
         finally { CryptographicOperations.ZeroMemory(oldKey); CryptographicOperations.ZeroMemory(newKey); }
         VerifyReconciliation(vault, policy, nextPolicy, root, project, alice, bob, recovery, now, payload);
+        VerifyProjectBinding(policy, root, alice, bob, recovery, now);
+    }
+
+    private static void VerifyProjectBinding(OfflineGroupPolicy policy, RSA root, X509Certificate2 alice, X509Certificate2 bob,
+        X509Certificate2 recovery, DateTimeOffset now)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "SieEncode-project-group-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var trust = new OfflineGroupTrustStore(Path.Combine(directory, "trust.bin"), policy.LibraryId, new OfflineGroupTrustTests.TestProtection());
+            var publicKey = root.ExportSubjectPublicKeyInfo();
+            trust.Enroll(publicKey, OfflineGroupTrustStore.AdministratorFingerprint(publicKey), OfflineGroupPolicyService.Sign(policy, root));
+            var legacy = new ProjectDefinition(); legacy.Project.Name = "Synthetic project";
+            legacy.Productive.PiccKey = new KeyReference { Type = "DF_KEY_AES", Value = new string('1', 32) };
+            var before = JsonSerializer.Serialize(legacy, ProjectJson.Options);
+            var project = ProjectGroupVault.Bind(legacy, trust, "lokal");
+            if (legacy.Project.Id is not null || legacy.Project.GroupVault is not null || JsonSerializer.Serialize(legacy, ProjectJson.Options) != before ||
+                project.Project.Id is null || project.Project.Id == Guid.Empty)
+                throw new Exception("Explicit group binding mutated legacy source or omitted identity.");
+            var rebound = ProjectGroupVault.Bind(project, trust, "lokal");
+            if (rebound.Project.Id != project.Project.Id) throw new Exception("Rebinding same group changed project identity.");
+            Reject(() => ProjectGroupVault.Bind(project, trust, "other"));
+            var path = Path.Combine(directory, "sample.project.json");
+            ProjectJson.Save(path, ProjectJson.WithoutAllSecrets(project));
+            var reloaded = ProjectJson.Load(path);
+            if (reloaded.Project.Id != project.Project.Id || reloaded.Project.GroupVault != project.Project.GroupVault || reloaded.Productive.PiccKey.Value != "")
+                throw new Exception("Key-free project did not retain stable group identity.");
+            var keys = ProjectKeyVault.FromProject(project);
+            Reject(() => ProjectGroupVault.Create(path, project, keys, trust, [bob], now));
+            if (File.Exists(ProjectKeyVault.GetPath(path))) throw new Exception("Inaccessible new vault persisted.");
+            var revision = ProjectGroupVault.Create(path, project, keys, trust, [alice], now);
+            Reject(() => ProjectGroupVault.Create(path, project, keys, trust, [alice], now));
+            var loaded = ProjectGroupVault.Load(path, reloaded, trust, [alice]);
+            var recovered = ProjectGroupVault.Load(path, reloaded, trust, [recovery], recovery: true);
+            if (loaded.ProductivePicc.Value != keys.ProductivePicc.Value || recovered.ProductivePicc.Value != keys.ProductivePicc.Value ||
+                ProjectKeyVault.Apply(reloaded, loaded).Productive.PiccKey.Value != keys.ProductivePicc.Value)
+                throw new Exception("Typed project group vault roundtrip failed.");
+            reloaded.Project.Id = Guid.NewGuid();
+            Reject(() => ProjectGroupVault.Load(path, reloaded, trust, [alice]));
+            reloaded.Project.Id = project.Project.Id;
+            reloaded.Project.GroupVault = new(policy.LibraryId, "other");
+            Reject(() => ProjectGroupVault.Load(path, reloaded, trust, [alice]));
+            reloaded.Project.GroupVault = project.Project.GroupVault;
+            keys.ProductivePicc.Value = new string('2', 32);
+            var updated = ProjectGroupVault.Update(path, reloaded, keys, trust, [alice], revision, now);
+            if (ProjectGroupVault.Load(path, reloaded, trust, [alice]).ProductivePicc.Value != keys.ProductivePicc.Value ||
+                !File.Exists(updated.EncryptedBackupPath)) throw new Exception("Typed project update or backup failed.");
+            Reject(() => ProjectGroupVault.Update(path, reloaded, keys, trust, [alice], revision, now));
+            var newer = policy with { Revision = 2, Groups = [new("lokal", "Lokal", ["alice", "bob"]), policy.Groups[1]] };
+            trust.AcceptUpdate(OfflineGroupPolicyService.Sign(newer, root));
+            Reject(() => ProjectGroupVault.Update(path, reloaded, keys, trust, [alice], updated.Revision, now));
+            if (ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(path)) != updated.Revision)
+                throw new Exception("Ordinary save silently changed recipients.");
+        }
+        finally { Directory.Delete(directory, true); }
     }
 
     private static void VerifyReconciliation(GroupVaultDocument original, OfflineGroupPolicy oldPolicy, OfflineGroupPolicy targetPolicy,

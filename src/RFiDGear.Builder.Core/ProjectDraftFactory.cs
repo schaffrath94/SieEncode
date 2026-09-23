@@ -12,7 +12,7 @@ public static class ProjectDraftFactory
             .FirstOrDefault() ?? throw new InvalidDataException("Die Profilbibliothek enthält kein Grundprofil.");
         var project = new ProjectDefinition
         {
-            Project = new ProjectSection { Name = name, OutputDirectory = ".", Build = ["Mastering", "Coding"], CardMode = CardOperationMode.FullCard },
+            Project = new ProjectSection { Id = Guid.NewGuid(), Name = name, OutputDirectory = ".", Build = ["Mastering", "Coding"], CardMode = CardOperationMode.FullCard },
             Profiles = new ProfileSelection { Base = baseProfile.Profile.Id },
             Transport = new TransportConfiguration
             {

@@ -3,6 +3,32 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Projektidentitaet und typisierte Schluesselspeicherung (Core)
+
+Neue Projektentwuerfe erhalten eine stabile GUID. Alte Projektdateien ohne ID
+bleiben beim Laden/Speichern unveraendert; erst Bind erzeugt bei ausdruecklicher
+Gruppenzuordnung eine ID auf einer Projektkopie. Project.GroupVault enthaelt die
+registrierte Bibliothek und Gruppen-ID. Wiederholtes Binden derselben Gruppe
+erhaelt die ID, eine andere Gruppe erfordert einen noch separaten kontrollierten
+Umzuordnungsablauf. Projektmetadaten alleine sind keine Freigabe: beim Entsperren
+muessen sie exakt zum authentisierten Vault-Header passen.
+
+ProjectGroupVault bindet die vorhandenen ProjectKeyVaultPayload-Daten ueber einen
+strikten versionierten Nutzdatenumschlag an das Gruppenformat. Erstellen prueft
+vor dem Schreiben, dass der konkrete normale oder Recovery-Zugang den neuen Vault
+wieder oeffnen kann. Die Datei nutzt den bisherigen abgeleiteten Vaultpfad, aber
+Create ersetzt niemals eine vorhandene Datei oder migriert einen Altvault still.
+Laden prueft Bindung, Zugang und Nutzdatentyp. Aktualisieren authentisiert den
+alten Vault, prueft den erwarteten Dateistand und sichert verschluesselt vor der
+Neuschreibung. Geaenderte Empfaenger sperren normales Schluesselspeichern, bis
+zuvor der separate kontrollierte Abgleich erfolgt ist.
+
+Schluesselfreie Projektkopien und ProjectKeyVault.Apply erhalten ID/Zuordnung.
+Die Core-API schreibt den Vault und die Projektdatei bewusst nicht als angeblich
+atomare Zweidateitransaktion. Editor muss Erstellung/Migration, Speichern unter,
+Entsperren und Recovery konsistent orchestrieren; diese Oberflaechenanbindung und
+Altvault-Migration sind noch offen. Noch keine neue Release-Freigabe.
+
 ## Kontrollierter Empfaengerabgleich (Core)
 
 GroupVaultReconciliation.Preview authentisiert den vorhandenen Vault mit einem
