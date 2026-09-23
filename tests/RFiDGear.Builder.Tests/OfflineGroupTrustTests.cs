@@ -56,7 +56,7 @@ internal static class OfflineGroupTrustTests
     }
 
     // Synthetic authenticated protector only; not a production OS-user protection implementation.
-    private sealed class TestProtection : ILocalGroupTrustProtection
+    internal sealed class TestProtection : ILocalGroupTrustProtection
     {
         private readonly byte[] key = RandomNumberGenerator.GetBytes(32);
         public Action? BeforeProtect { get; set; }

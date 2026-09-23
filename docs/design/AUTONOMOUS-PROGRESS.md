@@ -1,6 +1,23 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Gruppenbegrenzte Delegationen im Core umgesetzt: hauptsignierte Vollmachten mit
+separatem Signierschluessel, Person/Aktivstatus und erlaubten Gruppen. Signierte
+Aenderungen binden Bibliothek und exakten Ausgangs-Checkpoint. Nur Namen und
+Mitgliedschaften vorhandener erlaubter Gruppen veraenderbar, keine Personen-,
+Geraete- oder Rolleneskalation. Verwaltungsstore uebernimmt nach Pruefung atomar;
+konkurrierender Vollmachtentzug, Replay, fremde Gruppen/Signaturen/Bibliotheken,
+doppelte/unbekannte Felder und Schluesselwiederverwendung negativ getestet.
+CI nach Korrektur des Negativtest-Exceptionfilters Exit 0, 66/66, CLI/WPF gebaut.
+Nachweis tmp/group-delegation-ci-final.log. Isolierter App-Smoke Exit 0,
+44 Checks/5 Kompatibilitaetsszenarien, stderr leer:
+tmp/group-delegation-ui-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Noch kein delegierter UI-/Ablageablauf: derzeit nimmt die Hauptverwaltung die
+signierten Aenderungen entgegen. Naechster Schritt: geschuetzte Delegatenschluessel,
+gefuehrte Vollmachtvergabe und Offline-Transport mit wirksamer Rollenanzeige;
+danach authentisierte Projekt-/Vaultbindung, Empfaengerabgleich und Recovery.
+Keine neue Release-, Hardware- oder Mehrbenutzerfreigabe.
+
 Personen-/Geraeteoberflaeche integriert: Namen/Aktivstatus, bestaetigte
 Geraeteeinladungen, Personen als Gruppenmitglieder, signiertes v2-Speichern.
 Neue leere Verwaltungen nutzen Personenmodell; bestehende v1-Testgruppen nur

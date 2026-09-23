@@ -45,7 +45,14 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
     public GroupEnrollmentPackage UpdateDirectory(OfflineVaultPerson[] people, OfflineVaultGroup[] groups, GroupPolicyCheckpoint expectedPolicy)
         => Update(groups, people ?? throw new ArgumentNullException(nameof(people)), expectedPolicy);
 
-    private GroupEnrollmentPackage Update(OfflineVaultGroup[] groups, OfflineVaultPerson[]? people, GroupPolicyCheckpoint expectedPolicy)
+    public GroupEnrollmentPackage UpdateDelegations(OfflineGroupDelegation[] delegations, GroupPolicyCheckpoint expectedPolicy)
+        => Transform(expectedPolicy, current => current.Policy with { Revision = checked(current.Policy.Revision + 1),
+            Delegations = delegations ?? throw new ArgumentNullException(nameof(delegations)) });
+
+    public GroupEnrollmentPackage ApplyDelegatedChange(SignedGroupChange change, GroupPolicyCheckpoint expectedPolicy)
+        => Transform(expectedPolicy, current => OfflineGroupDelegationService.Apply(change, current));
+
+    private GroupEnrollmentPackage Transform(GroupPolicyCheckpoint expectedPolicy, Func<VerifiedGroupPolicy, OfflineGroupPolicy> transform)
     {
         ArgumentNullException.ThrowIfNull(expectedPolicy);
         var (state, revision) = Load();
@@ -54,14 +61,16 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
             using var administrator = OpenKey(state);
             var current = OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId);
             if (current.Checkpoint != expectedPolicy) throw new ConcurrentFileChangeException(path);
-            var next = current.Policy with { Revision = checked(current.Policy.Revision + 1), Groups = groups,
-                Version = people is null ? current.Policy.Version : 2, People = people ?? current.Policy.People };
-            var signed = OfflineGroupPolicyService.Sign(next, administrator);
+            var signed = OfflineGroupPolicyService.Sign(transform(current), administrator);
             Save(state with { Policy = signed }, revision);
             return PublicPackage(administrator, signed);
         }
         finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
     }
+
+    private GroupEnrollmentPackage Update(OfflineVaultGroup[] groups, OfflineVaultPerson[]? people, GroupPolicyCheckpoint expectedPolicy)
+        => Transform(expectedPolicy, current => current.Policy with { Revision = checked(current.Policy.Revision + 1), Groups = groups,
+            Version = people is null ? current.Policy.Version : 2, People = people ?? current.Policy.People });
 
     private GroupEnrollmentPackage PublicPackage(RSA administrator, SignedGroupPolicy policy)
         => new(GroupEnrollmentPackages.Format, 1, libraryId, administrator.ExportSubjectPublicKeyInfo(), policy);

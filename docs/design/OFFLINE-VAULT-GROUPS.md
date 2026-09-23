@@ -3,6 +3,31 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Aktueller Delegationsbaustein
+
+Die signierte v2-Richtlinie bindet Vollmacht-ID, Person, separaten oeffentlichen
+RSA-Signierschluessel, erlaubte Gruppen-IDs und Aktivstatus. Gruppenverwalter
+koennen ausschliesslich Namen und Mitgliedschaften vorhandener zugewiesener
+Gruppen aendern. Personen, Geraete, Vollmachten, neue Gruppen und Recovery sind
+kein Bestandteil dieses Aenderungsformats. Verwaltungsschluessel duerfen keine
+Entschluesselungsschluessel aus dem Personenverzeichnis wiederverwenden.
+
+Jede delegierte Aenderung ist RSA-PSS-signiert und an Bibliothek, Vollmacht und
+den exakten vorherigen Richtlinien-Checkpoint (Revision plus SHA256) gebunden.
+Der aktuelle vertrauenswuerdige Stand bestimmt die Berechtigung; eine mitgelieferte
+Behauptung oder ein alter Rollenstand wird nicht verwendet. Deaktivierte Personen
+und Vollmachten sind abgewiesen, ebenso fremde Gruppen, Wiedereinspielungen und
+uneindeutige JSON-Felder. Ein abgelehnter Import veraendert den lokalen Stand nicht.
+
+OfflineGroupAdministrationStore kann eine verifizierte Aenderung atomar in eine
+neue hauptsignierte Richtlinie uebernehmen. Konkurrierender Entzug gewinnt gegen
+einen alten Schreibversuch. Dieses Core-Verfahren ist noch nicht der fertige
+delegierte Bedienablauf: lokale geschuetzte Delegatenschluessel, gefuehrte Vergabe,
+Transport ueber die gemeinsame Ablage und Rollenanzeige fehlen weiterhin.
+Aktuell muss die Hauptverwaltung einen delegierten Aenderungsdatensatz einlesen;
+unabhaengige Offline-Veroeffentlichung durch Gruppenverwalter ist damit noch
+nicht implementiert. Keine Wirkung auf vorhandene Vaults oder alte Kopien.
+
 ## Ziel und Vertrauensgrenzen
 
 Personen koennen in mehreren Gruppen sein (Lokal, Lokal 2, Lokal 3) und mehrere

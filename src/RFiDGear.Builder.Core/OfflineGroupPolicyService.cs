@@ -10,6 +10,7 @@ public sealed record OfflineVaultPerson(string Id, string Name, bool Enabled, Of
 public sealed record OfflineGroupPolicy(string Format, int Version, Guid LibraryId, long Revision, OfflineVaultGroup[] Groups)
 {
     public OfflineVaultPerson[] People { get; init; } = [];
+    public OfflineGroupDelegation[] Delegations { get; init; } = [];
 }
 public sealed record SignedGroupPolicy(byte[] Payload, byte[] Signature);
 public sealed record GroupPolicyCheckpoint(long Revision, string PayloadSha256);
@@ -72,7 +73,7 @@ public static class OfflineGroupPolicyService
 
     private static bool IsFingerprint(string? value) => value is { Length: 64 } && value.All(c => c is >= '0' and <= '9' or >= 'A' and <= 'F');
 
-    private static void Validate(OfflineGroupPolicy policy)
+    internal static void Validate(OfflineGroupPolicy policy)
     {
         ArgumentNullException.ThrowIfNull(policy);
         if (policy.Format != Format || policy.Version is not (1 or 2) || policy.LibraryId == Guid.Empty || policy.Revision < 1 || policy.Groups is null || policy.Groups.Length > 1000)
@@ -90,9 +91,10 @@ public static class OfflineGroupPolicyService
             foreach (var member in group.Members)
                 if (!(policy.Version == 1 ? IsFingerprint(member) : member is not null && people.Contains(member)) || !members.Add(member)) throw new InvalidDataException("Gruppenmitglied fehlt im Verzeichnis, ist ungültig oder doppelt vorhanden.");
         }
+        OfflineGroupDelegationService.ValidateDelegations(policy);
     }
 
-    private static void RejectDuplicateProperties(JsonElement element)
+    internal static void RejectDuplicateProperties(JsonElement element)
     {
         if (element.ValueKind == JsonValueKind.Object)
         {
