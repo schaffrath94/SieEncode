@@ -3,7 +3,24 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
-## Portable private Sicherungen (Core, Bedienoberflaeche noch offen)
+## Private Sicherungsdialoge fuer Verwaltungsschluessel
+
+Hauptverwaltung und Gruppenverwaltungsplatz bieten getrennte Aktionen zum
+privaten Sichern und Wiederherstellen. Beim Sichern verlangt der Dialog eine
+wiederholte Passphrase sowie bestaetigte getrennte Verwahrung. Bereits bestehende
+Dateien werden nicht ersetzt; die geschriebenen Bytes werden zurueckgelesen.
+Beim Wiederherstellen werden nur registrierte Bibliotheken bzw. aktive Vollmachten
+angeboten. Die Core-Pruefungen bestimmen die tatsaechliche Berechtigung erneut.
+Auf einem neuen Windows-Benutzer muss zuerst die oeffentliche Registrierung mit
+unabhaengigem Fingerabdruck bestaetigt werden. Private Sicherungen nicht als
+Einladungen versenden, ausserhalb gemeinsamer Projektordner verwahren.
+Passwortfelder werden nach Bedienversuchen und beim Schliessen geleert.
+
+Synthetische Dialogmethodentests pruefen reale Datei-/DPAPI-Ablaeufe ohne
+Zertifikatsspeichereingriff. Native Dateiauswahl/visuelle Abnahme bleiben offen.
+Die separate Recovery-Identitaetserzeugung/-Wiederherstellung folgt noch.
+
+## Portable private Sicherungen im Core
 
 GroupPrivateKeyBackups kapselt PKCS8-Schluessel und bei Recovery das oeffentliche
 Zertifikat in einem strikt versionierten, begrenzten und authentisiert
@@ -26,8 +43,8 @@ rueckgerufen werden. Private Backups gehoeren nicht in den gemeinsamen Projektor
 
 Synthetische CI prueft echte Signatur-/Entschluesselungsoperationen, Rollen- und
 Kontextverwechslung, Manipulation, Entzug und konkurrierende Richtlinienaktualisierung.
-Gefuehrte Dateiablage, separate Recovery-Erzeugung vor nicht-exportierbarer
-Windows-Schluesselpersistenz und native Wiederherstellungsdialoge bleiben offen.
+Separate Recovery-Erzeugung vor nicht-exportierbarer Windows-Schluesselpersistenz
+und native Abnahme der Wiederherstellungsdialoge bleiben offen.
 
 ## Zentrale Freigabe der Recovery-Identitaeten
 
@@ -44,7 +61,7 @@ neue signierte Revision. Ohne aktiven Recovery-Zugang sind neue Gruppen-Vaults
 und Rotation gesperrt. Verteilen des neuen Standes und Abgleich vorhandener Vaults
 bleiben erforderlich; alte Kopien bleiben zugaenglich. Die Oberflaeche weist auf
 separate private Sicherung/Wiederherstellungspruefung hin. Deren gefuehrte Erzeugung
-und portable Sicherung sind weiterhin offen; eine Einladung ist kein Schluesselbackup.
+und die Recovery-Sicherungsoberflaeche sind weiterhin offen; eine Einladung ist kein Schluesselbackup.
 
 ## Separater Recovery-Bedienweg im Editor
 

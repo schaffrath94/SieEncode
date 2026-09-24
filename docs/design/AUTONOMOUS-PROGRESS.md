@@ -1,6 +1,24 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Private Sicherung/Wiederherstellung fuer Haupt- und Gruppenverwaltung in der UI
+integriert (2026-09-24). Eigenes Passphrase-/Bestaetigungsfenster mit Auswahl
+registrierter Bibliothek bzw. Vollmacht; oeffentliche Einladungen klar getrennt.
+Sicherung verlangt zweimalige Passphrase und bestaetigte getrennte Verwahrung,
+schreibt nur neue Dateien und prueft identisches Ruecklesen. Restore verwendet
+registriertes Vertrauen; ueberschreibt keine lokale Identitaet. Passwortfelder
+werden nach dem Versuch/Schliessen geleert. Keine private Sicherung automatisch
+im gemeinsamen Projektordner. Gespeicherte Sicherungen bleiben erhalten.
+WPF-Build Exit 0, keine Warnungen/Fehler; tmp/group-private-backup-ui-build.log.
+UI-Smoke Exit 0, 51 Checks/5 Szenarien; tmp/group-private-backup-ui-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Neuer Dialogmethodentest: fehlende Bestaetigung, ungleiche/falsche Passphrase,
+oeffentliche Registrierung statt privater Sicherung, Dateiruecklesen,
+Windows-DPAPI-Wiederherstellung und Ueberschreibschutz. Native Dateiauswahl und
+visuelle Abnahme noch offen. Core unveraendert, vorherige CI 69/69 weiterhin Basis.
+Naechster Schritt: separate Recovery-Identitaet mit gepruefter privater Sicherung
+vor lokaler Persistenz gefuehrt erzeugen/wiederherstellen; Projektmigration und
+Gesamtworkflow-Abnahme weiterhin offen. Ziel aktiv, kein neuer Release.
+
 Portable private Schluesselsicherung im Core implementiert (2026-09-24):
 AES-GCM/PBKDF2-SHA256 mit 600000 Iterationen, getrennte Zwecke fuer Hauptverwaltung,
 Gruppenverwalter und Recovery; Bibliothek/Person/Fingerabdruck werden beim Import

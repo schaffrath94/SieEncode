@@ -50,6 +50,8 @@ internal sealed class GroupDelegateWindow : Window
             if (ConfirmDiscard()) LoadPerson(selected.Id);
         }));
         root.Children.Add(Action("Öffentliche Verwaltungseinladung exportieren", ExportInvitation));
+        root.Children.Add(Action("Privaten Verwaltungsschlüssel sichern", () => ShowPrivateBackup(false)));
+        root.Children.Add(Action("Privaten Verwaltungsschlüssel wiederherstellen", () => ShowPrivateBackup(true)));
         root.Children.Add(status);
         root.Children.Add(Note("Bearbeitbar sind nur Ihre freigegebenen Gruppen. Personen und Geräte pflegt die Hauptverwaltung. Mitgliedschaften durch Auswahl umschalten; mehrere Personen sind möglich."));
         grid.Columns.Add(new DataGridTextColumn { Header = "Meine freigegebene Gruppe", Binding = new Binding(nameof(GroupAdministrationDraft.Name)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
@@ -175,6 +177,21 @@ internal sealed class GroupDelegateWindow : Window
         finally { selectingMembers = false; }
     }
     private string KeyPath(Guid libraryId, string id) => Path.Combine(directory, "Delegates", libraryId.ToString("N"), id + ".delegate.bin");
+    private void ShowPrivateBackup(bool restore)
+    {
+        RequirePerson();
+        if (!ConfirmDiscard()) return;
+        var id = personId!;
+        var current = trust!.LoadOffline();
+        var selectedStore = KeyStore(current.Policy.LibraryId, id);
+        GroupPrivateBackupTarget[] choices = restore
+            ? current.Policy.Delegations.Where(g => g.Enabled && g.PersonId == id).Select(g =>
+                new GroupPrivateBackupTarget($"{id} · Vollmacht {g.Id} · {current.Policy.LibraryId:D}", null,
+                    (bytes, password) => { selectedStore.RestorePrivateBackup(bytes, password, trust, g.Id); LoadPerson(id); })).ToArray()
+            : [new($"{id} · {current.Policy.LibraryId:D}", selectedStore.ExportPrivateBackup, null)];
+        if (choices.Length == 0) throw new InvalidOperationException("Keine aktive registrierte Vollmacht für diese Person. Zuerst den aktuellen Gruppenstand importieren.");
+        new GroupPrivateBackupWindow(this, choices, restore).ShowDialog();
+    }
     private OfflineGroupDelegateStore KeyStore(Guid libraryId, string id) => new(KeyPath(libraryId, id), libraryId, id, new WindowsGroupDelegateProtection(libraryId, id));
     private void RequirePerson() { if (loaded is null || personId is null) throw new InvalidOperationException("Bitte Bibliothek und Person laden."); }
     private bool ConfirmDiscard() => !dirty || MessageBox.Show(this, "Nicht exportierte Gruppenänderungen verwerfen?", Title, MessageBoxButton.YesNo) == MessageBoxResult.Yes;

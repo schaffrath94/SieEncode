@@ -103,6 +103,7 @@ public partial class MainWindow
                 if (GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Policy.RecoveryDevices.Single().Enabled) throw new Exception("Recovery revocation not saved.");
                 administrationWindow.SetRecoveryEnabled(recoveryInvitation.Fingerprint, true);
                 if (!GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Policy.RecoveryDevices.Single().Enabled) throw new Exception("Recovery reactivation not saved.");
+                VerifyPrivateBackupDialog(directory, uiLibrary, uiStore, checks);
             }
             finally { administrationWindow.Close(); }
             checks.Add("Gruppen-Verwaltungsdialog: Person mit zwei Geräten, signiertes Verzeichnis, Vollmacht nur mit bestätigtem Fingerabdruck und Gruppe; delegierte Änderung über Transport geprüft; veralteter Entwurf abgewiesen.");

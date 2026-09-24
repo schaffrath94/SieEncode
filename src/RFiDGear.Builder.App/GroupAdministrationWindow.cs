@@ -37,7 +37,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         localDirectory = Path.Combine(Path.GetFullPath(localTrustDirectory), "Administrations");
         var root = new StackPanel { Margin = new Thickness(20) };
-        root.Children.Add(Note("Hier verwalten Sie Bibliotheken, deren privater Verwaltungsschlüssel auf diesem Windows-Benutzer liegt. Registrierung allein verleiht keine Verwaltungsrechte. Projekt-Vault-Anbindung und Verwaltungsschlüssel-Recovery sind noch in Entwicklung."));
+        root.Children.Add(Note("Hier verwalten Sie Bibliotheken, deren privater Verwaltungsschlüssel auf diesem Windows-Benutzer liegt. Registrierung allein verleiht keine Verwaltungsrechte. Sichern Sie neue Verwaltungsschlüssel separat über ‚Privaten Schlüssel sichern‘."));
         root.Children.Add(libraries);
         libraries.SelectionChanged += (_, _) =>
         {
@@ -52,9 +52,11 @@ internal sealed partial class GroupAdministrationWindow : Window
         };
         root.Children.Add(Action("Neue Verwaltung erstellen", () =>
         {
-            if (ConfirmDiscard() && MessageBox.Show(this, "Eine neue unabhängige Bibliothek mit eigenem Verwaltungsschlüssel erstellen? Für bestehende Teams deren Registrierung verwenden. Der neue Schlüssel bleibt lokal; seine Wiederherstellung ist noch nicht eingerichtet.", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            if (ConfirmDiscard() && MessageBox.Show(this, "Eine neue unabhängige Bibliothek mit eigenem Verwaltungsschlüssel erstellen? Für bestehende Teams deren Registrierung verwenden. Den neuen Schlüssel anschließend über ‚Privaten Schlüssel sichern‘ separat sichern.", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 CreateAdministration();
         }));
+        root.Children.Add(Action("Privaten Schlüssel sichern", ShowPrivateBackup));
+        root.Children.Add(Action("Privaten Schlüssel wiederherstellen", ShowPrivateRestore));
         AddPeopleControls(root);
         grid.Columns.Add(new DataGridTextColumn { Header = "Gruppe", Binding = new Binding(nameof(GroupAdministrationDraft.Name)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
         grid.Columns.Add(new DataGridTextColumn { Header = "Stabile Gruppen-ID", Binding = new Binding(nameof(GroupAdministrationDraft.Id)), IsReadOnly = true, Width = new DataGridLength(2, DataGridLengthUnitType.Star) });
