@@ -57,6 +57,42 @@ public sealed class OfflineGroupDelegateStore
         return new(libraryId, personId, rsa.ExportSubjectPublicKeyInfo());
     }
 
+    public byte[] ExportPrivateBackup(string passphrase)
+    {
+        using var rsa = LoadKey();
+        return GroupPrivateKeyBackups.Protect(rsa, new(libraryId, GroupPrivateKeyBackups.Delegate, personId), passphrase);
+    }
+
+    public GroupDelegateInvitation RestorePrivateBackup(byte[] backup, string passphrase, OfflineGroupTrustStore trust, string delegationId)
+    {
+        var current = trust.LoadOffline();
+        var grant = current.Policy.Delegations.SingleOrDefault(g => g.Id == delegationId && g.Enabled && g.PersonId == personId);
+        if (current.Policy.LibraryId != libraryId || grant is null || !current.Policy.People.Any(p => p.Id == personId && p.Enabled))
+            throw new CryptographicException("Aktive registrierte Verwaltungsvollmacht fehlt für die Wiederherstellung.");
+        using var restored = GroupPrivateKeyBackups.Restore(backup, passphrase, new(libraryId, GroupPrivateKeyBackups.Delegate, personId),
+            OfflineGroupTrustStore.AdministratorFingerprint(grant.SigningPublicKey));
+        var privateKey = restored.Key.ExportPkcs8PrivateKey();
+        byte[]? plaintext = null;
+        try
+        {
+            plaintext = JsonSerializer.SerializeToUtf8Bytes(new State(1, libraryId, personId, privateKey), Options);
+            var bytes = protection.Protect(plaintext);
+            if (bytes.Length is 0 or > MaximumBytes) throw new InvalidDataException("Geschützter Verwaltungsschlüssel ist ungültig.");
+            ConcurrentFileWriter.Write(path, FileRevision.Missing, temporary =>
+            {
+                if (trust.LoadOffline().Checkpoint != current.Checkpoint) throw new CryptographicException("Registrierter Stand wurde während der Wiederherstellung geändert.");
+                using var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                stream.Write(bytes); stream.Flush(true);
+            });
+            return new(libraryId, personId, restored.Key.ExportSubjectPublicKeyInfo());
+        }
+        finally
+        {
+            if (plaintext is not null) CryptographicOperations.ZeroMemory(plaintext);
+            CryptographicOperations.ZeroMemory(privateKey);
+        }
+    }
+
     public SignedGroupChange SignChange(OfflineGroupTrustStore trust, string delegationId,
         GroupPolicyCheckpoint expectedPolicy, OfflineVaultGroup[] groups)
     {

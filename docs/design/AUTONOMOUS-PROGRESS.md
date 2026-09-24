@@ -1,6 +1,23 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Portable private Schluesselsicherung im Core implementiert (2026-09-24):
+AES-GCM/PBKDF2-SHA256 mit 600000 Iterationen, getrennte Zwecke fuer Hauptverwaltung,
+Gruppenverwalter und Recovery; Bibliothek/Person/Fingerabdruck werden beim Import
+geprueft. Export prueft echte private Signatur nach Entschluesselung der Sicherung.
+Hauptverwaltung wird mit dem aktuell lokal registrierten Richtlinienstand
+wiederhergestellt, Delegaten nur mit aktiver registrierter Vollmacht; vorhandene
+Schluesseldateien werden nicht ueberschrieben. Lokale Schutzschluessel sind im Test
+verschieden; keine echte zweite Windows-Umgebung und kein Zertifikatsspeichereingriff.
+CI Exit 0, 69/69, CLI/WPF ohne Warnungen/Fehler; tmp/group-private-backup-ci.log.
+Neue Tests: falsche Passphrase/Zweck/Bibliothek/Fingerabdruck, Manipulation,
+striktes JSON, Zertifikat-Schluessel-Verwechslung, Recovery-RSA-Entschluesselung,
+restaurierte Verwaltungssignaturen, Entzug, Richtlinienwechsel beim Speichern.
+Keine UI-Aenderung in diesem Schritt; vorherige UI-Abnahme nicht wiederholt.
+Naechster Schritt: gefuehrte private Sicherung/Wiederherstellung in der Oberflaeche
+und separate Recovery-Identitaetserzeugung. Projekt-Erstellung/Migration und
+Gesamtworkflow-Abnahme bleiben offen. Ziel aktiv, Release 1.2.1 unveraendert.
+
 Zentrale Recovery-Freigabe integriert: Hauptverwalter importiert oeffentliche
 Einladung mit unabhaengigem Fingerabdruck, sieht aktive/entzogene Zugaenge und
 kann sie bestaetigt umschalten. Core erzwingt Schluesseltrennung/keine Duplikate

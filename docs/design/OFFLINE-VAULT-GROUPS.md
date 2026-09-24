@@ -3,6 +3,32 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Portable private Sicherungen (Core, Bedienoberflaeche noch offen)
+
+GroupPrivateKeyBackups kapselt PKCS8-Schluessel und bei Recovery das oeffentliche
+Zertifikat in einem strikt versionierten, begrenzten und authentisiert
+verschluesselten Format. Bestehendes AES-256-GCM/PBKDF2-SHA256-Verfahren mit
+600000 Iterationen; neue Passphrasen unterliegen den bestehenden Staerkepruefungen.
+Bibliothek, Zweck und gegebenenfalls Personen-ID liegen im verschluesselten Inhalt.
+Import verlangt einen extern bestimmten Fingerabdruck. Der Export entschluesselt
+seine Sicherung und prueft eine private RSA-PSS-Operation vor Rueckgabe.
+Private Bytepuffer werden geloescht; fuer verwaltete JSON-Strings ist keine
+vollstaendige Speicherloeschung zugesichert.
+
+Hauptverwalter-Restore benoetigt eine zuvor bestaetigte lokale Registrierung
+und uebernimmt deren aktuellen Richtlinienstand statt eines Standes aus dem Backup.
+Gruppenverwalter-Restore verlangt aktive Person und passende aktive Vollmacht.
+Beide schreiben nur neue lokal geschuetzte Dateien, niemals ueber vorhandene.
+Vor dem Schreiben wird der registrierte Stand erneut geprueft; dies ist keine
+globale Transaktion ueber Vertrauens- und Schluesseldatei und keine Aussage ueber
+noch nicht empfangene Offline-Aenderungen. Eine alte private Sicherung kann nicht
+rueckgerufen werden. Private Backups gehoeren nicht in den gemeinsamen Projektordner.
+
+Synthetische CI prueft echte Signatur-/Entschluesselungsoperationen, Rollen- und
+Kontextverwechslung, Manipulation, Entzug und konkurrierende Richtlinienaktualisierung.
+Gefuehrte Dateiablage, separate Recovery-Erzeugung vor nicht-exportierbarer
+Windows-Schluesselpersistenz und native Wiederherstellungsdialoge bleiben offen.
+
 ## Zentrale Freigabe der Recovery-Identitaeten
 
 Die Hauptverwaltung zeigt Recovery-Zugaenge mit Name, Aktivstatus und Fingerabdruck.

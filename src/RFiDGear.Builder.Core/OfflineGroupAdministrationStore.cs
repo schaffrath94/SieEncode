@@ -39,6 +39,38 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
     }
 
+    public byte[] ExportPrivateBackup(string passphrase)
+    {
+        var (state, _) = Load();
+        try
+        {
+            using var administrator = OpenKey(state);
+            OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId);
+            return GroupPrivateKeyBackups.Protect(administrator, new(libraryId, GroupPrivateKeyBackups.Administrator), passphrase);
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
+    public GroupEnrollmentPackage RestorePrivateBackup(byte[] backup, string passphrase, OfflineGroupTrustStore trust)
+    {
+        var package = trust.ExportPublic();
+        if (package.LibraryId != libraryId) throw new CryptographicException("Registrierte Bibliothek passt nicht zur Wiederherstellung.");
+        var current = GroupEnrollmentPackages.Validate(package);
+        using var restored = GroupPrivateKeyBackups.Restore(backup, passphrase, new(libraryId, GroupPrivateKeyBackups.Administrator),
+            OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey));
+        var privateKey = restored.Key.ExportPkcs8PrivateKey();
+        try
+        {
+            if (trust.LoadOffline().Checkpoint != current.Checkpoint) throw new CryptographicException("Registrierter Stand wurde während der Wiederherstellung geändert.");
+            Save(new(1, libraryId, privateKey, package.Policy), FileRevision.Missing, () =>
+            {
+                if (trust.LoadOffline().Checkpoint != current.Checkpoint) throw new CryptographicException("Registrierter Stand wurde während der Wiederherstellung geändert.");
+            });
+            return PublicPackage(restored.Key, package.Policy);
+        }
+        finally { CryptographicOperations.ZeroMemory(privateKey); }
+    }
+
     public GroupEnrollmentPackage UpdateGroups(OfflineVaultGroup[] groups, GroupPolicyCheckpoint expectedPolicy)
         => Update(groups, null, expectedPolicy);
 
@@ -145,7 +177,7 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         finally { CryptographicOperations.ZeroMemory(plaintext); }
     }
 
-    private void Save(State state, FileRevision expected)
+    private void Save(State state, FileRevision expected, Action? validateCurrent = null)
     {
         var plaintext = JsonSerializer.SerializeToUtf8Bytes(state, Options);
         try
@@ -154,6 +186,7 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
             if (bytes.Length is 0 or > MaximumBytes) throw new InvalidDataException("Verwaltungsstand ist zu groß.");
             ConcurrentFileWriter.Write(path, expected, temporary =>
             {
+                validateCurrent?.Invoke();
                 using var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None);
                 stream.Write(bytes); stream.Flush(true);
             });

@@ -55,6 +55,14 @@ public sealed class OfflineGroupTrustStore
         return OfflineGroupPolicyService.Verify(state.SignedPolicy, administrator, libraryId);
     }
 
+    public GroupEnrollmentPackage ExportPublic()
+    {
+        var (state, _) = Load();
+        using var administrator = OpenAdministrator(state.AdministratorPublicKey);
+        OfflineGroupPolicyService.Verify(state.SignedPolicy, administrator, libraryId);
+        return new(GroupEnrollmentPackages.Format, 1, libraryId, state.AdministratorPublicKey.ToArray(), Snapshot(state.SignedPolicy));
+    }
+
     public VerifiedGroupPolicy AcceptUpdate(SignedGroupPolicy candidate)
     {
         var (state, revision) = Load();

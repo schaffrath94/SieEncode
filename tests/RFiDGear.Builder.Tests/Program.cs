@@ -34,6 +34,7 @@ if (args.Length == 2 && args[0] == "hardware-extension-upgrade-rollback")
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Portable private group backups, purpose isolation and current-policy restoration", GroupPrivateKeyBackupTests.Verify),
     ("Offline group policy signatures, trust binding and rollback rejection", OfflineGroupPolicyTests.Verify),
     ("Offline trust enrollment, persistence and concurrent update protection", OfflineGroupTrustTests.Verify),
     ("Signed people/device directory and overlapping access matrix", OfflineGroupDirectoryTests.Verify),
