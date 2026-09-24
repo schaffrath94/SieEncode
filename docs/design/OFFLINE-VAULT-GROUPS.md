@@ -3,6 +3,23 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Zentrale Freigabe der Recovery-Identitaeten
+
+Die Hauptverwaltung zeigt Recovery-Zugaenge mit Name, Aktivstatus und Fingerabdruck.
+Oeffentliche Empfaengereinladungen werden erst nach manuell eingegebenem,
+unabhaengigem Fingerabdruck als bibliotheksweite Recovery-Zugaenge aufgenommen.
+GrantRecovery verifiziert das oeffentliche Zertifikat, sperrt doppelte Eintraege
+und schreibt ueber den vorhandenen signierten/konfliktgeprueften Verwaltungsweg.
+Die Richtlinienpruefung erzwingt getrennte Schluessel gegen normale Geraete,
+Delegaten und Hauptverwaltung. Gruppenverwalter besitzen keine Recovery-Schreibrechte.
+
+Entziehen/Reaktivieren benoetigt eine ausdrueckliche Bestaetigung und erzeugt eine
+neue signierte Revision. Ohne aktiven Recovery-Zugang sind neue Gruppen-Vaults
+und Rotation gesperrt. Verteilen des neuen Standes und Abgleich vorhandener Vaults
+bleiben erforderlich; alte Kopien bleiben zugaenglich. Die Oberflaeche weist auf
+separate private Sicherung/Wiederherstellungspruefung hin. Deren gefuehrte Erzeugung
+und portable Sicherung sind weiterhin offen; eine Einladung ist kein Schluesselbackup.
+
 ## Separater Recovery-Bedienweg im Editor
 
 Gruppenprojekte zeigen eine eigene Taste zum Oeffnen mit Recovery-Schluessel.

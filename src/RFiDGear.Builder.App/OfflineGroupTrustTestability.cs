@@ -88,9 +88,25 @@ public partial class MainWindow
                 try { administrationWindow.SaveGroups(); throw new Exception("Stale UI overwrote group policy."); }
                 catch (ConcurrentFileChangeException) { }
                 administrationWindow.LoadAdministration(uiLibrary);
+                using var recoveryKey = RSA.Create(3072);
+                using var recoveryCertificate = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=Synthetic central recovery", recoveryKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+                    .CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
+                var recoveryInvitation = CertificateVaultService.ExportInvitation(recoveryCertificate, "Synthetischer Recovery-Zugang");
+                var recoveryBefore = GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Checkpoint;
+                Reject(() => administrationWindow.GrantRecoveryInvitation(recoveryInvitation, new string('0', 64)));
+                Reject(() => administrationWindow.GrantRecoveryInvitation(firstInvitation, firstInvitation.Fingerprint));
+                if (GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Checkpoint != recoveryBefore) throw new Exception("Rejected recovery grant changed policy.");
+                administrationWindow.GrantRecoveryInvitation(recoveryInvitation, recoveryInvitation.Fingerprint);
+                try { administrationWindow.GrantRecoveryInvitation(recoveryInvitation, recoveryInvitation.Fingerprint); throw new Exception("Duplicate recovery grant accepted."); }
+                catch (InvalidOperationException) { }
+                administrationWindow.SetRecoveryEnabled(recoveryInvitation.Fingerprint, false);
+                if (GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Policy.RecoveryDevices.Single().Enabled) throw new Exception("Recovery revocation not saved.");
+                administrationWindow.SetRecoveryEnabled(recoveryInvitation.Fingerprint, true);
+                if (!GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Policy.RecoveryDevices.Single().Enabled) throw new Exception("Recovery reactivation not saved.");
             }
             finally { administrationWindow.Close(); }
             checks.Add("Gruppen-Verwaltungsdialog: Person mit zwei Geräten, signiertes Verzeichnis, Vollmacht nur mit bestätigtem Fingerabdruck und Gruppe; delegierte Änderung über Transport geprüft; veralteter Entwurf abgewiesen.");
+            checks.Add("Zentrale Recovery-Freigabe: unabhängiger Fingerabdruck erforderlich, normales Geräte-Schlüsselmaterial und doppelte Einträge abgewiesen; separater Zugang signiert gespeichert, entzogen und erneut aktiviert. Synthetische Zertifikate ohne Storeeingriff.");
             var key = administrator.ExportSubjectPublicKeyInfo();
             var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 1, library, 1, []);
             var signed = OfflineGroupPolicyService.Sign(policy, administrator);

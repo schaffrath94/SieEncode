@@ -53,6 +53,22 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         => Transform(expectedPolicy, current => current.Policy with { Revision = checked(current.Policy.Revision + 1),
             RecoveryDevices = devices ?? throw new ArgumentNullException(nameof(devices)) });
 
+    public GroupEnrollmentPackage GrantRecovery(VaultRecipientInvitation invitation, string confirmedFingerprint, GroupPolicyCheckpoint expectedPolicy)
+    {
+        var imported = CertificateVaultService.ImportInvitation(invitation);
+        using var certificate = imported.Certificate;
+        var fingerprint = CertificateVaultService.Fingerprint(certificate);
+        if (fingerprint != confirmedFingerprint) throw new CryptographicException("Recovery-Fingerabdruck stimmt nicht mit der unabhängigen Bestätigung überein.");
+        var device = new OfflineVaultDevice(imported.DisplayName, fingerprint, Convert.ToBase64String(certificate.RawData), true);
+        return Transform(expectedPolicy, current =>
+        {
+            if (current.Policy.Version != 2) throw new InvalidOperationException("Bitte zuerst das Personen-/Gruppenverzeichnis signiert speichern.");
+            if (current.Policy.RecoveryDevices.Any(d => d.Fingerprint == fingerprint))
+                throw new InvalidOperationException("Recovery-Zugang ist bereits vorhanden. Den vorhandenen Eintrag verwenden.");
+            return current.Policy with { Revision = checked(current.Policy.Revision + 1), RecoveryDevices = [.. current.Policy.RecoveryDevices, device] };
+        });
+    }
+
     public GroupEnrollmentPackage ApplyDelegatedChange(SignedGroupChange change, GroupPolicyCheckpoint expectedPolicy)
         => Transform(expectedPolicy, current => OfflineGroupDelegationService.Apply(change, current));
 

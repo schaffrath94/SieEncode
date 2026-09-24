@@ -76,6 +76,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         }));
         root.Children.Add(memberActions);
         AddDelegationControls(root);
+        AddRecoveryControls(root);
         var actions = new WrapPanel();
         actions.Children.Add(Action("Gruppen signiert speichern", SaveGroups));
         actions.Children.Add(Action("Gespeicherten Stand öffentlich exportieren", ExportPublic));
@@ -111,6 +112,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         loading = true; libraries.SelectedItem = id; loading = false; dirty = false;
         RefreshMemberLabels();
         RefreshDelegations(verified.Policy);
+        RefreshRecovery(verified.Policy);
         status.Text = $"Bibliothek: {id:D}\nGespeicherte Revision: {checkpoint.Revision}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}";
     }
 

@@ -1,6 +1,22 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Zentrale Recovery-Freigabe integriert: Hauptverwalter importiert oeffentliche
+Einladung mit unabhaengigem Fingerabdruck, sieht aktive/entzogene Zugaenge und
+kann sie bestaetigt umschalten. Core erzwingt Schluesseltrennung/keine Duplikate
+und signiertes konfliktgeprueftes Speichern. Bibliotheksweite Reichweite, benoetigte
+Verteilung/Rotation und Grenzen alter Kopien werden angezeigt.
+CI Exit 0, 68/68, CLI/WPF erfolgreich; tmp/group-recovery-grant-ci.log.
+Erster UI-Lauf scheiterte beim Aufraeumen einer gesperrten synthetischen
+card-preflight.plan.json; anschliessender exklusiver Lesezugriff belegte Freigabe.
+Unveraenderter Build in neuem Testordner erfolgreich: Exit 0, 50 Checks/5 Szenarien,
+stderr leer; tmp/group-recovery-grant-smoke2/SieEncode/ui-smoke/ui-smoke-result.json.
+Dialogmethoden pruefen falschen Fingerabdruck, normale Geraeteschluessel, Duplikate,
+Entzug und Reaktivierung ohne Zertifikatsspeichereingriff. Native Importdialoge
+bleiben offen. Naechster Schritt: portable private Schluesselsicherung und
+gefuehrte separate Recovery-Identitaetserzeugung; Gruppenprojekt-Erstellung/Migration
+und Gesamtworkflow-Abnahme bleiben ebenfalls offen.
+
 Separater Recovery-Editorweg integriert: eigene Taste, kein automatischer
 Fallback, expliziter Sitzungsstatus; Speichern/Abgleich/Audit verwenden den
 Recovery-Zugang. Builds bleiben gesperrt bis erfolgreichem normalen Entsperren;
