@@ -19,10 +19,10 @@ internal sealed class GroupPrivateBackupWindow : Window
     private readonly bool restore;
     private const string Filter = "Private Schlüsselsicherung (*.group-private.json)|*.group-private.json";
 
-    internal GroupPrivateBackupWindow(Window owner, IEnumerable<GroupPrivateBackupTarget> choices, bool restore)
+    internal GroupPrivateBackupWindow(Window owner, IEnumerable<GroupPrivateBackupTarget> choices, bool restore, string keyLabel = "Verwaltungsschlüssel")
     {
         Owner = owner; this.restore = restore;
-        Title = restore ? "Privaten Verwaltungsschlüssel wiederherstellen" : "Privaten Verwaltungsschlüssel sichern";
+        Title = restore ? $"Privaten {keyLabel} wiederherstellen" : $"Privaten {keyLabel} sichern";
         Width = 720; SizeToContent = SizeToContent.Height; MaxHeight = 780; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(Note(restore
@@ -78,7 +78,7 @@ internal sealed class GroupPrivateBackupWindow : Window
             throw new InvalidOperationException("Bitte eine registrierte Bibliothek/Vollmacht auswählen.");
         if (!confirmed) throw new InvalidDataException("Wiederherstellung muss ausdrücklich bestätigt werden.");
         target.Restore(ReadBackup(path), passphrase);
-        status.Text = "Privater Schlüssel passend zum registrierten Stand wiederhergestellt. Schließen Sie diesen Dialog und laden Sie den Verwaltungsplatz neu. Die Sicherungsdatei bleibt erhalten.";
+        status.Text = "Privater Schlüssel passend zum registrierten Stand auf diesem Windows-Benutzer wiederhergestellt. Die Sicherungsdatei bleibt erhalten. Sie können den Dialog schließen.";
     }
 
     private static byte[] ReadBackup(string path)

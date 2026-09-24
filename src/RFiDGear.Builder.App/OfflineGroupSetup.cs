@@ -9,6 +9,12 @@ public partial class MainWindow
 {
     private readonly string localGroupTrustDirectory;
 
+    private void OpenGroupRecoverySetup_Click(object sender, RoutedEventArgs e)
+    {
+        try { new GroupRecoverySetupWindow(this, localGroupTrustDirectory).ShowDialog(); }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
     private void OpenGroupDelegate_Click(object sender, RoutedEventArgs e)
     {
         try { new GroupDelegateWindow(this, localGroupTrustDirectory).ShowDialog(); }

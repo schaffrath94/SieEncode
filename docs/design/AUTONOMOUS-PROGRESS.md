@@ -1,6 +1,27 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Gefuehrte separate Recovery-Identitaet integriert (2026-09-24): Einstellungen
+bieten registrierte Bibliotheksauswahl, neue private Sicherung mit zweifacher
+Passphrase/Bestaetigung, geprueftes Dateiruecklesen und Wiederherstellung,
+anschliessend separaten oeffentlichen Einladungsexport. Erzeugung installiert
+keinen Windows-Schluessel und erteilt keine Freigabe. Wiederherstellung verlangt
+aktiven zentral freigegebenen Recovery-Fingerabdruck im registrierten Stand;
+Bibliotheks-/Zweckbindung und echte RSA-OAEP-Entschluesselung werden geprueft.
+Explizite Windows-Uebernahme verwendet nicht-exportierbare UserKeySet-Persistenz,
+ersetzt keine bestehenden Zertifikate und prueft gespeicherte Entschluesselung.
+Dieser echte Installer wurde NICHT ausgefuehrt: UI-Test injiziert eine pruefende
+ephemere Uebernahme, keine Zertifikatsspeicheraenderung/Mehrbenutzerfreigabe.
+CI Exit 0, 69/69, CLI/WPF erfolgreich; tmp/group-recovery-setup-ci.log.
+Nach finalem Textabgleich WPF-Build Exit 0, keine Warnungen/Fehler;
+tmp/group-recovery-setup-ui-build.log. UI-Smoke Exit 0, 52 Checks/5 Szenarien,
+stderr leer; tmp/group-recovery-setup-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Neuer Test prueft Gesamtablauf, fehlende Freigabe/falsche Passphrase/Entzug,
+Ueberschreibschutz und erfolgreiche Wiederherstellung ohne echten Installer.
+Naechster Schritt: konsistente gefuehrte Gruppenprojekt-Erstellung und explizite
+Altvault-Migration; native/visuelle Einrichtung und echte Windows-Installer-
+Abnahme separat offen. Ziel aktiv, Release 1.2.1 unveraendert.
+
 Private Sicherung/Wiederherstellung fuer Haupt- und Gruppenverwaltung in der UI
 integriert (2026-09-24). Eigenes Passphrase-/Bestaetigungsfenster mit Auswahl
 registrierter Bibliothek bzw. Vollmacht; oeffentliche Einladungen klar getrennt.
