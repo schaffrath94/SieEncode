@@ -3,6 +3,23 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Separater Recovery-Bedienweg im Editor
+
+Gruppenprojekte zeigen eine eigene Taste zum Oeffnen mit Recovery-Schluessel.
+Es gibt keinen stillen Wechsel bei fehlendem normalen Zugang. Die erfolgreiche
+Entsperrung kennzeichnet die Sitzung als Recovery, verwendet diesen Zugang fuer
+Schluesselspeichern/Empfaengerabgleich/Pruefung und sperrt operative Builds.
+Die Kodierstation bleibt ausschliesslich beim normalen Gruppenzugang. Erst ein
+erfolgreiches ausdrueckliches normales Entsperren beendet den Recovery-Modus;
+Projektneuladen verwirft den Sitzungszustand.
+
+Der App-Test verwendet getrennte synthetische Identitaeten und echte Button-Events:
+Recovery-Identitaet kann nicht normal oeffnen, Recovery-Speichern erhaelt beide
+Zugangswege, Audit nennt den richtigen Zugangsweg, Build bleibt gesperrt und
+normales Entsperren beendet den Sondermodus. Kein Zertifikatsspeichereingriff.
+Erzeugung/Import/Freigabe dieser separaten Identitaeten und deren portable
+private Sicherung sind noch gefuehrt zu integrieren.
+
 ## Editor und sichere Stationsbereitstellung
 
 Vorhandene gebundene Gruppenprojekte sind jetzt im Editor ueber die persoenliche

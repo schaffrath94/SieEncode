@@ -1,6 +1,20 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Separater Recovery-Editorweg integriert: eigene Taste, kein automatischer
+Fallback, expliziter Sitzungsstatus; Speichern/Abgleich/Audit verwenden den
+Recovery-Zugang. Builds bleiben gesperrt bis erfolgreichem normalen Entsperren;
+Stationszugang bleibt normal, Projektneuladen verwirft den Recovery-Modus.
+WPF-Build Exit 0, 0 Warnungen/Fehler; tmp/group-recovery-editor-build.log.
+UI-Smoke Exit 0, 49 Checks/5 Szenarien;
+tmp/group-recovery-editor-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Neuer synthetischer Button-Ablauf prueft Rollentrennung, Recovery-Schluesselupdate,
+Audit und bewussten Wechsel zum normalen Zugang. Core unveraendert; letzte
+vollstaendige Core-/CLI-Regression weiterhin 68/68 aus dem vorherigen Stand.
+Naechster Schritt: gefuehrte Recovery-Identitaetsfreigabe und portable private
+Schluesselsicherung, danach Gruppenprojekt-Erstellung/Migration. Native Dialog-
+und echte Mehrbenutzerabnahme weiterhin offen.
+
 Editor-/Stationsintegration fuer bestehende Gruppenprojekte umgesetzt: persoenlich
 entsperren, Schluesselupdates mit Sicherung, bestaetigter Empfaengerabgleich und
 normaler Integritaetsaudit. Stationspfad laedt ueber registrierten Gruppenstand.

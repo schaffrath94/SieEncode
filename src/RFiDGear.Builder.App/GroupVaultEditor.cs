@@ -6,17 +6,26 @@ namespace RFiDGear.Builder.App;
 
 public partial class MainWindow
 {
+    private bool editorGroupRecovery;
+    private bool requestGroupRecovery;
+    private void UnlockGroupRecovery_Click(object sender, RoutedEventArgs e)
+    {
+        if (!IsEditorGroupVault) return;
+        requestGroupRecovery = true;
+        try { UnlockVault_Click(sender, e); }
+        finally { requestGroupRecovery = false; }
+    }
     private bool IsEditorGroupVault => editorProject?.Project.GroupVault is not null || editorVaultVersion == ProjectGroupVault.ProtectionLevel;
     private OfflineGroupTrustStore GroupTrust(ProjectDefinition project)
     {
         var binding = project.Project.GroupVault ?? throw new InvalidDataException("Ursprüngliche Projekt-/Gruppenzuordnung fehlt.");
         return new(Path.Combine(localGroupTrustDirectory, binding.LibraryId.ToString("N") + ".trust.bin"), binding.LibraryId, new WindowsGroupTrustProtection(binding.LibraryId));
     }
-    private ProjectKeyVaultPayload LoadEditorGroupKeys()
+    private ProjectKeyVaultPayload LoadEditorGroupKeys(bool? recovery = null)
     {
         if (editorProject is null || string.IsNullOrWhiteSpace(editorSourcePath)) throw new InvalidOperationException("Gespeichertes Gruppenprojekt fehlt.");
         var identities = loadEditorVaultIdentities();
-        try { return ProjectGroupVault.Load(editorSourcePath, editorProject, GroupTrust(editorProject), identities.Select(i => i.Certificate)); }
+        try { return ProjectGroupVault.Load(editorSourcePath, editorProject, GroupTrust(editorProject), identities.Select(i => i.Certificate), recovery ?? editorGroupRecovery); }
         finally { foreach (var identity in identities) identity.Certificate.Dispose(); }
     }
     private void SaveEditorGroupKeys()
@@ -27,9 +36,9 @@ public partial class MainWindow
         {
             var certificates = identities.Select(i => i.Certificate).ToArray();
             var trust = GroupTrust(editorProject);
-            var result = ProjectGroupVault.Update(editorSourcePath, editorProject, CreateVaultPayload(), trust, certificates, editorVaultRevision, DateTimeOffset.UtcNow);
+            var result = ProjectGroupVault.Update(editorSourcePath, editorProject, CreateVaultPayload(), trust, certificates, editorVaultRevision, DateTimeOffset.UtcNow, editorGroupRecovery);
             editorVaultRevision = result.Revision;
-            VerifyLoadedVaultPayload(ProjectGroupVault.Load(editorSourcePath, editorProject, trust, certificates));
+            VerifyLoadedVaultPayload(ProjectGroupVault.Load(editorSourcePath, editorProject, trust, certificates, editorGroupRecovery));
             editorVaultVersion = ProjectGroupVault.ProtectionLevel;
         }
         finally { foreach (var identity in identities) identity.Certificate.Dispose(); }
@@ -44,7 +53,7 @@ public partial class MainWindow
             var certificates = identities.Select(i => i.Certificate).ToArray();
             var trust = GroupTrust(editorProject);
             var path = ProjectKeyVault.GetPath(editorSourcePath);
-            var plan = GroupVaultReconciliation.Preview(path, trust, editorProject.Project.Id.Value, editorProject.Project.GroupVault.GroupId, certificates, DateTimeOffset.UtcNow);
+            var plan = GroupVaultReconciliation.Preview(path, trust, editorProject.Project.Id.Value, editorProject.Project.GroupVault.GroupId, certificates, DateTimeOffset.UtcNow, editorGroupRecovery);
             if (plan.VaultRevision != editorVaultRevision) throw new ConcurrentFileChangeException(path);
             var details = "Hinzufügen:\n" + string.Join("\n", plan.Added.Select(a => a.Role + " · " + a.Fingerprint)) +
                 "\n\nEntfernen:\n" + string.Join("\n", plan.Removed.Select(a => a.Role + " · " + a.Fingerprint));
@@ -65,13 +74,16 @@ public partial class MainWindow
         if (ConcurrentFileWriter.Capture(path) != before) throw new ConcurrentFileChangeException(path);
         if (editorKeysPersisted) { VerifyLoadedVaultPayload(payload); editorVaultVerified = true; }
         CreateVerifiedVaultBackupIfConfigured(payload);
-        EditorVaultStatus.Text = "Gruppen-Vault: Projektbindung, normaler Zugang und Integrität geprüft. Separater Recovery-Zugang wurde nicht geprüft.";
+        EditorVaultStatus.Text = editorGroupRecovery
+            ? "Gruppen-Vault: separater Recovery-Zugang, Projektbindung und Integrität geprüft. Keine normale Gruppenfreigabe."
+            : "Gruppen-Vault: Projektbindung, normaler Zugang und Integrität geprüft. Separater Recovery-Zugang wurde nicht geprüft.";
         RefreshEditorWorkflow();
     }
     private void VerifyEditorGroupBuildAccess()
     {
         try
         {
+            if (editorGroupRecovery) throw new InvalidOperationException("Recovery-Sitzung: Vor einem Build mit normalem Gruppen-Zugang entsperren.");
             var path = ProjectKeyVault.GetPath(editorSourcePath);
             if (ConcurrentFileWriter.Capture(path) != editorVaultRevision) throw new ConcurrentFileChangeException(path);
             VerifyLoadedVaultPayload(LoadEditorGroupKeys());

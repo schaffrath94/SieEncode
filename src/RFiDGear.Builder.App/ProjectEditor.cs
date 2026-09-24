@@ -140,6 +140,7 @@ public partial class MainWindow
             editorVaultRevision = string.IsNullOrWhiteSpace(editorSourcePath) ? FileRevision.Missing : ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(editorSourcePath));
             editorKeysPersisted = false;
             editorVaultVerified = false;
+            editorGroupRecovery = false;
             editorVaultVersion = ReadVaultVersion(editorSourcePath);
             editorVaultPayload = string.IsNullOrWhiteSpace(editorSourcePath) ? ProjectKeyVault.FromProject(editorProject) : null;
 
@@ -532,6 +533,8 @@ public partial class MainWindow
             EditorSaveVaultButton.IsEnabled = false;
             EditorManageVaultAccessButton.IsEnabled = false;
             EditorAuditVaultButton.IsEnabled = false;
+            EditorGroupRecoveryButton.IsEnabled = false;
+            EditorGroupRecoveryButton.Visibility = Visibility.Collapsed;
             return;
         }
 
@@ -546,20 +549,22 @@ public partial class MainWindow
         var keysLoaded = keyIssues.Length == 0;
         var backupRequired = editorProject.Project.Build.Contains("Mastering", StringComparer.OrdinalIgnoreCase);
         var backupReady = !backupRequired || IsIndependentVaultBackupConfigured();
-        var keysSafe = keysLoaded && editorKeysPersisted && editorVaultVerified && editorVaultVersion >= KeyVaultService.CurrentVersion && backupReady;
+        var keysSafe = keysLoaded && editorKeysPersisted && editorVaultVerified && editorVaultVersion >= KeyVaultService.CurrentVersion && backupReady && !editorGroupRecovery;
         var saved = !string.IsNullOrWhiteSpace(editorSourcePath) && !editorDirty;
         var vaultExists = !string.IsNullOrWhiteSpace(editorSourcePath) && File.Exists(ProjectKeyVault.GetPath(editorSourcePath));
         var existingDefinition = !string.IsNullOrWhiteSpace(editorSourcePath);
 
         EditorGenerateKeysButton.IsEnabled = true;
         EditorUnlockVaultButton.IsEnabled = vaultExists;
+        EditorGroupRecoveryButton.Visibility = IsEditorGroupVault ? Visibility.Visible : Visibility.Collapsed;
+        EditorGroupRecoveryButton.IsEnabled = vaultExists && IsEditorGroupVault;
         EditorSaveVaultButton.IsEnabled = keysLoaded && existingDefinition;
         EditorSaveVaultButton.Content = editorVaultVersion >= KeyVaultService.CertificateVersion
             ? "Vault-Änderungen sicher speichern"
             : "Einzelbenutzer-Vault speichern";
         EditorManageVaultAccessButton.IsEnabled = keysLoaded && existingDefinition;
         EditorAuditVaultButton.IsEnabled = vaultExists;
-        EditorAuditVaultButton.Content = IsEditorGroupVault ? "Gruppen-Vault prüfen" : "Vault / Recovery prüfen";
+        EditorAuditVaultButton.Content = IsEditorGroupVault ? editorGroupRecovery ? "Recovery-Zugang prüfen" : "Gruppen-Vault prüfen" : "Vault / Recovery prüfen";
         EditorManageVaultAccessButton.Content = IsEditorGroupVault ? "Gruppenempfänger abgleichen" : "Mehrbenutzerzugriff";
 
         EditorWorkflowProfile.Text = profilesOk ? "✓ Profile" : "! Profile prüfen";
@@ -575,6 +580,7 @@ public partial class MainWindow
             : !keysLoaded ? "Nächster Schritt: Produktivschlüssel erzeugen, Projekt speichern und anschließend den Vault verschlüsselt sichern."
             : !valuesOk ? "Nächster Schritt: Grundschlüssel prüfen. " + string.Join(" ", definitionIssues.Take(3).Select(issue => issue.Message))
             : editorVaultVersion == 1 ? "Nächster Schritt: alten Vault mit einer neuen starken Passphrase als Vault v2 speichern. Vorher bleibt der Neubau gesperrt."
+            : editorGroupRecovery ? "Recovery-Sitzung: Änderungen bei Bedarf speichern. Vor einem Build über ‚Vault entsperren‘ mit normalem Gruppenzugang öffnen."
             : !editorVaultVerified ? "Nächster Schritt: Vault speichern oder entsperren; SieEncode muss ihn erfolgreich wieder öffnen."
             : backupRequired && !backupReady ? "Nächster Schritt: Unter Einstellungen einen vom Projektordner unabhängigen Vault-Sicherungsort wählen. Mastering bleibt bis dahin gesperrt."
             : !editorKeysPersisted ? "Nächster Schritt: Mehrbenutzerzugriff einrichten und Recovery-Passphrase in KeePass ablegen."
@@ -721,7 +727,7 @@ public partial class MainWindow
             var windowsIdentity = false;
             if (IsEditorGroupVault)
             {
-                payload = LoadEditorGroupKeys();
+                payload = LoadEditorGroupKeys(requestGroupRecovery);
                 windowsIdentity = true;
             }
             else if (document.Version == KeyVaultService.CertificateVersion)
@@ -754,6 +760,7 @@ public partial class MainWindow
             editorVaultVerified = true;
             editorVaultVersion = ReadVaultVersion(editorSourcePath);
             suppressEditorChanges = true;
+            editorGroupRecovery = IsEditorGroupVault && requestGroupRecovery;
             try
             {
                 SetComboValue(EditorTransportPiccType, editorProject.Transport.PiccKey.Type);
@@ -766,7 +773,7 @@ public partial class MainWindow
                 RefreshInitialKeySets();
             }
             finally { suppressEditorChanges = false; }
-            EditorVaultStatus.Text = IsEditorGroupVault ? "Gruppen-Vault mit geprüftem Projekt-/Gruppenbezug entsperrt: " + path : editorVaultVersion == KeyVaultService.CertificateVersion
+            EditorVaultStatus.Text = IsEditorGroupVault ? (editorGroupRecovery ? "Recovery-Sitzung für Gruppen-Vault: " : "Gruppen-Vault mit normalem Zugang entsperrt: ") + path : editorVaultVersion == KeyVaultService.CertificateVersion
                 ? (windowsIdentity ? "Mehrbenutzer-Vault automatisch mit der persönlichen Windows-Identität entsperrt: " : "Mehrbenutzer-Vault über Recovery-Zugang entsperrt: ") + path
                 : editorVaultVersion >= KeyVaultService.CurrentVersion
                 ? "Vault v2 für diese Sitzung entsperrt: " + path
@@ -861,7 +868,8 @@ public partial class MainWindow
             editorKeysPersisted = true;
             editorVaultVerified = true;
             if (editorVaultVersion >= KeyVaultService.CertificateVersion)
-                EditorVaultStatus.Text = "Mehrbenutzer-Vault mit der persönlichen Windows-Identität aktualisiert; Empfänger und Recovery-Zugang blieben unverändert: " + path;
+                EditorVaultStatus.Text = IsEditorGroupVault && editorGroupRecovery ? "Gruppen-Vault über separaten Recovery-Zugang aktualisiert: " + path
+                    : "Mehrbenutzer-Vault mit der persönlichen Windows-Identität aktualisiert; Empfänger und Recovery-Zugang blieben unverändert: " + path;
             else
             {
                 editorVaultVersion = KeyVaultService.CurrentVersion;

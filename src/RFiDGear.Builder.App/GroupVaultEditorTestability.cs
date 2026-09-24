@@ -40,6 +40,26 @@ public partial class MainWindow
         EditorSaveVaultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         if (!editorVaultVerified || ProjectGroupVault.Load(path, ProjectJson.Load(path), trust, [identity]).ProductivePicc.Value != changed)
             throw new Exception("Group editor save failed.");
+        loadEditorVaultIdentities = () => [new("Synthetic separate recovery", CertificateVaultService.Fingerprint(recovery), new X509Certificate2(recovery))];
+        LoadEditor(ProjectJson.Load(path), path);
+        try { LoadEditorGroupKeys(false); throw new Exception("Recovery identity received normal group access."); }
+        catch (CryptographicException) { }
+        EditorGroupRecoveryButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (!editorGroupRecovery || !editorVaultVerified || EditorBuildButton.IsEnabled || !EditorNextStep.Text.Contains("Recovery-Sitzung", StringComparison.Ordinal))
+            throw new Exception("Separate recovery session not clearly separated from operational access.");
+        var restoredKey = KeyVaultService.GenerateKey("DF_KEY_AES");
+        EditorProductivePiccKey.Text = restoredKey;
+        EditorSaveVaultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (!editorGroupRecovery || !editorVaultVerified || EditorBuildButton.IsEnabled ||
+            ProjectGroupVault.Load(path, ProjectJson.Load(path), trust, [identity]).ProductivePicc.Value != restoredKey ||
+            ProjectGroupVault.Load(path, ProjectJson.Load(path), trust, [recovery], recovery: true).ProductivePicc.Value != restoredKey)
+            throw new Exception("Recovery editor update lost access or enabled normal builds.");
+        EditorAuditVaultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (!EditorVaultStatus.Text.Contains("separater Recovery-Zugang", StringComparison.Ordinal))
+            throw new Exception("Recovery audit reported normal access.");
+        loadEditorVaultIdentities = () => [new("Synthetic group editor", CertificateVaultService.Fingerprint(identity), new X509Certificate2(identity))];
+        EditorUnlockVaultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (editorGroupRecovery || !editorVaultVerified) throw new Exception("Explicit normal unlock did not end recovery mode.");
         var entry = new ProjectCatalog().Scan(projectsDirectory).Single(e => e.SourcePath == Path.GetFullPath(path));
         if (!entry.SecureOnDemand || entry.VaultVersion != ProjectGroupVault.ProtectionLevel) throw new Exception("Group catalog classification lost.");
         try
@@ -66,5 +86,6 @@ public partial class MainWindow
         }
         finally { File.WriteAllBytes(vaultPath, intact); }
         checks.Add("Gruppen-Vault im Editor: gesperrtes Neuladen, Entsperren/Speichern per Buttons, Katalog/gesicherte Stationsbereitstellung und erneute Bausperre nach lokal importiertem Entzug geprüft. Synthetisch, keine Hardwarefreigabe.");
+        checks.Add("Separater Recovery-Editorweg: normaler Zugriff mit Recovery-Identität abgewiesen, Recovery-Button/Schlüsselupdate/Audit erfolgreich; Builds gesperrt bis explizitem normalem Entsperren. Kein Zertifikatsspeichereingriff.");
     }
 }
