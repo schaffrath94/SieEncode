@@ -8,6 +8,17 @@ namespace RFiDGear.Builder.Core;
 /// <summary>Typed project-key integration. Binding changes are explicit; legacy vaults are never implicitly migrated.</summary>
 public static class ProjectGroupVault
 {
+    // UI/catalog protection family marker, not the group's on-disk format version (which is 1).
+    public const int ProtectionLevel = 4;
+    public static bool IsGroupVaultFile(string path)
+    {
+        if (!File.Exists(path)) return false;
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        if (stream.Length is <= 0 or > GroupVaultService.MaximumBytes) throw new InvalidDataException("Vault-Dateigröße ist ungültig.");
+        using var json = JsonDocument.Parse(stream);
+        return json.RootElement.TryGetProperty("Header", out var header) && header.ValueKind == JsonValueKind.Object &&
+            header.TryGetProperty("Format", out var format) && format.GetString() == GroupVaultService.Format;
+    }
     private sealed record Payload(string Format, int Version, ProjectKeyVaultPayload Keys);
     private const string PayloadFormat = "SieEncode-Group-Project-Keys";
     private static readonly JsonSerializerOptions Options = new() { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 32 };

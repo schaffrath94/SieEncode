@@ -3,6 +3,28 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Editor und sichere Stationsbereitstellung
+
+Vorhandene gebundene Gruppenprojekte sind jetzt im Editor ueber die persoenliche
+Identitaet entsperrbar und mit typisierter Projekt-/Gruppenpruefung speicherbar.
+Die Freigabetaste bietet fuer diese Projekte den bestaetigten Empfaengerabgleich.
+Normale Integritaetspruefung ist getrennt von einem noch einzubindenden separaten
+Recovery-Bedienweg beschriftet. Die Sicherungsanweisung benennt Gruppenregistrierung
+und private Geraete-/Recovery-Schluessel als Voraussetzungen.
+
+Der Katalog leitet Gruppenprojekte in den sicheren Stationspfad. Die interne
+Schutzstufe 4 dient nur dieser UI-/Katalogklassifizierung; das Gruppen-Dateiformat
+bleibt Version 1. Beschaedigte/fehlende Vaults gebundener Projekte duerfen nicht
+auf alte unverschluesselte Builds zurueckfallen. Stationsbereitstellung prueft
+die registrierte Richtlinie und Vaultbindung erneut und materialisiert lokal.
+Ein Build aus entsperrter Editorsitzung prueft den Zugang nochmals; nach bekanntem
+Entzug wird die Sitzungsverifikation verworfen und der Build gesperrt.
+
+App-Smoke: tatsaechliche Entsperr-/Speicher-Buttons, lokale Stationsbereitstellung
+ohne Readeraufruf, Entzug und gesperrter Altbuild-Fallback. Noch offen sind gefuehrte
+Erstellung/Migration, Recovery-Schluesselverwaltung und deren eigener Editorweg,
+native Dialogabnahme sowie echte Mehrbenutzer-/Rechnerabnahme.
+
 ## Projektidentitaet und typisierte Schluesselspeicherung (Core)
 
 Neue Projektentwuerfe erhalten eine stabile GUID. Alte Projektdateien ohne ID

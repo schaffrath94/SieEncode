@@ -124,7 +124,7 @@ public partial class MainWindow
         if (string.IsNullOrWhiteSpace(projectPath)) return 0;
         var vaultPath = ProjectKeyVault.GetPath(projectPath);
         if (!File.Exists(vaultPath)) return 0;
-        try { return JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(vaultPath), ProjectJson.Options)?.Version ?? 0; }
+        try { return ProjectGroupVault.IsGroupVaultFile(vaultPath) ? ProjectGroupVault.ProtectionLevel : JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(vaultPath), ProjectJson.Options)?.Version ?? 0; }
         catch { return 0; }
     }
 
@@ -559,6 +559,8 @@ public partial class MainWindow
             : "Einzelbenutzer-Vault speichern";
         EditorManageVaultAccessButton.IsEnabled = keysLoaded && existingDefinition;
         EditorAuditVaultButton.IsEnabled = vaultExists;
+        EditorAuditVaultButton.Content = IsEditorGroupVault ? "Gruppen-Vault prüfen" : "Vault / Recovery prüfen";
+        EditorManageVaultAccessButton.Content = IsEditorGroupVault ? "Gruppenempfänger abgleichen" : "Mehrbenutzerzugriff";
 
         EditorWorkflowProfile.Text = profilesOk ? "✓ Profile" : "! Profile prüfen";
         EditorWorkflowValues.Text = fieldIssues.Length == 0 ? "✓ Pflichtfelder" : "! Pflichtfelder";
@@ -717,7 +719,12 @@ public partial class MainWindow
             var document = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options) ?? throw new InvalidDataException("Key-Vault ist leer.");
             ProjectKeyVaultPayload payload;
             var windowsIdentity = false;
-            if (document.Version == KeyVaultService.CertificateVersion)
+            if (IsEditorGroupVault)
+            {
+                payload = LoadEditorGroupKeys();
+                windowsIdentity = true;
+            }
+            else if (document.Version == KeyVaultService.CertificateVersion)
             {
                 var identities = loadEditorVaultIdentities();
                 try
@@ -745,7 +752,7 @@ public partial class MainWindow
             VerifyLoadedVaultPayload(payload);
             editorKeysPersisted = true;
             editorVaultVerified = true;
-            editorVaultVersion = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options)?.Version ?? 0;
+            editorVaultVersion = ReadVaultVersion(editorSourcePath);
             suppressEditorChanges = true;
             try
             {
@@ -759,7 +766,7 @@ public partial class MainWindow
                 RefreshInitialKeySets();
             }
             finally { suppressEditorChanges = false; }
-            EditorVaultStatus.Text = editorVaultVersion == KeyVaultService.CertificateVersion
+            EditorVaultStatus.Text = IsEditorGroupVault ? "Gruppen-Vault mit geprüftem Projekt-/Gruppenbezug entsperrt: " + path : editorVaultVersion == KeyVaultService.CertificateVersion
                 ? (windowsIdentity ? "Mehrbenutzer-Vault automatisch mit der persönlichen Windows-Identität entsperrt: " : "Mehrbenutzer-Vault über Recovery-Zugang entsperrt: ") + path
                 : editorVaultVersion >= KeyVaultService.CurrentVersion
                 ? "Vault v2 für diese Sitzung entsperrt: " + path
@@ -820,7 +827,11 @@ public partial class MainWindow
                 .Where(issue => issue.Code.StartsWith("PRODUCTIVE", StringComparison.Ordinal) || issue.Code.StartsWith("PROJECT_", StringComparison.Ordinal)).ToArray();
             if (issues.Length > 0) throw new InvalidDataException("Produktivdaten sind nicht vollständig:\n" + string.Join("\n", issues.Select(issue => $"{issue.Code}: {issue.Message}")));
             var path = ProjectKeyVault.GetPath(editorSourcePath);
-            if (editorVaultVersion >= KeyVaultService.CertificateVersion)
+            if (IsEditorGroupVault)
+            {
+                SaveEditorGroupKeys();
+            }
+            else if (editorVaultVersion >= KeyVaultService.CertificateVersion)
             {
                 var identities = loadEditorVaultIdentities();
                 try
@@ -869,6 +880,7 @@ public partial class MainWindow
     {
         try
         {
+            if (IsEditorGroupVault) { ReconcileEditorGroupVault(); return; }
             if (editorProject is null || editorLibrary is null || string.IsNullOrWhiteSpace(editorSourcePath)) throw new InvalidOperationException("Projekt bitte zuerst speichern und Schlüssel laden.");
             CaptureEditorControls();
             var issues = ProjectContractValidator.Validate(editorProject, editorLibrary, requireProductiveSecrets: true)
@@ -898,6 +910,7 @@ public partial class MainWindow
     {
         try
         {
+            if (IsEditorGroupVault) { AuditEditorGroupVault(); return; }
             if (editorProject is null || editorLibrary is null || string.IsNullOrWhiteSpace(editorSourcePath))
                 throw new InvalidOperationException("Gespeichertes Projekt bitte zuerst im Editor öffnen.");
             var path = ProjectKeyVault.GetPath(editorSourcePath);
@@ -936,6 +949,7 @@ public partial class MainWindow
                 if (!SaveEditorProject(saveAs: false)) return;
             CaptureEditorControls();
             if (!editorVaultVerified) throw new InvalidOperationException("Build gesperrt: Der aktuelle Vault wurde in dieser Sitzung noch nicht erfolgreich wieder geöffnet.");
+            if (IsEditorGroupVault) VerifyEditorGroupBuildAccess();
             if (editorProject.Project.Build.Contains("Mastering", StringComparer.OrdinalIgnoreCase) && !IsIndependentVaultBackupConfigured())
                 throw new InvalidOperationException("Mastering-Build gesperrt: Unter Einstellungen muss ein vom Projektordner unabhängiger Vault-Sicherungsort gewählt werden.");
             var recoveryBackup = CreateVerifiedVaultBackupIfConfigured();

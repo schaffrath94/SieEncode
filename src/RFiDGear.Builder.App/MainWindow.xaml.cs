@@ -627,12 +627,14 @@ public partial class MainWindow : Window
         secureOperationalSession = null;
         if (!entry.SecureOnDemand) return entry;
         var source = ProjectJson.Load(entry.SourcePath);
-        var identities = WindowsVaultIdentityService.List();
+        var identities = loadEditorVaultIdentities();
         try
         {
             if (identities.Count == 0)
                 throw new CryptographicException("Auf diesem Windows-Benutzer ist keine persönliche SieEncode-Identität vorhanden. Bitte das Projekt bearbeiten und unter ‚Mehrbenutzerzugriff‘ zuerst eine Identität anlegen oder freigeben lassen.");
-            var payload = ProjectKeyVault.LoadWithCertificates(ProjectKeyVault.GetPath(entry.SourcePath), identities.Select(identity => identity.Certificate));
+            var payload = source.Project.GroupVault is not null || ProjectGroupVault.IsGroupVaultFile(ProjectKeyVault.GetPath(entry.SourcePath))
+                ? ProjectGroupVault.Load(entry.SourcePath, source, GroupTrust(source), identities.Select(identity => identity.Certificate))
+                : ProjectKeyVault.LoadWithCertificates(ProjectKeyVault.GetPath(entry.SourcePath), identities.Select(identity => identity.Certificate));
             var hydrated = ProjectKeyVault.Apply(ProjectJson.WithoutProductiveSecrets(source), payload);
             var shells = TaskShellLibrary.Load(Path.Combine(AppContext.BaseDirectory, "assets", "task-shells"));
             secureOperationalSession = new SecureOperationalSessionService().Materialize(

@@ -1,6 +1,22 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Editor-/Stationsintegration fuer bestehende Gruppenprojekte umgesetzt: persoenlich
+entsperren, Schluesselupdates mit Sicherung, bestaetigter Empfaengerabgleich und
+normaler Integritaetsaudit. Stationspfad laedt ueber registrierten Gruppenstand.
+Erneute Zugriffspruefung vor Editorbuild invalidiert Sitzung bei Entzug. Katalog
+verhindert Altbuild-Fallback bei defektem/fehlendem Vault eines gebundenen Projekts.
+Interne Schutzstufe 4 ist kein neues Dateiformat; Gruppenformat bleibt Version 1.
+CI Exit 0, 68/68, CLI/WPF ohne Warnungen/Fehler;
+tmp/group-editor-integration-ci-verified.log. UI-Smoke Exit 0, 48 Checks/5 Szenarien;
+tmp/group-editor-integration-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Neuer synthetischer Test prueft Editor-Buttons, Schluessel-Roundtrip, Katalog,
+lokale sichere Stationsbereitstellung, Entzug/Bausperre und defekten-Vault-Fallback.
+Keine Reader-/Kartenoperation, keine echte Mehrbenutzerfreigabe.
+Naechste Schritte: gefuehrte Gruppenzuordnung/Erstellung und explizite Migration,
+separater Recovery-Bedienweg, Einrichtung/Sicherung privater Recovery-/Verwaltungs-
+schluessel; visuelle/native Abnahme und Vereinfachung des Gesamtworkflows.
+
 Stabile Projektidentitaet und typisierte Gruppen-Vault-Projektanbindung im Core:
 neue Entwuerfe erhalten ID, alte Projekte erst bei expliziter Zuordnung auf Kopie.
 ID/Bibliothek/Gruppe bleiben beim schluesselfreien Speichern und Anwenden von

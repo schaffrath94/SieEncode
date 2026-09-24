@@ -343,6 +343,7 @@ public partial class MainWindow
                 ProjectKeyVault.Load(vault, passphrase).ProductivePicc.Value != recoveryUpdatedKey)
                 throw new InvalidOperationException("Speichern nach Recovery verliert Schlüssel, Empfänger oder Recovery-Zugang.");
             checks.Add("Recovery-Sitzung ohne Identität: Editor-Speichern öffnet vorhandene Freigabe, erhält Empfänger und speichert den geänderten Schlüssel nach Passphrasebestätigung; Identitäts-/Recovery-Zugang danach erfolgreich.");
+            VerifyGroupVaultEditor(project, identityCertificate, checks);
         }
         finally
         {
