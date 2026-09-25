@@ -6,6 +6,37 @@ namespace RFiDGear.Builder.App;
 
 public partial class MainWindow
 {
+    private bool SaveEditorGroupCopy()
+    {
+        if (editorProject is null || string.IsNullOrWhiteSpace(editorSourcePath)) throw new InvalidOperationException("Gespeichertes Gruppenprojekt erforderlich.");
+        if (editorGroupRecovery) throw new InvalidOperationException("Zum Kopieren mit normalem Gruppenzugang entsperren. Recovery-Sitzungen erlauben keine operative Projektkopie.");
+        var name = TextEntryPrompt.Show(this, "Gruppenprojekt vollständig kopieren",
+            "Neuen eindeutigen Projekt-/Ordnernamen eingeben. Projekt und Vault werden gemeinsam mit neuer Projekt-ID kopiert. Bibliothek und Gruppe bleiben gleich; aktuelle zentrale Empfänger gelten. Offene Editor- und geladene Schlüsseländerungen werden in die Kopie übernommen. Originaldateien bleiben unverändert.", editorProject.Project.Name + " Kopie");
+        if (name is null) return false;
+        var result = CopyEditorGroupProject(name);
+        LoadEditor(ProjectJson.Load(result.ProjectPath), result.ProjectPath);
+        RefreshProjects();
+        SetStatus("Vollständige Gruppenprojektkopie mit neuer ID gespeichert. Zum Arbeiten erneut entsperren; Originaldateien bleiben unverändert.");
+        return true;
+    }
+
+    private GroupProjectCreationResult CopyEditorGroupProject(string name)
+    {
+        if (editorProject is null || editorLibrary is null || !IsEditorGroupVault || string.IsNullOrWhiteSpace(editorSourcePath) || editorGroupRecovery)
+            throw new InvalidOperationException("Gespeichertes Gruppenprojekt und normaler Gruppenzugang erforderlich.");
+        CaptureEditorControls();
+        var trust = GroupTrust(editorProject);
+        var current = trust.LoadOffline();
+        var identities = loadEditorVaultIdentities();
+        try
+        {
+            return GroupProjectCreation.CopyGroup(projectsDirectory, name, editorSourcePath, editorProjectRevision, editorVaultRevision,
+                trust, current.Checkpoint, identities.Select(i => i.Certificate), DateTimeOffset.UtcNow, editorLibrary,
+                editorProject, editorVaultPayload is null ? null : CreateVaultPayload());
+        }
+        finally { foreach (var identity in identities) identity.Certificate.Dispose(); }
+    }
+
     private void CreateGroupProject_Click(object sender, RoutedEventArgs e)
     {
         try

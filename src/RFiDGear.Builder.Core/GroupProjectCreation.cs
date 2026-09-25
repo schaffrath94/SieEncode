@@ -74,6 +74,29 @@ public static class GroupProjectCreation
         return Create(projectsDirectory, name, source, keys, trust, groupId, expectedPolicy, certificates, now, profiles);
     }
 
+    public static GroupProjectCreationResult CopyGroup(string projectsDirectory, string name, string sourcePath,
+        FileRevision expectedProject, FileRevision expectedVault, OfflineGroupTrustStore trust, GroupPolicyCheckpoint expectedPolicy,
+        IEnumerable<X509Certificate2> identities, DateTimeOffset now, ProfileLibrary? profiles = null,
+        ProjectDefinition? draft = null, ProjectKeyVaultPayload? editedKeys = null)
+    {
+        var path = Path.GetFullPath(sourcePath);
+        var vaultPath = ProjectKeyVault.GetPath(path);
+        using var projectStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var vaultStream = new FileStream(vaultPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var source = JsonSerializer.Deserialize<ProjectDefinition>(ReadSnapshot(projectStream, expectedProject, path), ProjectJson.Options)
+            ?? throw new InvalidDataException("Projektdefinition fehlt.");
+        _ = ReadSnapshot(vaultStream, expectedVault, vaultPath);
+        var binding = source.Project.GroupVault ?? throw new InvalidDataException("Quelle ist kein Gruppenprojekt.");
+        var certificates = identities.ToArray();
+        // Always authenticate the original using current normal membership, even when editor changes are supplied.
+        var originalKeys = ProjectGroupVault.Load(path, source, trust, certificates);
+        if (draft is not null && (draft.Project.Id != source.Project.Id || draft.Project.GroupVault != binding))
+            throw new CryptographicException("Editorentwurf passt nicht zur authentisierten Quelle. Keine stille Umzuordnung erlaubt.");
+        var copy = ProjectJson.WithoutAllSecrets(draft ?? source);
+        copy.Project.GroupVault = null;
+        return Create(projectsDirectory, name, copy, editedKeys ?? originalKeys, trust, binding.GroupId, expectedPolicy, certificates, now, profiles);
+    }
+
     private static byte[] ReadSnapshot(FileStream stream, FileRevision expected, string path)
     {
         if (stream.Length is <= 0 or > GroupVaultService.MaximumBytes) throw new InvalidDataException("Quelldatei ist leer oder zu groß.");

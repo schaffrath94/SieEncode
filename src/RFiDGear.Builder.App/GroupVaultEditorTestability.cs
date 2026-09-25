@@ -74,6 +74,8 @@ public partial class MainWindow
             secureOperationalSession?.Dispose(); secureOperationalSession = null;
         }
         trust.AcceptUpdate(OfflineGroupPolicyService.Sign(policy with { Revision = 2, People = [policy.People[0] with { Enabled = false }] }, root));
+        try { CopyEditorGroupProject("UI Revoked Copy"); throw new Exception("Revoked session could copy group project."); }
+        catch (CryptographicException) { }
         try { VerifyEditorGroupBuildAccess(); throw new Exception("Revoked group session retained build permission."); }
         catch (CryptographicException) { }
         if (editorVaultVerified || EditorBuildButton.IsEnabled) throw new Exception("Revocation did not relock editor build.");

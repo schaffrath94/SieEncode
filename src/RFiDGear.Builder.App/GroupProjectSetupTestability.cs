@@ -22,10 +22,19 @@ public partial class MainWindow
             var result = create.CreateSelected("UI Group New", null, true);
             LoadEditor(ProjectJson.Load(result.ProjectPath), result.ProjectPath);
             if (editorVaultVerified || editorVaultVersion != ProjectGroupVault.ProtectionLevel) throw new Exception("New group project not locked/classified.");
-            try { SaveEditorProject(saveAs: true); throw new Exception("Definition-only group Save As was allowed."); }
-            catch (InvalidOperationException) { }
+            var lockedCopy = CopyEditorGroupProject("UI Group Locked Copy");
+            if (lockedCopy.ProjectId == result.ProjectId) throw new Exception("Copy reused project identity.");
             EditorUnlockVaultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             if (!editorVaultVerified || editorProject!.Productive.PiccKey.Value != fixture.Productive.PiccKey.Value) throw new Exception("Created group project did not reopen with preserved keys.");
+            var changed = KeyVaultService.GenerateKey("DF_KEY_AES");
+            EditorProductivePiccKey.Text = changed;
+            var editedCopy = CopyEditorGroupProject("UI Group Edited Copy");
+            var copied = ProjectJson.Load(editedCopy.ProjectPath);
+            if (copied.Project.GroupVault != editorProject.Project.GroupVault || editedCopy.ProjectId == result.ProjectId ||
+                ProjectGroupVault.Load(editedCopy.ProjectPath, copied, GroupTrust(copied), [identity]).ProductivePicc.Value != changed ||
+                ConcurrentFileWriter.Capture(result.ProjectPath) != result.ProjectRevision ||
+                ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(result.ProjectPath)) != result.VaultRevision)
+                throw new Exception("Editor copy lost edits, changed binding or modified original files.");
         }
         finally { create.Close(); }
         var legacy = Path.Combine(projectsDirectory, "UI Legacy Source", "source.project.json");
@@ -47,5 +56,6 @@ public partial class MainWindow
         }
         finally { migration.Close(); }
         checks.Add("Gruppenprojekt-Assistent: bestätigte Neuanlage und passphrasengeschützte Altvault-Migration über Editorpfad, eigene IDs, gesperrtes Neuladen und Entsperren mit erhaltenen Schlüsseln; Originaldateien unverändert. Synthetisch.");
+        checks.Add("Gruppenprojektkopie: gesperrte Quelle mit erneuter Zugriffsprüfung und offene Schlüsseländerung als vollständige Kopie mit neuer ID übernommen; Gruppe und Originalhashes erhalten. Namensdialog separat visuell abzunehmen.");
     }
 }

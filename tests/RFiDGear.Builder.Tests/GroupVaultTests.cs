@@ -103,6 +103,23 @@ internal static class GroupVaultTests
             if (ProjectGroupVault.Load(created.ProjectPath, definition, trust, [alice]).ProductivePicc.Value != keys.ProductivePicc.Value ||
                 ProjectGroupVault.Load(created.ProjectPath, definition, trust, [recovery], true).ProductivePicc.Value != keys.ProductivePicc.Value)
                 throw new Exception("Published group project cannot reopen.");
+            var copied = GroupProjectCreation.CopyGroup(directory, "Group Copy", created.ProjectPath, created.ProjectRevision, created.VaultRevision,
+                trust, current.Checkpoint, [alice], now);
+            var copyDefinition = ProjectJson.Load(copied.ProjectPath);
+            if (copied.ProjectId == created.ProjectId || copyDefinition.Project.GroupVault != definition.Project.GroupVault ||
+                ProjectGroupVault.Load(copied.ProjectPath, copyDefinition, trust, [alice]).ProductivePicc.Value != keys.ProductivePicc.Value)
+                throw new Exception("Complete group copy lost identity separation, binding or keys.");
+            Reject(() => GroupProjectCreation.CopyGroup(directory, "Denied Copy", created.ProjectPath, created.ProjectRevision, created.VaultRevision, trust, current.Checkpoint, [bob], now));
+            Reject(() => GroupProjectCreation.CopyGroup(directory, "Recovery Copy", created.ProjectPath, created.ProjectRevision, created.VaultRevision, trust, current.Checkpoint, [recovery], now));
+            Reject(() => GroupProjectCreation.CopyGroup(directory, "Stale Copy", created.ProjectPath, FileRevision.Missing, created.VaultRevision, trust, current.Checkpoint, [alice], now));
+            var wrongDraft = ProjectJson.WithoutAllSecrets(definition); wrongDraft.Project.GroupVault = new(policy.LibraryId, "other");
+            Reject(() => GroupProjectCreation.CopyGroup(directory, "Rebound Copy", created.ProjectPath, created.ProjectRevision, created.VaultRevision,
+                trust, current.Checkpoint, [alice], now, draft: wrongDraft));
+            wrongDraft.Project.GroupVault = definition.Project.GroupVault; wrongDraft.Project.Id = Guid.NewGuid();
+            Reject(() => GroupProjectCreation.CopyGroup(directory, "Wrong ID Copy", created.ProjectPath, created.ProjectRevision, created.VaultRevision,
+                trust, current.Checkpoint, [alice], now, draft: wrongDraft));
+            if (ConcurrentFileWriter.Capture(created.ProjectPath) != created.ProjectRevision || ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(created.ProjectPath)) != created.VaultRevision)
+                throw new Exception("Group copy modified source files.");
             Reject(() => GroupProjectCreation.Create(directory, "New Group", source, keys, trust, "lokal", current.Checkpoint, [alice], now));
             Reject(() => GroupProjectCreation.Create(directory, "Denied", source, keys, trust, "lokal", current.Checkpoint, [bob], now));
             if (new ProjectCatalog().Scan(directory).Any(e => e.Name == "Denied")) throw new Exception("Failed project visible in catalog.");

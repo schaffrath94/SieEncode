@@ -21,7 +21,22 @@ und Originalvault bleiben unveraendert. Erwartete Dateifingerabdruecke werden
 geprueft, beide Originaldateien waehrend des Vorgangs unter Windows lesegesperrt
 gehalten. Offene Editor-/Schluesseländerungen sind vorher zu speichern/verwerfen.
 Die Migration ist keine Entfernung des alten Zugriffs und kopiert keine Builds.
-Bestehende Gruppenprojekte werden hier nicht still umgeordnet oder kopiert.
+Bestehende Gruppenprojekte werden hier nicht still umgeordnet; ihr eigener
+Speichern-unter-Weg erstellt eine vollstaendige Kopie wie unten beschrieben.
+
+### Vollstaendige Gruppenprojektkopie
+
+Speichern unter verlangt einen eindeutigen neuen Projekt-/Ordnernamen. Der Core
+prueft Originaldefinition und Vault anhand der geladenen Dateifingerabdruecke,
+haelt beide lesegesperrt und entschluesselt den originalen Vault unter der
+aktuellen normalen Gruppenberechtigung erneut. Recovery-Zugaenge sind hier
+ausgeschlossen. Ohne geladene Schluessel werden die authentisierten Originalkeys
+uebernommen; sonst koennen offene Editor-/Schluesseländerungen in die Kopie
+einfliessen. Entwurf-ID und Bibliotheks-/Gruppenbindung muessen exakt zur Quelle
+passen. Die Kopie erhaelt eine neue ID, einen neuen Vault-Inhaltsschluessel und
+die aktuellen zentralen Empfaenger derselben Gruppe. Zielname und Ausgabeordner
+richten sich nach der neuen Kopie. Originaldateien werden nicht veraendert.
+Der vorher vorlaeufig gesperrte Definitionskopierweg ist damit ersetzt.
 
 Die Veroeffentlichung ist bewusst mehrstufig: ein separater Arbeitsordner enthaelt
 zunaechst nur verschluesselte Vaultdaten und eine schluesselfreie definition.pending.
@@ -190,9 +205,8 @@ atomare Zweidateitransaktion. Die neue Gruppenprojekt-Erstellung/Altvault-Migrat
 veroeffentlicht eine gepruefte Kopie ueber den oben beschriebenen Arbeitsordner.
 Die Vollstaendigkeitspruefung erfolgt auf dem entschluesselten Stand, da eine
 gesperrte Definition bewusst keine Transport-/Produktivschluessel enthaelt.
-Das bisherige reine Definitions-"Speichern unter" ist fuer Gruppenprojekte
-vorlaeufig gesperrt: vollstaendiges Kopieren bestehender Gruppenprojekte mit
-neuer ID bleibt umzusetzen. Einzel-/bisherige Mehrbenutzerprojekte behalten ihren
+"Speichern unter" kopiert Gruppenprojekte vollstaendig mit neuer ID und
+authentisierter Quelle. Einzel-/bisherige Mehrbenutzerprojekte behalten ihren
 Speichern-unter-Weg. Noch keine neue Release-Freigabe.
 
 ## Kontrollierter Empfaengerabgleich (Core)

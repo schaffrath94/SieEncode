@@ -1,6 +1,26 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Vollstaendiges Speichern unter fuer Gruppenprojekte umgesetzt (2026-09-25):
+neuer Projekt-/Ordnername, frische authentisierte ID und frischer Vault;
+Bibliothek/Gruppe bleiben gleich, aktuelle zentrale Empfaenger werden verwendet.
+Originaldateien werden per erwartetem Hash geprueft und lesegesperrt gehalten.
+Normaler Zugriff wird erneut am Originalvault geprueft, auch bei geladenen
+Editor-Schluesseln. Gesperrte Quelle nutzt Originalkeys; offene Editor-/geladene
+Schluesseländerungen koennen in die Kopie einfliessen. Entwurf-ID/Bindung muessen
+zur Quelle passen. Recovery-Sitzung, entzogener Zugang und stille Umzuordnung
+sind gesperrt. Die vorherige temporaere Save-As-Sperre ist ersetzt.
+CI Exit 0, 69/69, CLI/WPF ohne Warnungen/Fehler;
+tmp/group-project-copy-verified-ci.log. UI-Smoke Exit 0, 54 Checks/5 Szenarien,
+stderr leer; tmp/group-project-copy-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Neue Negativtests: unberechtigte Identitaet/Recovery, falscher Dateistand,
+Entwurfs-ID und Gruppenbindung; UI prueft gesperrte Quelle, offene Keyaenderung,
+erhaltene Originalhashes sowie Kopiersperre nach importiertem Entzug.
+Namensdialog noch nicht visuell bedient. Naechster Schritt: weitere Migrations-
+und Namens-/Ausgabeziel-Konfliktfaelle, danach integrierte Einrichtung/Gesamtabnahme.
+Native Dialoge/echte Windows-Recovery-Persistenz/Zweitbenutzer weiterhin offen.
+Ziel aktiv, Release unveraendert.
+
 Gefuehrte Gruppenprojekt-Erstellung und explizite Altvault-Migration als neue
 Projektkopie umgesetzt (2026-09-25). Editor waehlt registrierte Bibliothek/Gruppe,
 neuen eindeutigen Namen und bestaetigt Kopierumfang/alte Zugriffsmoeglichkeiten.

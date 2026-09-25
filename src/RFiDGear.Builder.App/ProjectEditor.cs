@@ -629,7 +629,7 @@ public partial class MainWindow
 
     private bool SaveEditorProject(bool saveAs)
     {
-        if (saveAs && IsEditorGroupVault) throw new InvalidOperationException("Gruppenprojekte benötigen eine vollständige Kopie mit neu gebundenem Vault. Dieser Kopierweg ist noch nicht verfügbar. Normales Speichern aktualisiert das vorhandene Projekt.");
+        if (saveAs && IsEditorGroupVault) return SaveEditorGroupCopy();
         if (editorProject is null || editorLibrary is null) throw new InvalidOperationException("Kein Projekt im Editor geöffnet.");
         CaptureEditorControls();
         ProjectDraftFactory.Synchronize(editorProject, editorLibrary);
