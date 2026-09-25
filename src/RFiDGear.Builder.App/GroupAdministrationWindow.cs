@@ -38,6 +38,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         localDirectory = Path.Combine(Path.GetFullPath(localTrustDirectory), "Administrations");
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(Note("Hier verwalten Sie Bibliotheken, deren privater Verwaltungsschlüssel auf diesem Windows-Benutzer liegt. Registrierung allein verleiht keine Verwaltungsrechte. Sichern Sie neue Verwaltungsschlüssel separat über ‚Privaten Schlüssel sichern‘."));
+        root.Children.Add(Note("Einrichtung: 1. Neue Verwaltung erstellen und privaten Schlüssel sichern. 2. Personen mit öffentlichen Geräte-Einladungen aufnehmen, Gruppen zuordnen und signiert speichern. Auch die eigene normale Identität benötigt eine Mitgliedschaft. 3. Separate Recovery-Identität einrichten und freigeben. 4. Öffentlichen Stand an Kollegen verteilen. Eigene signierte Änderungen werden lokal übernommen; fremde Registrierungen benötigen weiterhin einen unabhängig bestätigten Fingerabdruck."));
         root.Children.Add(libraries);
         libraries.SelectionChanged += (_, _) =>
         {
@@ -52,11 +53,12 @@ internal sealed partial class GroupAdministrationWindow : Window
         };
         root.Children.Add(Action("Neue Verwaltung erstellen", () =>
         {
-            if (ConfirmDiscard() && MessageBox.Show(this, "Eine neue unabhängige Bibliothek mit eigenem Verwaltungsschlüssel erstellen? Für bestehende Teams deren Registrierung verwenden. Den neuen Schlüssel anschließend über ‚Privaten Schlüssel sichern‘ separat sichern.", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            if (ConfirmDiscard() && MessageBox.Show(this, "Eine neue unabhängige Bibliothek mit eigenem Verwaltungsschlüssel erstellen und auf diesem Windows-Benutzer registrieren? Für bestehende Teams deren Registrierung verwenden. Den neuen Schlüssel anschließend über ‚Privaten Schlüssel sichern‘ separat sichern.", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 CreateAdministration();
         }));
         root.Children.Add(Action("Privaten Schlüssel sichern", ShowPrivateBackup));
         root.Children.Add(Action("Privaten Schlüssel wiederherstellen", ShowPrivateRestore));
+        root.Children.Add(Action("Eigene Verwaltung lokal registrieren", ShowOwnRegistration));
         AddPeopleControls(root);
         grid.Columns.Add(new DataGridTextColumn { Header = "Gruppe", Binding = new Binding(nameof(GroupAdministrationDraft.Name)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
         grid.Columns.Add(new DataGridTextColumn { Header = "Stabile Gruppen-ID", Binding = new Binding(nameof(GroupAdministrationDraft.Id)), IsReadOnly = true, Width = new DataGridLength(2, DataGridLengthUnitType.Star) });
@@ -92,7 +94,9 @@ internal sealed partial class GroupAdministrationWindow : Window
     internal Guid CreateAdministration()
     {
         var id = Guid.NewGuid();
-        Store(id).Create();
+        var package = Store(id).Create();
+        try { SynchronizeOwnRegistration(package, allowInitialEnrollment: true); }
+        catch (Exception exception) { throw new InvalidOperationException("Verwaltung wurde erstellt, lokale Registrierung aber nicht abgeschlossen. Vorhandene Verwaltung laden und lokal registrieren; keinen Ersatzschlüssel erzeugen.", exception); }
         dirty = false; RefreshLibraries(); LoadAdministration(id);
         return id;
     }
@@ -102,6 +106,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         var candidate = Store(id);
         var package = candidate.ExportPublic();
         var verified = GroupEnrollmentPackages.Validate(package);
+        var registrationStatus = SynchronizeOwnRegistration(package);
         LoadPeople(verified.Policy);
         groups.Clear();
         foreach (var group in verified.Policy.Groups)
@@ -115,7 +120,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         RefreshMemberLabels();
         RefreshDelegations(verified.Policy);
         RefreshRecovery(verified.Policy);
-        status.Text = $"Bibliothek: {id:D}\nGespeicherte Revision: {checkpoint.Revision}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}";
+        status.Text = $"Bibliothek: {id:D}\nGespeicherte Revision: {checkpoint.Revision}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}\n{registrationStatus}";
     }
 
     internal void SaveGroups()
@@ -125,7 +130,9 @@ internal sealed partial class GroupAdministrationWindow : Window
         if (!personMode && people.Count > 0) throw new InvalidOperationException("Bitte zuerst die bisherigen Gruppen auf Personen umstellen.");
         var package = personMode ? store!.UpdateDirectory(PersonRows(), groupRows, checkpoint!) : store!.UpdateGroups(groupRows, checkpoint!);
         checkpoint = GroupEnrollmentPackages.Validate(package).Checkpoint;
-        dirty = false; status.Text = $"Bibliothek: {package.LibraryId:D} · Revision {checkpoint.Revision} signiert gespeichert. Zum Weitergeben den gespeicherten Stand exportieren.";
+        dirty = false;
+        try { status.Text = $"Bibliothek: {package.LibraryId:D} · Revision {checkpoint.Revision} signiert gespeichert.\n{SynchronizeOwnRegistration(package)}"; }
+        catch (Exception exception) { throw new InvalidOperationException("Signierte Änderung gespeichert, lokale Registrierung aber nicht aktualisiert. Verwaltung neu laden; vorhandenes Vertrauen wird nicht ersetzt.", exception); }
         RefreshMemberLabels();
     }
 

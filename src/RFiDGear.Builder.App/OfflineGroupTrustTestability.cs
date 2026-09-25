@@ -53,6 +53,9 @@ public partial class MainWindow
             {
                 VerifyAutomationContract(administrationWindow);
                 var uiLibrary = administrationWindow.CreateAdministration();
+                var ownTrustPath = Path.Combine(uiDirectory, uiLibrary.ToString("N") + ".trust.bin");
+                var ownTrust = new OfflineGroupTrustStore(ownTrustPath, uiLibrary, new WindowsGroupTrustProtection(uiLibrary));
+                if (ownTrust.LoadOffline().Policy.LibraryId != uiLibrary) throw new Exception("New authority was not locally registered.");
                 var uiGrid = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.DataGrid>().Single(table => table.Columns.Any(column => Equals(column.Header, "Gruppe")));
                 var add = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.Button>().Single(button => Equals(button.Content, "Gruppe hinzufügen"));
                 add.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
@@ -103,12 +106,39 @@ public partial class MainWindow
                 if (GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Policy.RecoveryDevices.Single().Enabled) throw new Exception("Recovery revocation not saved.");
                 administrationWindow.SetRecoveryEnabled(recoveryInvitation.Fingerprint, true);
                 if (!GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Policy.RecoveryDevices.Single().Enabled) throw new Exception("Recovery reactivation not saved.");
+                if (ownTrust.LoadOffline().Checkpoint != GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Checkpoint)
+                    throw new Exception("Own signed changes not adopted locally.");
+                var ownBytes = File.ReadAllBytes(ownTrustPath);
+                administrationWindow.LoadAdministration(uiLibrary);
+                if (!ownBytes.SequenceEqual(File.ReadAllBytes(ownTrustPath))) throw new Exception("Unchanged authority unnecessarily rewrote trust.");
+                try { administrationWindow.RegisterOwnAdministration(false); throw new Exception("Unconfirmed registration accepted."); }
+                catch (InvalidDataException) { }
+                var removedTrust = ownTrustPath + ".synthetic-backup";
+                File.Move(ownTrustPath, removedTrust);
+                administrationWindow.LoadAdministration(uiLibrary);
+                if (File.Exists(ownTrustPath)) throw new Exception("Existing authority silently re-enrolled missing trust.");
+                administrationWindow.RegisterOwnAdministration(true);
+                if (ownTrust.LoadOffline().Checkpoint != GroupEnrollmentPackages.Validate(uiStore.ExportPublic()).Checkpoint) throw new Exception("Confirmed own registration failed.");
+                var registeredBytes = File.ReadAllBytes(ownTrustPath);
+                File.Delete(ownTrustPath);
+                using (var wrongRoot = RSA.Create(3072))
+                {
+                    var wrongKey = wrongRoot.ExportSubjectPublicKeyInfo();
+                    ownTrust.Enroll(wrongKey, OfflineGroupTrustStore.AdministratorFingerprint(wrongKey),
+                        OfflineGroupPolicyService.Sign(new(OfflineGroupPolicyService.Format, 1, uiLibrary, 1, []), wrongRoot));
+                    var wrongBytes = File.ReadAllBytes(ownTrustPath);
+                    Reject(() => administrationWindow.LoadAdministration(uiLibrary));
+                    Reject(() => administrationWindow.RegisterOwnAdministration(true));
+                    if (!wrongBytes.SequenceEqual(File.ReadAllBytes(ownTrustPath))) throw new Exception("Existing different trust anchor replaced.");
+                }
+                File.WriteAllBytes(ownTrustPath, registeredBytes);
                 VerifyPrivateBackupDialog(directory, uiLibrary, uiStore, checks);
                 VerifyRecoverySetupDialog(directory, uiLibrary, uiStore, checks);
             }
             finally { administrationWindow.Close(); }
             checks.Add("Gruppen-Verwaltungsdialog: Person mit zwei Geräten, signiertes Verzeichnis, Vollmacht nur mit bestätigtem Fingerabdruck und Gruppe; delegierte Änderung über Transport geprüft; veralteter Entwurf abgewiesen.");
             checks.Add("Zentrale Recovery-Freigabe: unabhängiger Fingerabdruck erforderlich, normales Geräte-Schlüsselmaterial und doppelte Einträge abgewiesen; separater Zugang signiert gespeichert, entzogen und erneut aktiviert. Synthetische Zertifikate ohne Storeeingriff.");
+            checks.Add("Hauptverwaltung: neue eigene Bibliothek lokal registriert, eigene signierte Änderungen übernommen, unveränderter Stand nicht neu geschrieben; fehlende Registrierung nur bestätigt erneuert, fremder Vertrauensanker nicht ersetzt. Isoliertes Windows-DPAPI-Testverzeichnis.");
             var key = administrator.ExportSubjectPublicKeyInfo();
             var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 1, library, 1, []);
             var signed = OfflineGroupPolicyService.Sign(policy, administrator);

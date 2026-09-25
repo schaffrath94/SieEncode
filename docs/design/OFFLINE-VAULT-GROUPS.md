@@ -3,6 +3,35 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Einrichtung auf dem Hauptverwaltungsplatz
+
+Die bestaetigte Aktion fuer eine neue Verwaltung erzeugt den privaten
+Signierschluessel und registriert dessen eigenen oeffentlichen Stand lokal.
+Hier stammt der Vertrauensanker direkt aus dem gerade selbst erzeugten lokalen
+Signierspeicher, nicht aus einer fremden Datei. Neue Gruppenmitglieder oder
+Entschluesselungsrechte entstehen dadurch nicht. Ein eigener normaler Zugang
+benoetigt weiterhin eine Person mit Geraeteeinladung und Gruppenmitgliedschaft.
+Die Oberflaeche nennt die Schritte Schluesselsicherung, Personen/Gruppen,
+separate Recovery-Einrichtung und Verteilung des oeffentlichen Standes.
+
+Beim Speichern und Neuladen einer lokal privat verwalteten Bibliothek werden
+eigene signierte Aenderungen in die vorhandene lokale Registrierung uebernommen.
+Die vorhandene Pruefung von angeheftetem Verwaltungsschluessel, Signatur und
+monotonem Versionsstand gilt unveraendert; ein anderer Vertrauensanker wird nie
+ersetzt. Unveraenderte Staende werden nicht neu geschrieben. Fehlt bei einer
+aelteren Verwaltung die Registrierung, erfordert ihre Einrichtung eine eigene
+bestaetigte Aktion. Ein gewoehnliches Laden registriert sie nicht still neu.
+
+Private Verwaltung und lokale Registrierung sind getrennte Dateien. Falls die
+lokale Uebernahme nach erfolgreichem Signieren fehlschlaegt, ist die signierte
+Aenderung bereits gespeichert; die Meldung nennt diesen Teilzustand. Erneutes
+Laden uebernimmt den Stand nach erfolgreicher Pruefung. Bei fehlgeschlagener
+Erstregistrierung bleibt der erzeugte private Schluessel erhalten; Dialog erneut
+oeffnen und die vorhandene Verwaltung registrieren statt eine neue zu erzeugen.
+Andere Benutzer muessen den exportierten oeffentlichen Stand weiterhin importieren;
+die eigene lokale Uebernahme ist keine verteilte Synchronisierung. Fremde
+Registrierungen benoetigen nach wie vor unabhaengige Fingerabdruckbestaetigung.
+
 ## Gruppenprojekt erstellen und Altvault als neue Kopie migrieren
 
 Der Editor bietet einen eigenen Assistenten fuer registrierte Bibliothek,

@@ -1,6 +1,28 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Hauptverwalter-Ersteinrichtung vereinfacht (2026-09-25): bestaetigtes Erzeugen
+einer neuen privaten Verwaltung registriert den selbst erzeugten Vertrauensanker
+lokal. Einrichtungstext fuehrt durch private Sicherung, Personen/Gruppen, separate
+Recovery und oeffentliche Verteilung. Keine automatische Gruppenmitgliedschaft.
+Eigene signierte Aenderungen werden beim Speichern/Neuladen in vorhandenes
+lokales Vertrauen uebernommen, nach denselben Anker-/Signatur-/Versionspruefungen.
+Kein Schreiben bei unveraendertem Stand. Bei fehlender Registrierung einer
+bestehenden Verwaltung ist eine ausdrueckliche eigene Bestaetigung erforderlich;
+fremde Anker werden auch dann nicht ersetzt. Fremde Bibliotheken behalten den
+unabhaengigen Fingerabdruckweg. Signierspeicher/Trust sind keine gemeinsame
+Transaktion; Meldungen/Doku erklaeren gespeicherte Teilzustaende und Wiederaufnahme.
+WPF-Build Exit 0, 0 Warnungen/Fehler; tmp/group-own-registration-build.log.
+UI-Smoke Exit 0, 55 Checks/5 Szenarien, stderr leer;
+tmp/group-own-registration-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Neue isolierte DPAPI-Tests fuer initiale Registrierung, Uebernahme eigener
+Aenderungen, unveraendertes Dateihash bei Neuladen, fehlende Registrierung ohne
+stille Neuanlage und abgewiesenen fremden Anker ohne Ueberschreiben.
+Core unveraendert; letzte komplette Regression 69/69 aus group-migration-conflicts-ci.
+Naechster Schritt: integrierten Gesamtworkflow und visuelle Bedienbarkeit der
+neuen Dialoge abnehmen, offene Fehler/Anleitungsbrueche beheben. Echte Windows-
+Recovery-Persistenz und Zweitbenutzer bleiben separat offen. Ziel aktiv.
+
 Namens-/Ausgabezielkonflikte und weitere Altvault-Migrationswege geprueft
 (2026-09-25). Gruppenanlage/Kopie sperrt jetzt auch katalogisierte gleiche Namen
 (case-insensitive) und kanonisch gleiche Ausgabeziele ohne vorhandenen Buildordner.
