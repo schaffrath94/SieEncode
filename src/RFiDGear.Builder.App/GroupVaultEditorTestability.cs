@@ -23,6 +23,7 @@ public partial class MainWindow
         var trust = new OfflineGroupTrustStore(Path.Combine(localGroupTrustDirectory, library.ToString("N") + ".trust.bin"), library, new WindowsGroupTrustProtection(library));
         var key = root.ExportSubjectPublicKeyInfo();
         trust.Enroll(key, OfflineGroupTrustStore.AdministratorFingerprint(key), OfflineGroupPolicyService.Sign(policy, root));
+        VerifyGroupProjectSetupDialog(fixture, library, identity, checks);
         var project = ProjectGroupVault.Bind(fixture, trust, "local");
         project.Project.Name = "Synthetic Group Editor";
         var path = Path.Combine(projectsDirectory, "group-editor.project.json");

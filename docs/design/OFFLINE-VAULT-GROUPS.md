@@ -3,6 +3,37 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+## Gruppenprojekt erstellen und Altvault als neue Kopie migrieren
+
+Der Editor bietet einen eigenen Assistenten fuer registrierte Bibliothek,
+Gruppe und eindeutigen neuen Projektnamen. Die zentrale Richtlinie liefert
+Empfaenger und separate Recovery-Zugaenge; der Ersteller benoetigt normalen
+Gruppenzugang. Der Assistent erstellt eine neue Kopie mit frischer authentisierter
+Projekt-ID. Projektschluessel bleiben erhalten, Gruppenzuordnung wird explizit
+gesetzt; die schluesselfreie Definition wird neben dem geprueften Gruppen-Vault
+gespeichert. Ausgabeordner der Kopie ist der neue Projektordner im Projektstamm.
+Vorhandene Zielordner werden niemals wiederverwendet/ueberschrieben.
+
+Bei einem vorhandenen alten Vault wird ausschliesslich dessen gespeicherter
+Stand authentisiert entschluesselt (persoenliches Zertifikat oder eingegebene
+Passphrase, einschliesslich des bisherigen Recoverywegs). Originaldefinition
+und Originalvault bleiben unveraendert. Erwartete Dateifingerabdruecke werden
+geprueft, beide Originaldateien waehrend des Vorgangs unter Windows lesegesperrt
+gehalten. Offene Editor-/Schluesseländerungen sind vorher zu speichern/verwerfen.
+Die Migration ist keine Entfernung des alten Zugriffs und kopiert keine Builds.
+Bestehende Gruppenprojekte werden hier nicht still umgeordnet oder kopiert.
+
+Die Veroeffentlichung ist bewusst mehrstufig: ein separater Arbeitsordner enthaelt
+zunaechst nur verschluesselte Vaultdaten und eine schluesselfreie definition.pending.
+Nach Entschluesselungspruefung und Richtlinienvergleich wird der Ordner ohne
+Zusammenfuehren an den Zielort verschoben. Erst die abschliessende Umbenennung
+der pending-Datei zur Projekt-JSON macht das Projekt im Katalog sichtbar.
+Ein Fehler/Absturz davor kann Arbeitsdateien oder einen belegten Zielordner
+zuruecklassen, aber keine gelistete unvollstaendige Definition. Es wird nichts
+pauschal geloescht; fuer einen neuen Versuch einen neuen Namen verwenden.
+Dies ist keine verteilte Transaktion mit Cloud-Synchronisation/Richtliniendatei;
+spaetere Entzuege werden beim regulaeren Entsperren erneut geprueft.
+
 ## Separate Recovery-Identitaet einrichten
 
 In Einstellungen eine registrierte Bibliothek auswaehlen, Namen und zweimal eine
@@ -129,9 +160,9 @@ Ein Build aus entsperrter Editorsitzung prueft den Zugang nochmals; nach bekannt
 Entzug wird die Sitzungsverifikation verworfen und der Build gesperrt.
 
 App-Smoke: tatsaechliche Entsperr-/Speicher-Buttons, lokale Stationsbereitstellung
-ohne Readeraufruf, Entzug und gesperrter Altbuild-Fallback. Noch offen sind gefuehrte
-Erstellung/Migration, Recovery-Schluesselverwaltung und deren eigener Editorweg,
-native Dialogabnahme sowie echte Mehrbenutzer-/Rechnerabnahme.
+ohne Readeraufruf, Entzug und gesperrter Altbuild-Fallback. Gefuehrte Erstellung,
+Altvault-Migration und separater Recoveryweg sind in den neueren Abschnitten
+beschrieben. Native Dialogabnahme und echte Mehrbenutzer-/Rechnerabnahme bleiben offen.
 
 ## Projektidentitaet und typisierte Schluesselspeicherung (Core)
 
@@ -155,9 +186,14 @@ zuvor der separate kontrollierte Abgleich erfolgt ist.
 
 Schluesselfreie Projektkopien und ProjectKeyVault.Apply erhalten ID/Zuordnung.
 Die Core-API schreibt den Vault und die Projektdatei bewusst nicht als angeblich
-atomare Zweidateitransaktion. Editor muss Erstellung/Migration, Speichern unter,
-Entsperren und Recovery konsistent orchestrieren; diese Oberflaechenanbindung und
-Altvault-Migration sind noch offen. Noch keine neue Release-Freigabe.
+atomare Zweidateitransaktion. Die neue Gruppenprojekt-Erstellung/Altvault-Migration
+veroeffentlicht eine gepruefte Kopie ueber den oben beschriebenen Arbeitsordner.
+Die Vollstaendigkeitspruefung erfolgt auf dem entschluesselten Stand, da eine
+gesperrte Definition bewusst keine Transport-/Produktivschluessel enthaelt.
+Das bisherige reine Definitions-"Speichern unter" ist fuer Gruppenprojekte
+vorlaeufig gesperrt: vollstaendiges Kopieren bestehender Gruppenprojekte mit
+neuer ID bleibt umzusetzen. Einzel-/bisherige Mehrbenutzerprojekte behalten ihren
+Speichern-unter-Weg. Noch keine neue Release-Freigabe.
 
 ## Kontrollierter Empfaengerabgleich (Core)
 

@@ -1,6 +1,37 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Gefuehrte Gruppenprojekt-Erstellung und explizite Altvault-Migration als neue
+Projektkopie umgesetzt (2026-09-25). Editor waehlt registrierte Bibliothek/Gruppe,
+neuen eindeutigen Namen und bestaetigt Kopierumfang/alte Zugriffsmoeglichkeiten.
+Aktive normale Mitgliedschaft und Recovery-Empfaenger werden im Core erzwungen.
+Neue Projekt-ID, frischer Vault, Originaldateien unveraendert; bestehende
+Zielordner werden nicht ueberschrieben. Quelle wird anhand erwarteter Hashes
+geprueft und waehrend der Migration unter Windows lesegesperrt gehalten.
+Arbeitsordner enthaelt nur verschluesselten Vault und schluesselfreie pending-
+Definition. Erst die abschliessende Umbenennung veroeffentlicht im Katalog.
+Fehler koennen nicht gelistete Arbeitsreste/belegte Zielordner hinterlassen;
+keine pauschale Loeschung und keine behauptete verteilte/Cloud-Transaktion.
+
+Erster UI-Lauf tmp/group-project-setup-smoke scheiterte an echter Fehlvalidierung:
+gesperrte Quelle enthaelt absichtlich keine Transportkeys. Vollstaendige Pruefung
+erfolgt jetzt nach Entschluesselung, vor jedem Veroeffentlichen. Migrationsabsicht
+bleibt an geladene Vaultrevision gebunden (kein Fallback bei geloeschter Quelle).
+Reines Definitions-Speichern-unter fuer Gruppenprojekte vorlaeufig gesperrt;
+vollstaendige Gruppenprojektkopie mit neuer Bindung muss noch implementiert werden.
+Altprojekt-Funktionen bleiben erhalten. Neue Gruppe wird nach Erfolg gesperrt
+geladen und ueber vorhandenen normalen Entsperrweg geoeffnet.
+
+CI Exit 0, 69/69 und CLI/WPF ohne Warnungen/Fehler;
+tmp/group-project-creation-verified-ci.log. UI-Smoke Exit 0, 53 Checks/5 Szenarien,
+stderr leer; tmp/group-project-setup-verified-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Neue Nachweise: Originalhashes, neue ID, verweigerter Ersteller, falsche Passphrase,
+veralteter Dateistand, geaenderte Richtlinie und unsichtbare Fehlversuche im Katalog;
+Editor-Neuanlage/Migration und anschliessendes Entsperren mit erhaltenem PICC-Key.
+Naechster Schritt: vollstaendige Kopie bestehender Gruppenprojekte/Save As,
+weitere Migrationswege und Gesamtabnahme. Native Dialoge/echte Windows-Recovery-
+Persistenz und Zweitbenutzerabnahme bleiben offen. Ziel aktiv, Release unveraendert.
+
 Gefuehrte separate Recovery-Identitaet integriert (2026-09-24): Einstellungen
 bieten registrierte Bibliotheksauswahl, neue private Sicherung mit zweifacher
 Passphrase/Bestaetigung, geprueftes Dateiruecklesen und Wiederherstellung,

@@ -80,6 +80,55 @@ internal static class GroupVaultTests
         finally { CryptographicOperations.ZeroMemory(oldKey); CryptographicOperations.ZeroMemory(newKey); }
         VerifyReconciliation(vault, policy, nextPolicy, root, project, alice, bob, recovery, now, payload);
         VerifyProjectBinding(policy, root, alice, bob, recovery, now);
+        VerifyProjectCreation(policy, root, alice, bob, recovery, now);
+    }
+
+    private static void VerifyProjectCreation(OfflineGroupPolicy policy, RSA root, X509Certificate2 alice, X509Certificate2 bob, X509Certificate2 recovery, DateTimeOffset now)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "SieEncode-group-creation-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var trust = new OfflineGroupTrustStore(Path.Combine(directory, "trust.bin"), policy.LibraryId, new OfflineGroupTrustTests.TestProtection());
+            var publicKey = root.ExportSubjectPublicKeyInfo();
+            var current = trust.Enroll(publicKey, OfflineGroupTrustStore.AdministratorFingerprint(publicKey), OfflineGroupPolicyService.Sign(policy, root));
+            var source = new ProjectDefinition(); source.Project.Name = "Original"; source.Project.Id = Guid.NewGuid(); source.Profiles.Base = "synthetic";
+            source.Productive.PiccKey = new() { Type = "DF_KEY_AES", Value = new string('9', 32) };
+            var keys = ProjectKeyVault.FromProject(source);
+            var before = JsonSerializer.Serialize(source, ProjectJson.Options);
+            var created = GroupProjectCreation.Create(directory, "New Group", source, keys, trust, "lokal", current.Checkpoint, [alice], now);
+            var definition = ProjectJson.Load(created.ProjectPath);
+            if (created.ProjectId == source.Project.Id || created.ProjectId != definition.Project.Id || definition.Productive.PiccKey.Value != "" ||
+                JsonSerializer.Serialize(source, ProjectJson.Options) != before) throw new Exception("Group creation changed source or leaked secrets/reused ID.");
+            if (ProjectGroupVault.Load(created.ProjectPath, definition, trust, [alice]).ProductivePicc.Value != keys.ProductivePicc.Value ||
+                ProjectGroupVault.Load(created.ProjectPath, definition, trust, [recovery], true).ProductivePicc.Value != keys.ProductivePicc.Value)
+                throw new Exception("Published group project cannot reopen.");
+            Reject(() => GroupProjectCreation.Create(directory, "New Group", source, keys, trust, "lokal", current.Checkpoint, [alice], now));
+            Reject(() => GroupProjectCreation.Create(directory, "Denied", source, keys, trust, "lokal", current.Checkpoint, [bob], now));
+            if (new ProjectCatalog().Scan(directory).Any(e => e.Name == "Denied")) throw new Exception("Failed project visible in catalog.");
+            Reject(() => GroupProjectCreation.Create(directory, "../escape", source, keys, trust, "lokal", current.Checkpoint, [alice], now));
+            var legacyPath = Path.Combine(directory, "Original", "original.project.json");
+            ProjectJson.Save(legacyPath, ProjectJson.WithoutAllSecrets(source));
+            var legacyVault = ProjectKeyVault.GetPath(legacyPath);
+            const string phrase = "Synthetic legacy migration password 2026";
+            File.WriteAllText(legacyVault, JsonSerializer.Serialize(KeyVaultService.Protect(JsonSerializer.Serialize(keys), phrase), ProjectJson.Options));
+            var projectRevision = ConcurrentFileWriter.Capture(legacyPath); var vaultRevision = ConcurrentFileWriter.Capture(legacyVault);
+            Reject(() => GroupProjectCreation.MigrateLegacy(directory, "Wrong Password", legacyPath, projectRevision, vaultRevision, trust, "lokal", current.Checkpoint, [alice], now, "wrong"));
+            Reject(() => GroupProjectCreation.MigrateLegacy(directory, "Stale", legacyPath, FileRevision.Missing, vaultRevision, trust, "lokal", current.Checkpoint, [alice], now, phrase));
+            var migrated = GroupProjectCreation.MigrateLegacy(directory, "Migrated", legacyPath, projectRevision, vaultRevision, trust, "lokal", current.Checkpoint, [alice], now, phrase);
+            if (ConcurrentFileWriter.Capture(legacyPath) != projectRevision || ConcurrentFileWriter.Capture(legacyVault) != vaultRevision ||
+                ProjectGroupVault.Load(migrated.ProjectPath, ProjectJson.Load(migrated.ProjectPath), trust, [alice]).ProductivePicc.Value != keys.ProductivePicc.Value)
+                throw new Exception("Migration changed originals or lost keys.");
+            IEnumerable<X509Certificate2> ChangePolicyDuringCreation()
+            {
+                trust.AcceptUpdate(OfflineGroupPolicyService.Sign(policy with { Revision = policy.Revision + 1 }, root));
+                yield return alice;
+            }
+            Reject(() => GroupProjectCreation.Create(directory, "Changed Policy", source, keys, trust, "lokal", current.Checkpoint, ChangePolicyDuringCreation(), now));
+            if (new ProjectCatalog().Scan(directory).Any(e => e.Name is "Changed Policy" or "Wrong Password" or "Stale"))
+                throw new Exception("Failed creation/migration appeared in catalog.");
+        }
+        finally { Directory.Delete(directory, true); }
     }
 
     private static void VerifyProjectBinding(OfflineGroupPolicy policy, RSA root, X509Certificate2 alice, X509Certificate2 bob,
