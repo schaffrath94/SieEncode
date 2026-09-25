@@ -94,7 +94,12 @@ internal static class GroupVaultTests
             var current = trust.Enroll(publicKey, OfflineGroupTrustStore.AdministratorFingerprint(publicKey), OfflineGroupPolicyService.Sign(policy, root));
             var source = new ProjectDefinition(); source.Project.Name = "Original"; source.Project.Id = Guid.NewGuid(); source.Profiles.Base = "synthetic";
             source.Productive.PiccKey = new() { Type = "DF_KEY_AES", Value = new string('9', 32) };
+            source.Transport.PiccKey = new() { Type = "DF_KEY_AES", Value = new string('2', 32) };
+            source.Transport.ApplicationKeys = new() { ["DF_KEY_AES"] = new string('3', 32), ["DF_KEY_3K3DES"] = new string('4', 48) };
+            source.Productive.ApplicationKeys = new() { ["A1B2C3"] = [new string('5', 32), new string('6', 32)] };
             var keys = ProjectKeyVault.FromProject(source);
+            keys.InitialKeySets.Add(new() { Id = "alternate", Name = "Synthetic alternate transport", PiccKey = new() { Type = "DF_KEY_3K3DES", Value = new string('7', 48) }, ApplicationKeys = new() { ["DF_KEY_AES"] = new string('8', 32) } });
+            ProjectKeyVault.Normalize(keys);
             var before = JsonSerializer.Serialize(source, ProjectJson.Options);
             var created = GroupProjectCreation.Create(directory, "New Group", source, keys, trust, "lokal", current.Checkpoint, [alice], now);
             var definition = ProjectJson.Load(created.ProjectPath);
@@ -136,6 +141,39 @@ internal static class GroupVaultTests
             if (ConcurrentFileWriter.Capture(legacyPath) != projectRevision || ConcurrentFileWriter.Capture(legacyVault) != vaultRevision ||
                 ProjectGroupVault.Load(migrated.ProjectPath, ProjectJson.Load(migrated.ProjectPath), trust, [alice]).ProductivePicc.Value != keys.ProductivePicc.Value)
                 throw new Exception("Migration changed originals or lost keys.");
+            void VerifyFullPayload(GroupProjectCreationResult result)
+            {
+                foreach (var useRecovery in new[] { false, true })
+                {
+                    var payload = ProjectGroupVault.Load(result.ProjectPath, ProjectJson.Load(result.ProjectPath), trust, [useRecovery ? recovery : alice], useRecovery);
+                    if (JsonSerializer.Serialize(payload, ProjectJson.Options) != JsonSerializer.Serialize(keys, ProjectJson.Options))
+                        throw new Exception("Migration/copy lost a transport set, selected set, productive application key or other payload field.");
+                }
+            }
+            VerifyFullPayload(created); VerifyFullPayload(copied); VerifyFullPayload(migrated);
+            File.WriteAllText(legacyVault, JsonSerializer.Serialize(CertificateVaultService.Protect(JsonSerializer.Serialize(keys), phrase, [(bob, "Legacy Bob")]), ProjectJson.Options));
+            var certificateRevision = ConcurrentFileWriter.Capture(legacyVault);
+            Reject(() => GroupProjectCreation.MigrateLegacy(directory, "No Legacy Identity", legacyPath, projectRevision, certificateRevision, trust, "lokal", current.Checkpoint, [alice], now));
+            Reject(() => GroupProjectCreation.MigrateLegacy(directory, "No New Group Access", legacyPath, projectRevision, certificateRevision, trust, "lokal", current.Checkpoint, [bob], now));
+            Reject(() => GroupProjectCreation.MigrateLegacy(directory, "Wrong Legacy Recovery", legacyPath, projectRevision, certificateRevision, trust, "lokal", current.Checkpoint, [alice], now, "wrong"));
+            VerifyFullPayload(GroupProjectCreation.MigrateLegacy(directory, "Certificate Migrated", legacyPath, projectRevision, certificateRevision, trust, "lokal", current.Checkpoint, [alice, bob], now));
+            VerifyFullPayload(GroupProjectCreation.MigrateLegacy(directory, "Recovery Migrated", legacyPath, projectRevision, certificateRevision, trust, "lokal", current.Checkpoint, [alice], now, phrase));
+            if (ConcurrentFileWriter.Capture(legacyVault) != certificateRevision || ConcurrentFileWriter.Capture(legacyPath) != projectRevision)
+                throw new Exception("Certificate/recovery migration modified original files.");
+            File.WriteAllText(legacyVault, JsonSerializer.Serialize(KeyVaultService.ProtectLegacyV1(JsonSerializer.Serialize(keys), phrase), ProjectJson.Options));
+            var v1Revision = ConcurrentFileWriter.Capture(legacyVault);
+            VerifyFullPayload(GroupProjectCreation.MigrateLegacy(directory, "V1 Migrated", legacyPath, projectRevision, v1Revision, trust, "lokal", current.Checkpoint, [alice], now, phrase));
+            if (ConcurrentFileWriter.Capture(legacyVault) != v1Revision) throw new Exception("V1 migration changed original vault.");
+
+            var flat = ProjectJson.WithoutAllSecrets(source); flat.Project.Name = "Flat Existing"; flat.Project.OutputDirectory = ".";
+            var flatPath = Path.Combine(directory, "flat.project.json"); ProjectJson.Save(flatPath, flat);
+            var flatRevision = ConcurrentFileWriter.Capture(flatPath);
+            Reject(() => GroupProjectCreation.Create(directory, "flat existing", source, keys, trust, "lokal", current.Checkpoint, [alice], now));
+            flat.Project.Name = "PathAlias/../Reserved Output";
+            ProjectJson.Save(Path.Combine(directory, "alias.project.json"), flat);
+            Reject(() => GroupProjectCreation.Create(directory, "Reserved Output", source, keys, trust, "lokal", current.Checkpoint, [alice], now));
+            if (Directory.Exists(Path.Combine(directory, "flat existing")) || Directory.Exists(Path.Combine(directory, "Reserved Output")) || ConcurrentFileWriter.Capture(flatPath) != flatRevision)
+                throw new Exception("Name/output conflict created a target or modified existing definition.");
             IEnumerable<X509Certificate2> ChangePolicyDuringCreation()
             {
                 trust.AcceptUpdate(OfflineGroupPolicyService.Sign(policy with { Revision = policy.Revision + 1 }, root));

@@ -13,6 +13,11 @@ Projekt-ID. Projektschluessel bleiben erhalten, Gruppenzuordnung wird explizit
 gesetzt; die schluesselfreie Definition wird neben dem geprueften Gruppen-Vault
 gespeichert. Ausgabeordner der Kopie ist der neue Projektordner im Projektstamm.
 Vorhandene Zielordner werden niemals wiederverwendet/ueberschrieben.
+Auch bereits katalogisierte Projektnamen (ohne Beachtung der Grossschreibung)
+und kanonisch gleiche Ausgabeziele sperren die Anlage, selbst wenn noch kein
+Build-Ordner existiert. Das schuetzt flach gespeicherte Definitionen und alte
+Pfadlayouts. Die Pruefung erfolgt unter der Zielnamen-Sperre; sie ist keine
+globale Transaktion mit nicht kooperierenden externen Schreibern.
 
 Bei einem vorhandenen alten Vault wird ausschliesslich dessen gespeicherter
 Stand authentisiert entschluesselt (persoenliches Zertifikat oder eingegebene
@@ -21,6 +26,12 @@ und Originalvault bleiben unveraendert. Erwartete Dateifingerabdruecke werden
 geprueft, beide Originaldateien waehrend des Vorgangs unter Windows lesegesperrt
 gehalten. Offene Editor-/Schluesseländerungen sind vorher zu speichern/verwerfen.
 Die Migration ist keine Entfernung des alten Zugriffs und kopiert keine Builds.
+Synthetische Regression deckt V1-/V2-Passphrasen sowie V3-Zertifikatszugang und
+V3-Recovery-Passphrase ab. Alter Entschluesselungszugang und neuer normaler
+Gruppenzugang werden unabhaengig benoetigt. Verglichen wird der gesamte
+normalisierte Payload einschliesslich ausgewaehltem und zusaetzlichem
+Transportschluesselsatz, PICC- und Anwendungsschluesseln, auch beim separaten
+Recovery-Lesen der neuen Kopie. Originaldateihashes bleiben unveraendert.
 Bestehende Gruppenprojekte werden hier nicht still umgeordnet; ihr eigener
 Speichern-unter-Weg erstellt eine vollstaendige Kopie wie unten beschrieben.
 

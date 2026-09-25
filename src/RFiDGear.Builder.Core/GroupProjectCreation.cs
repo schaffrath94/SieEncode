@@ -32,6 +32,12 @@ public static class GroupProjectCreation
         var target = Path.Combine(root, name);
         using var reservation = new FileStream(Path.Combine(root, "." + name + ".group-create.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         if (Directory.Exists(target) || File.Exists(target)) throw new IOException("Zielordner existiert bereits. Bitte einen neuen eindeutigen Projektnamen wählen.");
+        // A flat or custom-layout definition may already reserve this name/output without a built directory yet.
+        var conflict = new ProjectCatalog().Scan(root).FirstOrDefault(entry =>
+            string.Equals(entry.Name, name, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(Path.GetFullPath(entry.ProjectDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                target.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
+        if (conflict is not null) throw new IOException("Projektname oder Ausgabeziel ist bereits durch ein vorhandenes Projekt belegt. Bitte einen anderen Namen wählen.");
         var staging = Path.Combine(root, ".sieencode-group-staging-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(staging);
         // No editable *.json is written in staging, so even a concurrent catalog scan cannot list a partial project.

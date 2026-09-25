@@ -1,6 +1,26 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Namens-/Ausgabezielkonflikte und weitere Altvault-Migrationswege geprueft
+(2026-09-25). Gruppenanlage/Kopie sperrt jetzt auch katalogisierte gleiche Namen
+(case-insensitive) und kanonisch gleiche Ausgabeziele ohne vorhandenen Buildordner.
+Damit kann eine flache/alte Definition nicht erst beim spaeteren Build mit der
+neuen Kopie kollidieren. Pruefung unter Zielnamensperre, keine globale Transaktion
+mit externen Schreibern behauptet.
+Erweiterte synthetische Tests fuer V1/V2-Passphrasenmigration und V3-Zertifikat/
+Recovery-Passphrase: alter Entschluesselungszugang und neue Gruppenmitgliedschaft
+unabhaengig erforderlich. Ganze normalisierte Payloads inklusive mehrerer
+Transportschluesselsaetze, Auswahl, PICC und Anwendungen nach Erstellung/Kopie/
+Migration ueber normalen und separaten Recovery-Zugang verglichen; Originalhashes
+erhalten. Flat-/Alias-Ausgabezielkonflikte hinterlassen keinen neuen Zielordner.
+CI Exit 0, 69/69, CLI/WPF ohne Warnungen/Fehler;
+tmp/group-migration-conflicts-ci.log. UI-Smoke Exit 0, 54 Checks/5 Szenarien,
+stderr leer; tmp/group-migration-conflicts-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Naechster Schritt: integrierte Hauptverwalter-Ersteinrichtung und lokale Uebernahme
+eigener signierter Aenderungen vereinfachen, danach Gesamtworkflow-/visuelle
+Abnahme. Native Windows-Recovery-Persistenz und Zweitbenutzer bleiben separat
+offen. Ziel aktiv, keine Releaseaenderung.
+
 Vollstaendiges Speichern unter fuer Gruppenprojekte umgesetzt (2026-09-25):
 neuer Projekt-/Ordnername, frische authentisierte ID und frischer Vault;
 Bibliothek/Gruppe bleiben gleich, aktuelle zentrale Empfaenger werden verwendet.
