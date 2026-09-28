@@ -41,7 +41,7 @@ internal sealed class TeamVaultWindow : Window
 
         var root = new StackPanel { Margin = new Thickness(22) };
         root.Children.Add(new TextBlock { Text = initialSetup ? "Vault einmalig für das Team einrichten" : "Vault-Teamzugriff", FontSize = 23, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(Color.FromRgb(26, 91, 98)) });
-        root.Children.Add(new TextBlock { Text = "Hier legen Sie fest, wer neue Projekt-Vaults öffnen darf. Bestehende Vaults werden nicht geändert. Eine Identität ist Ihr persönlicher Zugang auf diesem Windows-Benutzer; die Teamliste enthält die vorgesehenen Zugänge für neue Vaults.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, Margin = new Thickness(0, 6, 0, 14) });
+        root.Children.Add(new TextBlock { Text = "Eine Identität ist Ihr persönlicher Zugang auf diesem Windows-Benutzer. Für Gruppen-Vaults nur Identität auswählen bzw. anlegen und in Schritt 2 die öffentliche Einladung exportieren; danach den Dialog schließen. Die Teamliste in Schritt 3 und 4 gilt ausschließlich für neue bisherige Team-Vaults. Gruppenrechte verwaltet der Hauptverwalter unter Offline-Gruppen verwalten. Bestehende Vaults werden hier nicht geändert.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, Margin = new Thickness(0, 6, 0, 14) });
         root.Children.Add(new Expander
         {
             Header = "Anleitung: allein starten, Kollegen hinzufügen, bestehendes Projekt freigeben",
@@ -63,10 +63,10 @@ internal sealed class TeamVaultWindow : Window
         own.Children.Add(ActionButton("Neue persönliche Identität anlegen", CreateIdentity, identities.Count == 0));
         own.Children.Add(ActionButton("Eigene Identität zum Team hinzufügen", AddSelectedIdentity));
         identityContent.Children.Add(own);
-        root.Children.Add(Step("1", "Meinen vorhandenen Zugang auswählen", "Eine Identität je Windows-Benutzer reicht normalerweise aus. Vorhandenen Eintrag weiterverwenden und zum Team hinzufügen; für ein Update keine neue Identität anlegen.", identityContent));
+        root.Children.Add(Step("1", "Meinen vorhandenen Zugang auswählen", "Vorhandene persönliche Identität weiterverwenden; für ein Update keine neue anlegen. Nur bei bisherigen Team-Vaults zusätzlich zur Teamliste hinzufügen. Gruppenmitgliedschaften vergibt die zentrale Verwaltung.", identityContent));
 
         var exportContent = new StackPanel();
-        exportContent.Children.Add(new TextBlock { Text = "Exportieren Sie die öffentliche Einladung und geben Sie sie an die Person weiter, die die gemeinsame Teamliste pflegt. Die Datei enthält keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray });
+        exportContent.Children.Add(new TextBlock { Text = "Exportieren Sie die öffentliche Einladung und geben Sie sie an den Hauptverwalter Ihrer Gruppen bzw. den Verantwortlichen der bisherigen Teamliste. Fingerabdruck unabhängig abgleichen. Die Datei enthält keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray });
         exportContent.Children.Add(ActionButton("Öffentliche Einladung exportieren", ExportIdentity));
         root.Children.Add(Step("2", "Kollege: eigene Einladung weitergeben", "Nur für Teamzugriff nötig. Jeder Kollege führt diesen Schritt auf seinem eigenen Windows-Benutzer aus.", exportContent));
 

@@ -1989,29 +1989,29 @@ public partial class MainWindow : Window
                 var ownRegistered = team.Any(recipient => localFingerprints.Contains(recipient.Fingerprint));
                 if (identities.Count == 0)
                 {
-                    VaultSetupStatusTitle.Text = "Nicht eingerichtet";
+                    VaultSetupStatusTitle.Text = "Persönliche Identität fehlt";
                     VaultSetupStatusText.Text = "Auf diesem Windows-Benutzerkonto fehlt die persönliche Vault-Identität. Starten Sie die Ersteinrichtung; ein Projekt muss dafür nicht geöffnet sein.";
                     VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.MistyRose;
                     VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.IndianRed;
                 }
                 else if (!ownRegistered)
                 {
-                    VaultSetupStatusTitle.Text = "Eigene Identität noch nicht im Team";
-                    VaultSetupStatusText.Text = $"{identities.Count} lokale Identität(en), {team.Count} Teammitglied(er). Fügen Sie die eigene Identität zur gemeinsamen Teamliste hinzu.";
+                    VaultSetupStatusTitle.Text = "Bisherige Teamliste: eigener Zugang nicht enthalten";
+                    VaultSetupStatusText.Text = $"{identities.Count} lokale Identität(en), {team.Count} Teammitglied(er). Nur für bisherige Team-Vaults die eigene Identität zur Teamliste hinzufügen. Diese Anzeige bewertet keine Gruppenrechte.";
                     VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.LemonChiffon;
                     VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.DarkGoldenrod;
                 }
                 else if (team.Count < 2)
                 {
-                    VaultSetupStatusTitle.Text = "Einzelzugriff eingerichtet";
-                    VaultSetupStatusText.Text = "Die eigene Identität ist registriert. Für Mehrbenutzerbetrieb mindestens eine öffentliche Einladung eines weiteren Teammitglieds importieren.";
+                    VaultSetupStatusTitle.Text = "Bisherige Teamliste: Einzelzugriff eingerichtet";
+                    VaultSetupStatusText.Text = "Die eigene Identität ist in der bisherigen Teamliste enthalten. Für weitere Empfänger bisheriger Team-Vaults deren öffentliche Einladungen importieren. Gruppenrechte werden separat verwaltet.";
                     VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.LemonChiffon;
                     VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.DarkGoldenrod;
                 }
                 else
                 {
-                    VaultSetupStatusTitle.Text = "Teamvorlage eingerichtet";
-                    VaultSetupStatusText.Text = $"Eigener Zugang enthalten; {team.Count} Empfänger für neue Projekt-Vaults. Bestehende Vaults separat freigeben. Zugriff auf dem zweiten Rechner noch praktisch prüfen.";
+                    VaultSetupStatusTitle.Text = "Bisherige Teamliste: Vorlage eingerichtet";
+                    VaultSetupStatusText.Text = $"Eigener Zugang enthalten; {team.Count} Empfänger für neue bisherige Team-Vaults. Bestehende Vaults separat freigeben. Gruppenrechte werden separat verwaltet. Zugriff auf dem zweiten Rechner noch praktisch prüfen.";
                     VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.Honeydew;
                     VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.SeaGreen;
                 }
@@ -2020,7 +2020,7 @@ public partial class MainWindow : Window
         }
         catch (Exception exception)
         {
-            VaultSetupStatusTitle.Text = "Vault-Status nicht lesbar";
+            VaultSetupStatusTitle.Text = "Identitäts-/Teamlistenstatus nicht lesbar";
             VaultSetupStatusText.Text = exception.Message;
             VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.MistyRose;
             VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.Firebrick;

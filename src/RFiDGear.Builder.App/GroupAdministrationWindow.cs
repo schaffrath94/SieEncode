@@ -39,6 +39,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(Note("Hier verwalten Sie Bibliotheken, deren privater Verwaltungsschlüssel auf diesem Windows-Benutzer liegt. Registrierung allein verleiht keine Verwaltungsrechte. Sichern Sie neue Verwaltungsschlüssel separat über ‚Privaten Schlüssel sichern‘."));
         root.Children.Add(Note("Einrichtung: 1. Neue Verwaltung erstellen und privaten Schlüssel sichern. 2. Personen mit öffentlichen Geräte-Einladungen aufnehmen, Gruppen zuordnen und signiert speichern. Auch die eigene normale Identität benötigt eine Mitgliedschaft. 3. Separate Recovery-Identität einrichten und freigeben. 4. Öffentlichen Stand an Kollegen verteilen. Eigene signierte Änderungen werden lokal übernommen; fremde Registrierungen benötigen weiterhin einen unabhängig bestätigten Fingerabdruck."));
+        root.Children.Add(Note("Privat verwaltete Bibliothek auswählen (Bibliotheks-ID)"));
         root.Children.Add(libraries);
         libraries.SelectionChanged += (_, _) =>
         {
@@ -141,12 +142,13 @@ internal sealed partial class GroupAdministrationWindow : Window
         RequireStore();
         CommitEdits();
         if (dirty) throw new InvalidOperationException("Bitte Änderungen zuerst signiert speichern oder den Dialog neu laden.");
-        var bytes = GroupEnrollmentPackages.Write(store!.ExportPublic());
+        var package = store!.ExportPublic();
+        var bytes = GroupEnrollmentPackages.Write(package);
         var dialog = new SaveFileDialog { Title = "Nur öffentliche Verwaltungsdaten exportieren", Filter = "Gruppenregistrierung (*.group-enrollment.json)|*.group-enrollment.json", FileName = currentLibrary!.Value.ToString("N") + ".group-enrollment.json" };
         if (dialog.ShowDialog(this) != true) return;
         var revision = ConcurrentFileWriter.Capture(dialog.FileName);
         ConcurrentFileWriter.Write(dialog.FileName, revision, temporary => File.WriteAllBytes(temporary, bytes));
-        status.Text = "Öffentliche Registrierung exportiert. Bibliotheks-ID und Verwaltungsfingerabdruck den Kollegen unabhängig vom Dateiübertragungsweg bestätigen. Kein privater Schlüssel exportiert.";
+        status.Text = $"Öffentliche Registrierung exportiert.\nBibliotheks-ID: {package.LibraryId:D}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}\nDiese Angaben den Kollegen unabhängig vom Dateiübertragungsweg bestätigen. Kein privater Schlüssel exportiert.";
     }
 
     private void ImportMember()

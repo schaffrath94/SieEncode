@@ -3,6 +3,15 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+Bedienablauf: [Offline-Gruppen einrichten](../OFFLINE-GRUPPEN-SCHNELLSTART.md).
+Einstellungen trennen normale Registrierung, Hauptverwaltung und delegierte
+Verwaltung. Die bisherige Teamlistenanzeige bewertet keine Gruppenrechte.
+Persoenliche Einladungen bleiben fuer beide Vaultarten nutzbar; Gruppenprojekte
+benoetigen keine Recovery-Passphrase je Projekt. Oeffentlicher Export zeigt
+Bibliotheks-ID und Verwaltungsfingerabdruck fuer den unabhaengigen Abgleich.
+Die korrigierte Anleitung ist gebaut und im UI-Smoke geprueft, aber noch nicht
+nativ visuell abgenommen (Benutzerabbruch bei der Sichtpruefung).
+
 ## Einrichtung auf dem Hauptverwaltungsplatz
 
 Die bestaetigte Aktion fuer eine neue Verwaltung erzeugt den privaten

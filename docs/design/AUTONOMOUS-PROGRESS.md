@@ -1,6 +1,26 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Einrichtungshinweise korrigiert (implementiert/geprueft 2026-09-25, gesichert
+2026-09-28): Einstellungen unterscheiden Teammitglied, Hauptverwaltung und
+delegierte Gruppenverwaltung. Persoenliche Identitaeten bleiben wiederverwendbar;
+die bisherige Teamliste ist kein Gruppenberechtigungsnachweis. Status und
+Identitaetsdialog kennzeichnen diesen Unterschied. Gruppenprojekte verlangen
+keine Recovery-Passphrase pro Projekt; separate Recovery bleibt erforderlich.
+Oeffentlicher Verwaltungsexport zeigt Bibliotheks-ID und Fingerabdruck nach dem
+Export an. Bibliotheksauswahl im Verwaltungsdialog beschriftet.
+WPF-Build Exit 0, 0 Warnungen/Fehler: tmp/group-onboarding-guidance-build.log.
+UI-Smoke Exit 0, 55 Checks/5 Szenarien, stderr leer:
+tmp/group-onboarding-guidance-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Native Sichtpruefung des vorherigen Standes fand den Anleitungsbruch. Die
+Sichtpruefung des korrigierten Standes wurde per Benutzer-Escape beendet und
+ist NICHT abgenommen. Keine Wiederholung unveraenderter Tests erforderlich.
+Bedienablauf dokumentiert in docs/OFFLINE-GRUPPEN-SCHNELLSTART.md.
+Offen: durchgaengige native Dialog-/Dateiauswahlabnahme, Gesamtworkflow ueber
+getrennte Arbeitsplaetze sowie echte Windows-Recovery-Persistenz. Synthetische
+Einzel-/Integrationspruefungen sind kein echter Zweitbenutzernachweis.
+Ziel aktiv; Release 1.2.1 unveraendert.
+
 Hauptverwalter-Ersteinrichtung vereinfacht (2026-09-25): bestaetigtes Erzeugen
 einer neuen privaten Verwaltung registriert den selbst erzeugten Vertrauensanker
 lokal. Einrichtungstext fuehrt durch private Sicherung, Personen/Gruppen, separate
