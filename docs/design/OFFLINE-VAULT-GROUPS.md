@@ -12,6 +12,26 @@ Bibliotheks-ID und Verwaltungsfingerabdruck fuer den unabhaengigen Abgleich.
 Die korrigierte Anleitung ist gebaut und im UI-Smoke geprueft, aber noch nicht
 nativ visuell abgenommen (Benutzerabbruch bei der Sichtpruefung).
 
+## Nachweis der gewuenschten Zugriffsmatrix
+
+`OfflineGroupMatrixWorkflowTests` prueft die konkrete Acht-Personen-/Drei-Gruppen-
+Zuordnung mit acht unabhaengigen RSA-Schluesseln, separater Recovery und neun
+getrennten Vertrauensdateien. Oeffentliche Pakete durchlaufen Serialisierung,
+Registrierung, Neuladen und Aktualisierung. Alle 24 normalen Zugriffskombinationen
+werden durch Entschluesselung bzw. deren Ablehnung geprueft, nicht nur als Listen.
+Getrennter Recoveryzugang wird fuer alle drei Vaults geprueft.
+
+Der Wechsel Person 3 zu Person 1 ausschliesslich in Lokal 2 prueft den zeitlichen
+Ablauf Richtlinienimport, noch fehlenden Zugang zum alten Vault, Vorschau und
+Empfaengerabgleich durch das weiterhin berechtigte Mitglied Person 4. Neue
+Schluesselgeneration, erhaltenes verschluesseltes Backup, neue/entzogene Zugriffe
+und unveraenderte andere Gruppen werden geprueft. Der bewusst alte lokale Stand
+kann die alte Kopie weiterhin oeffnen, aber keinen neueren Vault. Nach Aktualisierung
+wird der Entzug erkannt; Rueckspruenge werden in allen Speichern abgewiesen.
+
+Diese CI-Pruefung verwendet synthetischen authentisierten Speicherschutz in
+einem Prozess, keine echten getrennten Windows-Benutzer und keine Hardware.
+
 ## Einrichtung auf dem Hauptverwaltungsplatz
 
 Die bestaetigte Aktion fuer eine neue Verwaltung erzeugt den privaten

@@ -38,6 +38,7 @@ var tests = new (string Name, Action Run)[]
     ("Offline group policy signatures, trust binding and rollback rejection", OfflineGroupPolicyTests.Verify),
     ("Offline trust enrollment, persistence and concurrent update protection", OfflineGroupTrustTests.Verify),
     ("Signed people/device directory and overlapping access matrix", OfflineGroupDirectoryTests.Verify),
+    ("Eight independent identities across three offline vault groups and scoped recipient change", OfflineGroupMatrixWorkflowTests.Verify),
     ("Scoped delegation, signed changes, revocation and atomic authority updates", OfflineGroupDelegationTests.Verify),
     ("Protected delegate key restart, enrolled scope and revocation checks", OfflineGroupDelegateStoreTests.Verify),
     ("Bound group vault, separate recovery, tamper rejection and fresh-key rotation", GroupVaultTests.Verify),

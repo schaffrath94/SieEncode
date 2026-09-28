@@ -1,6 +1,26 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Acht-Personen-/Drei-Gruppen-Ablauf kryptografisch geprueft (2026-09-28):
+OfflineGroupMatrixWorkflowTests verwendet acht getrennte RSA-Schluessel plus
+separate Recovery, neun getrennte lokale Vertrauensdateien und oeffentliche
+Registrierungspakete. Alle 24 Personen-/Gruppenkombinationen entschluesseln nur
+gemaess gewuenschter Zuordnung. Recovery funktioniert getrennt in allen Gruppen;
+normale Identitaeten werden im Recoverymodus und Recovery im Normalmodus abgewiesen.
+Person 3 wird nur in Lokal 2 durch Person 1 ersetzt: Richtlinienimport allein
+gibt Person 1 noch keinen alten Vaultzugang. Vorschau/Abgleich durch Person 4
+erzeugt neue Schluesselgeneration und unveraendertes verschluesseltes Backup.
+Neuer Zugang funktioniert, entzogener Zugang scheitert; andere Vaultdateien und
+Person-3-Zugang zu Lokal/Lokal 3 bleiben erhalten. Absichtlich offline belassener
+Stand oeffnet alte Kopie weiterhin, verweigert neueren Vault; spaeterer Import
+und Rollbackabwehr auf allen neun Speichern geprueft.
+Erstlauf 69/70 wegen ungueltigem JSON im neuen Testpayload, korrigiert.
+Vollstaendige CI danach Exit 0, 70/70, CLI/WPF erfolgreich:
+tmp/group-matrix-workflow-verified-ci.log. Kein Produktcode dafuer geaendert.
+Synthetischer authentisierter Speicherschutz im selben Prozess, KEIN Nachweis
+echter Windows-Benutzer-/Rechnertrennung. Native Abnahme und echte Recovery-
+Persistenz bleiben offen. Ziel aktiv; Release unveraendert.
+
 Einrichtungshinweise korrigiert (implementiert/geprueft 2026-09-25, gesichert
 2026-09-28): Einstellungen unterscheiden Teammitglied, Hauptverwaltung und
 delegierte Gruppenverwaltung. Persoenliche Identitaeten bleiben wiederverwendbar;
