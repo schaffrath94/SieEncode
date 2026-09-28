@@ -44,7 +44,10 @@ public partial class MainWindow
         try
         {
             var name = (sender as Button)?.Tag as string ?? throw new InvalidOperationException("Dokument wurde nicht angegeben.");
-            OpenExisting(Path.Combine(FindDistributionRoot(), name), false);
+            var path = Path.Combine(FindDistributionRoot(), name);
+            if (string.Equals(Path.GetExtension(path), ".md", StringComparison.OrdinalIgnoreCase))
+                new HelpDocumentWindow(this, path).ShowDialog();
+            else OpenExisting(path, false);
         }
         catch (Exception exception) { ShowError(exception); }
     }

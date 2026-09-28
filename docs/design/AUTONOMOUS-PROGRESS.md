@@ -1,6 +1,24 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Native Anleitung pruefbar und Dateizuordnungsfehler behoben (2026-09-28):
+Gruppeneinstellungen bei 1426x893 sichtbar geprueft; Rollenabschnitte, Anleitung
+und bisherige Teamliste lesbar. Anleitungsklick fuehrte zuvor zur Windows-
+Programmauswahl fuer .md. Keine Dateizuordnung geaendert. Markdown-Hilfedokumente
+oeffnen jetzt in HelpDocumentWindow als lokale schreibgeschuetzte Textansicht,
+ohne Browser/aktive Links/externes Programm. WPF-Build Exit 0, 0 Warnungen/Fehler:
+tmp/group-internal-guide-build.log. Native erneute Pruefung: Anleitungsfenster
+oeffnet, Text bis zum Ende per Scrollleiste erreichbar, Schliessen kehrt zu
+Einstellungen zurueck. Markdownzeichen bleiben in der einfachen Textansicht
+sichtbar; kein formatierter Markdownrenderer behauptet.
+Recovery-Dialog nativ geoeffnet und geschlossen, keine Schluessel erzeugt oder
+installiert. Konkreter naechster Bedienpunkt: leere Bibliotheksauswahl erklaert
+fehlende Erstregistrierung noch nicht ausreichend. Alle weiteren befuellten
+Verwaltungs-/Dateidialoge und echte Recovery-Persistenz bleiben offen.
+Nur isolierte --ui-test-workspace-Starts unter tmp/group-native-review-20260928
+und tmp/group-internal-guide-visual. Bestehende Identitaeten unveraendert.
+Ziel aktiv; kein neuer Release.
+
 Gruppenanleitung in die Anwendung eingebunden (2026-09-28): direkte Schaltflaeche
 in den Gruppeneinstellungen verwendet den vorhandenen Dokumentoeffner. Release-
 Skript kopiert bereits docs vollstaendig und verlangt jetzt die Anleitung als

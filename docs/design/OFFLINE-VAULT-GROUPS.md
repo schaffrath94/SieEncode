@@ -9,8 +9,11 @@ Verwaltung. Die bisherige Teamlistenanzeige bewertet keine Gruppenrechte.
 Persoenliche Einladungen bleiben fuer beide Vaultarten nutzbar; Gruppenprojekte
 benoetigen keine Recovery-Passphrase je Projekt. Oeffentlicher Export zeigt
 Bibliotheks-ID und Verwaltungsfingerabdruck fuer den unabhaengigen Abgleich.
-Die korrigierte Anleitung ist gebaut und im UI-Smoke geprueft, aber noch nicht
-nativ visuell abgenommen (Benutzerabbruch bei der Sichtpruefung).
+Die korrigierten Gruppeneinstellungen sind nativ sichtbar geprueft. Der dabei
+beobachtete Windows-Dateizuordnungsdialog fuer .md ist durch eine interne lokale
+schreibgeschuetzte Textansicht ersetzt. Oeffnen, Scrollen bis zum Ende und
+Schliessen der Anleitung nativ geprueft (2026-09-28); Markdownzeichen bleiben
+sichtbar. Das ist keine Abnahme aller Verwaltungs-/Recovery-Bedienwege.
 
 ## Nachweis der gewuenschten Zugriffsmatrix
 
