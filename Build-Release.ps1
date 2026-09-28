@@ -116,7 +116,7 @@ foreach ($releaseDocument in @('VERSION','README.md','PARITY.md','MIGRATION.md',
     Copy-Item -LiteralPath (Join-Path $root $releaseDocument) -Destination (Join-Path $studio $releaseDocument)
 }
 $PackageVersion | Set-Content -LiteralPath (Join-Path $studio 'VERSION') -Encoding UTF8
-foreach ($requiredReleaseDocument in @('VERSION','README.md','PARITY.md','MIGRATION.md','RUNTIME.md','Docs\GRUNDPROFILE.md','Docs\HARDWARE-ABNAHME.md','Docs\DATENBAUSTEINE.md')) {
+foreach ($requiredReleaseDocument in @('VERSION','README.md','PARITY.md','MIGRATION.md','RUNTIME.md','Docs\GRUNDPROFILE.md','Docs\HARDWARE-ABNAHME.md','Docs\DATENBAUSTEINE.md','Docs\OFFLINE-GRUPPEN-SCHNELLSTART.md')) {
     if (-not (Test-Path -LiteralPath (Join-Path $studio $requiredReleaseDocument) -PathType Leaf)) {
         throw "Release-Dokument fehlt im publizierten Studio: $requiredReleaseDocument"
     }

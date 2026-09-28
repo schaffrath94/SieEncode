@@ -2,6 +2,9 @@
 
 Entwicklungsstand auf `codex/offline-vault-groups`, noch nicht Teil von 1.2.1.
 Die vollständige Bedienungs- und Mehrbenutzerabnahme steht aus.
+Diese Anleitung ist unter **Einstellungen → Offline-Gruppenverwaltung →
+Schritt-für-Schritt-Anleitung öffnen** erreichbar und wird mit dem Installer
+als lokale Datei mitgeliefert.
 
 ## Wer macht was?
 

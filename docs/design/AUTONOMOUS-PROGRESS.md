@@ -1,6 +1,15 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Gruppenanleitung in die Anwendung eingebunden (2026-09-28): direkte Schaltflaeche
+in den Gruppeneinstellungen verwendet den vorhandenen Dokumentoeffner. Release-
+Skript kopiert bereits docs vollstaendig und verlangt jetzt die Anleitung als
+Pflichtdatei. Umgebungstest prueft sie ebenfalls. WPF-Build Exit 0, 0 Warnungen/
+Fehler: tmp/group-guide-entry-build.log. XAML-Linkziel und PowerShell-Syntax
+geprueft. Kein neuer Installer gebaut; installierte Dateizuordnung/Oeffnen und
+native Dialogabnahme weiterhin offen. Letzte Core-CI 70/70 unveraendert gueltig,
+da keine Coreaenderung. Ziel aktiv; Release 1.2.1 unveraendert.
+
 Acht-Personen-/Drei-Gruppen-Ablauf kryptografisch geprueft (2026-09-28):
 OfflineGroupMatrixWorkflowTests verwendet acht getrennte RSA-Schluessel plus
 separate Recovery, neun getrennte lokale Vertrauensdateien und oeffentliche
