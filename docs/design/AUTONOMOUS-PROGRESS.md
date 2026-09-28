@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Fehlende Recovery-Registrierung erklaert (2026-09-28): Bibliotheksauswahl
+beschriftet, bei leerer Liste konkrete Anleitung zur Registrierung bzw. neuen
+Hauptverwaltung und erneutem Oeffnen. Ohne Auswahl sind private Erzeugung und
+Wiederherstellung deaktiviert. Vor dem Speicherdialog wird der lokale Trust
+geladen/geprueft; alle Fehlerpfade des Erzeugungsbuttons leeren Passphrasenfelder.
+WPF-Build Exit 0, 0 Warnungen/Fehler:
+tmp/group-recovery-empty-state-verified-build.log.
+Bestehender isolierter UI-Smoke Exit 0, 55 Checks/5 Szenarien, stderr leer:
+tmp/group-recovery-empty-state-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Der konkrete Hinweis wurde noch nicht erneut am Bildschirm abgenommen; keine
+neue native Recovery-Installation oder echte Zweitbenutzerpruefung. Ziel aktiv.
+
 Native Anleitung pruefbar und Dateizuordnungsfehler behoben (2026-09-28):
 Gruppeneinstellungen bei 1426x893 sichtbar geprueft; Rollenabschnitte, Anleitung
 und bisherige Teamliste lesbar. Anleitungsklick fuehrte zuvor zur Windows-

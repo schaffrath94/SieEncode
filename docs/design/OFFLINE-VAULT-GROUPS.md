@@ -123,6 +123,11 @@ spaetere Entzuege werden beim regulaeren Entsperren erneut geprueft.
 
 ## Separate Recovery-Identitaet einrichten
 
+Ohne lokal registrierte Bibliothek zeigt der Dialog den Weg zur Erstregistrierung
+bzw. neuen Hauptverwaltung und sperrt Erzeugung/Wiederherstellung bis zur Auswahl.
+Eine Auswahl wird vor dem Speicherdialog durch Laden des lokalen Trust geprueft.
+Auch fruehe Fehler leeren die eingegebenen Sicherungspassphrasen.
+
 In Einstellungen eine registrierte Bibliothek auswaehlen, Namen und zweimal eine
 neue Sicherungspassphrase eingeben und getrennte Verwahrung bestaetigen. Der
 Assistent erzeugt einen separaten RSA-3072-Schluessel mit oeffentlichem Zertifikat

@@ -34,16 +34,28 @@ internal sealed class GroupRecoverySetupWindow : Window
             .Select(p => Path.GetFileName(p).Replace(".trust.bin", "", StringComparison.Ordinal))
             .Where(n => Guid.TryParseExact(n, "N", out _)).Select(Guid.Parse).ToArray() : [];
         libraries.SelectedIndex = libraries.Items.Count == 1 ? 0 : -1;
+        root.Children.Add(Note("Registrierte Bibliothek (Bibliotheks-ID)"));
+        var setupHint = Note(libraries.Items.Count == 0
+            ? "Noch keine Gruppenverwaltung auf diesem Windows-Benutzer registriert. Diesen Dialog schließen und in Einstellungen → Gruppenverwaltung registrieren die öffentliche Datei des Hauptverwalters übernehmen. Als Hauptverwalter eines neuen Teams zuerst unter Offline-Gruppen verwalten eine Verwaltung erstellen. Danach diesen Dialog erneut öffnen."
+            : "Bitte die Bibliothek auswählen, für die Sie einen separaten Recovery-Zugang einrichten oder wiederherstellen möchten.");
+        setupHint.Foreground = Brushes.DarkGoldenrod;
+        root.Children.Add(setupHint);
         root.Children.Add(libraries); root.Children.Add(Note("Anzeigename für die öffentliche Einladung")); root.Children.Add(name);
         root.Children.Add(Note("Neue Sicherungspassphrase (mindestens 20 Zeichen)")); root.Children.Add(password);
         root.Children.Add(Note("Passphrase wiederholen")); root.Children.Add(repeat); root.Children.Add(confirmed);
-        root.Children.Add(Button("Neuen Recovery-Schlüssel erzeugen und privat sichern", () =>
+        var createBackup = Button("Neuen Recovery-Schlüssel erzeugen und privat sichern", () =>
         {
-            if (invitation is not null && !exported) throw new InvalidOperationException("Zuerst die bereits erzeugte öffentliche Einladung exportieren.");
-            var dialog = new SaveFileDialog { Filter = "Private Recovery-Sicherung (*.group-private.json)|*.group-private.json", FileName = "recovery.group-private.json" };
-            try { if (dialog.ShowDialog(this) == true) CreateBackup(SelectedLibrary(), name.Text, dialog.FileName, password.Password, repeat.Password, confirmed.IsChecked == true); }
+            try
+            {
+                if (invitation is not null && !exported) throw new InvalidOperationException("Zuerst die bereits erzeugte öffentliche Einladung exportieren.");
+                var library = SelectedLibrary();
+                Trust(library).LoadOffline();
+                var dialog = new SaveFileDialog { Filter = "Private Recovery-Sicherung (*.group-private.json)|*.group-private.json", FileName = "recovery.group-private.json" };
+                if (dialog.ShowDialog(this) == true) CreateBackup(library, name.Text, dialog.FileName, password.Password, repeat.Password, confirmed.IsChecked == true);
+            }
             finally { password.Clear(); repeat.Clear(); }
-        }));
+        });
+        root.Children.Add(createBackup);
         root.Children.Add(Button("Öffentliche Recovery-Einladung exportieren", () =>
         {
             if (invitation is null) throw new InvalidOperationException("Zuerst die private Sicherung erzeugen.");
@@ -51,7 +63,7 @@ internal sealed class GroupRecoverySetupWindow : Window
             if (dialog.ShowDialog(this) == true) ExportInvitation(dialog.FileName);
         }));
         root.Children.Add(Note("Wiederherstellen: Nur bei Bedarf auf dem vertrauenswürdigen Recovery-Arbeitsplatz. Damit liegt ein privater Entschlüsselungsschlüssel im aktuellen Windows-Benutzer. Recovery-Zugänge gelten bibliotheksweit. Der lokale Stand kann spätere Offline-Entzüge noch nicht kennen; alte Kopien bleiben zugänglich."));
-        root.Children.Add(Button("Freigegebene Recovery-Identität wiederherstellen", () =>
+        var restoreIdentity = Button("Freigegebene Recovery-Identität wiederherstellen", () =>
         {
             var library = SelectedLibrary();
             var policy = Trust(library).LoadOffline();
@@ -59,7 +71,16 @@ internal sealed class GroupRecoverySetupWindow : Window
                 new GroupPrivateBackupTarget($"{d.Name} · {d.Fingerprint}", null, (bytes, phrase) => RestoreIdentity(library, d.Fingerprint, bytes, phrase))).ToArray();
             if (choices.Length == 0) throw new InvalidOperationException("Noch kein aktiver Recovery-Zugang registriert. Einladung zentral freigeben lassen und den neuen Gruppenstand importieren.");
             new GroupPrivateBackupWindow(this, choices, true, "Recovery-Schlüssel").ShowDialog();
-        }));
+        });
+        root.Children.Add(restoreIdentity);
+        void RefreshAvailability()
+        {
+            var selected = libraries.SelectedItem is Guid;
+            createBackup.IsEnabled = selected; restoreIdentity.IsEnabled = selected;
+            setupHint.Visibility = selected ? Visibility.Collapsed : Visibility.Visible;
+        }
+        libraries.SelectionChanged += (_, _) => RefreshAvailability();
+        RefreshAvailability();
         root.Children.Add(status); root.Children.Add(Button("Schließen", Close));
         Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         Closing += (_, e) =>
