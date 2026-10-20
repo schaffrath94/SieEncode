@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Wiederaufnahme/Auftragsabgleich (2026-10-20): Arbeitsbaum sauber, getesteter
+Recovery-Commit c3048f6 war noch nicht remote und wurde jetzt auf den privaten
+Branch gepusht. Vorhandene Build-/Smoke-Nachweise erneut gelesen, nicht ohne
+Aenderung wiederholt. Der Abgleich mit Implementierungsfolge Punkt 2 zeigt
+einen bisher nicht umgesetzten Administrator-Schluesselwechsel: RestorePrivateBackup
+restauriert denselben registrierten Schluessel, VerifyPackageUpdate lehnt
+abweichende Anker ab. Das bleibt fuer normale Updates richtig, ersetzt aber
+keinen gesonderten Wechselweg. Konkreter offener Vertrag und Abnahmen in
+OFFLINE-GROUP-ADMINISTRATOR-CHANGE.md. Ziel daher nicht auf reine UI-/Hardware-
+Abnahme verengt. Naechster Entwicklungsbaustein ist der gesonderte
+Uebergangs-Verifikationskern, danach Persistenz/Bedienweg.
+WindowsSandbox.exe am Standard-Systempfad nicht vorhanden; daraus keine
+generelle Aussage ueber andere VM-Umgebungen abgeleitet. Echte Windows-Recovery-
+Persistenz/Zweitbenutzerabnahme weiterhin unbewiesen. Ziel aktiv.
+
 Fehlende Recovery-Registrierung erklaert (2026-09-28): Bibliotheksauswahl
 beschriftet, bei leerer Liste konkrete Anleitung zur Registrierung bzw. neuen
 Hauptverwaltung und erneutem Oeffnen. Ohne Auswahl sind private Erzeugung und

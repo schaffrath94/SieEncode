@@ -3,6 +3,12 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
+Auftragsabgleich 2026-10-20: Der in der Implementierungsfolge vorgesehene
+[Wechsel des zentralen Verwaltungsschluessels](OFFLINE-GROUP-ADMINISTRATOR-CHANGE.md)
+ist noch nicht implementiert. Private Wiederherstellung verwendet denselben
+Schluessel und ersetzt diesen Wechsel nicht. Offen sind damit auch weitere
+Entwicklung und Sicherheitspruefungen, nicht allein native Abnahmen.
+
 Bedienablauf: [Offline-Gruppen einrichten](../OFFLINE-GRUPPEN-SCHNELLSTART.md).
 Einstellungen trennen normale Registrierung, Hauptverwaltung und delegierte
 Verwaltung. Die bisherige Teamlistenanzeige bewertet keine Gruppenrechte.
