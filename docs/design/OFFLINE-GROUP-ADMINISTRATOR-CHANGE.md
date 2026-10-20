@@ -1,7 +1,7 @@
 # Wechsel der Hauptverwaltung: noch offener Implementierungsumfang
 
-Stand 2026-10-20. Ein reiner Erzeugungs-/Verifikationskern ist implementiert,
-Persistenz und Bedienweg sind weiterhin ausstehend. Bezug: Implementierungsfolge Punkt 2 in
+Stand 2026-10-20. Erzeugungs-/Verifikationskern und lokaler Vertrauensimport sind
+implementiert; private Übergabe und Bedienweg fehlen. Bezug: Implementierungsfolge Punkt 2 in
 [Offline-Vault-Gruppen](OFFLINE-VAULT-GROUPS.md).
 
 ## Verifizierter Iststand
@@ -11,7 +11,7 @@ registrierten Fingerabdruck passenden privaten Schlüssel wieder her. Das hilft
 beim Rechnerwechsel, entzieht einer alten Kopie des Schlüssels aber keine Rechte.
 `OfflineGroupTrustStore.VerifyPackageUpdate` verlangt denselben öffentlichen
 Verwaltungsschlüssel wie bei der Registrierung. Ein anderer Schlüssel wird
-absichtlich abgewiesen. Es gibt keinen gesonderten Übergangsimport.
+absichtlich abgewiesen. Der gesonderte Übergangsimport ist unten beschrieben.
 
 Die bisherige Wiederherstellung darf deshalb nicht als Widerruf eines früheren
 Hauptverwalters oder als Schlüsselrotation bezeichnet werden.
@@ -51,6 +51,27 @@ doppelt signierte Rechte-/Revisionsänderungen sowie strikte JSON-Eingaben.
 Zusätzlich werden ein Personenverzeichnis und ein vorhandener Gruppen-Vault
 nach dem Wechsel über normalen Zugang und separate Recovery entschlüsselt.
 Mitglieds-/Recovery-Schlüssel werden als neue Verwaltungsschlüssel abgewiesen.
+
+### Persistenter lokaler Übergangsimport
+
+`OfflineGroupTrustStore.PreviewAdministratorTransition` liest den vorhandenen
+geschützten Zustand und prüft den Übergang gegen genau diesen Anker und den
+erwarteten Checkpoint. Die Vorschau verändert keine Datei.
+`AcceptAdministratorTransition` verlangt zusätzlich ausdrückliche Bestätigung,
+prüft erneut und schreibt neuen Anker und Richtlinie zusammen in dieselbe
+geschützte Zustandsdatei. Der erwartete Dateihash stammt aus dem gelesenen
+Snapshot; der bestehende konfliktgeprüfte Dateischreiber verweigert einen
+zwischenzeitlich geänderten Stand. Es gibt keinen automatischen Fallback zur
+Neuregistrierung und keinen Lösch-/Zurücksetzschritt.
+
+Tests prüfen unveränderte Dateien bei abgewiesenen Bestätigungen, falschem
+Fingerabdruck/Checkpoint und Fehlern im Speicherschutz. Eine konkurrierende
+gewöhnliche Aktualisierung sowie ein konkurrierender Verwaltungswechsel
+bleiben erhalten. Nach Neuanlage des Storeobjekts sind neuer Anker und neuer
+Checkpoint aktiv; Wiederholungsimporte und alte Schlüssel mit höherer Revision
+werden abgewiesen, Folgerichtlinien des neuen Schlüssels akzeptiert.
+Das sind synthetische lokale Tests, keine Zweitbenutzer-/Rechnerabnahme und
+keine Aussage über eine Transaktion mit dem privaten Verwaltungsspeicher.
 
 ### Noch zu integrieren
 
@@ -111,6 +132,6 @@ stillschweigend überschrieben oder gelöscht.
 7. UI führt durch neue private Sicherung, Fingerabdruckabgleich, öffentliche
    Verteilung und lokalen Import; keine privaten Schlüssel in Exporten/Logs.
 
-Nächster Implementierungsschritt: konfliktgeprüfter persistenter Übergangsimport,
-anschließend wiederaufnehmbare private Übergabe und UI. Bestehende
+Nächster Implementierungsschritt: wiederaufnehmbare private Übergabe und UI.
+Bestehende
 Updateprüfungen bleiben dabei erhalten.

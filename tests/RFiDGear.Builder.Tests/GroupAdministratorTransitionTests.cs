@@ -93,12 +93,66 @@ internal static class GroupAdministratorTransitionTests
         try
         {
             var path = Path.Combine(directory, "trust.bin");
-            var trust = new OfflineGroupTrustStore(path, policy.LibraryId, new OfflineGroupTrustTests.TestProtection());
+            var protector = new OfflineGroupTrustTests.TestProtection();
+            var trust = new OfflineGroupTrustStore(path, policy.LibraryId, protector);
             var enrolled = trust.Enroll(current.AdministratorPublicKey,
                 OfflineGroupTrustStore.AdministratorFingerprint(current.AdministratorPublicKey), current.Policy);
             var before = File.ReadAllBytes(path);
             Reject(() => trust.AcceptPackageUpdate(next, enrolled.Checkpoint));
             if (!File.ReadAllBytes(path).SequenceEqual(before)) throw new Exception("Ordinary update replaced trust.");
+            var preview = trust.PreviewAdministratorTransition(transition, enrolled.Checkpoint, fingerprint);
+            if (!preview.AdministratorPublicKey.SequenceEqual(newKey.ExportSubjectPublicKeyInfo()) ||
+                !File.ReadAllBytes(path).SequenceEqual(before)) throw new Exception("Transition preview changed trust.");
+            Reject(() => trust.AcceptAdministratorTransition(transition, enrolled.Checkpoint, fingerprint, false));
+            Reject(() => trust.AcceptAdministratorTransition(transition, enrolled.Checkpoint, "", true));
+            Reject(() => trust.AcceptAdministratorTransition(transition, new(99, enrolled.Checkpoint.PayloadSha256), fingerprint, true));
+            if (!File.ReadAllBytes(path).SequenceEqual(before)) throw new Exception("Rejected transition changed trust.");
+
+            protector.BeforeProtect = () => throw new IOException("Synthetic protection failure");
+            try { Reject(() => trust.AcceptAdministratorTransition(transition, enrolled.Checkpoint, fingerprint, true)); }
+            finally { protector.BeforeProtect = null; }
+            if (!File.ReadAllBytes(path).SequenceEqual(before)) throw new Exception("Failed protection lost old trust.");
+
+            // A concurrent ordinary update must not be overwritten by the transition.
+            protector.BeforeProtect = () =>
+            {
+                protector.BeforeProtect = null;
+                trust.AcceptUpdate(OfflineGroupPolicyService.Sign(policy with { Revision = 5 }, oldKey));
+            };
+            Reject(() => trust.AcceptAdministratorTransition(transition, enrolled.Checkpoint, fingerprint, true));
+            if (trust.LoadOffline().Policy.Revision != 5 || !trust.ExportPublic().AdministratorPublicKey.SequenceEqual(current.AdministratorPublicKey))
+                throw new Exception("Concurrent ordinary update overwritten.");
+            var latest = trust.ExportPublic();
+            var checkpoint = trust.LoadOffline().Checkpoint;
+            var refreshedTransition = GroupAdministratorTransition.Create(latest, oldKey, newKey);
+            var accepted = trust.AcceptAdministratorTransition(refreshedTransition, checkpoint, fingerprint, true);
+            var restarted = new OfflineGroupTrustStore(path, policy.LibraryId, protector);
+            if (restarted.LoadOffline().Checkpoint != accepted.Checkpoint ||
+                !restarted.ExportPublic().AdministratorPublicKey.SequenceEqual(newKey.ExportSubjectPublicKeyInfo()))
+                throw new Exception("Transition not durable across store restart.");
+            var acceptedBytes = File.ReadAllBytes(path);
+            Reject(() => restarted.AcceptAdministratorTransition(refreshedTransition, checkpoint, fingerprint, true));
+            Reject(() => restarted.AcceptAdministratorTransition(refreshedTransition, accepted.Checkpoint, fingerprint, true));
+            Reject(() => restarted.AcceptUpdate(OfflineGroupPolicyService.Sign(policy with { Revision = 100 }, oldKey)));
+            Reject(() => restarted.AcceptPackageUpdate(Package(policy with { Revision = 100 }, oldKey), accepted.Checkpoint));
+            if (!File.ReadAllBytes(path).SequenceEqual(acceptedBytes)) throw new Exception("Old authority or replay changed transitioned trust.");
+            restarted.AcceptUpdate(OfflineGroupPolicyService.Sign(policy with { Revision = 7 }, newKey));
+            if (restarted.LoadOffline().Policy.Revision != 7) throw new Exception("New authority cannot update after restart.");
+
+            // A different explicit transition wins over an in-flight competing transition.
+            latest = restarted.ExportPublic(); checkpoint = restarted.LoadOffline().Checkpoint;
+            var toOld = GroupAdministratorTransition.Create(latest, newKey, oldKey);
+            var toOther = GroupAdministratorTransition.Create(latest, newKey, stranger);
+            var otherFingerprint = OfflineGroupTrustStore.AdministratorFingerprint(stranger.ExportSubjectPublicKeyInfo());
+            protector.BeforeProtect = () =>
+            {
+                protector.BeforeProtect = null;
+                restarted.AcceptAdministratorTransition(toOther, checkpoint, otherFingerprint, true);
+            };
+            Reject(() => restarted.AcceptAdministratorTransition(toOld, checkpoint,
+                OfflineGroupTrustStore.AdministratorFingerprint(oldKey.ExportSubjectPublicKeyInfo()), true));
+            if (!restarted.ExportPublic().AdministratorPublicKey.SequenceEqual(stranger.ExportSubjectPublicKeyInfo()))
+                throw new Exception("Competing transition overwritten.");
         }
         finally { Directory.Delete(directory, true); }
     }
@@ -106,7 +160,7 @@ internal static class GroupAdministratorTransitionTests
     private static void Reject(Action action)
     {
         try { action(); }
-        catch (Exception e) when (e is CryptographicException or InvalidDataException or JsonException) { return; }
+        catch (Exception e) when (e is CryptographicException or IOException or InvalidDataException or JsonException) { return; }
         throw new Exception("Invalid administrator transition accepted.");
     }
 }

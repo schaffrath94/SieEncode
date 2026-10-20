@@ -89,6 +89,36 @@ public sealed class OfflineGroupTrustStore
         return next;
     }
 
+    /// <summary>Read-only preview against the locally pinned root and exact policy checkpoint.</summary>
+    public GroupEnrollmentPackage PreviewAdministratorTransition(SignedAdministratorTransition transition,
+        GroupPolicyCheckpoint expected, string independentlyConfirmedNewFingerprint)
+    {
+        var (state, _) = Load();
+        return VerifyAdministratorTransition(transition, expected, independentlyConfirmedNewFingerprint, state);
+    }
+
+    /// <summary>Explicitly replaces root and policy together; ordinary package updates cannot do this.</summary>
+    public VerifiedGroupPolicy AcceptAdministratorTransition(SignedAdministratorTransition transition,
+        GroupPolicyCheckpoint expected, string independentlyConfirmedNewFingerprint, bool confirmed)
+    {
+        if (!confirmed) throw new InvalidDataException("Verwaltungswechsel muss ausdrücklich bestätigt werden.");
+        var (state, revision) = Load();
+        var next = VerifyAdministratorTransition(transition, expected, independentlyConfirmedNewFingerprint, state);
+        var verified = GroupEnrollmentPackages.Validate(next);
+        Save(state with { AdministratorPublicKey = next.AdministratorPublicKey, SignedPolicy = next.Policy }, revision);
+        return verified;
+    }
+
+    private GroupEnrollmentPackage VerifyAdministratorTransition(SignedAdministratorTransition transition,
+        GroupPolicyCheckpoint expected, string fingerprint, State state)
+    {
+        var current = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1, libraryId,
+            state.AdministratorPublicKey, state.SignedPolicy);
+        if (GroupEnrollmentPackages.Validate(current).Checkpoint != expected)
+            throw new ConcurrentFileChangeException(path);
+        return GroupAdministratorTransition.Verify(transition, current, fingerprint);
+    }
+
     private VerifiedGroupPolicy VerifyPackageUpdate(GroupEnrollmentPackage package, GroupPolicyCheckpoint expected, State state)
     {
         ArgumentNullException.ThrowIfNull(package);

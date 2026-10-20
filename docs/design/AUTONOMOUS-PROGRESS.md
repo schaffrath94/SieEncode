@@ -1,6 +1,22 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Persistenter Verwaltungswechsel-Import umgesetzt (2026-10-20):
+OfflineGroupTrustStore bietet getrennte Vorschau und ausdruecklich bestaetigten
+Import. Beide pruefen den lokal gespeicherten Anker und erwarteten Checkpoint.
+Import speichert neuen Anker plus Richtlinie in einer geschuetzten Datei ueber
+den vorhandenen Dateihash-Konfliktschutz. Keine Neuregistrierung/kein Loeschen.
+Erweiterte Tests: Vorschau und Ablehnungen unveraendert, simuliertes Versagen
+des Speicherschutzes erhaelt alten Stand, konkurrierende normale Aktualisierung
+und konkurrierender Verwaltungswechsel gewinnen gegen den veralteten Schreiber.
+Store-Neustart erhaelt neuen Anker/Checkpoint; alter Schluessel auch bei Revision
+100 und wiederholter Import abgewiesen, neuer Schluessel kann weiter aktualisieren.
+CI Exit 0, 71/71, CLI/WPF ohne Warnungen/Fehler:
+tmp/group-administrator-transition-store-ci.log.
+Nur synthetischer lokaler Schutzzugang; keine echte Benutzertrennung behauptet.
+Naechster Schritt: wiederaufnehmbare private Verwaltungsschluessel-Uebergabe und
+geführter UI-Import. Ziel aktiv; bestehender Release unveraendert.
+
 Reiner Verwaltungswechsel-Pruefkern umgesetzt (2026-10-20):
 GroupAdministratorTransition bindet alten SPKI/Checkpoint, Bibliothek und neues
 signiertes Paket an zwei domaenengetrennte RSA-PSS/SHA-256-Signaturen.
