@@ -1,6 +1,25 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Reiner Verwaltungswechsel-Pruefkern umgesetzt (2026-10-20):
+GroupAdministratorTransition bindet alten SPKI/Checkpoint, Bibliothek und neues
+signiertes Paket an zwei domaenengetrennte RSA-PSS/SHA-256-Signaturen.
+Unabhaengig bestaetigter neuer Fingerabdruck erforderlich; genau eine Revision
+weiter, Richtlinieninhalt sonst unveraendert. Kein impliziter Ankerwechsel,
+keine Persistenz/Bedienung in diesem Baustein. Normale Paketupdates lehnen den
+neuen Anker weiterhin ab und lassen gespeicherten Trust unveraendert.
+Neue Tests fuer Signatur-/Payloadmanipulation, falsche Bibliothek/Anker/
+Ausgangsstaende, Wiederholung, gleichbleibenden Schluessel, korrekt doppelt
+signierte Rechte-/Revisionsmanipulation, doppelte/unbekannte JSON-Felder und
+Groessenbegrenzung. Personenverzeichnis plus bestehender Vault unter neuem
+Pruefstand normal und per separater Recovery lesbar; Mitglieder-/Recovery-
+Schluessel als neue Verwaltung abgewiesen.
+CI nach ergaenztem Vault-Test Exit 0, 71/71, CLI/WPF erfolgreich:
+tmp/group-administrator-transition-verified-ci.log.
+Naechster Schritt: konfliktgepruefter persistenter Uebergangsimport, danach
+wiederaufnehmbare private Uebergabe und UI. Keine neue Hardware-/Mehrbenutzer-
+Freigabe, keine Releaseaenderung. Ziel aktiv.
+
 Wiederaufnahme/Auftragsabgleich (2026-10-20): Arbeitsbaum sauber, getesteter
 Recovery-Commit c3048f6 war noch nicht remote und wurde jetzt auf den privaten
 Branch gepusht. Vorhandene Build-/Smoke-Nachweise erneut gelesen, nicht ohne

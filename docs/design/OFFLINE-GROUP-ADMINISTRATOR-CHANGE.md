@@ -1,7 +1,7 @@
 # Wechsel der Hauptverwaltung: noch offener Implementierungsumfang
 
-Stand 2026-10-20. Dieser Vertrag beschreibt ausstehende Arbeit, keinen bereits
-verfügbaren Bedienweg. Bezug: Implementierungsfolge Punkt 2 in
+Stand 2026-10-20. Ein reiner Erzeugungs-/Verifikationskern ist implementiert,
+Persistenz und Bedienweg sind weiterhin ausstehend. Bezug: Implementierungsfolge Punkt 2 in
 [Offline-Vault-Gruppen](OFFLINE-VAULT-GROUPS.md).
 
 ## Verifizierter Iststand
@@ -18,6 +18,42 @@ Hauptverwalters oder als Schlüsselrotation bezeichnet werden.
 
 ## Vorgesehener kontrollierter Übergang
 
+### Implementierter Verifikationskern
+
+`GroupAdministratorTransition` erzeugt und prüft einen separaten
+`SignedAdministratorTransition` mit exakten Payloadbytes und zwei RSA-PSS/SHA-256-
+Signaturen. Signierte Daten sind jeweils UTF-8-Präfix plus unveränderte Payload:
+`SieEncode-Administrator-Transition/v1/previous\0` bzw.
+`SieEncode-Administrator-Transition/v1/next\0` (abschließendes Nullbyte).
+Die Payload bindet Format/Version, Bibliotheks-ID, bisherigen SPKI-Schlüssel,
+exakten bisherigen Checkpoint und das neue signierte Registrierungspaket.
+
+Der Aufrufer muss den aktuellen Stand aus dem bereits registrierten lokalen
+Trust liefern. Das Paket selbst begründet kein Vertrauen. Verifikation prüft
+zusätzlich den unabhängig bestätigten neuen Fingerabdruck, einen tatsächlich
+anderen Verwaltungsschlüssel und exakt eine Revisionssteigerung. Die neue
+Richtlinie wird nach der regulären Richtlinienprüfung erneut serialisiert und
+mit dem bisherigen Inhalt plus Revisionssteigerung verglichen. Ein reiner
+Wechsel erhält alle Personen, Geräte, Gruppen, Recovery-Zugänge und Vollmachten;
+Rechteänderungen bleiben getrennte signierte Operationen.
+
+Transport ist größen-/tiefenbegrenzt; unbekannte und doppelte Felder werden
+abgewiesen. Signaturprüfung und Auswertung verwenden private Snapshots.
+Vorhandene Trennung von Verwaltung, Mitgliedern, Recovery und Delegation gilt
+auch für den neuen Schlüssel. Der Kern schreibt keine Dateien und ersetzt
+keinen Vertrauensanker. Normale `AcceptPackageUpdate`-Aufrufe lehnen das neue
+Verwaltungspaket weiterhin ab.
+
+Tests umfassen gültigen Transport, beide Signaturen, Rollenkreuzung,
+unbestätigten Fingerabdruck, falsche Bibliothek/Schlüssel/Checkpoints,
+Wiederholungsprüfung gegen den neuen Stand, manipulierte oder korrekt
+doppelt signierte Rechte-/Revisionsänderungen sowie strikte JSON-Eingaben.
+Zusätzlich werden ein Personenverzeichnis und ein vorhandener Gruppen-Vault
+nach dem Wechsel über normalen Zugang und separate Recovery entschlüsselt.
+Mitglieds-/Recovery-Schlüssel werden als neue Verwaltungsschlüssel abgewiesen.
+
+### Noch zu integrieren
+
 Ein Schlüsselwechsel benötigt eine eigene, ausdrücklich bestätigte Aktion und
 ein eigenes öffentliches Übergangsformat. Gewöhnliche Registrierungsdateien
 dürfen den Vertrauensanker weiterhin niemals ersetzen.
@@ -25,9 +61,8 @@ dürfen den Vertrauensanker weiterhin niemals ersetzen.
 Der Übergang bindet mindestens Bibliotheks-ID, alten öffentlichen Schlüssel,
 exakten Ausgangscheckpoint, neuen öffentlichen Schlüssel und neue Richtlinie.
 Die bisherige Verwaltung signiert diese Bindung; die neue Verwaltung muss
-zusätzlich den Besitz ihres privaten Schlüssels nachweisen. Die genaue
-kanonische Serialisierung und Signaturdomänentrennung sind vor Implementierung
-festzulegen und mit Manipulationstests zu prüfen.
+zusätzlich den Besitz ihres privaten Schlüssels nachweisen. Die konkrete
+Bytebindung und Domänentrennung des Prüfkerns stehen oben.
 
 Empfänger prüfen den bisherigen lokal angehefteten Schlüssel, Ausgangscheckpoint
 und beide Signaturen. Der neue Fingerabdruck muss unabhängig bestätigt werden.
@@ -76,6 +111,6 @@ stillschweigend überschrieben oder gelöscht.
 7. UI führt durch neue private Sicherung, Fingerabdruckabgleich, öffentliche
    Verteilung und lokalen Import; keine privaten Schlüssel in Exporten/Logs.
 
-Nächster Implementierungsschritt: Übergangsformat und reiner Verifikationskern
-mit positiven und negativen Vertragstests; anschließend private Übergabe,
-persistenter Import und UI. Bestehende Updateprüfungen bleiben dabei erhalten.
+Nächster Implementierungsschritt: konfliktgeprüfter persistenter Übergangsimport,
+anschließend wiederaufnehmbare private Übergabe und UI. Bestehende
+Updateprüfungen bleiben dabei erhalten.

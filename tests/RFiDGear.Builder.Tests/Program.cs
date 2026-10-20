@@ -34,6 +34,7 @@ if (args.Length == 2 && args[0] == "hardware-extension-upgrade-rollback")
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Explicit dual-signed administrator transition and unchanged-rights verification", GroupAdministratorTransitionTests.Verify),
     ("Portable private group backups, purpose isolation and current-policy restoration", GroupPrivateKeyBackupTests.Verify),
     ("Offline group policy signatures, trust binding and rollback rejection", OfflineGroupPolicyTests.Verify),
     ("Offline trust enrollment, persistence and concurrent update protection", OfflineGroupTrustTests.Verify),

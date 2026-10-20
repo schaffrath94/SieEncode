@@ -5,7 +5,8 @@ Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erh
 
 Auftragsabgleich 2026-10-20: Der in der Implementierungsfolge vorgesehene
 [Wechsel des zentralen Verwaltungsschluessels](OFFLINE-GROUP-ADMINISTRATOR-CHANGE.md)
-ist noch nicht implementiert. Private Wiederherstellung verwendet denselben
+besitzt inzwischen einen separat getesteten Erzeugungs-/Verifikationskern;
+persistenter Import und Bedienweg fehlen weiterhin. Private Wiederherstellung verwendet denselben
 Schluessel und ersetzt diesen Wechsel nicht. Offen sind damit auch weitere
 Entwicklung und Sicherheitspruefungen, nicht allein native Abnahmen.
 
