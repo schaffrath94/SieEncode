@@ -1,6 +1,25 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Geschuetzte Nachfolgervorbereitung im Core umgesetzt (2026-10-21):
+OfflineGroupSuccessorStore speichert neuen RSA-3072-Schluessel, Ausgangsstand
+und signierte oeffentliche Anforderung ohne Aktivierung als Verwaltung.
+Nur Neuanlage; geschuetztes Neuladen mit Schluessel-/Signaturbindung;
+Anforderungsexport verlangt unveraenderten registrierten Ausgangsstand.
+Private verschluesselte Sicherung bleibt nach Trustwechsel exportierbar.
+Wiederherstellung als aktive Verwaltung gelingt erst nach bestaetigtem Wechsel
+und nur in fehlende Zieldatei. Eigener Windows-CurrentUser-DPAPI-Zweck angelegt.
+Synthetische Tests: Neustart, falsche Bibliothek/Schutzinstanz, stale Checkpoint,
+Ueberschreibschutz, vorzeitige Aktivierung abgewiesen, autorisierter Wechsel mit
+anschliessendem Signieren, konkurrierendes Update bei Vorbereitung und korrupte
+Schluesseldatei. CI Exit 0, 71/71, CLI/WPF ohne Warnungen/Fehler:
+tmp/group-successor-store-ci.log. Sandbox-Build brach zuvor beim Restore ohne
+Compilerdiagnose ab; regulaerer Lauf ausserhalb der Sandbox erfolgreich.
+Noch offen: Lauf des neuen DPAPI-Zwecks, Bedienweg fuer Vorbereitung und
+Autorisierung, kontrollierter Umgang mit bereits vorhandener lokaler Verwaltung.
+Kein neuer Release, keine echten Identitaeten oder Zertifikatsspeicher veraendert.
+Ziel bleibt aktiv.
+
 Getrennte Nachfolgeranforderung und Autorisierung im Core umgesetzt (2026-10-21):
 Prepare benoetigt nur neuen privaten Schluessel und registrierten oeffentlichen
 Ausgangsstand. Eigenes strikt begrenztes Request-Format mit Nachfolgersignatur.

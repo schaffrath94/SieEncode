@@ -2,11 +2,31 @@
 
 Stand 2026-10-21. Erzeugungs-/Verifikationskern, getrennte öffentliche
 Anforderung/Autorisierung und lokaler Vertrauensimport sind implementiert,
-ebenso der empfangsseitige Importdialog. Geschützte private Vorbereitung und
-deren Bedienweg fehlen. Bezug: Implementierungsfolge Punkt 2 in
+ebenso der empfangsseitige Importdialog und geschützte private Vorbereitung
+im Core. Deren Bedienweg fehlt. Bezug: Implementierungsfolge Punkt 2 in
 [Offline-Vault-Gruppen](OFFLINE-VAULT-GROUPS.md).
 
 ## Verifizierter Iststand
+
+`OfflineGroupSuccessorStore` speichert einen neu erzeugten RSA-3072-Schlüssel
+zusammen mit dem registrierten Ausgangsstand und der öffentlichen Anforderung.
+Die Datei wird ausschließlich neu angelegt, niemals überschrieben. Neuladen
+prüft Bibliothek, Signaturen und Übereinstimmung des privaten Schlüssels mit
+der Anforderung. Export einer Anforderung verlangt weiterhin den identischen
+registrierten Ausgangsstand. Ein konkurrierendes Update während der Vorbereitung
+wird vor Veröffentlichung erneut geprüft. Änderungen unmittelbar nach dem
+Schreiben können den abschließenden Export verhindern; die vorbereitete Datei
+bleibt dann für die Sicherung erhalten.
+
+Eine passwortgeschützte private Sicherung bleibt auch nach einem Vertrauenswechsel
+exportierbar. Die bestehende Wiederherstellung akzeptiert diesen Schlüssel erst,
+wenn er zur ausdrücklich registrierten neuen Verwaltung passt; eine vorhandene
+aktive Verwaltungsdatei wird nicht ersetzt. Die Vorbereitung selbst erteilt
+keine Verwaltungsrechte. Für Windows ist ein eigener CurrentUser-DPAPI-Zweck
+`SieEncode.OfflineGroupSuccessor.v1:` plus Bibliotheks-ID implementiert.
+Die neuen Core-Tests verwenden einen synthetischen authentisierten Schutz,
+keine echte Zweitbenutzerumgebung. Ein eigener Lauf des neuen DPAPI-Zwecks und
+die Einbindung in den Erzeugungs-/Autorisierungsdialog stehen noch aus.
 
 `OfflineGroupAdministrationStore.RestorePrivateBackup` stellt den zum aktuell
 registrierten Fingerabdruck passenden privaten Schlüssel wieder her. Das hilft

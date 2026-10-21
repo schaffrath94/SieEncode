@@ -126,6 +126,7 @@ internal static class GroupAdministratorTransitionTests
             var enrolled = trust.Enroll(current.AdministratorPublicKey,
                 OfflineGroupTrustStore.AdministratorFingerprint(current.AdministratorPublicKey), current.Policy);
             var before = File.ReadAllBytes(path);
+            VerifySuccessorPreparation(directory, current, oldKey);
             Reject(() => trust.AcceptPackageUpdate(next, enrolled.Checkpoint));
             if (!File.ReadAllBytes(path).SequenceEqual(before)) throw new Exception("Ordinary update replaced trust.");
             var preview = trust.PreviewAdministratorTransition(transition, enrolled.Checkpoint, fingerprint);
@@ -183,6 +184,58 @@ internal static class GroupAdministratorTransitionTests
                 throw new Exception("Competing transition overwritten.");
         }
         finally { Directory.Delete(directory, true); }
+    }
+
+    private static void VerifySuccessorPreparation(string directory, GroupEnrollmentPackage current, RSA oldKey)
+    {
+        var id = current.LibraryId;
+        var trust = new OfflineGroupTrustStore(Path.Combine(directory, "successor-trust.bin"), id, new OfflineGroupTrustTests.TestProtection());
+        var checkpoint = trust.Enroll(current.AdministratorPublicKey,
+            OfflineGroupTrustStore.AdministratorFingerprint(current.AdministratorPublicKey), current.Policy).Checkpoint;
+        var path = Path.Combine(directory, "pending.bin");
+        var protection = new OfflineGroupTrustTests.TestProtection();
+        var pending = new OfflineGroupSuccessorStore(path, id, protection);
+        Reject(() => pending.Create(trust, new(999, checkpoint.PayloadSha256)));
+        if (File.Exists(path)) throw new Exception("Stale preparation created a key file.");
+        var request = pending.Create(trust, checkpoint);
+        var before = File.ReadAllBytes(path);
+        var restarted = new OfflineGroupSuccessorStore(path, id, protection);
+        if (!GroupAdministratorTransition.WriteRequest(request).SequenceEqual(
+            GroupAdministratorTransition.WriteRequest(restarted.ExportRequest(trust))))
+            throw new Exception("Pending successor did not survive restart.");
+        Reject(() => restarted.Create(trust, checkpoint));
+        Reject(() => new OfflineGroupSuccessorStore(path, Guid.NewGuid(), protection).ExportRequest(trust));
+        Reject(() => new OfflineGroupSuccessorStore(path, id, new OfflineGroupTrustTests.TestProtection()).ExportRequest(trust));
+        const string phrase = "Synthetic successor backup phrase 2026!";
+        var backup = restarted.ExportPrivateBackup(phrase);
+        var activePath = Path.Combine(directory, "successor-active.bin");
+        var active = new OfflineGroupAdministrationStore(activePath, id, new OfflineGroupTrustTests.TestProtection());
+        Reject(() => active.RestorePrivateBackup(backup, phrase, trust));
+        if (File.Exists(activePath) || !trust.ExportPublic().AdministratorPublicKey.SequenceEqual(current.AdministratorPublicKey))
+            throw new Exception("Preparation activated an unauthorized authority.");
+        var next = GroupAdministratorTransition.InspectRequest(request, current);
+        var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(next.AdministratorPublicKey);
+        var transition = GroupAdministratorTransition.Authorize(request, current, oldKey, fingerprint, true);
+        trust.AcceptAdministratorTransition(transition, checkpoint, fingerprint, true);
+        Reject(() => restarted.ExportRequest(trust));
+        backup = restarted.ExportPrivateBackup(phrase);
+        active.RestorePrivateBackup(backup, phrase, trust);
+        Reject(() => active.RestorePrivateBackup(backup, phrase, trust));
+        var updated = active.UpdateGroups(GroupEnrollmentPackages.Validate(next).Policy.Groups, trust.LoadOffline().Checkpoint);
+        trust.AcceptPackageUpdate(updated, trust.LoadOffline().Checkpoint);
+        if (!File.ReadAllBytes(path).SequenceEqual(before)) throw new Exception("Preparation was overwritten during handover.");
+
+        var conflictPath = Path.Combine(directory, "pending-conflict.bin");
+        protection.BeforeProtect = () =>
+        {
+            protection.BeforeProtect = null;
+            var later = active.UpdateGroups(GroupEnrollmentPackages.Validate(updated).Policy.Groups, trust.LoadOffline().Checkpoint);
+            trust.AcceptPackageUpdate(later, trust.LoadOffline().Checkpoint);
+        };
+        Reject(() => new OfflineGroupSuccessorStore(conflictPath, id, protection).Create(trust, trust.LoadOffline().Checkpoint));
+        if (File.Exists(conflictPath)) throw new Exception("Concurrent policy change published stale preparation.");
+        var corrupt = before.ToArray(); corrupt[^1] ^= 1; File.WriteAllBytes(path, corrupt);
+        Reject(() => restarted.ExportPrivateBackup(phrase));
     }
 
     private static void Reject(Action action)
