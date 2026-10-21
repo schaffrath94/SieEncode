@@ -1,6 +1,19 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Nachfolgervorbereitung mit Windows-CurrentUser-DPAPI geprueft (2026-10-21):
+Isolierte synthetische Bibliothek/Schluesseldatei erstellt und mit neuer Store-
+und Schutzinstanz geladen. Falsche Bibliotheksentropie, Trust-Zweck und aktiver
+Verwaltungszweck koennen die Vorbereitung nicht entschluesseln. Private Sicherung
+vor Autorisierung nicht aktivierbar; nach bestaetigtem Trustwechsel wiederhergestellt,
+neue Richtlinie signiert und akzeptiert. Vorbereitung bleibt bytegleich erhalten.
+App-Build Exit 0 ohne Warnungen/Fehler: tmp/group-successor-dpapi-build.log.
+UI-Smoke Exit 0, status OK, 57 Checks, stderr leer:
+tmp/group-successor-dpapi-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Kein Zertifikatsspeicher veraendert; dies ist keine Zweitbenutzerabnahme.
+Naechster Schritt: integrierte Vorbereitung/Autorisierung und wiederaufnehmbare
+Aktivierung mit ausdruecklicher Behandlung vorhandener Verwaltungsdateien.
+
 Geschuetzte Nachfolgervorbereitung im Core umgesetzt (2026-10-21):
 OfflineGroupSuccessorStore speichert neuen RSA-3072-Schluessel, Ausgangsstand
 und signierte oeffentliche Anforderung ohne Aktivierung als Verwaltung.

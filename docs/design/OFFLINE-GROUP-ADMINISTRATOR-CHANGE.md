@@ -25,8 +25,13 @@ aktive Verwaltungsdatei wird nicht ersetzt. Die Vorbereitung selbst erteilt
 keine Verwaltungsrechte. Für Windows ist ein eigener CurrentUser-DPAPI-Zweck
 `SieEncode.OfflineGroupSuccessor.v1:` plus Bibliotheks-ID implementiert.
 Die neuen Core-Tests verwenden einen synthetischen authentisierten Schutz,
-keine echte Zweitbenutzerumgebung. Ein eigener Lauf des neuen DPAPI-Zwecks und
-die Einbindung in den Erzeugungs-/Autorisierungsdialog stehen noch aus.
+keine echte Zweitbenutzerumgebung. Zusätzlich wurde der neue DPAPI-Zweck unter
+dem aktuellen Windows-Benutzer geprüft: Datei neu geladen, fremde Bibliothek
+und beide anderen Schutzzwecke abgewiesen, Aktivierung vor Autorisierung
+abgewiesen, nach Übergangsimport wiederhergestellt und neue Richtlinie signiert.
+UI-Smoke Exit 0, status OK, 57 Checks, stderr leer:
+`tmp/group-successor-dpapi-smoke/SieEncode/ui-smoke/ui-smoke-result.json`.
+Die Einbindung in den Erzeugungs-/Autorisierungsdialog steht noch aus.
 
 `OfflineGroupAdministrationStore.RestorePrivateBackup` stellt den zum aktuell
 registrierten Fingerabdruck passenden privaten Schlüssel wieder her. Das hilft
@@ -133,7 +138,8 @@ Zielrichtlinie gebundene Besitzbestätigung. Die bisherige Verwaltung signiert
 diesen Übergang nach unabhängigem Fingerabdruckabgleich. Der bestehende
 `Create`-Baustein mit beiden RSA-Objekten ist dafür noch kein verteilter
 Bedienweg. Das getrennte Anforderungs-/Autorisierungsformat ist implementiert;
-geschützte, wiederaufnehmbare Vorbereitung ist als Nächstes umzusetzen.
+geschützte, wiederaufnehmbare Vorbereitung ist im Core implementiert und
+mit synthetischem Schutz sowie Windows-CurrentUser-DPAPI geprüft.
 
 Ein Schlüsselwechsel benötigt eine eigene, ausdrücklich bestätigte Aktion und
 ein eigenes öffentliches Übergangsformat. Gewöhnliche Registrierungsdateien

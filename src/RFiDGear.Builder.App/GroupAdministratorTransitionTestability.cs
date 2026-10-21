@@ -16,6 +16,36 @@ public partial class MainWindow
             oldKey.ExportSubjectPublicKeyInfo(), OfflineGroupPolicyService.Sign(policy, oldKey));
         var transition = GroupAdministratorTransition.Create(original, oldKey, nextKey);
         var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(nextKey.ExportSubjectPublicKeyInfo());
+        var pendingDirectory = Path.Combine(root, "successor-preparation");
+        var pendingTrust = new OfflineGroupTrustStore(Path.Combine(pendingDirectory, "trust.bin"), library, new WindowsGroupTrustProtection(library));
+        var pendingCheckpoint = pendingTrust.Enroll(original.AdministratorPublicKey,
+            OfflineGroupTrustStore.AdministratorFingerprint(original.AdministratorPublicKey), original.Policy).Checkpoint;
+        var pendingPath = Path.Combine(pendingDirectory, "pending.bin");
+        var pending = new OfflineGroupSuccessorStore(pendingPath, library, new WindowsGroupSuccessorProtection(library));
+        var pendingRequest = pending.Create(pendingTrust, pendingCheckpoint);
+        var reloaded = new OfflineGroupSuccessorStore(pendingPath, library, new WindowsGroupSuccessorProtection(library));
+        if (!GroupAdministratorTransition.WriteRequest(pendingRequest).SequenceEqual(
+            GroupAdministratorTransition.WriteRequest(reloaded.ExportRequest(pendingTrust))))
+            throw new Exception("DPAPI successor preparation changed on reload.");
+        var protectedBytes = File.ReadAllBytes(pendingPath);
+        Reject(() => new WindowsGroupTrustProtection(library).Unprotect(protectedBytes));
+        Reject(() => new WindowsGroupTrustProtection(library, true).Unprotect(protectedBytes));
+        Reject(() => new WindowsGroupSuccessorProtection(Guid.NewGuid()).Unprotect(protectedBytes));
+        const string backupPhrase = "Synthetic DPAPI successor backup 2026!";
+        var backup = reloaded.ExportPrivateBackup(backupPhrase);
+        var activePath = Path.Combine(pendingDirectory, "active.bin");
+        var active = new OfflineGroupAdministrationStore(activePath, library, new WindowsGroupTrustProtection(library, true));
+        Reject(() => active.RestorePrivateBackup(backup, backupPhrase, pendingTrust));
+        if (File.Exists(activePath)) throw new Exception("Pending DPAPI key activated before authorization.");
+        var pendingNext = GroupAdministratorTransition.InspectRequest(pendingRequest, original);
+        var pendingFingerprint = OfflineGroupTrustStore.AdministratorFingerprint(pendingNext.AdministratorPublicKey);
+        var approved = GroupAdministratorTransition.Authorize(pendingRequest, original, oldKey, pendingFingerprint, true);
+        pendingTrust.AcceptAdministratorTransition(approved, pendingCheckpoint, pendingFingerprint, true);
+        active.RestorePrivateBackup(backup, backupPhrase, pendingTrust);
+        var changed = active.UpdateGroups([], pendingTrust.LoadOffline().Checkpoint);
+        pendingTrust.AcceptPackageUpdate(changed, pendingTrust.LoadOffline().Checkpoint);
+        if (!File.ReadAllBytes(pendingPath).SequenceEqual(protectedBytes)) throw new Exception("DPAPI handover overwrote preparation.");
+        checks.Add("Nachfolgervorbereitung: echte CurrentUser-DPAPI-Datei neu geladen; fremde Bibliothek, Trust- und Verwaltungszweck abgewiesen; Aktivierung erst nach autorisiertem Wechsel, danach Richtlinie signiert. Nur aktueller Windows-Benutzer, keine Zweitbenutzerabnahme.");
         foreach (var scenario in new[] { "frozen", "concurrent" })
         {
             var directory = Path.Combine(root, "transition-" + scenario);
