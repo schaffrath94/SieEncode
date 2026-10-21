@@ -1,6 +1,29 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Verwaltungswechsel-Importdialog integriert (2026-10-20, Nachweise am 21.10.
+nach Unterbrechung erneut gelesen): eigene Aktion in Einstellungen, begrenztes
+Einlesen der Wechseldatei, explizite Auswahl einer vorhandenen Registrierung.
+Alte/neue Fingerabdruecke, Revisionen, unveraenderte Rechte und lokale Wirkung
+werden angezeigt. Unabhaengige Eingabe des neuen Fingerabdrucks plus Bestaetigung
+erforderlich. Inspect prueft nur kryptografisch fuer die Anzeige; Verify und
+persistenter Import verlangen weiterhin den extern bestaetigten Fingerabdruck.
+Neue UI-Pruefungen: kein Schreiben bei Vorschau/falschem Fingerabdruck/fehlender
+Bestaetigung, fehlgeschlagene Bibliothekswahl verwirft vorheriges Ziel, eingefrorener
+Dateikandidat, Konkurrenz- und Wiederholungsabwehr. Windows-DPAPI im isolierten
+Testverzeichnis; keine Zertifikatsspeicheraenderung.
+CI-Log: tmp/group-transition-dialog-ci.log, 71/71, abschliessende Builds erfolgreich.
+UI-Bericht status OK, 56 Checks/5 Szenarien, stderr leer:
+tmp/group-transition-dialog-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Alter Prozesshandle 40501 beim Wiederaufnehmen nicht mehr vorhanden; kein neuer
+Lauf allein wegen Unterbrechung gestartet. Kein nachtraeglich behaupteter Exitcode.
+Native Dateiauswahl/Sichtpruefung des neuen Dialogs noch offen.
+Naechster Schritt: private Uebergabe mit getrennten Schluesselinhabern. Nachfolger
+soll den neuen Schluessel selbst erzeugen und eine oeffentliche Besitzbestaetigung
+liefern; bisherige Verwaltung autorisiert diese ohne Kenntnis des neuen privaten
+Schluessels. Vorhandenes Create mit beiden RSA-Objekten ist bisher nur Core-/Test-
+Baustein, kein fertiger verteilter Uebergabeprozess. Ziel aktiv, Release unveraendert.
+
 Persistenter Verwaltungswechsel-Import umgesetzt (2026-10-20):
 OfflineGroupTrustStore bietet getrennte Vorschau und ausdruecklich bestaetigten
 Import. Beide pruefen den lokal gespeicherten Anker und erwarteten Checkpoint.

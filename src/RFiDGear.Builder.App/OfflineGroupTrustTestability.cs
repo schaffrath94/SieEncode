@@ -13,6 +13,7 @@ public partial class MainWindow
         try
         {
             VerifyGroupDelegateWindow(checks, directory);
+            VerifyAdministratorTransitionDialog(directory, checks);
             using var administrator = RSA.Create(3072);
             var library = Guid.NewGuid();
             var delegatePath = Path.Combine(directory, "delegate.bin");

@@ -42,6 +42,17 @@ public static class GroupAdministratorTransition
     public static GroupEnrollmentPackage Verify(SignedAdministratorTransition transition,
         GroupEnrollmentPackage enrolledCurrent, string independentlyConfirmedNewFingerprint)
     {
+        var next = Inspect(transition, enrolledCurrent);
+        if (!string.Equals(OfflineGroupTrustStore.AdministratorFingerprint(next.AdministratorPublicKey),
+                independentlyConfirmedNewFingerprint, StringComparison.Ordinal))
+            throw new CryptographicException("Neuer Verwaltungsschlüssel wurde nicht unabhängig bestätigt.");
+        return next;
+    }
+
+    /// <summary>Cryptographic inspection for a confirmation screen, not consent to replace trust.
+    /// The current package must come from the locally enrolled store.</summary>
+    public static GroupEnrollmentPackage Inspect(SignedAdministratorTransition transition, GroupEnrollmentPackage enrolledCurrent)
+    {
         // Snapshot all caller-owned arrays before signature checks and parsing.
         var signed = Read(Write(transition));
         var current = GroupEnrollmentPackages.Read(GroupEnrollmentPackages.Write(enrolledCurrent));
@@ -58,10 +69,8 @@ public static class GroupAdministratorTransition
             throw new CryptographicException("Verwaltungswechsel passt nicht zum registrierten Ausgangsstand.");
         var nextPolicy = GroupEnrollmentPackages.Validate(payload.Next);
         if (payload.Next.LibraryId != current.LibraryId ||
-            payload.Next.AdministratorPublicKey.SequenceEqual(current.AdministratorPublicKey) ||
-            !string.Equals(OfflineGroupTrustStore.AdministratorFingerprint(payload.Next.AdministratorPublicKey),
-                independentlyConfirmedNewFingerprint, StringComparison.Ordinal))
-            throw new CryptographicException("Neuer Verwaltungsschlüssel wurde nicht unabhängig bestätigt.");
+            payload.Next.AdministratorPublicKey.SequenceEqual(current.AdministratorPublicKey))
+            throw new CryptographicException("Neuer Verwaltungsschlüssel oder Bibliotheksbindung ungültig.");
         using var nextKey = OpenKey(payload.Next.AdministratorPublicKey);
         if (signed.NextSignature.Length != nextKey.KeySize / 8 ||
             !nextKey.VerifyData(SignatureInput(signed.Payload, "next"), signed.NextSignature,

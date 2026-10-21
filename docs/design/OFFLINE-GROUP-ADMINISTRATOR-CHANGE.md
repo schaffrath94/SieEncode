@@ -1,7 +1,8 @@
 # Wechsel der Hauptverwaltung: noch offener Implementierungsumfang
 
 Stand 2026-10-20. Erzeugungs-/Verifikationskern und lokaler Vertrauensimport sind
-implementiert; private Übergabe und Bedienweg fehlen. Bezug: Implementierungsfolge Punkt 2 in
+implementiert, ebenso der empfangsseitige Importdialog; private Übergabe und
+deren Bedienweg fehlen. Bezug: Implementierungsfolge Punkt 2 in
 [Offline-Vault-Gruppen](OFFLINE-VAULT-GROUPS.md).
 
 ## Verifizierter Iststand
@@ -74,6 +75,24 @@ Das sind synthetische lokale Tests, keine Zweitbenutzer-/Rechnerabnahme und
 keine Aussage über eine Transaktion mit dem privaten Verwaltungsspeicher.
 
 ### Noch zu integrieren
+
+Der empfangsseitige Dialog ist über **Angekündigten Verwaltungswechsel importieren**
+in den Einstellungen erreichbar. Er friert die eingelesene Datei ein, verlangt
+die Auswahl einer bestehenden lokalen Registrierung und zeigt erst nach
+kryptografischer Prüfung bisherige/neue Fingerabdrücke und Revisionen an.
+`Inspect` liefert nur diese geprüfte Vorschau, keine unabhängige Bestätigung.
+Übernahme benötigt weiterhin die separate Fingerabdruckeingabe und Bestätigung;
+der Store prüft den Ausgangscheckpoint erneut. Ein Auswahlfehler verwirft den
+vorherigen Zielzustand. Die Tests nutzen isolierte Windows-DPAPI-Dateien, keinen
+realen zweiten Benutzer; native Dateiauswahl und Sichtprüfung bleiben offen.
+
+Für die noch fehlende private Übergabe gilt: Der Nachfolger erzeugt den neuen
+privaten Schlüssel selbst. Er liefert eine öffentliche, an Ausgangsstand und
+Zielrichtlinie gebundene Besitzbestätigung. Die bisherige Verwaltung signiert
+diesen Übergang nach unabhängigem Fingerabdruckabgleich. Der bestehende
+`Create`-Baustein mit beiden RSA-Objekten ist dafür noch kein verteilter
+Bedienweg. Ein getrenntes Anforderungs-/Autorisierungsformat und geschützte,
+wiederaufnehmbare Vorbereitung sind als Nächstes umzusetzen.
 
 Ein Schlüsselwechsel benötigt eine eigene, ausdrücklich bestätigte Aktion und
 ein eigenes öffentliches Übergangsformat. Gewöhnliche Registrierungsdateien

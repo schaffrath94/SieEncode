@@ -9,6 +9,22 @@ public partial class MainWindow
 {
     private readonly string localGroupTrustDirectory;
 
+    private void ImportAdministratorTransition_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var dialog = new OpenFileDialog { Title = "Öffentlichen Verwaltungswechsel wählen", Filter = "Verwaltungswechsel (*.group-transition.json)|*.group-transition.json" };
+            if (dialog.ShowDialog(this) != true) return;
+            using var stream = new FileStream(dialog.FileName, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (stream.Length is <= 0 or > GroupAdministratorTransition.MaximumBytes) throw new InvalidDataException("Verwaltungswechseldatei ist leer oder zu groß.");
+            var bytes = new byte[(int)stream.Length]; stream.ReadExactly(bytes);
+            var transition = GroupAdministratorTransition.Read(bytes);
+            if (new GroupAdministratorTransitionWindow(this, transition, localGroupTrustDirectory).ShowDialog() == true)
+                SetStatus("Neuer Verwaltungsschlüssel lokal übernommen. Andere Arbeitsplätze und private Verwaltungsschlüssel wurden nicht geändert.");
+        }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
     private void OpenGroupRecoverySetup_Click(object sender, RoutedEventArgs e)
     {
         try { new GroupRecoverySetupWindow(this, localGroupTrustDirectory).ShowDialog(); }

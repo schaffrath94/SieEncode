@@ -6,7 +6,8 @@ Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erh
 Auftragsabgleich 2026-10-20: Der in der Implementierungsfolge vorgesehene
 [Wechsel des zentralen Verwaltungsschluessels](OFFLINE-GROUP-ADMINISTRATOR-CHANGE.md)
 besitzt inzwischen einen Erzeugungs-/Verifikationskern und einen gesonderten
-persistenten Trust-Import; private Uebergabe und Bedienweg fehlen weiterhin.
+persistenten Trust-Import samt empfangsseitigem Dialog; private Uebergabe und
+deren Bedienweg fehlen weiterhin.
 Private Wiederherstellung verwendet denselben
 Schluessel und ersetzt diesen Wechsel nicht. Offen sind damit auch weitere
 Entwicklung und Sicherheitspruefungen, nicht allein native Abnahmen.
