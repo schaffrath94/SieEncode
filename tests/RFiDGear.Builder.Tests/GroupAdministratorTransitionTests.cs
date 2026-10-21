@@ -18,6 +18,34 @@ internal static class GroupAdministratorTransitionTests
             p.LibraryId, key.ExportSubjectPublicKeyInfo(), OfflineGroupPolicyService.Sign(p, key));
         var current = Package(policy, oldKey);
         var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(newKey.ExportSubjectPublicKeyInfo());
+        var request = GroupAdministratorTransition.Prepare(current, newKey);
+        var publicRequest = GroupAdministratorTransition.WriteRequest(request);
+        var received = GroupAdministratorTransition.ReadRequest(publicRequest);
+        var authorized = GroupAdministratorTransition.Authorize(received, current, oldKey, fingerprint, true);
+        var authorizedNext = GroupAdministratorTransition.Verify(authorized, current, fingerprint);
+        if (!authorizedNext.AdministratorPublicKey.SequenceEqual(newKey.ExportSubjectPublicKeyInfo()))
+            throw new Exception("Separated successor request authorized the wrong key.");
+        Reject(() => GroupAdministratorTransition.Authorize(received, current, oldKey, fingerprint, false));
+        Reject(() => GroupAdministratorTransition.Authorize(received, current, oldKey, "", true));
+        Reject(() => GroupAdministratorTransition.Authorize(received, current, stranger, fingerprint, true));
+        Reject(() => GroupAdministratorTransition.Authorize(received, Package(policy with { Revision = 5 }, oldKey), oldKey, fingerprint, true));
+        Reject(() => GroupAdministratorTransition.Authorize(received, Package(policy with { Groups = [] }, oldKey), oldKey, fingerprint, true));
+        var invalidRequestSignature = received.NextSignature.ToArray(); invalidRequestSignature[0] ^= 1;
+        Reject(() => GroupAdministratorTransition.Authorize(received with { NextSignature = invalidRequestSignature }, current, oldKey, fingerprint, true));
+        var invalidRequestPayload = received.Payload.ToArray(); invalidRequestPayload[0] ^= 1;
+        Reject(() => GroupAdministratorTransition.Authorize(received with { Payload = invalidRequestPayload }, current, oldKey, fingerprint, true));
+        Reject(() => GroupAdministratorTransition.ReadRequest(GroupAdministratorTransition.Write(authorized)));
+        Reject(() => GroupAdministratorTransition.Read(publicRequest));
+        Reject(() => GroupAdministratorTransition.ReadRequest(new byte[GroupAdministratorTransition.MaximumBytes + 1]));
+        Reject(() => GroupAdministratorTransition.ReadRequest(Encoding.UTF8.GetBytes(
+            Encoding.UTF8.GetString(publicRequest).Insert(1, "\"Version\":1,"))));
+        Reject(() => GroupAdministratorTransition.WriteRequest(received with { Version = 2 }));
+        Reject(() => GroupAdministratorTransition.WriteRequest(received with { Format = "unrelated" }));
+        var requestJson = JsonNode.Parse(publicRequest)!; requestJson["PrivateKey"] = "not-allowed";
+        Reject(() => GroupAdministratorTransition.ReadRequest(Encoding.UTF8.GetBytes(requestJson.ToJsonString())));
+        // Caller mutation after authorization must not alter the produced public transition.
+        received.Payload[0] ^= 1; received.NextSignature[0] ^= 1;
+        _ = GroupAdministratorTransition.Verify(authorized, current, fingerprint);
         var transition = GroupAdministratorTransition.Read(GroupAdministratorTransition.Write(
             GroupAdministratorTransition.Create(current, oldKey, newKey)));
         var next = GroupAdministratorTransition.Verify(transition, current, fingerprint);

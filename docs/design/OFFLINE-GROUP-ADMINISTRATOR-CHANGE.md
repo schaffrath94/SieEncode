@@ -1,7 +1,8 @@
 # Wechsel der Hauptverwaltung: noch offener Implementierungsumfang
 
-Stand 2026-10-20. Erzeugungs-/Verifikationskern und lokaler Vertrauensimport sind
-implementiert, ebenso der empfangsseitige Importdialog; private Übergabe und
+Stand 2026-10-21. Erzeugungs-/Verifikationskern, getrennte öffentliche
+Anforderung/Autorisierung und lokaler Vertrauensimport sind implementiert,
+ebenso der empfangsseitige Importdialog. Geschützte private Vorbereitung und
 deren Bedienweg fehlen. Bezug: Implementierungsfolge Punkt 2 in
 [Offline-Vault-Gruppen](OFFLINE-VAULT-GROUPS.md).
 
@@ -76,6 +77,26 @@ keine Aussage über eine Transaktion mit dem privaten Verwaltungsspeicher.
 
 ### Noch zu integrieren
 
+Der Core trennt die beiden Schlüsselinhaber jetzt auch bei der Erstellung:
+`Prepare` erhält nur den neuen privaten Schlüssel und den bereits registrierten
+öffentlichen Ausgangsstand. Es erzeugt eine `AdministratorTransitionRequest`
+mit eigenem Format `SieEncode-Administrator-Transition-Request`, Version 1,
+Payload und Nachfolgersignatur. Die Payload und Signaturdomäne entsprechen dem
+fertigen Wechsel; die bisherige Unterschrift fehlt absichtlich.
+`Authorize` erhält nur diese öffentliche Anforderung, den aktuellen öffentlichen
+Ausgangsstand, den bisherigen privaten Schlüssel, den unabhängig bestätigten
+neuen Fingerabdruck und eine ausdrückliche Bestätigung. Es prüft zuerst Besitz,
+Rechteerhalt und Ausgangsbindung, dann ergänzt es die bisherige Signatur.
+Keine der beiden Seiten benötigt den privaten Schlüssel der anderen Seite.
+
+Anforderungs- und fertiges Wechselformat sind nicht austauschbar. Beide Transport-
+wege begrenzen Größe/Tiefe und verweigern unbekannte/doppelte Felder. Die
+Autorisierung verwendet einen eigenen Snapshot, sodass spätere Änderungen an
+der eingelesenen Anforderung den fertig signierten Wechsel nicht verändern.
+`Create` bleibt als kombinierter Core-Helfer bestehen und verwendet diese beiden
+Schritte. Noch nicht enthalten sind das geschützte Speichern einer Vorbereitung,
+die Wiederaufnahme nach Neustart und die endgültige private Übergabe.
+
 Der empfangsseitige Dialog ist über **Angekündigten Verwaltungswechsel importieren**
 in den Einstellungen erreichbar. Er friert die eingelesene Datei ein, verlangt
 die Auswahl einer bestehenden lokalen Registrierung und zeigt erst nach
@@ -91,8 +112,8 @@ privaten Schlüssel selbst. Er liefert eine öffentliche, an Ausgangsstand und
 Zielrichtlinie gebundene Besitzbestätigung. Die bisherige Verwaltung signiert
 diesen Übergang nach unabhängigem Fingerabdruckabgleich. Der bestehende
 `Create`-Baustein mit beiden RSA-Objekten ist dafür noch kein verteilter
-Bedienweg. Ein getrenntes Anforderungs-/Autorisierungsformat und geschützte,
-wiederaufnehmbare Vorbereitung sind als Nächstes umzusetzen.
+Bedienweg. Das getrennte Anforderungs-/Autorisierungsformat ist implementiert;
+geschützte, wiederaufnehmbare Vorbereitung ist als Nächstes umzusetzen.
 
 Ein Schlüsselwechsel benötigt eine eigene, ausdrücklich bestätigte Aktion und
 ein eigenes öffentliches Übergangsformat. Gewöhnliche Registrierungsdateien

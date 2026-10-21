@@ -1,6 +1,24 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Getrennte Nachfolgeranforderung und Autorisierung im Core umgesetzt (2026-10-21):
+Prepare benoetigt nur neuen privaten Schluessel und registrierten oeffentlichen
+Ausgangsstand. Eigenes strikt begrenztes Request-Format mit Nachfolgersignatur.
+Authorize benoetigt nur oeffentliche Anforderung, bisherigen privaten Schluessel,
+aktuellen Ausgangsstand, unabhaengigen neuen Fingerabdruck und Bestaetigung.
+Kein Austausch privater Schluessel notwendig. Create kombiniert diese Bausteine
+weiterhin fuer bestehende Core-Aufrufer. Request kann nicht als fertiger Wechsel
+importiert werden, vollstaendiger Wechsel nicht als Request; private Snapshots
+verhindern nachtraegliche Manipulation der autorisierten Ausgabe.
+Erweiterte Tests fuer beide getrennten Schritte, fehlende/falsche Bestaetigung,
+falschen bisherigen Schluessel, geaenderten Ausgangsstand, manipulierte Payload/
+Nachfolgersignatur, Formate, doppelte/unbekannte Felder, Groessenlimit und
+nachtraegliche Aenderung der Aufruferarrays. CI Exit 0, 71/71, CLI/WPF erfolgreich:
+tmp/group-successor-request-ci.log.
+Noch keine persistente private Vorbereitung oder neuer Erzeugungs-/Autorisierungs-
+dialog; naechster Schritt ist geschuetztes Speichern/Neuladen beim Nachfolger.
+Ziel aktiv, bestehender Release und Identitaeten unveraendert.
+
 Verwaltungswechsel-Importdialog integriert (2026-10-20, Nachweise am 21.10.
 nach Unterbrechung erneut gelesen): eigene Aktion in Einstellungen, begrenztes
 Einlesen der Wechseldatei, explizite Auswahl einer vorhandenen Registrierung.
