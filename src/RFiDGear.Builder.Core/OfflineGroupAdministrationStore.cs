@@ -101,6 +101,33 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         });
     }
 
+    /// <summary>Produces only a public transition. Does not activate the successor or alter local trust.</summary>
+    public SignedAdministratorTransition AuthorizeSuccessor(AdministratorTransitionRequest request,
+        OfflineGroupTrustStore trust, GroupPolicyCheckpoint expectedPolicy, string confirmedFingerprint, bool confirmed)
+    {
+        var candidate = GroupAdministratorTransition.ReadRequest(GroupAdministratorTransition.WriteRequest(request));
+        var enrolled = trust.ExportPublic();
+        var current = GroupEnrollmentPackages.Validate(enrolled);
+        if (enrolled.LibraryId != libraryId || current.Checkpoint != expectedPolicy)
+            throw new CryptographicException("Registrierter Ausgangsstand passt nicht zur Übergabe.");
+        var (state, revision) = Load();
+        try
+        {
+            using var administrator = OpenKey(state);
+            var local = OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId);
+            if (local.Checkpoint != expectedPolicy || !administrator.ExportSubjectPublicKeyInfo().SequenceEqual(enrolled.AdministratorPublicKey))
+                throw new CryptographicException("Lokale Verwaltung und Registrierung stimmen nicht überein.");
+            var transition = GroupAdministratorTransition.Authorize(candidate, enrolled, administrator, confirmedFingerprint, confirmed);
+            var latest = trust.ExportPublic();
+            if (ConcurrentFileWriter.Capture(path) != revision ||
+                !latest.AdministratorPublicKey.SequenceEqual(enrolled.AdministratorPublicKey) ||
+                GroupEnrollmentPackages.Validate(latest).Checkpoint != expectedPolicy)
+                throw new ConcurrentFileChangeException(path);
+            return transition;
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     public GroupEnrollmentPackage ApplyDelegatedChange(SignedGroupChange change, GroupPolicyCheckpoint expectedPolicy)
         => Transform(expectedPolicy, current => OfflineGroupDelegationService.Apply(change, current));
 

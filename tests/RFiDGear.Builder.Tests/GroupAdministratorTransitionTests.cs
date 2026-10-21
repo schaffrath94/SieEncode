@@ -127,6 +127,7 @@ internal static class GroupAdministratorTransitionTests
                 OfflineGroupTrustStore.AdministratorFingerprint(current.AdministratorPublicKey), current.Policy);
             var before = File.ReadAllBytes(path);
             VerifySuccessorPreparation(directory, current, oldKey);
+            VerifyStoredAuthorization(directory);
             Reject(() => trust.AcceptPackageUpdate(next, enrolled.Checkpoint));
             if (!File.ReadAllBytes(path).SequenceEqual(before)) throw new Exception("Ordinary update replaced trust.");
             var preview = trust.PreviewAdministratorTransition(transition, enrolled.Checkpoint, fingerprint);
@@ -236,6 +237,43 @@ internal static class GroupAdministratorTransitionTests
         if (File.Exists(conflictPath)) throw new Exception("Concurrent policy change published stale preparation.");
         var corrupt = before.ToArray(); corrupt[^1] ^= 1; File.WriteAllBytes(path, corrupt);
         Reject(() => restarted.ExportPrivateBackup(phrase));
+    }
+
+    private static void VerifyStoredAuthorization(string directory)
+    {
+        var id = Guid.NewGuid();
+        var adminPath = Path.Combine(directory, "authorizing-admin.bin");
+        var trustPath = Path.Combine(directory, "authorizing-trust.bin");
+        var admin = new OfflineGroupAdministrationStore(adminPath, id, new OfflineGroupTrustTests.TestProtection());
+        var original = admin.Create();
+        var trust = new OfflineGroupTrustStore(trustPath, id, new OfflineGroupTrustTests.TestProtection());
+        var checkpoint = trust.Enroll(original.AdministratorPublicKey,
+            OfflineGroupTrustStore.AdministratorFingerprint(original.AdministratorPublicKey), original.Policy).Checkpoint;
+        using var successor = RSA.Create(3072);
+        var request = GroupAdministratorTransition.Prepare(original, successor);
+        var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(successor.ExportSubjectPublicKeyInfo());
+        var adminBefore = File.ReadAllBytes(adminPath);
+        var trustBefore = File.ReadAllBytes(trustPath);
+        Reject(() => admin.AuthorizeSuccessor(request, trust, checkpoint, fingerprint, false));
+        Reject(() => admin.AuthorizeSuccessor(request, trust, checkpoint, "", true));
+        Reject(() => admin.AuthorizeSuccessor(request, trust, new(999, checkpoint.PayloadSha256), fingerprint, true));
+        var bad = request with { NextSignature = new byte[384] };
+        Reject(() => admin.AuthorizeSuccessor(bad, trust, checkpoint, fingerprint, true));
+        var approved = admin.AuthorizeSuccessor(request, trust, checkpoint, fingerprint, true);
+        _ = GroupAdministratorTransition.Verify(approved, original, fingerprint);
+        if (!File.ReadAllBytes(adminPath).SequenceEqual(adminBefore) || !File.ReadAllBytes(trustPath).SequenceEqual(trustBefore))
+            throw new Exception("Public authorization changed local authority or trust.");
+        var differentAdmin = new OfflineGroupAdministrationStore(Path.Combine(directory, "other-authority.bin"), id, new OfflineGroupTrustTests.TestProtection());
+        differentAdmin.Create();
+        Reject(() => differentAdmin.AuthorizeSuccessor(request, trust, checkpoint, fingerprint, true));
+        var newer = admin.UpdateGroups([], checkpoint);
+        Reject(() => admin.AuthorizeSuccessor(request, trust, checkpoint, fingerprint, true));
+        trust.AcceptPackageUpdate(newer, checkpoint);
+        Reject(() => admin.AuthorizeSuccessor(request, trust, trust.LoadOffline().Checkpoint, fingerprint, true));
+        var fresh = GroupAdministratorTransition.Prepare(newer, successor);
+        var final = admin.AuthorizeSuccessor(fresh, trust, trust.LoadOffline().Checkpoint, fingerprint, true);
+        trust.AcceptAdministratorTransition(final, trust.LoadOffline().Checkpoint, fingerprint, true);
+        Reject(() => admin.AuthorizeSuccessor(fresh, trust, trust.LoadOffline().Checkpoint, fingerprint, true));
     }
 
     private static void Reject(Action action)

@@ -8,6 +8,23 @@ im Core. Deren Bedienweg fehlt. Bezug: Implementierungsfolge Punkt 2 in
 
 ## Verifizierter Iststand
 
+`OfflineGroupAdministrationStore.AuthorizeSuccessor` lädt den bisherigen privaten
+Schlüssel intern aus dem geschützten Verwaltungsspeicher. Der Aufrufer übergibt
+nur die öffentliche Anforderung, vorhandene lokale Registrierung, erwarteten
+Checkpoint, unabhängig bestätigten Fingerabdruck und ausdrückliche Bestätigung.
+Verwaltungsschlüssel und signierter lokaler Stand müssen zur Registrierung
+passen. Vor Rückgabe werden Verwaltungsdateihash und registrierter Stand erneut
+geprüft. Die Rückgabe enthält ausschließlich den öffentlichen signierten Wechsel;
+die Methode verändert keine Schlüsseldatei und keine Registrierung.
+Empfänger müssen den Wechsel weiterhin gegen ihren dann aktuellen Stand prüfen;
+eine exportierte Signatur sperrt spätere Änderungen nicht global.
+
+Tests prüfen fehlende/falsche Bestätigung, falschen Checkpoint, manipulierten
+Besitznachweis, fremden lokalen Verwaltungsschlüssel, auseinanderlaufende Stände,
+veraltete Anforderung sowie die Ablehnung der alten lokalen Verwaltung nach dem
+Vertrauenswechsel. Erfolgreiche Autorisierung erhält beide lokalen Dateien
+bytegleich. Der Bedienweg für diese API steht noch aus.
+
 `OfflineGroupSuccessorStore` speichert einen neu erzeugten RSA-3072-Schlüssel
 zusammen mit dem registrierten Ausgangsstand und der öffentlichen Anforderung.
 Die Datei wird ausschließlich neu angelegt, niemals überschrieben. Neuladen

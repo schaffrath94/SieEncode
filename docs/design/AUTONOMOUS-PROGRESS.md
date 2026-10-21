@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Autorisierung aus geschuetztem Verwaltungsspeicher umgesetzt (2026-10-21):
+AuthorizeSuccessor verarbeitet ausschliesslich oeffentliche Anforderung plus
+lokalen Trust, erwarteten Checkpoint, unabhaengigen Fingerabdruck und explizite
+Bestaetigung. Privater Schluessel bleibt intern; Verwaltung und Registrierung
+muessen Schluessel und Stand teilen. Vor Rueckgabe erneute Pruefung von
+Verwaltungsdateihash und registriertem Stand. Ausgabe ist oeffentlicher Wechsel;
+keine automatische Aktivierung oder Aenderung der lokalen Dateien.
+Tests fuer unbestaetigte/falsche Angaben, manipulierten Besitznachweis, fremden
+lokalen Schluessel, divergierende Staende, veraltete Anfrage und alte Verwaltung
+nach Trustwechsel; erfolgreiche Ausgabe laesst beide Dateien bytegleich.
+CI Exit 0, 71/71, CLI/WPF ohne Warnungen/Fehler:
+tmp/group-stored-authorization-ci.log. Keine UI-Aenderung in diesem Schritt.
+Naechster Schritt bleibt integrierte Vorbereitung/Autorisierung und kontrollierte
+Aktivierung; kein neuer Release, Ziel weiterhin aktiv.
+
 Nachfolgervorbereitung mit Windows-CurrentUser-DPAPI geprueft (2026-10-21):
 Isolierte synthetische Bibliothek/Schluesseldatei erstellt und mit neuer Store-
 und Schutzinstanz geladen. Falsche Bibliotheksentropie, Trust-Zweck und aktiver
