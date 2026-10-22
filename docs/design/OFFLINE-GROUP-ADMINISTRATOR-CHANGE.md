@@ -10,6 +10,30 @@ Bezug: Implementierungsfolge Punkt 2 in
 
 ## Verifizierter Iststand
 
+`OfflineGroupAdministrationStore.ActivateSuccessor` ist der separate Core-Schritt
+nach dem ausdrücklich bestätigten Vertrauenswechsel. Er verlangt Bestätigung,
+erwarteten aktuellen Checkpoint und einen vorbereiteten Schlüssel, der zum bereits
+registrierten neuen Anker passt. Vorbereitung, Bibliothek und ursprünglicher
+Besitznachweis werden erneut geprüft. Ohne importierten neuen Anker scheitert die
+Aktivierung. Der private Schlüssel wird nur intern zwischen Stores verwendet.
+
+Bei fehlender Verwaltungsdatei wird sie neu angelegt. Bei vorhandener Datei darf
+nur der exakte vorbereitete Vorgänger ersetzt werden. Dessen geschützte Bytes
+werden zuerst unter `.retired-<Datei-SHA256>.bin` neben der Verwaltungsdatei
+archiviert und per Hash geprüft. Erst danach erfolgt die konfliktgeprüfte
+Ersetzung, mit erneuter Trust-Prüfung im Schreibschritt. Ein fehlgeschlagener
+Schreibversuch kann ein zusätzliches Archiv hinterlassen; Wiederaufnahme verwendet
+es nur bei identischem Hash. Vorbereitung und Archiv werden nicht gelöscht.
+Eine bereits vollständig aktivierte Datei wird bei identischem Checkpoint ohne
+erneutes Schreiben akzeptiert. Abweichende/fremde Verwaltung wird nicht ersetzt.
+
+Archiv und Vorbereitung bleiben an den vorhandenen lokalen Schutz gebunden und
+ersetzen keine portable private Sicherung. Das Archiv enthält weiterhin einen
+funktionsfähigen alten Schlüssel; es ist kein globaler Widerruf. Trustimport und
+private Aktivierung sind zwei Schritte, keine dateiübergreifende atomare Transaktion.
+Nach einem Abbruch zwischen beiden kann die Aktivierung wiederholt werden.
+Die Einbindung dieses Aktivierungsschritts in den Dialog steht noch aus.
+
 `OfflineGroupAdministrationStore.AuthorizeSuccessor` lädt den bisherigen privaten
 Schlüssel intern aus dem geschützten Verwaltungsspeicher. Der Aufrufer übergibt
 nur die öffentliche Anforderung, vorhandene lokale Registrierung, erwarteten

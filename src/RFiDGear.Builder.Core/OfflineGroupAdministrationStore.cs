@@ -74,6 +74,69 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
     public GroupEnrollmentPackage UpdateGroups(OfflineVaultGroup[] groups, GroupPolicyCheckpoint expectedPolicy)
         => Update(groups, null, expectedPolicy);
 
+    public GroupEnrollmentPackage ActivateSuccessor(OfflineGroupSuccessorStore preparation, OfflineGroupTrustStore trust,
+        GroupPolicyCheckpoint expectedPolicy, bool confirmed)
+    {
+        if (!confirmed) throw new InvalidDataException("Aktivierung muss ausdrücklich bestätigt werden.");
+        var (key, previous) = preparation.OpenForActivation(libraryId);
+        using (key)
+        {
+            var package = trust.ExportPublic();
+            var current = GroupEnrollmentPackages.Validate(package);
+            if (package.LibraryId != libraryId || current.Checkpoint != expectedPolicy ||
+                !key.ExportSubjectPublicKeyInfo().SequenceEqual(package.AdministratorPublicKey) ||
+                current.Policy.Revision <= GroupEnrollmentPackages.Validate(previous).Policy.Revision)
+                throw new CryptographicException("Vorbereitung passt nicht zum bestätigten neuen Verwaltungsstand.");
+            void CheckTrust()
+            {
+                var latest = trust.ExportPublic();
+                if (!latest.AdministratorPublicKey.SequenceEqual(package.AdministratorPublicKey) ||
+                    GroupEnrollmentPackages.Validate(latest).Checkpoint != expectedPolicy)
+                    throw new ConcurrentFileChangeException(path);
+            }
+            var expectedFile = FileRevision.Missing;
+            if (File.Exists(path))
+            {
+                var (old, revision) = Load();
+                try
+                {
+                    using var oldKey = OpenKey(old);
+                    var oldPolicy = OfflineGroupPolicyService.Verify(old.Policy, oldKey, libraryId);
+                    if (oldKey.ExportSubjectPublicKeyInfo().SequenceEqual(package.AdministratorPublicKey))
+                    {
+                        if (oldPolicy.Checkpoint != expectedPolicy) throw new ConcurrentFileChangeException(path);
+                        CheckTrust();
+                        if (ConcurrentFileWriter.Capture(path) != revision) throw new ConcurrentFileChangeException(path);
+                        return package; // A completed activation can be resumed without rewriting keys.
+                    }
+                    if (!oldKey.ExportSubjectPublicKeyInfo().SequenceEqual(previous.AdministratorPublicKey) ||
+                        oldPolicy.Checkpoint != GroupEnrollmentPackages.Validate(previous).Checkpoint)
+                        throw new CryptographicException("Vorhandene Verwaltung ist nicht der vorbereitete Vorgänger. Datei bleibt erhalten.");
+                    byte[] protectedOld;
+                    using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        if (stream.Length is <= 0 or > MaximumBytes) throw new InvalidDataException("Ungültiger Verwaltungsstand.");
+                        protectedOld = new byte[(int)stream.Length]; stream.ReadExactly(protectedOld);
+                    }
+                    if (Convert.ToHexString(SHA256.HashData(protectedOld)) != revision.Sha256) throw new ConcurrentFileChangeException(path);
+                    CheckTrust();
+                    var archive = path + ".retired-" + revision.Sha256 + ".bin";
+                    if (!File.Exists(archive)) ConcurrentFileWriter.Write(archive, FileRevision.Missing, temporary => File.WriteAllBytes(temporary, protectedOld));
+                    if (ConcurrentFileWriter.Capture(archive) != revision) throw new CryptographicException("Archivprüfung fehlgeschlagen; bisherige Verwaltung bleibt erhalten.");
+                    expectedFile = revision;
+                }
+                finally { CryptographicOperations.ZeroMemory(old.PrivateKey); }
+            }
+            var privateKey = key.ExportPkcs8PrivateKey();
+            try
+            {
+                Save(new(1, libraryId, privateKey, package.Policy), expectedFile, CheckTrust);
+                return package;
+            }
+            finally { CryptographicOperations.ZeroMemory(privateKey); }
+        }
+    }
+
     public GroupEnrollmentPackage UpdateDirectory(OfflineVaultPerson[] people, OfflineVaultGroup[] groups, GroupPolicyCheckpoint expectedPolicy)
         => Update(groups, people ?? throw new ArgumentNullException(nameof(people)), expectedPolicy);
 

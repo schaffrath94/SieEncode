@@ -1,6 +1,23 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Kontrollierte Nachfolgeraktivierung im Core umgesetzt (2026-10-22):
+ActivateSuccessor verlangt vorbereiteten Schluessel passend zum bereits
+registrierten neuen Anker, erwarteten Checkpoint und ausdrueckliche Bestaetigung.
+Fehlende Verwaltung wird angelegt; nur exakter vorbereiteter Vorgaenger darf nach
+bytegetreuer geschuetzter Archivierung ersetzt werden. Archivname enthaelt Hash;
+vorhandenes Archiv muss identisch sein. CAS schuetzt aktive Zieldatei, Trust wird
+vor Schreiben erneut geprueft. Keine gemeinsame atomare Transaktion mit Trustimport.
+Wiederholte bereits abgeschlossene Aktivierung mit gleichem Stand schreibt nichts.
+Tests: Aktivierung vor Trustwechsel/unbestaetigt/falscher Checkpoint abgewiesen,
+fremde Verwaltung erhalten, Schutzfehler nach Archivierung laesst alten Stand
+erhalten, erneuter Versuch erfolgreich, Vorbereitung unveraendert, neuer Schluessel
+signiert, alter archivierter Schluessel weiterhin lesbar. Archiv ist kein Widerruf.
+CI Exit 0, 71/71, CLI/WPF ohne Warnungen/Fehler:
+tmp/group-successor-activation-ci.log. Keine Windows-/UI-Aktivierungsabnahme in
+diesem Schritt; als Naechstes Dialoganbindung und entsprechende Integrationspruefung.
+Bestehender Release unveraendert; Ziel aktiv.
+
 Nachfolger-Einrichtung integriert und getestet (2026-10-22):
 Neue Einstellungsaktion mit registrierter Bibliotheksauswahl, expliziter
 Vorbereitung, privater Sicherung und oeffentlichem Anfrageexport. Vorbereitungen

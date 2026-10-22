@@ -70,6 +70,14 @@ public sealed class OfflineGroupSuccessorStore(string localPath, Guid libraryId,
         finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
     }
 
+    internal (RSA Key, GroupEnrollmentPackage Previous) OpenForActivation(Guid expectedLibrary)
+    {
+        if (expectedLibrary != libraryId) throw new CryptographicException("Falsche Bibliothek für Aktivierung.");
+        var state = Load();
+        try { return (Validate(state), state.Current); }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     private static void RequireCurrent(GroupEnrollmentPackage prepared, OfflineGroupTrustStore trust)
     {
         var current = trust.ExportPublic();

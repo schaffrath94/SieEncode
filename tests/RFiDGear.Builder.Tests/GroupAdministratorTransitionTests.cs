@@ -128,6 +128,7 @@ internal static class GroupAdministratorTransitionTests
             var before = File.ReadAllBytes(path);
             VerifySuccessorPreparation(directory, current, oldKey);
             VerifyStoredAuthorization(directory);
+            VerifySuccessorActivation(directory);
             Reject(() => trust.AcceptPackageUpdate(next, enrolled.Checkpoint));
             if (!File.ReadAllBytes(path).SequenceEqual(before)) throw new Exception("Ordinary update replaced trust.");
             var preview = trust.PreviewAdministratorTransition(transition, enrolled.Checkpoint, fingerprint);
@@ -274,6 +275,52 @@ internal static class GroupAdministratorTransitionTests
         var final = admin.AuthorizeSuccessor(fresh, trust, trust.LoadOffline().Checkpoint, fingerprint, true);
         trust.AcceptAdministratorTransition(final, trust.LoadOffline().Checkpoint, fingerprint, true);
         Reject(() => admin.AuthorizeSuccessor(fresh, trust, trust.LoadOffline().Checkpoint, fingerprint, true));
+    }
+
+    private static void VerifySuccessorActivation(string directory)
+    {
+        var id = Guid.NewGuid();
+        var path = Path.Combine(directory, "activation-admin.bin");
+        var protector = new OfflineGroupTrustTests.TestProtection();
+        var admin = new OfflineGroupAdministrationStore(path, id, protector);
+        var original = admin.Create();
+        var oldBytes = File.ReadAllBytes(path);
+        var trust = new OfflineGroupTrustStore(Path.Combine(directory, "activation-trust.bin"), id, new OfflineGroupTrustTests.TestProtection());
+        trust.Enroll(original.AdministratorPublicKey, OfflineGroupTrustStore.AdministratorFingerprint(original.AdministratorPublicKey), original.Policy);
+        var pendingPath = Path.Combine(directory, "activation-pending.bin");
+        var pending = new OfflineGroupSuccessorStore(pendingPath, id, new OfflineGroupTrustTests.TestProtection());
+        var request = pending.Create(trust, trust.LoadOffline().Checkpoint);
+        var pendingBytes = File.ReadAllBytes(pendingPath);
+        Reject(() => admin.ActivateSuccessor(pending, trust, trust.LoadOffline().Checkpoint, true));
+        var next = GroupAdministratorTransition.InspectRequest(request, original);
+        var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(next.AdministratorPublicKey);
+        var approved = admin.AuthorizeSuccessor(request, trust, trust.LoadOffline().Checkpoint, fingerprint, true);
+        trust.AcceptAdministratorTransition(approved, trust.LoadOffline().Checkpoint, fingerprint, true);
+        var checkpoint = trust.LoadOffline().Checkpoint;
+        Reject(() => admin.ActivateSuccessor(pending, trust, checkpoint, false));
+        Reject(() => admin.ActivateSuccessor(pending, trust, new(999, checkpoint.PayloadSha256), true));
+        var foreign = new OfflineGroupAdministrationStore(Path.Combine(directory, "activation-foreign.bin"), id, new OfflineGroupTrustTests.TestProtection());
+        var foreignBefore = foreign.Create();
+        Reject(() => foreign.ActivateSuccessor(pending, trust, checkpoint, true));
+        if (!foreign.ExportPublic().AdministratorPublicKey.SequenceEqual(foreignBefore.AdministratorPublicKey)) throw new Exception("Foreign administration replaced.");
+        protector.BeforeProtect = () => throw new IOException("Synthetic activation protection failure");
+        Reject(() => admin.ActivateSuccessor(pending, trust, checkpoint, true));
+        protector.BeforeProtect = null;
+        if (!File.ReadAllBytes(path).SequenceEqual(oldBytes)) throw new Exception("Failed activation destroyed previous authority.");
+        var archive = Directory.GetFiles(directory, "activation-admin.bin.retired-*.bin").Single();
+        if (!File.ReadAllBytes(archive).SequenceEqual(oldBytes)) throw new Exception("Protected previous authority not archived intact.");
+        admin.ActivateSuccessor(pending, trust, checkpoint, true);
+        var activeBytes = File.ReadAllBytes(path);
+        admin.ActivateSuccessor(pending, trust, checkpoint, true);
+        if (!File.ReadAllBytes(path).SequenceEqual(activeBytes) || !File.ReadAllBytes(pendingPath).SequenceEqual(pendingBytes))
+            throw new Exception("Repeated activation rewrote key state.");
+        var empty = new OfflineGroupAdministrationStore(Path.Combine(directory, "activation-new.bin"), id, new OfflineGroupTrustTests.TestProtection());
+        empty.ActivateSuccessor(pending, trust, checkpoint, true);
+        var update = admin.UpdateGroups([], checkpoint);
+        trust.AcceptPackageUpdate(update, checkpoint);
+        Reject(() => empty.ActivateSuccessor(pending, trust, trust.LoadOffline().Checkpoint, true));
+        var archived = new OfflineGroupAdministrationStore(archive, id, protector);
+        if (!archived.ExportPublic().AdministratorPublicKey.SequenceEqual(original.AdministratorPublicKey)) throw new Exception("Archived authority cannot be recovered.");
     }
 
     private static void Reject(Action action)
