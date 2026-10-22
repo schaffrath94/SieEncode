@@ -9,6 +9,7 @@ public partial class MainWindow
     private void VerifyAdministratorTransitionDialog(string root, ICollection<string> checks)
     {
         VerifySuccessorAuthorizationExport(root, checks);
+        VerifySuccessorActivationUi(root, checks);
         using var oldKey = RSA.Create(3072);
         using var nextKey = RSA.Create(3072);
         var library = Guid.NewGuid();
@@ -173,6 +174,69 @@ public partial class MainWindow
             try { action(); }
             catch (Exception e) when (e is CryptographicException or IOException or InvalidDataException or InvalidOperationException) { return; }
             throw new Exception("Invalid UI authorization succeeded.");
+        }
+    }
+
+    private void VerifySuccessorActivationUi(string root, ICollection<string> checks)
+    {
+        foreach (var existing in new[] { false, true })
+        {
+            var directory = Path.Combine(root, "activation-ui-" + existing);
+            var oldWindow = new GroupAdministrationWindow(this, directory);
+            GroupSuccessorSetupWindow? setup = null;
+            try
+            {
+                var id = oldWindow.CreateAdministration();
+                var adminPath = Path.Combine(directory, "Administrations", id.ToString("N") + ".admin.bin");
+                var oldBytes = File.ReadAllBytes(adminPath);
+                var trust = new OfflineGroupTrustStore(Path.Combine(directory, id.ToString("N") + ".trust.bin"), id, new WindowsGroupTrustProtection(id));
+                var original = trust.ExportPublic();
+                setup = new GroupSuccessorSetupWindow(this, directory) { ShowInTaskbar = false, Opacity = 0 };
+                setup.Show(); setup.Prepare();
+                Reject(() => setup.Activate(trust.LoadOffline().Checkpoint, true));
+                var backup = setup.CreateBackupWindow();
+                try { backup.ExportTo(Path.Combine(directory, "backup.group-private.json"), "Synthetic complete handover backup 2026!", "Synthetic complete handover backup 2026!", true); }
+                finally { backup.Close(); }
+                var requestPath = Path.Combine(directory, "request.group-successor.json");
+                setup.ExportRequest(requestPath);
+                var request = GroupAdministratorTransition.ReadRequest(File.ReadAllBytes(requestPath));
+                var next = GroupAdministratorTransition.InspectRequest(request, original);
+                var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(next.AdministratorPublicKey);
+                var transitionPath = Path.Combine(directory, "approved.group-transition.json");
+                oldWindow.ExportSuccessorAuthorization(request, fingerprint, true, transitionPath);
+                var import = new GroupAdministratorTransitionWindow(this, GroupAdministratorTransition.Read(File.ReadAllBytes(transitionPath)), directory);
+                try { import.SelectLibrary(id); import.Accept(fingerprint, true); }
+                finally { import.Close(); }
+                setup.Close(); setup = null;
+                if (!existing) File.Move(adminPath, Path.Combine(directory, "synthetic-previous-location.bin"));
+                setup = new GroupSuccessorSetupWindow(this, directory);
+                VerifyAutomationContract(setup);
+                var checkpoint = trust.LoadOffline().Checkpoint;
+                Reject(() => setup.Activate(checkpoint, false));
+                Reject(() => setup.Activate(new(999, checkpoint.PayloadSha256), true));
+                setup.Activate(checkpoint, true);
+                var activeBytes = File.ReadAllBytes(adminPath);
+                setup.Activate(checkpoint, true);
+                if (!File.ReadAllBytes(adminPath).SequenceEqual(activeBytes)) throw new Exception("Repeated UI activation rewrote authority.");
+                if (existing)
+                {
+                    var archive = Directory.GetFiles(Path.GetDirectoryName(adminPath)!, "*.retired-*.bin").Single();
+                    if (!File.ReadAllBytes(archive).SequenceEqual(oldBytes)) throw new Exception("Windows predecessor archive changed protected bytes.");
+                }
+                var active = new OfflineGroupAdministrationStore(adminPath, id, new WindowsGroupTrustProtection(id, true));
+                var newer = active.UpdateGroups([], checkpoint);
+                trust.AcceptPackageUpdate(newer, checkpoint);
+                oldWindow.LoadAdministration(id);
+            }
+            finally { setup?.Close(); oldWindow.Close(); }
+        }
+        checks.Add("Nachfolge-Gesamtablauf unter Windows-DPAPI: Vorbereitung, Sicherung, Anfrage, Autorisierung, expliziter Import und Aktivierung nach Dialogneustart; mit/ohne bisherige Verwaltungsdatei, Archiv bytegleich, unbestätigt/stale abgewiesen, Wiederholung ohne Schreiben und neue Signatur erfolgreich. Kein echter Zweitbenutzer, keine visuelle Bestätigungsdialogabnahme.");
+
+        static void Reject(Action action)
+        {
+            try { action(); }
+            catch (Exception e) when (e is CryptographicException or IOException or InvalidDataException or InvalidOperationException) { return; }
+            throw new Exception("Invalid successor activation UI action succeeded.");
         }
     }
 }

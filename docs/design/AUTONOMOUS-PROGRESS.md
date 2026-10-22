@@ -1,6 +1,26 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Aktivierungsdialog und Windows-Nachfolge-Gesamtablauf abgeschlossen (2026-10-22):
+Schritt 4 im Nachfolgerdialog prueft registrierten neuen Fingerabdruck, zeigt
+Bibliothek/Archivierungsfolgen und verlangt ausdrueckliche Bestaetigung. Vor der
+Bestaetigung gelesener Checkpoint wird beim Schreiben erneut geprueft. Nach
+Trustimport erkennt neu geoeffneter Dialog den vorbereiteten Nachfolger, ohne
+erneuten Anfrageexport gegen alten Stand zu verlangen. Erfolg verweist auf die
+Gruppenverwaltung und verbleibende Importe anderer Arbeitsplaetze.
+Windows-Test ueber Dialogfunktionen: Vorbereitung, private Sicherung, oeffentliche
+Anfrage, alte Autorisierung, Importdialog, Neustart des Nachfolgerdialogs,
+Aktivierung mit/ohne Vorgaengerdatei, Archiv bytegleich, unbestaetigt/stale
+abgewiesen, Wiederholung ohne Schreiben, neue Signatur und Verwaltungsneuladen.
+CI Exit 0, 71/71, CLI/WPF ohne Warnungen/Fehler: tmp/group-activation-ui-ci.log.
+Windows-Smoke Exit 0, status OK, 60 Checks, stderr leer:
+tmp/group-activation-ui-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Nur synthetische Dateien und aktueller Windows-Benutzer. Keine echte
+Zweitbenutzer-/Hardware- oder visuelle Datei-/Bestaetigungsdialogabnahme.
+Schnellstart und Architekturstand aktualisiert; naechster Schritt sind noch
+offene Gesamtabnahme/Sicherheitspruefung gegen den vollstaendigen Auftrag.
+Bestehender Release unveraendert, Ziel aktiv.
+
 Kontrollierte Nachfolgeraktivierung im Core umgesetzt (2026-10-22):
 ActivateSuccessor verlangt vorbereiteten Schluessel passend zum bereits
 registrierten neuen Anker, erwarteten Checkpoint und ausdrueckliche Bestaetigung.

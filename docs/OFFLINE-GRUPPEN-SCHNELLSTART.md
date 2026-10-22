@@ -122,6 +122,22 @@ Die bisherige Hauptverwaltung prüft und autorisiert die öffentliche Anfrage:
    und verteilen. Jeder Arbeitsplatz muss den angekündigten Wechsel ausdrücklich
    importieren; der Export aktiviert ihn auf keinem Arbeitsplatz automatisch.
 
-Die geführte Aktivierung des vorbereiteten privaten Schlüssels beim Nachfolger
-ist noch in Arbeit. Offline-Arbeitsplätze vertrauen bis zum Import weiterhin
-dem alten Schlüssel. Vorhandene private Dateien nicht löschen oder überschreiben.
+Beim Nachfolger anschließend:
+
+1. Den Vorbereitungsdialog schließen und in den Einstellungen
+   **Angekündigten Verwaltungswechsel importieren** wählen. Die zurückerhaltene
+   Übergabedatei und Bibliothek prüfen, den unabhängig bestätigten Fingerabdruck
+   eingeben und den Import bestätigen.
+2. **Nachfolge der Hauptverwaltung vorbereiten** erneut öffnen und dieselbe
+   Bibliothek auswählen. Der Dialog erkennt den bereits registrierten neuen Schlüssel.
+3. **Nach importierter Übergabe lokal aktivieren** wählen und bestätigen.
+   Eine passende bisherige lokale Verwaltung wird zuerst geschützt archiviert;
+   eine fremde Verwaltung wird nicht ersetzt. Bei einem abgebrochenen Versuch den
+   Schritt erneut ausführen, vorhandene Dateien nicht manuell löschen.
+4. Dialog schließen und die Gruppenverwaltung öffnen. Dort wird nun mit dem neuen
+   Schlüssel gearbeitet. Vorbereitung und gegebenenfalls Vorgängerarchiv bleiben
+   erhalten. Das lokale Archiv ersetzt keine portable private Sicherung.
+
+Offline-Arbeitsplätze vertrauen bis zum Import weiterhin dem alten Schlüssel.
+Das Vorgängerarchiv enthält weiterhin einen nutzbaren alten Schlüssel; weder
+Archivierung noch Aktivierung sperren bereits vorhandene Kopien aus der Ferne.

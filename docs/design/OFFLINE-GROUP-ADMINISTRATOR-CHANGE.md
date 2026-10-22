@@ -4,7 +4,7 @@ Stand 2026-10-21. Erzeugungs-/Verifikationskern, getrennte öffentliche
 Anforderung/Autorisierung und lokaler Vertrauensimport sind implementiert,
 ebenso der empfangsseitige Importdialog und geschützte private Vorbereitung
 im Core. Autorisierung in der Verwaltungsoberfläche und Vorbereitung/Sicherung/
-Anfrageexport beim Nachfolger sind integriert. Geführte Aktivierung fehlt noch.
+Anfrageexport und explizite lokale Aktivierung beim Nachfolger sind integriert.
 Bezug: Implementierungsfolge Punkt 2 in
 [Offline-Vault-Gruppen](OFFLINE-VAULT-GROUPS.md).
 
@@ -32,7 +32,12 @@ ersetzen keine portable private Sicherung. Das Archiv enthält weiterhin einen
 funktionsfähigen alten Schlüssel; es ist kein globaler Widerruf. Trustimport und
 private Aktivierung sind zwei Schritte, keine dateiübergreifende atomare Transaktion.
 Nach einem Abbruch zwischen beiden kann die Aktivierung wiederholt werden.
-Die Einbindung dieses Aktivierungsschritts in den Dialog steht noch aus.
+`GroupSuccessorSetupWindow` bietet die Aktivierung als Schritt 4 an, nachdem der
+öffentliche Wechsel separat importiert wurde. Bibliothek und neuer Fingerabdruck
+werden vor Bestätigung angezeigt; der vorher gelesene Checkpoint wird an den Core
+übergeben. Erneutes Öffnen erkennt den registrierten Nachfolger, ohne erneut eine
+Anfrage gegen den alten Stand zu verlangen. Die Erfolgsmeldung verweist auf die
+Gruppenverwaltung und die noch nötigen Importe anderer Arbeitsplätze.
 
 `OfflineGroupAdministrationStore.AuthorizeSuccessor` lädt den bisherigen privaten
 Schlüssel intern aus dem geschützten Verwaltungsspeicher. Der Aufrufer übergibt
@@ -86,7 +91,7 @@ Vorhandene Vorbereitung wird wieder geladen; jede neue Sitzung verlangt vor
 Anfrageexport eine erfolgreich gespeicherte und zurückgelesene private Sicherung.
 Fehlerhafte Bibliothekswahl verwirft das vorherige Ziel. Bei einem geänderten
 Trust bleibt die Vorbereitung sicherbar, ihr Anfrageexport scheitert.
-Die geführte Aktivierung sowie visuelle Dateidialogabnahme stehen noch aus.
+Die visuelle Dateidialog- und Bestätigungsdialogabnahme steht noch aus.
 
 `OfflineGroupAdministrationStore.RestorePrivateBackup` stellt den zum aktuell
 registrierten Fingerabdruck passenden privaten Schlüssel wieder her. Das hilft

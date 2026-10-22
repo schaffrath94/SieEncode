@@ -3,14 +3,16 @@
 Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
 Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
 
-Auftragsabgleich 2026-10-20: Der in der Implementierungsfolge vorgesehene
+Auftragsabgleich 2026-10-22: Der in der Implementierungsfolge vorgesehene
 [Wechsel des zentralen Verwaltungsschluessels](OFFLINE-GROUP-ADMINISTRATOR-CHANGE.md)
-besitzt inzwischen einen Erzeugungs-/Verifikationskern und einen gesonderten
-persistenten Trust-Import samt empfangsseitigem Dialog; private Uebergabe und
-deren Bedienweg fehlen weiterhin.
-Private Wiederherstellung verwendet denselben
-Schluessel und ersetzt diesen Wechsel nicht. Offen sind damit auch weitere
-Entwicklung und Sicherheitspruefungen, nicht allein native Abnahmen.
+besitzt einen Erzeugungs-/Verifikationskern, getrennte Vorbereitung mit privater
+Sicherung und oeffentlicher Anfrage, Autorisierung durch die alte Verwaltung,
+persistenten Trust-Import und separate lokale Aktivierung samt Dialoganbindung.
+Die Aktivierung archiviert eine passende vorhandene Vorgaengerverwaltung
+geschuetzt und ist nach einem Schreibfehler wiederaufnehmbar. Private
+Wiederherstellung verwendet dagegen denselben Schluessel und ersetzt diesen
+Wechsel nicht. Native Gesamtabnahme und echte Zweitbenutzerpruefung sind damit
+nicht belegt; Detailnachweise und Grenzen stehen im verlinkten Wechselkonzept.
 
 Bedienablauf: [Offline-Gruppen einrichten](../OFFLINE-GRUPPEN-SCHNELLSTART.md).
 Einstellungen trennen normale Registrierung, Hauptverwaltung und delegierte

@@ -41,6 +41,7 @@ internal sealed class GroupSuccessorSetupWindow : Window
             var dialog = new SaveFileDialog { Title = "Öffentliche Nachfolgeranfrage als neue Datei speichern", Filter = "Nachfolgeranfrage (*.group-successor.json)|*.group-successor.json", FileName = selected!.Value.ToString("N") + ".group-successor.json" };
             if (dialog.ShowDialog(this) == true) ExportRequest(dialog.FileName);
         }));
+        root.Children.Add(Action("4. Nach importierter Übergabe lokal aktivieren", ShowActivation));
         root.Children.Add(Note("Neuer SHA-256-Fingerabdruck (separat bestätigen):"));
         root.Children.Add(fingerprintDisplay); root.Children.Add(status); root.Children.Add(error);
         root.Children.Add(Note("Die Vorbereitung bleibt nach dem Schließen erhalten. Für einen erneuten Anfrageexport in einer neuen Sitzung zuerst eine neue private Sicherung speichern. Private Sicherung getrennt aufbewahren; nur die öffentliche Anfrage an die bisherige Hauptverwaltung geben und den neuen Fingerabdruck separat bestätigen."));
@@ -80,6 +81,13 @@ internal sealed class GroupSuccessorSetupWindow : Window
     private void ShowFingerprint()
     {
         var current = Trust(selected!.Value).ExportPublic();
+        var fingerprint = preparation!.GetFingerprint();
+        fingerprintDisplay.Text = fingerprint;
+        if (fingerprint == OfflineGroupTrustStore.AdministratorFingerprint(current.AdministratorPublicKey))
+        {
+            status.Text = "Der vorbereitete Schlüssel ist bereits als neue Verwaltung registriert. Jetzt Schritt 4 ausführen bzw. eine abgeschlossene Aktivierung bestätigen. Die Vorbereitung bleibt erhalten.";
+            return;
+        }
         var next = GroupAdministratorTransition.InspectRequest(preparation!.ExportRequest(Trust(selected.Value)), current);
         fingerprintDisplay.Text = OfflineGroupTrustStore.AdministratorFingerprint(next.AdministratorPublicKey);
         status.Text = "Vorbereitung vorhanden. Noch keine aktive Verwaltung. Als Nächstes private Sicherung erstellen.";
@@ -113,6 +121,27 @@ internal sealed class GroupSuccessorSetupWindow : Window
             File.WriteAllBytes(temporary, GroupAdministratorTransition.WriteRequest(RequestForExport()));
         });
         status.Text = "Öffentliche Anfrage exportiert. An die bisherige Hauptverwaltung geben und den neuen Fingerabdruck unabhängig bestätigen. Private Sicherung bleibt bei Ihnen.";
+    }
+
+    private void ShowActivation()
+    {
+        if (selected is not Guid id || preparation is null) throw new InvalidOperationException("Zuerst die vorbereitete Bibliothek auswählen.");
+        var current = Trust(id).ExportPublic();
+        var fingerprint = preparation.GetFingerprint();
+        if (fingerprint != OfflineGroupTrustStore.AdministratorFingerprint(current.AdministratorPublicKey))
+            throw new InvalidOperationException("Zuerst den angekündigten Verwaltungswechsel in den Einstellungen importieren. Danach diesen Dialog erneut öffnen.");
+        var checkpoint = GroupEnrollmentPackages.Validate(current).Checkpoint;
+        if (MessageBox.Show(this, $"Bibliothek: {id:D}\nNeuer Fingerabdruck: {fingerprint}\n\nDen vorbereiteten Schlüssel auf diesem Windows-Benutzer als Hauptverwaltung aktivieren? Eine vorhandene passende Vorgängerverwaltung wird vorher geschützt archiviert. Eine fremde Verwaltung wird nicht ersetzt. Archiv und Vorbereitung bleiben erhalten; alte Schlüsselkopien werden nicht gesperrt.", "Nachfolge lokal aktivieren", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        Activate(checkpoint, true);
+    }
+
+    internal void Activate(GroupPolicyCheckpoint expected, bool confirmed)
+    {
+        if (selected is not Guid id || preparation is null) throw new InvalidOperationException("Zuerst die vorbereitete Bibliothek auswählen.");
+        var path = Path.Combine(directory, "Administrations", id.ToString("N") + ".admin.bin");
+        var active = new OfflineGroupAdministrationStore(path, id, new WindowsGroupTrustProtection(id, true));
+        active.ActivateSuccessor(preparation, Trust(id), expected, confirmed);
+        status.Text = "Neue Hauptverwaltung lokal aktiv. Diesen Dialog schließen und die Gruppenverwaltung öffnen. Vorbereitung und gegebenenfalls geschütztes Vorgängerarchiv bleiben erhalten. Andere Arbeitsplätze müssen die öffentliche Übergabe weiterhin selbst importieren.";
     }
 
     private void Run(Action action) { try { error.Text = ""; action(); } catch (Exception exception) { error.Text = exception.Message; } }

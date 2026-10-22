@@ -70,6 +70,17 @@ public sealed class OfflineGroupSuccessorStore(string localPath, Guid libraryId,
         finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
     }
 
+    public string GetFingerprint()
+    {
+        var state = Load();
+        try
+        {
+            using var key = Validate(state);
+            return OfflineGroupTrustStore.AdministratorFingerprint(key.ExportSubjectPublicKeyInfo());
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     internal (RSA Key, GroupEnrollmentPackage Previous) OpenForActivation(Guid expectedLibrary)
     {
         if (expectedLibrary != libraryId) throw new CryptographicException("Falsche Bibliothek für Aktivierung.");
