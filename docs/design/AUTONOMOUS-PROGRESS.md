@@ -1,6 +1,20 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Freigabenachweise abgeglichen und Aktivierungskonkurrenz geprueft (2026-10-22):
+Neue Tests injizieren beschaedigtes Vorgaengerarchiv, Trustfortschritt waehrend
+Schutz der neuen Verwaltungsdatei und eine konkurrierende erfolgreiche Aktivierung.
+Beschädigtes Archiv und Vorgänger bleiben unveraendert, veraltete Aktivierung
+scheitert vor Ersatz, konkurrierende Gewinnerdatei bleibt bytegleich erhalten.
+CI Exit 0, 71/71, CLI/WPF ohne Warnungen/Fehler:
+tmp/group-activation-conflicts-ci.log. Keine Produktcodeaenderung erforderlich.
+Wechselkonzept enthaelt jetzt Abgleich aller sieben verlangten Nachweise mit
+konkreten Grenzen. Noch nicht bewiesen: dedizierter offline belassener Trust beim
+Verwaltungswechsel, delegierter Ablauf ueber Wechsel, nativer Gesamtlauf,
+Prozessabbruch-/Stromausfall und echte zweite Windows-Umgebung. Teilpruefungen
+werden nicht als End-to-End-Freigabe ausgegeben. Veraltete letzte Anweisung zur
+noch fehlenden UI im Wechselkonzept ersetzt. Ziel aktiv, Release unveraendert.
+
 Aktivierungsdialog und Windows-Nachfolge-Gesamtablauf abgeschlossen (2026-10-22):
 Schritt 4 im Nachfolgerdialog prueft registrierten neuen Fingerabdruck, zeigt
 Bibliothek/Archivierungsfolgen und verlangt ausdrueckliche Bestaetigung. Vor der

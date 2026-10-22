@@ -309,6 +309,33 @@ internal static class GroupAdministratorTransitionTests
         if (!File.ReadAllBytes(path).SequenceEqual(oldBytes)) throw new Exception("Failed activation destroyed previous authority.");
         var archive = Directory.GetFiles(directory, "activation-admin.bin.retired-*.bin").Single();
         if (!File.ReadAllBytes(archive).SequenceEqual(oldBytes)) throw new Exception("Protected previous authority not archived intact.");
+        var corruptedArchive = oldBytes.ToArray(); corruptedArchive[^1] ^= 1;
+        File.WriteAllBytes(archive, corruptedArchive);
+        Reject(() => admin.ActivateSuccessor(pending, trust, checkpoint, true));
+        if (!File.ReadAllBytes(path).SequenceEqual(oldBytes) || !File.ReadAllBytes(archive).SequenceEqual(corruptedArchive))
+            throw new Exception("Activation overwrote predecessor or damaged archive.");
+        File.WriteAllBytes(archive, oldBytes); // Restore only this synthetic fault-injection fixture.
+        var concurrent = new OfflineGroupAdministrationStore(Path.Combine(directory, "activation-concurrent.bin"), id, new OfflineGroupTrustTests.TestProtection());
+        concurrent.ActivateSuccessor(pending, trust, checkpoint, true);
+        protector.BeforeProtect = () =>
+        {
+            protector.BeforeProtect = null;
+            var newer = concurrent.UpdateGroups([], checkpoint);
+            trust.AcceptPackageUpdate(newer, checkpoint);
+        };
+        Reject(() => admin.ActivateSuccessor(pending, trust, checkpoint, true));
+        if (!File.ReadAllBytes(path).SequenceEqual(oldBytes)) throw new Exception("Concurrent trust update did not stop activation.");
+        checkpoint = trust.LoadOffline().Checkpoint;
+        byte[]? winningBytes = null;
+        protector.BeforeProtect = () =>
+        {
+            protector.BeforeProtect = null;
+            admin.ActivateSuccessor(pending, trust, checkpoint, true);
+            winningBytes = File.ReadAllBytes(path);
+        };
+        Reject(() => admin.ActivateSuccessor(pending, trust, checkpoint, true));
+        if (winningBytes is null || !File.ReadAllBytes(path).SequenceEqual(winningBytes))
+            throw new Exception("Competing activation overwrote the winning file.");
         admin.ActivateSuccessor(pending, trust, checkpoint, true);
         var activeBytes = File.ReadAllBytes(path);
         admin.ActivateSuccessor(pending, trust, checkpoint, true);
