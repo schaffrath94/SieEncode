@@ -3,8 +3,9 @@
 Stand 2026-10-21. Erzeugungs-/Verifikationskern, getrennte öffentliche
 Anforderung/Autorisierung und lokaler Vertrauensimport sind implementiert,
 ebenso der empfangsseitige Importdialog und geschützte private Vorbereitung
-im Core. Autorisierung in der Verwaltungsoberfläche ist integriert; Vorbereitung
-und Aktivierung beim Nachfolger fehlen noch als Bedienweg. Bezug: Implementierungsfolge Punkt 2 in
+im Core. Autorisierung in der Verwaltungsoberfläche und Vorbereitung/Sicherung/
+Anfrageexport beim Nachfolger sind integriert. Geführte Aktivierung fehlt noch.
+Bezug: Implementierungsfolge Punkt 2 in
 [Offline-Vault-Gruppen](OFFLINE-VAULT-GROUPS.md).
 
 ## Verifizierter Iststand
@@ -55,7 +56,13 @@ und beide anderen Schutzzwecke abgewiesen, Aktivierung vor Autorisierung
 abgewiesen, nach Übergangsimport wiederhergestellt und neue Richtlinie signiert.
 UI-Smoke Exit 0, status OK, 57 Checks, stderr leer:
 `tmp/group-successor-dpapi-smoke/SieEncode/ui-smoke/ui-smoke-result.json`.
-Die Einbindung in den Erzeugungs-/Autorisierungsdialog steht noch aus.
+`GroupSuccessorSetupWindow` bietet die registrierte Bibliotheksauswahl, explizite
+Vorbereitung, separate private Sicherung und öffentlichen Anfrageexport.
+Vorhandene Vorbereitung wird wieder geladen; jede neue Sitzung verlangt vor
+Anfrageexport eine erfolgreich gespeicherte und zurückgelesene private Sicherung.
+Fehlerhafte Bibliothekswahl verwirft das vorherige Ziel. Bei einem geänderten
+Trust bleibt die Vorbereitung sicherbar, ihr Anfrageexport scheitert.
+Die geführte Aktivierung sowie visuelle Dateidialogabnahme stehen noch aus.
 
 `OfflineGroupAdministrationStore.RestorePrivateBackup` stellt den zum aktuell
 registrierten Fingerabdruck passenden privaten Schlüssel wieder her. Das hilft

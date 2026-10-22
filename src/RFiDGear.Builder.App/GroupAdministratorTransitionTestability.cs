@@ -17,6 +17,46 @@ public partial class MainWindow
             oldKey.ExportSubjectPublicKeyInfo(), OfflineGroupPolicyService.Sign(policy, oldKey));
         var transition = GroupAdministratorTransition.Create(original, oldKey, nextKey);
         var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(nextKey.ExportSubjectPublicKeyInfo());
+        var setupRoot = Path.Combine(root, "successor-setup-ui");
+        var setupTrust = new OfflineGroupTrustStore(Path.Combine(setupRoot, library.ToString("N") + ".trust.bin"), library, new WindowsGroupTrustProtection(library));
+        setupTrust.Enroll(original.AdministratorPublicKey, OfflineGroupTrustStore.AdministratorFingerprint(original.AdministratorPublicKey), original.Policy);
+        var setup = new GroupSuccessorSetupWindow(this, setupRoot);
+        var exportedRequest = Path.Combine(setupRoot, "public.group-successor.json");
+        try
+        {
+            setup.ShowInTaskbar = false; setup.Opacity = 0; setup.Show();
+            VerifyAutomationContract(setup);
+            setup.SelectLibrary(library); setup.Prepare();
+            Reject(() => setup.Prepare());
+            Reject(() => setup.ExportRequest(exportedRequest));
+            if (File.Exists(exportedRequest)) throw new Exception("Successor UI exported before private backup.");
+            var backupWindow = setup.CreateBackupWindow();
+            try
+            {
+                backupWindow.ExportTo(Path.Combine(setupRoot, "backup.group-private.json"), "Synthetic successor UI backup phrase 2026!", "Synthetic successor UI backup phrase 2026!", true);
+            }
+            finally { backupWindow.Close(); }
+            setup.ExportRequest(exportedRequest);
+            _ = GroupAdministratorTransition.InspectRequest(GroupAdministratorTransition.ReadRequest(File.ReadAllBytes(exportedRequest)), original);
+            Reject(() => setup.ExportRequest(exportedRequest));
+            Reject(() => setup.SelectLibrary(Guid.NewGuid()));
+            Reject(() => setup.CreateBackupWindow());
+        }
+        finally { setup.Close(); }
+        var setupRestart = new GroupSuccessorSetupWindow(this, setupRoot);
+        try
+        {
+            setupRestart.ShowInTaskbar = false; setupRestart.Opacity = 0; setupRestart.Show();
+            Reject(() => setupRestart.ExportRequest(Path.Combine(setupRoot, "without-new-backup.json")));
+            setupTrust.AcceptUpdate(OfflineGroupPolicyService.Sign(policy with { Revision = 2 }, oldKey));
+            Reject(() => setupRestart.SelectLibrary(library));
+            var rescue = setupRestart.CreateBackupWindow();
+            try { rescue.ExportTo(Path.Combine(setupRoot, "stale-backup.group-private.json"), "Synthetic stale successor recovery 2026!", "Synthetic stale successor recovery 2026!", true); }
+            finally { rescue.Close(); }
+            Reject(() => setupRestart.ExportRequest(Path.Combine(setupRoot, "stale-request.json")));
+        }
+        finally { setupRestart.Close(); }
+        checks.Add("Nachfolge-Einrichtung: Vorbereitung erhalten, Anfrage erst nach geprüfter privater Sicherung, öffentliche Signatur geprüft, Wiederanlage/Überschreiben abgewiesen; neue Sitzung benötigt Sicherung, veraltete Vorbereitung bleibt sicherbar, ungültige Auswahl verwirft Ziel. Keine visuelle Dateidialogabnahme.");
         var pendingDirectory = Path.Combine(root, "successor-preparation");
         var pendingTrust = new OfflineGroupTrustStore(Path.Combine(pendingDirectory, "trust.bin"), library, new WindowsGroupTrustProtection(library));
         var pendingCheckpoint = pendingTrust.Enroll(original.AdministratorPublicKey,

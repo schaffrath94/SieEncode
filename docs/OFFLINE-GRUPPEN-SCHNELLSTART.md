@@ -92,9 +92,23 @@ noch ein Empfängerabgleich kann solche Kopien aus der Ferne sperren.
 
 ## Angekündigter Wechsel der Hauptverwaltung (Entwicklungsstand)
 
-Der vollständige Einrichtungsdialog beim Nachfolger ist noch in Arbeit. Eine
-vorbereitete öffentliche Nachfolgeranfrage kann die bisherige Hauptverwaltung
-bereits prüfen:
+Beim Nachfolger in den Einstellungen **Nachfolge der Hauptverwaltung vorbereiten**
+öffnen. Die bisherige Bibliothek muss bereits registriert und aktuell sein:
+
+1. Bibliothek auswählen und einmalig **Neuen Nachfolgeschlüssel vorbereiten** wählen.
+   Bei erneutem Öffnen wird die vorhandene Vorbereitung verwendet.
+2. **Private Sicherung erstellen** wählen, eine getrennte Passphrase vergeben und
+   die verschlüsselte Datei außerhalb des gemeinsamen Projektordners aufbewahren.
+   Den Sicherungsdialog anschließend schließen.
+3. **Öffentliche Anfrage exportieren** wählen. Nur diese `.group-successor.json`
+   weitergeben und den angezeigten neuen Fingerabdruck separat bestätigen.
+
+Nach einem Neustart verlangt der Dialog vor erneutem Anfrageexport eine neue
+Sicherungsdatei. Bei geändertem registriertem Stand wird die Anfrage abgewiesen;
+die bestehende Vorbereitung bleibt für eine private Sicherung verfügbar.
+Keine Vorbereitung löschen, um diese Prüfung zu umgehen.
+
+Die bisherige Hauptverwaltung prüft und autorisiert die öffentliche Anfrage:
 
 1. In der Gruppenverwaltung die betreffende Bibliothek auswählen und offene
    Änderungen zuerst signiert speichern.
@@ -108,6 +122,6 @@ bereits prüfen:
    und verteilen. Jeder Arbeitsplatz muss den angekündigten Wechsel ausdrücklich
    importieren; der Export aktiviert ihn auf keinem Arbeitsplatz automatisch.
 
-Die Aktivierung des vorbereiteten privaten Schlüssels beim Nachfolger ist ein
-zusätzlicher Schritt. Offline-Arbeitsplätze vertrauen bis zum Import weiterhin
+Die geführte Aktivierung des vorbereiteten privaten Schlüssels beim Nachfolger
+ist noch in Arbeit. Offline-Arbeitsplätze vertrauen bis zum Import weiterhin
 dem alten Schlüssel. Vorhandene private Dateien nicht löschen oder überschreiben.

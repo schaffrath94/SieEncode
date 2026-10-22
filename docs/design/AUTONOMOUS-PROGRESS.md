@@ -1,6 +1,24 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Nachfolger-Einrichtung integriert und getestet (2026-10-22):
+Neue Einstellungsaktion mit registrierter Bibliotheksauswahl, expliziter
+Vorbereitung, privater Sicherung und oeffentlichem Anfrageexport. Vorbereitungen
+bleiben erhalten; pro Sitzung erst nach erfolgreichem Schreiben/Zuruecklesen der
+privaten Sicherung und Schliessen des Sicherungsdialogs exportierbar. Fingerabdruck
+bleibt separat sichtbar/kopierbar. Ungueltige Auswahl verwirft vorheriges Ziel;
+bei geaendertem Trust bleibt private Sicherung moeglich, Anfrageexport scheitert.
+Neue Windows-Pruefungen decken Ablauf, Neuladen, fehlende Sicherung, Wiederanlage,
+vorhandene Ausgabedatei, falsche Bibliothek und stale Trust ab. Testaufbau korrigiert:
+WPF-Elternfenster muss vor Erstellen seines Kinddialogs angezeigt sein.
+App-Build Exit 0 ohne Warnungen/Fehler: tmp/group-successor-setup-build.log.
+Korrigierter UI-Smoke Exit 0, status OK, 59 Checks, stderr leer:
+tmp/group-successor-setup-smoke-fixed/SieEncode/ui-smoke/ui-smoke-result.json.
+Vorheriger fehlgeschlagener UI-Lauf unter tmp/group-successor-setup-smoke bleibt
+als Diagnose erhalten. Keine visuelle Dateidialog-/Zweitbenutzerabnahme behauptet.
+Naechster Schritt: gefuehrte Aktivierung nach autorisiertem Wechsel einschliesslich
+vorhandener Verwaltungsdateien. Bestehender Release unveraendert, Ziel aktiv.
+
 Autorisierungsablauf in Verwaltungsoberflaeche integriert (2026-10-22):
 Neue Aktion liest begrenzte oeffentliche Nachfolgeranfrage, fordert unabhaengigen
 Fingerabdruck und ausdrueckliche Bestaetigung. Pruefung vor Dateiauswahl und vor

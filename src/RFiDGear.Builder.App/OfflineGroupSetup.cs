@@ -9,6 +9,12 @@ public partial class MainWindow
 {
     private readonly string localGroupTrustDirectory;
 
+    private void OpenGroupSuccessorSetup_Click(object sender, RoutedEventArgs e)
+    {
+        try { new GroupSuccessorSetupWindow(this, localGroupTrustDirectory).ShowDialog(); }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
     private void ImportAdministratorTransition_Click(object sender, RoutedEventArgs e)
     {
         try

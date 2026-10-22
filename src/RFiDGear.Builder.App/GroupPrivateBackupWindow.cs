@@ -17,6 +17,7 @@ internal sealed class GroupPrivateBackupWindow : Window
     private readonly CheckBox confirmation = new() { Content = new TextBlock { Text = "Ich verwahre Datei und Passphrase getrennt und gebe diese private Sicherung nicht als Einladung weiter.", TextWrapping = TextWrapping.Wrap } };
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap };
     private readonly bool restore;
+    internal bool ExportCompleted { get; private set; }
     private const string Filter = "Private Schlüsselsicherung (*.group-private.json)|*.group-private.json";
 
     internal GroupPrivateBackupWindow(Window owner, IEnumerable<GroupPrivateBackupTarget> choices, bool restore, string keyLabel = "Verwaltungsschlüssel")
@@ -63,12 +64,14 @@ internal sealed class GroupPrivateBackupWindow : Window
 
     internal void ExportTo(string path, string passphrase, string repeated, bool confirmed)
     {
+        ExportCompleted = false;
         if (restore || targets.SelectedItem is not GroupPrivateBackupTarget { Export: not null } target)
             throw new InvalidOperationException("Bitte einen lokalen Verwaltungsschlüssel auswählen.");
         if (!confirmed || passphrase != repeated) throw new InvalidDataException("Bestätigung fehlt oder Passphrasen stimmen nicht überein.");
         var bytes = target.Export(passphrase);
         ConcurrentFileWriter.Write(path, FileRevision.Missing, temporary => File.WriteAllBytes(temporary, bytes));
         if (!ReadBackup(path).SequenceEqual(bytes)) throw new IOException("Die gespeicherte Sicherung konnte nicht unverändert zurückgelesen werden.");
+        ExportCompleted = true;
         status.Text = "Private Sicherung gespeichert und unverändert zurückgelesen. Die Schlüsselfunktion wurde beim Export nach Entschlüsselung geprüft. Datei und Passphrase getrennt verwahren.";
     }
 
