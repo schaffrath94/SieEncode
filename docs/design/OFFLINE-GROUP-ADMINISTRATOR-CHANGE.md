@@ -3,7 +3,8 @@
 Stand 2026-10-21. Erzeugungs-/Verifikationskern, getrennte öffentliche
 Anforderung/Autorisierung und lokaler Vertrauensimport sind implementiert,
 ebenso der empfangsseitige Importdialog und geschützte private Vorbereitung
-im Core. Deren Bedienweg fehlt. Bezug: Implementierungsfolge Punkt 2 in
+im Core. Autorisierung in der Verwaltungsoberfläche ist integriert; Vorbereitung
+und Aktivierung beim Nachfolger fehlen noch als Bedienweg. Bezug: Implementierungsfolge Punkt 2 in
 [Offline-Vault-Gruppen](OFFLINE-VAULT-GROUPS.md).
 
 ## Verifizierter Iststand
@@ -23,7 +24,13 @@ Tests prüfen fehlende/falsche Bestätigung, falschen Checkpoint, manipulierten
 Besitznachweis, fremden lokalen Verwaltungsschlüssel, auseinanderlaufende Stände,
 veraltete Anforderung sowie die Ablehnung der alten lokalen Verwaltung nach dem
 Vertrauenswechsel. Erfolgreiche Autorisierung erhält beide lokalen Dateien
-bytegleich. Der Bedienweg für diese API steht noch aus.
+bytegleich. In der Verwaltungsoberfläche öffnet „Nachfolgeranfrage prüfen und
+autorisieren“ eine größenbegrenzte `.group-successor.json`. Der neue Fingerabdruck
+wird unabhängig eingegeben; eine zusätzliche Bestätigung benennt unveränderte
+Rechte und die verbleibenden Offline-Grenzen. Vor der Dateiauswahl erfolgt die
+Autorisierungsprüfung, unmittelbar vor dem Schreiben erneut. Ausgabe ist eine
+neue `.group-transition.json`; vorhandene Dateien werden niemals überschrieben.
+Die Oberfläche importiert den erzeugten Wechsel nicht automatisch.
 
 `OfflineGroupSuccessorStore` speichert einen neu erzeugten RSA-3072-Schlüssel
 zusammen mit dem registrierten Ausgangsstand und der öffentlichen Anforderung.

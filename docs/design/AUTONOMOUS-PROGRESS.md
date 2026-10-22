@@ -1,6 +1,22 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Autorisierungsablauf in Verwaltungsoberflaeche integriert (2026-10-22):
+Neue Aktion liest begrenzte oeffentliche Nachfolgeranfrage, fordert unabhaengigen
+Fingerabdruck und ausdrueckliche Bestaetigung. Pruefung vor Dateiauswahl und vor
+Schreiben; ausschliesslich neue oeffentliche Wechseldatei, keine automatische
+Aktivierung. Bestehende Ausgabe-, Verwaltungs- und Trustdateien bleiben erhalten.
+Windows-Smoke testet gueltigen Export, fehlende/falsche Angaben, vorhandene Ziele
+und veraltete Oberflaeche nach Trustwechsel. App-Build ohne Warnungen/Fehler:
+tmp/group-authorization-ui-build.log. Voriger Lauf unterbrochen, Handle nicht mehr
+vorhanden und kein Bericht; kein Erfolg daraus abgeleitet. Neuer isolierter Lauf
+Exit 0, status OK, 58 Checks, stderr leer:
+tmp/group-authorization-ui-smoke-recheck/SieEncode/ui-smoke/ui-smoke-result.json.
+Dateiauswahldialoge noch nicht visuell abgenommen. Schnellstart beschreibt den
+vorhandenen Teilablauf und benennt fehlende Nachfolger-Einrichtung ausdruecklich.
+Als Naechstes Vorbereitung/Sicherung/Anforderungsexport beim Nachfolger und
+kontrollierte Aktivierung integrieren. Ziel aktiv, bestehender Release unveraendert.
+
 Autorisierung aus geschuetztem Verwaltungsspeicher umgesetzt (2026-10-21):
 AuthorizeSuccessor verarbeitet ausschliesslich oeffentliche Anforderung plus
 lokalen Trust, erwarteten Checkpoint, unabhaengigen Fingerabdruck und explizite

@@ -89,3 +89,25 @@ Offline-Zugriff verwendet den zuletzt lokal übernommenen Stand. Ein offline
 gebliebener Rechner kennt spätere Entzüge nicht. Alte Vaultkopien bleiben mit
 damals berechtigten Schlüsseln entschlüsselbar. Weder eine neue Gruppenliste
 noch ein Empfängerabgleich kann solche Kopien aus der Ferne sperren.
+
+## Angekündigter Wechsel der Hauptverwaltung (Entwicklungsstand)
+
+Der vollständige Einrichtungsdialog beim Nachfolger ist noch in Arbeit. Eine
+vorbereitete öffentliche Nachfolgeranfrage kann die bisherige Hauptverwaltung
+bereits prüfen:
+
+1. In der Gruppenverwaltung die betreffende Bibliothek auswählen und offene
+   Änderungen zuerst signiert speichern.
+2. **Nachfolgeranfrage prüfen und autorisieren** wählen und die öffentliche
+   `.group-successor.json` öffnen. Keine private Sicherung entgegennehmen.
+3. Den neuen Fingerabdruck separat mit dem Nachfolger abgleichen und eingeben.
+   Die Anzeige aus der Datei allein genügt nicht als unabhängige Bestätigung.
+4. Die Übergabe ausdrücklich bestätigen. Personen, Geräte, Gruppen, Recovery
+   und vorhandene Vollmachten bleiben dabei unverändert.
+5. Die öffentliche `.group-transition.json` unter einem neuen Dateinamen speichern
+   und verteilen. Jeder Arbeitsplatz muss den angekündigten Wechsel ausdrücklich
+   importieren; der Export aktiviert ihn auf keinem Arbeitsplatz automatisch.
+
+Die Aktivierung des vorbereiteten privaten Schlüssels beim Nachfolger ist ein
+zusätzlicher Schritt. Offline-Arbeitsplätze vertrauen bis zum Import weiterhin
+dem alten Schlüssel. Vorhandene private Dateien nicht löschen oder überschreiben.

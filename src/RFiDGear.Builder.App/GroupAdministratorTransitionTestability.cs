@@ -8,6 +8,7 @@ public partial class MainWindow
 {
     private void VerifyAdministratorTransitionDialog(string root, ICollection<string> checks)
     {
+        VerifySuccessorAuthorizationExport(root, checks);
         using var oldKey = RSA.Create(3072);
         using var nextKey = RSA.Create(3072);
         var library = Guid.NewGuid();
@@ -90,6 +91,48 @@ public partial class MainWindow
             try { action(); }
             catch (Exception e) when (e is CryptographicException or IOException or InvalidDataException or InvalidOperationException) { return; }
             throw new Exception("Invalid transition UI action succeeded.");
+        }
+    }
+    private void VerifySuccessorAuthorizationExport(string root, ICollection<string> checks)
+    {
+        var directory = Path.Combine(root, "authorizing-ui");
+        var window = new GroupAdministrationWindow(this, directory);
+        try
+        {
+            var id = window.CreateAdministration();
+            var trustPath = Path.Combine(directory, id.ToString("N") + ".trust.bin");
+            var adminPath = Path.Combine(directory, "Administrations", id.ToString("N") + ".admin.bin");
+            var trust = new OfflineGroupTrustStore(trustPath, id, new WindowsGroupTrustProtection(id));
+            var original = trust.ExportPublic();
+            using var successor = RSA.Create(3072);
+            var request = GroupAdministratorTransition.Prepare(original, successor);
+            var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(successor.ExportSubjectPublicKeyInfo());
+            var output = Path.Combine(directory, "public.group-transition.json");
+            var trustBefore = File.ReadAllBytes(trustPath); var adminBefore = File.ReadAllBytes(adminPath);
+            Reject(() => window.ExportSuccessorAuthorization(request, fingerprint, false, output));
+            Reject(() => window.ExportSuccessorAuthorization(request, "", true, output));
+            if (File.Exists(output)) throw new Exception("Invalid UI authorization created an output.");
+            window.ExportSuccessorAuthorization(request, fingerprint.ToLowerInvariant(), true, output);
+            var bytes = File.ReadAllBytes(output);
+            var transition = GroupAdministratorTransition.Read(bytes);
+            _ = GroupAdministratorTransition.Verify(transition, original, fingerprint);
+            Reject(() => window.ExportSuccessorAuthorization(request, fingerprint, true, output));
+            Reject(() => window.ExportSuccessorAuthorization(request, fingerprint, true, adminPath));
+            if (!File.ReadAllBytes(output).SequenceEqual(bytes) || !File.ReadAllBytes(trustPath).SequenceEqual(trustBefore) ||
+                !File.ReadAllBytes(adminPath).SequenceEqual(adminBefore)) throw new Exception("UI export overwrote output or local authority.");
+            trust.AcceptAdministratorTransition(transition, trust.LoadOffline().Checkpoint, fingerprint, true);
+            var staleOutput = Path.Combine(directory, "stale.group-transition.json");
+            Reject(() => window.ExportSuccessorAuthorization(request, fingerprint, true, staleOutput));
+            if (File.Exists(staleOutput)) throw new Exception("Stale UI exported old authority transition.");
+            checks.Add("Nachfolgerautorisierung in Verwaltungsoberfläche: Bestätigung/Fingerabdruck erforderlich, öffentliche Ausgabe verifiziert, vorhandene Dateien und Verwaltung unverändert; alte Oberfläche nach Trustwechsel abgewiesen. Dateiauswahldialoge nicht visuell abgenommen.");
+        }
+        finally { window.Close(); }
+
+        static void Reject(Action action)
+        {
+            try { action(); }
+            catch (Exception e) when (e is CryptographicException or IOException or InvalidDataException or InvalidOperationException) { return; }
+            throw new Exception("Invalid UI authorization succeeded.");
         }
     }
 }
