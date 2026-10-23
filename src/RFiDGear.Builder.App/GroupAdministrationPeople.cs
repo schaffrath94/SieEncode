@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Security.Cryptography.X509Certificates;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -77,6 +78,16 @@ internal sealed partial class GroupAdministrationWindow
         using var certificate = imported.Certificate;
         var fingerprint = CertificateVaultService.Fingerprint(certificate);
         if (people.SelectMany(p => p.Devices).Any(d => d.Fingerprint == fingerprint)) throw new InvalidOperationException("Dieses Gerät ist bereits einer Person zugeordnet.");
+        using var incomingKey = certificate.GetRSAPublicKey()!;
+        var incomingPublicKey = incomingKey.ExportSubjectPublicKeyInfo();
+        foreach (var assignedPerson in people)
+        foreach (var device in assignedPerson.Devices)
+        {
+            using var assignedCertificate = new X509Certificate2(Convert.FromBase64String(device.Certificate));
+            using var assignedKey = assignedCertificate.GetRSAPublicKey()!;
+            if (incomingPublicKey.SequenceEqual(assignedKey.ExportSubjectPublicKeyInfo()))
+                throw new InvalidOperationException($"Dieser Schlüssel gehört bereits zu {assignedPerson.Name} · {device.Name}, auch wenn der Zugang deaktiviert ist. Auf dem neuen Gerät eine eigene Identität erzeugen und deren öffentliche Einladung verwenden.");
+        }
         person.Devices.Add(new DeviceAdministrationDraft { Name = imported.DisplayName, Fingerprint = fingerprint, Certificate = Convert.ToBase64String(certificate.RawData) });
         dirty = true;
     }

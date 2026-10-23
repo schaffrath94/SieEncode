@@ -1,6 +1,20 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Geraeteeinrichtung weist wiederverwendete Schluessel sofort ab (2026-10-23):
+AddDevice vergleicht den RSA-Schluessel der Einladung mit allen bereits im
+Entwurf zugeordneten Geraeten, auch deaktivierten. Die Meldung nennt Person und
+Geraet sowie den notwendigen Schritt, eine eigene Identitaet zu erzeugen.
+Kein ungueltiger Eintrag wird erst zum spaeteren Speichern vorgemerkt.
+UI-Integration prueft abweichendes Zertifikat mit gleichem Schluessel bei aktivem
+und deaktiviertem Altgeraet, hilfreiche Meldung und unveraenderten Entwurf.
+Anschliessendes regulaeres Speichern/Neuladen mit zwei unabhaengigen Geraeten
+weiterhin erfolgreich. CI Exit 0, 72/72, Builds ohne Warnungen/Fehler:
+tmp/group-device-import-ci.log. Windows-UI-Smoke Exit 0, status OK, stderr leer:
+tmp/group-device-import-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Pruefung ueber Dialogfunktionen mit synthetischen Daten, keine native Datei-
+oder echte Zweitbenutzerabnahme. Ziel aktiv, bestehender Release unveraendert.
+
 Empfaengerabgleich bei spaeten Konflikten geprueft (2026-10-23):
 GroupVaultTests.VerifyReconciliation entzieht Recovery waehrend der tatsaechlichen
 Identitaetsenumeration beim Entschluesseln. Apply bricht ohne Vault-/Backupaenderung

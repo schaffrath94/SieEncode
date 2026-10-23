@@ -71,6 +71,24 @@ public partial class MainWindow
                 administrationWindow.AddDevice(person.Id, CertificateVaultService.ExportInvitation(secondDevice, "Testrechner 2"));
                 try { administrationWindow.AddDevice(person.Id, firstInvitation); throw new Exception("Duplicate device accepted by UI."); }
                 catch (InvalidOperationException) { }
+                using var reissuedDevice = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=Synthetic reused key", deviceKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+                foreach (var enabled in new[] { true, false })
+                {
+                    person.Devices[0].Enabled = enabled;
+                    try
+                    {
+                        administrationWindow.AddDevice(person.Id, CertificateVaultService.ExportInvitation(reissuedDevice, "Reissued test device"));
+                        throw new Exception("Reused device key accepted by administrative UI.");
+                    }
+                    catch (InvalidOperationException error)
+                    {
+                        if (!error.Message.Contains(person.Name, StringComparison.Ordinal) || !error.Message.Contains("eigene Identität", StringComparison.Ordinal))
+                            throw new Exception("Reused-key rejection did not explain the existing assignment and next step.");
+                    }
+                    if (person.Devices.Count != 2 || person.Devices[0].Enabled != enabled)
+                        throw new Exception("Rejected invitation mutated the device draft.");
+                }
+                person.Devices[0].Enabled = true;
                 draft.Name = "Lokal"; draft.Members.Add(person.Id);
                 administrationWindow.SaveGroups();
                 administrationWindow.LoadAdministration(uiLibrary);
