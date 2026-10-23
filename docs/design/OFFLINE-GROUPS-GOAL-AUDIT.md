@@ -1,0 +1,47 @@
+# Auftragsabgleich Offline-Gruppen – 23.10.2026
+
+Gesamtziel **nicht abgeschlossen**. Der Benutzer bestätigt am 23.10.2026:
+Derzeit keine separate Testumgebung. Vorhandene fremde VirtualBox-VMs wurden nur
+aufgelistet, nicht gestartet oder verändert; sie sind keine freigegebene
+Testumgebung. Keine neue Automation und kein weiterer unveränderter Paketbau.
+
+## Bewerteter Stand
+
+Testkandidat `1.3.0-offline-groups.1` aus sauberer Studio-Quelle
+`2be1be0857c1933e5bc91c95d3296f84052ce6b7`. Danach ausschließlich Dokumentation.
+Die [Kandidatennachweise](OFFLINE-GROUPS-CANDIDATE-1.3.0-1.md) enthalten exakte
+Hashwerte und Grenzen. CI: `tmp/group-device-import-ci.log`, 72/72 Tests;
+publizierter Kandidat: `tmp/offline-groups-candidate-smoke/SieEncode/ui-smoke/ui-smoke-result.json`,
+60 Checks, Version geprüft. Diese Belege sind lokale Softwareprüfungen.
+
+## Anforderungen und Nachweise
+
+| Anforderung aus dem Auftrag | Konkrete Umsetzung und vorhandene Evidenz | Bewertung / verbleibender Nachweis |
+| --- | --- | --- |
+| Überlappende zentral verwaltete Gruppen | `OfflineGroupAdministrationStore`, `OfflineGroupDirectory`; `OfflineGroupMatrixWorkflowTests` entschlüsselt alle 24 Kombinationen der acht Personen und drei gewünschten Gruppen mit unabhängigen Schlüsseln. | Synthetisch belegt; echter gemeinsamer Ordner unter getrennten Benutzern offen. |
+| Explizite Vertrauensregistrierung | `OfflineGroupTrustStore.Enroll`, Registrierungsdialog; Kandidaten-Smoke prüft fehlende Bestätigung, falschen Fingerabdruck und Überschreibschutz. | Lokale Dialogfunktionen und DPAPI belegt; unabhängiger Fingerabdruckabgleich im echten Anwenderlauf offen. |
+| Persistenter Versionsstand und Offlinebetrieb | Signierte Richtlinien, gebundene lokale DPAPI-Datei, Rücksprung-/Konfliktprüfung; `OfflineGroupTrustTests`, `VerifyOfflineTransition`. | Neuladen und getrennte synthetische Trustdateien belegt; echte zweite Windows-Umgebung/offline Benutzerprüfung offen. |
+| Getrennte Verwaltungsrechte | Separater Signierspeicher; Schlüsseltrennung zu Geräten, Delegation und Recovery; Hauptverwalter ist nicht automatisch Vaultempfänger. | Core-/Windows-Integration belegt. Vollständiger nativer Rollenablauf offen. |
+| Gruppenbegrenzte Delegation | `OfflineGroupDelegationService`, `OfflineGroupDelegateStore`; Signatur, Umfang, veraltete Anträge, Replay, Entzug und Verwaltungsnachfolge geprüft. | Synthetischer Dateiaustausch und lokale DPAPI-Neuladung belegt; Rollen auf getrennten Benutzern offen. |
+| Personen-/Geräteverwaltung | Mehrere Geräte pro Person, Aktivierung/Entzug; unabhängige RSA-Schlüssel pro Gerät. Wiederverwendung bereits beim Einladungsimport abgewiesen, Entwurf unverändert. | Coretests und Kandidaten-Verwaltungsdialogtest bestanden. |
+| Authentisierte Projektzuordnung | `GroupVaultService` bindet Bibliothek, Projekt-ID, Gruppe, Richtlinienstand und Empfänger kryptografisch; `ProjectGroupVault`, Erstellungs-/Kopierassistent. | Manipulationen, erhaltene Originale, neue Kopie und vollständige Schlüsselnutzdaten synthetisch geprüft. |
+| Kontrollierter Empfängerabgleich | Authentisierte Vorschau, Bestätigung im Editor, frischer Inhaltsschlüssel, verschlüsselte Altsicherung; `GroupVaultTests.VerifyReconciliation` und Matrixworkflow. | Stale-Vorschau, später Entzug, beschädigte Sicherung, konkurrierender Vault geprüft. Reale gemeinsame Ablage/Cloud-Konflikte offen. |
+| Separater Recoveryzugang | Eigene Identität und Sicherung, zentrale Freigabe, bibliotheksweite Recovery, ausdrücklicher Editorweg; keine normale Buildfreigabe. | Entschlüsselung und Freigabeprüfung belegt. Tatsächlicher Windows-Installer wurde im Test ersetzt; reale Installation/Neustart zwingend offen. |
+| Verständliche integrierte Einrichtung | Einstellungen, getrennte Rollen, interne Anleitung, leere Dialogzustände, private Sicherung vor öffentlicher Nachfolgeranfrage. | Teile nativ angesehen, Dialogfunktionen getestet; vollständiger nativer Bedienlauf einschließlich Datei-/Bestätigungsdialogen offen. |
+| Sicherheits-/Integrationsprüfungen | CI 72/72; Kandidat 60 UI-Checks; echte Kindprozessabbrüche an Aktivierungsgrenzen und Neustart; MSI-Extraktion mit 1.034 Hashvergleichen. | Keine Stromausfallprüfung, keine tatsächliche Installation/Upgrade, keine echte Mehrbenutzer- oder neue Hardwarefreigabe. |
+| Private Entwicklung und Erhalt bestehender Daten | Privater Branch `codex/offline-vault-groups`; Tests mit synthetischen Daten. Bisherige 1.2.1-MSI/Studio-/Runtime-Dateien vor/nach Paketbau hashgleich. | Keine produktiven Vaults/Identitäten migriert oder gelöscht, vorhandene Installation nicht ersetzt. |
+| Ehrliche Offline-Widerrufsgrenzen | Schnellstart, Dialoge und Matrixworkflow: alte Kopien und offline gebliebene Truststände bleiben nutzbar; spätere Entzüge erst nach Import bekannt. | Dokumentiert und synthetisch demonstriert; keine Behauptung sofortiger globaler Sperrung. |
+
+## Jetzt benötigte externe Voraussetzung
+
+Eine ausdrücklich geeignete separate Windows-Testumgebung mit zwei tatsächlich
+getrennten Benutzern oder Rechnern. Dort den vorhandenen Kandidaten nach
+[Abnahmeanleitung](../OFFLINE-GRUPPEN-ABNAHME.md) installieren und die offenen
+Schritte dokumentieren. Vorhandene Unternehmens-VMs nicht ersatzweise verwenden.
+Hostinstallation, Windows-Benutzer, Sicherheitskonfiguration und Zertifikatsspeicher
+nicht als Ersatz für diese fehlende Testumgebung verändern.
+
+Ein neuer unveränderter CI-Lauf oder ein weiterer MSI-Bau schließt diese Lücke
+nicht. Ohne neue Fehlerbefunde oder bereitgestellte Testumgebung bleibt die
+Gesamtfreigabe offen. Verlorener/kompromittierter Verwaltungsschlüssel hat keinen
+automatischen Ersatzanker; die normale autorisierte Nachfolge ist davon getrennt.

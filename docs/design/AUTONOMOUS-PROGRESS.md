@@ -1,6 +1,19 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Auftrag gegen fertigen Kandidaten abgeglichen (2026-10-23):
+OFFLINE-GROUPS-GOAL-AUDIT.md ordnet jede Anforderung konkreten Quellen und
+Nachweisen zu und trennt lokale Belege von offener echter Abnahme. Benutzer
+bestaetigt: derzeit keine separate Testumgebung. VirtualBox ist vorhanden;
+registrierte VMs wurden nur aufgelistet, nicht gestartet oder veraendert und
+nicht als freigegebene Testumgebung betrachtet. Keine weitere Installation,
+kein Zertifikatsspeichereingriff, kein neuer unveraenderter Build/Testlauf.
+Externe Voraussetzung fuer Gesamtabschluss: geeignete getrennte Windows-
+Umgebung fuer Installation/Upgrade, Mehrbenutzer-/Offlineablauf, tatsaechliche
+Recoveryinstallation und nativen Gesamtbedienlauf. Kandidat bleibt unveraendert.
+Erste dokumentierte externe Blockade nach fertig geprueftem Kandidaten; Ziel
+noch aktiv, nicht als abgeschlossen markieren und keine Abnahme simulieren.
+
 Installierbarer Offline-Gruppen-Testkandidat gebaut und geprueft (2026-10-23):
 1.3.0-offline-groups.1 aus sauberem Commit 2be1be0, MSI 1.3.0, kein Portable.
 Artefakte: artifacts/offline-groups-1.3.0-preview.1/package. Build Exit 0;
