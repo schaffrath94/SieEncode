@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Echte Prozessabbrueche an Aktivierungsgrenzen geprueft (2026-10-23):
+GroupActivationInterruptionTests erstellt ausschliesslich synthetische Verwaltung,
+Trust und Vorbereitung. Zwei Kindprozesse werden nach Archivierung vor dem
+Schutz/Schreiben bzw. nach abgeschlossener Aktivierung hart beendet; Bereitschaft
+wird per geflushter Markierungsdatei signalisiert, Prozessende kontrolliert.
+Jeweils ein neuer Prozess rekonstruiert die Stores von Platte und aktiviert
+erfolgreich. Vorgängerarchiv, Trust und Vorbereitung bleiben bytegleich; eine
+abgeschlossene Aktivierung wird nicht erneut geschrieben. Der neue Schluessel
+signiert danach ein akzeptiertes Update. Temporäre Testdaten werden entfernt.
+CI Exit 0, 72/72 Tests, CLI/WPF ohne Warnungen/Fehler:
+tmp/group-process-interruption-ci.log. Keine Produktcodeaenderung erforderlich.
+Grenzen: synthetischer Speicherschutz, kein Stromausfall, kein Abbruch mitten
+im Dateiersatz/Trustimport und keine echte zweite Windows-Umgebung. Diese
+fehlenden Nachweise bleiben in der Freigabematrix offen. Ziel aktiv.
+
 Leerer Nachfolgerdialog nativ geprueft und verbessert (2026-10-23):
 Ohne registrierte Bibliothek sind jetzt alle vier Nachfolgeaktionen deaktiviert;
 der Hinweis nennt zuerst erforderliche Registrierung. Schliessen bleibt bedienbar.

@@ -9,6 +9,11 @@ using RFiDGear.Builder.RfPrj;
 using RFiDGear.Builder.Runtime;
 
 const string ContractPassphrase = "Cross-Runtime-Portable-Test";
+if (args.Length == 3 && args[0] == "group-activation-interruption")
+{
+    GroupActivationInterruptionTests.RunChild(args[1], args[2]);
+    return 0;
+}
 if (args.Length == 3 && args[0] == "vault-unprotect-contract")
 {
     var document = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(args[1])) ?? throw new InvalidDataException("Vault test document is empty.");
@@ -34,6 +39,7 @@ if (args.Length == 2 && args[0] == "hardware-extension-upgrade-rollback")
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Administrator activation survives terminated child processes and restart", GroupActivationInterruptionTests.Verify),
     ("Explicit dual-signed administrator transition and unchanged-rights verification", GroupAdministratorTransitionTests.Verify),
     ("Portable private group backups, purpose isolation and current-policy restoration", GroupPrivateKeyBackupTests.Verify),
     ("Offline group policy signatures, trust binding and rollback rejection", OfflineGroupPolicyTests.Verify),
