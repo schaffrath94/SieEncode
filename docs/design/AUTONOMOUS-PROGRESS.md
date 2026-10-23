@@ -1,6 +1,19 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Leerer Nachfolgerdialog nativ geprueft und verbessert (2026-10-23):
+Ohne registrierte Bibliothek sind jetzt alle vier Nachfolgeaktionen deaktiviert;
+der Hinweis nennt zuerst erforderliche Registrierung. Schliessen bleibt bedienbar.
+Im isolierten --ui-test-workspace per Screenshot und Accessibility bestaetigt:
+vier disabled-Schaltflaechen, sichtbarer Hinweis, Rueckkehr zu Einstellungen.
+Release-Build erfolgreich, 0 Warnungen/Fehler:
+tmp/group-native-empty-build-verified.log. Erster Build war durch eine noch
+laufende Testanwendung blockiert; nach deren Ende erfolgreich wiederholt.
+Keine Sicherheitskonfiguration durch native Bedienung geaendert. Dies ist nur
+die Leerzustandsabnahme, kein vollstaendiger nativer Nachfolge-/Mehrbenutzerlauf.
+Weiter offen: Prozessabbruchnachweise und echte getrennte Windows-Umgebung.
+Ziel aktiv; bestehender Release unveraendert.
+
 Delegierter Ablauf ueber Verwaltungswechsel nachgewiesen (2026-10-23):
 OfflineGroupDelegateStoreTests.VerifyAdministratorChange fuehrt vorbereitete
 Nachfolge, Autorisierung, getrennte Trustimporte und Aktivierung durch. Alter

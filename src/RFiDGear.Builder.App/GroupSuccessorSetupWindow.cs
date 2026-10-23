@@ -49,7 +49,12 @@ internal sealed class GroupSuccessorSetupWindow : Window
         root.Children.Add(Action("Schließen", Close));
         Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         if (libraries.Items.Count == 1) libraries.SelectedIndex = 0;
-        if (libraries.Items.Count == 0) error.Text = "Keine Bibliothek registriert. Zuerst die bisherige Gruppenverwaltung registrieren.";
+        if (libraries.Items.Count == 0)
+        {
+            error.Text = "Keine Bibliothek registriert. Zuerst die bisherige Gruppenverwaltung registrieren.";
+            foreach (var button in root.Children.OfType<Button>().Where(b => !Equals(b.Content, "Schließen")))
+                button.IsEnabled = false;
+        }
         MainWindow.InitializeAutomationContract(this, "GroupSuccessorSetup");
     }
 
