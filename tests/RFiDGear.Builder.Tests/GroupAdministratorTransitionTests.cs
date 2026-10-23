@@ -129,6 +129,7 @@ internal static class GroupAdministratorTransitionTests
             VerifySuccessorPreparation(directory, current, oldKey);
             VerifyStoredAuthorization(directory);
             VerifySuccessorActivation(directory);
+            VerifyOfflineTransition(directory, current, oldKey, newKey);
             Reject(() => trust.AcceptPackageUpdate(next, enrolled.Checkpoint));
             if (!File.ReadAllBytes(path).SequenceEqual(before)) throw new Exception("Ordinary update replaced trust.");
             var preview = trust.PreviewAdministratorTransition(transition, enrolled.Checkpoint, fingerprint);
@@ -348,6 +349,60 @@ internal static class GroupAdministratorTransitionTests
         Reject(() => empty.ActivateSuccessor(pending, trust, trust.LoadOffline().Checkpoint, true));
         var archived = new OfflineGroupAdministrationStore(archive, id, protector);
         if (!archived.ExportPublic().AdministratorPublicKey.SequenceEqual(original.AdministratorPublicKey)) throw new Exception("Archived authority cannot be recovered.");
+    }
+
+    private static void VerifyOfflineTransition(string directory, GroupEnrollmentPackage original, RSA oldKey, RSA newKey)
+    {
+        var policy = GroupEnrollmentPackages.Validate(original).Policy;
+        OfflineGroupTrustStore Enroll(string name, OfflineGroupTrustTests.TestProtection protection)
+        {
+            var store = new OfflineGroupTrustStore(Path.Combine(directory, name + ".bin"), original.LibraryId, protection);
+            store.Enroll(original.AdministratorPublicKey, OfflineGroupTrustStore.AdministratorFingerprint(original.AdministratorPublicKey), original.Policy);
+            return store;
+        }
+        var online = Enroll("online-transition", new OfflineGroupTrustTests.TestProtection());
+        var offlineProtection = new OfflineGroupTrustTests.TestProtection();
+        var offline = Enroll("offline-transition", offlineProtection);
+        var diverged = Enroll("diverged-transition", new OfflineGroupTrustTests.TestProtection());
+        var originalCheckpoint = offline.LoadOffline().Checkpoint;
+        var offlinePath = Path.Combine(directory, "offline-transition.bin");
+        var before = File.ReadAllBytes(offlinePath);
+        var transition = GroupAdministratorTransition.Read(GroupAdministratorTransition.Write(
+            GroupAdministratorTransition.Create(original, oldKey, newKey)));
+        var fingerprint = OfflineGroupTrustStore.AdministratorFingerprint(newKey.ExportSubjectPublicKeyInfo());
+        online.AcceptAdministratorTransition(transition, originalCheckpoint, fingerprint, true);
+        var newUpdate = OfflineGroupPolicyService.Sign(policy with { Revision = policy.Revision + 2 }, newKey);
+        online.AcceptUpdate(newUpdate);
+        offline = new OfflineGroupTrustStore(offlinePath, original.LibraryId, offlineProtection);
+        if (offline.LoadOffline().Checkpoint != originalCheckpoint || !File.ReadAllBytes(offlinePath).SequenceEqual(before) ||
+            !offline.ExportPublic().AdministratorPublicKey.SequenceEqual(original.AdministratorPublicKey))
+            throw new Exception("Online transition implicitly changed offline trust.");
+        Reject(() => offline.AcceptUpdate(newUpdate));
+        Reject(() => offline.AcceptAdministratorTransition(transition, originalCheckpoint, fingerprint, false));
+        if (!File.ReadAllBytes(offlinePath).SequenceEqual(before)) throw new Exception("Rejected offline update changed trust.");
+
+        // An isolated peer can still accept a valid old-key update. This is an explicit offline limit.
+        var oldUpdate = OfflineGroupPolicyService.Sign(policy with { Revision = policy.Revision + 3 }, oldKey);
+        diverged.AcceptUpdate(oldUpdate);
+        var divergedCheckpoint = diverged.LoadOffline().Checkpoint;
+        Reject(() => diverged.AcceptAdministratorTransition(transition, divergedCheckpoint, fingerprint, true));
+        Reject(() => diverged.AcceptUpdate(original.Policy));
+        if (diverged.LoadOffline().Checkpoint != divergedCheckpoint ||
+            !diverged.ExportPublic().AdministratorPublicKey.SequenceEqual(original.AdministratorPublicKey))
+            throw new Exception("Divergent offline branch was silently rebased or reset.");
+
+        // The unchanged offline peer imports the exact transition explicitly, then catches up normally.
+        offline.AcceptAdministratorTransition(transition, originalCheckpoint, fingerprint, true);
+        offline = new OfflineGroupTrustStore(offlinePath, original.LibraryId, offlineProtection);
+        offline.AcceptUpdate(newUpdate);
+        if (offline.LoadOffline().Checkpoint != online.LoadOffline().Checkpoint ||
+            !offline.ExportPublic().AdministratorPublicKey.SequenceEqual(newKey.ExportSubjectPublicKeyInfo()))
+            throw new Exception("Explicit offline handover did not converge after restart.");
+        var accepted = File.ReadAllBytes(offlinePath);
+        Reject(() => offline.AcceptUpdate(oldUpdate));
+        Reject(() => online.AcceptUpdate(oldUpdate));
+        Reject(() => offline.AcceptAdministratorTransition(transition, offline.LoadOffline().Checkpoint, fingerprint, true));
+        if (!File.ReadAllBytes(offlinePath).SequenceEqual(accepted)) throw new Exception("Old authority or replay changed transitioned offline peer.");
     }
 
     private static void Reject(Action action)

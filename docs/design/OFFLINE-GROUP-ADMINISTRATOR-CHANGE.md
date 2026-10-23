@@ -258,7 +258,7 @@ stillschweigend überschrieben oder gelöscht.
 7. UI führt durch neue private Sicherung, Fingerabdruckabgleich, öffentliche
    Verteilung und lokalen Import; keine privaten Schlüssel in Exporten/Logs.
 
-## Abgleich der Freigabenachweise am 22.10.2026
+## Abgleich der Freigabenachweise am 23.10.2026
 
 Die folgende Bewertung ersetzt ältere Aussagen über noch fehlende Dialoganbindung.
 Sie ist keine pauschale Freigabe des Gesamtprodukts.
@@ -270,7 +270,7 @@ Sie ist keine pauschale Freigabe des Gesamtprodukts.
 | 3 | Core prüft alte Autorität nach Import, neue Updates, Replay und konkurrierenden Trustimport; Aktivierung besitzt gezielte Konkurrenztests. | Kein echter zweiter Windows-Arbeitsplatz geprüft. |
 | 4 | Schutzfehler nach Archivierung erhält Vorgängerdatei; Wiederholung aktiviert erfolgreich; beschädigtes Archiv und parallele Änderungen werden gezielt geprüft. | Kein Prozessabbruch-/Stromausfalltest; die Tests injizieren Fehler im laufenden Prozess. |
 | 5 | Richtlinieninhalt einschließlich Vollmachten muss beim Wechsel unverändert bleiben; private Backupwiederherstellung verlangt den aktuell registrierten Schlüssel. | Zusammenhängender delegierter Bedienlauf über einen Verwaltungswechsel hinweg noch nicht separat nachgewiesen. |
-| 6 | Gruppenmatrix zeigt Zugriff mit alter Vaultkopie/alter Richtlinie und Grenzen von Entzug. | Dedizierter Verwaltungswechseltest mit absichtlich offline belassenem Trust und späterem Import fehlt noch. |
+| 6 | `VerifyOfflineTransition` prüft drei getrennte synthetische Trustdateien: umgestellter Arbeitsplatz, unverändert offline belassener Arbeitsplatz mit späterem Import/Neuladen und unter altem Schlüssel weiterentwickelter Konfliktstand. Kein impliziter Wechsel, keine Rücksetzung; nach Import werden alter Schlüssel mit höherer Revision und Replay abgewiesen. | Echte zweite Windows-Umgebung und realer Offline-Anwenderlauf bleiben offen. |
 | 7 | Einrichtung, Sicherung, Anfrageexport, Autorisierung, Import und Aktivierung sind angebunden und über Dialogfunktionen mit Windows-DPAPI geprüft. | Native Datei-/Bestätigungsdialoge, Verständlichkeit des vollständigen Ablaufs und echte Zweitbenutzerumgebung bleiben offen. |
 
 Die bestehenden Testberichte beweisen synthetische bzw. lokale Integrationsabläufe.

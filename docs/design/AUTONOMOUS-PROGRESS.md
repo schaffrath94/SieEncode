@@ -1,6 +1,20 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Offline-Verwaltungswechsel gezielt nachgewiesen (2026-10-23):
+VerifyOfflineTransition nutzt drei getrennte synthetisch geschuetzte Trustdateien.
+Wechsel/Updates des ersten Arbeitsplatzes lassen offline Datei bytegleich unter
+altem Anker. Neuer Schluessel und unbestaetigter Wechsel werden dort abgewiesen.
+Spaeterer expliziter Import plus Neuladen und neues Update konvergieren zum neuen
+Stand; alter Schluessel mit hoeherer Revision und Replay werden dann abgewiesen.
+Dritter Arbeitsplatz akzeptiert bewusst noch gueltiges altes Update und weicht ab:
+urspruengliche Uebergabe und Ruecksetzung scheitern, sein Stand bleibt erhalten.
+CI Exit 0: tmp/group-offline-transition-ci.log. Keine Produktcodeaenderung,
+keine echte zweite Windows-Umgebung. Schnellstart nennt divergierende Staende
+und verbietet manuelle Registrierungsruecksetzung; Abnahmematrix aktualisiert.
+Naechster Nachweis: delegierter Ablauf ueber den Verwaltungswechsel hinweg;
+native Gesamtabnahme bleibt separat offen. Ziel aktiv, Release unveraendert.
+
 Freigabenachweise abgeglichen und Aktivierungskonkurrenz geprueft (2026-10-22):
 Neue Tests injizieren beschaedigtes Vorgaengerarchiv, Trustfortschritt waehrend
 Schutz der neuen Verwaltungsdatei und eine konkurrierende erfolgreiche Aktivierung.

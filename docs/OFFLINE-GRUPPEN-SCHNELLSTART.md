@@ -141,3 +141,9 @@ Beim Nachfolger anschließend:
 Offline-Arbeitsplätze vertrauen bis zum Import weiterhin dem alten Schlüssel.
 Das Vorgängerarchiv enthält weiterhin einen nutzbaren alten Schlüssel; weder
 Archivierung noch Aktivierung sperren bereits vorhandene Kopien aus der Ferne.
+
+Hat ein noch nicht umgestellter Arbeitsplatz inzwischen weitere Änderungen der
+alten Verwaltung importiert, passt die ursprüngliche Übergabe möglicherweise
+nicht mehr zu seinem Stand. SieEncode weist sie dann ab. Die lokale Registrierung
+nicht löschen oder zurücksetzen, sondern die abweichenden Stände mit der
+Hauptverwaltung klären. Es gibt dafür keine automatische Zusammenführung.
