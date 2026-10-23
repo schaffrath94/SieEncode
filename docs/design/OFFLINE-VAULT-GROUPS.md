@@ -28,6 +28,16 @@ sichtbar. Das ist keine Abnahme aller Verwaltungs-/Recovery-Bedienwege.
 
 ## Nachweis der gewuenschten Zugriffsmatrix
 
+Jeder normale Geraeteeintrag benoetigt einen eigenstaendigen RSA-Schluessel.
+Ein anderes Zertifikat mit demselben Schluessel ist keine unabhaengige Identitaet:
+der Besitzer des privaten Schluessels koennte ihn mit dem oeffentlichen Zertifikat
+des anderen Eintrags verbinden. Deshalb wird doppelte Schluesselnutzung bereits
+beim Signieren, beim Pruefen importierter Richtlinien und bei der Empfaengerauflösung
+abgewiesen, auch innerhalb derselben Person und bei deaktivierten Eintraegen.
+Die Pruefung veraendert keine vorhandenen Dateien. Ein alter Entwicklungsstand
+mit mehrfach verwendeten Schluesseln ist damit unzulaessig; keine automatische
+Umschreibung oder Ruecksetzung des lokalen Vertrauensstands erfolgt.
+
 `OfflineGroupMatrixWorkflowTests` prueft die konkrete Acht-Personen-/Drei-Gruppen-
 Zuordnung mit acht unabhaengigen RSA-Schluesseln, separater Recovery und neun
 getrennten Vertrauensdateien. Oeffentliche Pakete durchlaufen Serialisierung,

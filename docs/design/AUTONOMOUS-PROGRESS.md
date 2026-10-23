@@ -1,6 +1,23 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Unabhaengige Geraeteschluessel erzwungen (2026-10-23):
+Auftragspruefung fand normale Geraetezuordnung nur nach Zertifikatsfingerabdruck.
+Andere Zertifikate mit identischem RSA-Schluessel konnten mehreren Personen oder
+Geraeten zugeordnet werden. Schluesselbesitz ist jedoch nicht durch ein neues
+Zertifikat getrennt; damit waren getrennte Geraetezugaenge nicht garantiert.
+OfflineGroupDirectory lehnt jetzt doppelte SPKI-Schluesselfingerabdruecke ab,
+einschliesslich deaktivierter Eintraege. Gilt beim Signieren, Verifizieren und
+Empfaengeraufloesen. Keine automatische Datenmigration oder Dateiaenderung.
+Regression: gleiche/fremde Person, aktives/deaktiviertes Original, unabhaengig
+signierter unzulaessiger Import. Positive Core-/UI-Fixtures verwenden nun eigene
+RSA-Schluessel pro Geraet. Acht-Personen-/Drei-Gruppen-Matrix weiterhin bestanden.
+CI Exit 0, 72/72, Builds ohne Warnungen/Fehler:
+tmp/group-independent-device-keys-ci.log. Windows-UI-Smoke Exit 0, status OK,
+stderr leer: tmp/group-independent-device-keys-smoke/SieEncode/ui-smoke/ui-smoke-result.json.
+Schnellstart und Architektur dokumentieren Anforderung und Altstand-Grenze.
+Keine echte Zweitbenutzerabnahme; Ziel aktiv, Release unveraendert.
+
 Echte Prozessabbrueche an Aktivierungsgrenzen geprueft (2026-10-23):
 GroupActivationInterruptionTests erstellt ausschliesslich synthetische Verwaltung,
 Trust und Vorbereitung. Zwei Kindprozesse werden nach Archivierung vor dem

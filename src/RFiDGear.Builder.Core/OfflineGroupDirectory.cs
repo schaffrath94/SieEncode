@@ -11,6 +11,7 @@ public static class OfflineGroupDirectory
             throw new InvalidDataException("Ungültiges Personenverzeichnis oder falsche Richtlinienversion.");
         var people = new HashSet<string>(StringComparer.Ordinal);
         var devices = new HashSet<string>(StringComparer.Ordinal);
+        var deviceKeys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var person in policy.People)
         {
             if (person is null || !Id(person.Id) || !people.Add(person.Id) || !Name(person.Name) || person.Devices is null || person.Devices.Length > 100)
@@ -25,6 +26,10 @@ public static class OfflineGroupDirectory
                 using var rsa = certificate.GetRSAPublicKey();
                 if (certificate.HasPrivateKey || rsa is null || rsa.KeySize < 3072 || CertificateVaultService.Fingerprint(certificate) != device.Fingerprint)
                     throw new CryptographicException("Gerätezertifikat passt nicht zum öffentlichen Fingerabdruck.");
+                // A different certificate does not make a reused private key a separate device.
+                // Include disabled entries: reissuing their certificate must not undo a device revocation.
+                if (!deviceKeys.Add(Convert.ToHexString(SHA256.HashData(rsa.ExportSubjectPublicKeyInfo()))))
+                    throw new CryptographicException("Jeder Gerätezugang benötigt einen eigenen Schlüssel. Ein vorhandener Schlüssel darf nicht mit einem anderen Zertifikat erneut zugeordnet werden.");
                 // Reading an old signed policy must remain possible after a certificate expires.
                 // Current validity is enforced when resolving recipients for a new vault.
             }

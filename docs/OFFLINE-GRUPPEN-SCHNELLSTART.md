@@ -28,7 +28,9 @@ benötigt für normale Projektarbeit eine eigene Gruppenmitgliedschaft.
    Passphrase getrennt verwahren; beides gehört nicht in den allgemein zugänglichen Projektordner.
 4. Personen anlegen, deren öffentliche Geräteeinladungen aufnehmen und die
    Fingerabdrücke unabhängig mit den Personen vergleichen. Eine Person kann
-   mehrere Geräte haben und mehreren Gruppen angehören.
+   mehrere Geräte haben und mehreren Gruppen angehören. Jeder Gerätezugang
+   braucht einen eigenen Schlüssel. Ein neues Zertifikat für denselben Schlüssel
+   ersetzt keine neue Geräteidentität und wird auch bei deaktiviertem Altzugang abgewiesen.
 5. Gruppen anlegen, Personen zuordnen und **Gruppen signiert speichern** wählen.
 6. Unter **Separate Recovery-Identität einrichten** für die registrierte Bibliothek
    einen eigenen Recovery-Schlüssel erzeugen und verschlüsselt sichern. Die

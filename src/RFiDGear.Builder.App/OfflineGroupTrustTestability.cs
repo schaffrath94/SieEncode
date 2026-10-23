@@ -63,8 +63,9 @@ public partial class MainWindow
                 var draft = uiGrid.Items.Cast<GroupAdministrationDraft>().Single();
                 var person = administrationWindow.AddPerson("Synthetische Person");
                 using var deviceKey = RSA.Create(3072);
+                using var secondDeviceKey = RSA.Create(3072);
                 using var firstDevice = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=Synthetic workstation one", deviceKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
-                using var secondDevice = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=Synthetic workstation two", deviceKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+                using var secondDevice = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=Synthetic workstation two", secondDeviceKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
                 var firstInvitation = CertificateVaultService.ExportInvitation(firstDevice, "Testrechner 1");
                 administrationWindow.AddDevice(person.Id, firstInvitation);
                 administrationWindow.AddDevice(person.Id, CertificateVaultService.ExportInvitation(secondDevice, "Testrechner 2"));
