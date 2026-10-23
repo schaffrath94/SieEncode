@@ -53,11 +53,66 @@ internal static class OfflineGroupDelegateStoreTests
             Reject(() => signer.SignChange(trust, "grant", current.Checkpoint, [new("lokal", "Updated", [])]));
             Reject(() => signer.SignChange(trust, "grant", revoked.Checkpoint, [new("lokal", "Updated", [])]));
             if (!before.SequenceEqual(File.ReadAllBytes(path))) throw new Exception("Signing changed protected identity.");
+            VerifyAdministratorChange(directory, library, path, protection, policy, root);
             var corrupt = before.ToArray(); corrupt[^1] ^= 1; File.WriteAllBytes(path, corrupt);
             Reject(() => signer.ExportPublic());
         }
         finally { Directory.Delete(directory, true); }
     }
+    private static void VerifyAdministratorChange(string directory, Guid library, string signerPath,
+        OfflineGroupTrustTests.TestProtection signerProtection, OfflineGroupPolicy policy, RSA previousKey)
+    {
+        var package = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1, library,
+            previousKey.ExportSubjectPublicKeyInfo(), OfflineGroupPolicyService.Sign(policy, previousKey));
+        OfflineGroupTrustStore Enroll(string name)
+        {
+            var store = new OfflineGroupTrustStore(Path.Combine(directory, name), library, new OfflineGroupTrustTests.TestProtection());
+            store.Enroll(package.AdministratorPublicKey, OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey), package.Policy);
+            return store;
+        }
+        var authorityTrust = Enroll("handover-authority.trust");
+        var delegateTrust = Enroll("handover-delegate.trust");
+        var signer = new OfflineGroupDelegateStore(signerPath, library, "alice", signerProtection);
+        var identity = File.ReadAllBytes(signerPath);
+        var oldCheckpoint = delegateTrust.LoadOffline().Checkpoint;
+        var oldChange = signer.SignChange(delegateTrust, "grant", oldCheckpoint, [new("lokal", "Old request", [])]);
+        var preparation = new OfflineGroupSuccessorStore(Path.Combine(directory, "handover-pending.bin"), library, new OfflineGroupTrustTests.TestProtection());
+        var request = preparation.Create(authorityTrust, oldCheckpoint);
+        var transition = GroupAdministratorTransition.Authorize(request, package, previousKey, preparation.GetFingerprint(), true);
+        transition = GroupAdministratorTransition.Read(GroupAdministratorTransition.Write(transition));
+        authorityTrust.AcceptAdministratorTransition(transition, oldCheckpoint, preparation.GetFingerprint(), true);
+        var adminPath = Path.Combine(directory, "handover-active.bin");
+        var admin = new OfflineGroupAdministrationStore(adminPath, library, new OfflineGroupTrustTests.TestProtection());
+        admin.ActivateSuccessor(preparation, authorityTrust, authorityTrust.LoadOffline().Checkpoint, true);
+        var activeBefore = File.ReadAllBytes(adminPath);
+        Reject(() => admin.ApplyDelegatedChange(oldChange, authorityTrust.LoadOffline().Checkpoint));
+        if (!File.ReadAllBytes(adminPath).SequenceEqual(activeBefore)) throw new Exception("Pre-transition delegate request changed successor policy.");
+        delegateTrust.AcceptAdministratorTransition(transition, oldCheckpoint, preparation.GetFingerprint(), true);
+        signer = new OfflineGroupDelegateStore(signerPath, library, "alice", signerProtection);
+        var current = delegateTrust.LoadOffline();
+        Reject(() => signer.SignChange(delegateTrust, "grant", oldCheckpoint, [new("lokal", "Stale draft", [])]));
+        Reject(() => signer.SignChange(delegateTrust, "grant", current.Checkpoint, [new("other", "Escalation", [])]));
+        var change = GroupDelegationTransport.ReadChange(GroupDelegationTransport.WriteChange(
+            signer.SignChange(delegateTrust, "grant", current.Checkpoint, [new("lokal", "After handover", [])])));
+        var updated = admin.ApplyDelegatedChange(change, current.Checkpoint);
+        authorityTrust.AcceptPackageUpdate(updated, current.Checkpoint);
+        delegateTrust.AcceptPackageUpdate(updated, current.Checkpoint);
+        var verified = delegateTrust.LoadOffline();
+        if (verified.Policy.Groups[0].Name != "After handover" || verified.Policy.Groups[1].Name != "Other" ||
+            verified.Policy.Delegations.Single().GroupIds.Single() != "lokal" ||
+            !File.ReadAllBytes(signerPath).SequenceEqual(identity)) throw new Exception("Handover expanded delegation or replaced delegate identity.");
+        Reject(() => admin.ApplyDelegatedChange(change, verified.Checkpoint));
+        var pendingBeforeRevocation = signer.SignChange(delegateTrust, "grant", verified.Checkpoint, [new("lokal", "Pending", [])]);
+        var revoked = admin.UpdateDelegations([], verified.Checkpoint);
+        authorityTrust.AcceptPackageUpdate(revoked, verified.Checkpoint);
+        var revokedBytes = File.ReadAllBytes(adminPath);
+        Reject(() => admin.ApplyDelegatedChange(pendingBeforeRevocation, authorityTrust.LoadOffline().Checkpoint));
+        if (!File.ReadAllBytes(adminPath).SequenceEqual(revokedBytes)) throw new Exception("Revoked delegate request changed policy.");
+        delegateTrust.AcceptPackageUpdate(revoked, verified.Checkpoint);
+        Reject(() => signer.SignChange(delegateTrust, "grant", delegateTrust.LoadOffline().Checkpoint, [new("lokal", "Revoked", [])]));
+        if (!File.ReadAllBytes(signerPath).SequenceEqual(identity)) throw new Exception("Revocation erased local identity.");
+    }
+
     private static void Reject(Action action)
     {
         try { action(); }

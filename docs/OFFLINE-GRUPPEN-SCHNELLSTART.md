@@ -147,3 +147,12 @@ alten Verwaltung importiert, passt die ursprüngliche Übergabe möglicherweise
 nicht mehr zu seinem Stand. SieEncode weist sie dann ab. Die lokale Registrierung
 nicht löschen oder zurücksetzen, sondern die abweichenden Stände mit der
 Hauptverwaltung klären. Es gibt dafür keine automatische Zusammenführung.
+
+Beauftragte Gruppenverwalter behalten beim reinen Verwaltungswechsel ihre
+bisherigen Vollmachten und ihren separaten Delegatenschlüssel. Nach dem eigenen
+Import der Übergabe müssen sie offene Änderungsanträge auf dem neuen Stand erneut
+erstellen. Anträge vom alten Stand werden von der neuen Hauptverwaltung abgewiesen.
+Weiterhin sind nur die ausdrücklich freigegebenen Gruppen bearbeitbar; ein späterer
+Vollmachtsentzug wird wirksam, sobald der neue Stand am Arbeitsplatz übernommen ist.
+Die Hauptverwaltung lehnt eingereichte Änderungen bereits anhand ihres eigenen
+aktuellen Stands ab.

@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Delegierter Ablauf ueber Verwaltungswechsel nachgewiesen (2026-10-23):
+OfflineGroupDelegateStoreTests.VerifyAdministratorChange fuehrt vorbereitete
+Nachfolge, Autorisierung, getrennte Trustimporte und Aktivierung durch. Alter
+Antrag scheitert an neuer Verwaltung; delegierter Schluessel bleibt bytegleich.
+Nach Trustimport/Neuladen: alter Entwurfsstand und fremde Gruppe abgewiesen,
+neuer oeffentlich transportierter Antrag fuer freigegebene Gruppe erfolgreich.
+Unbeteiligte Gruppe und Vollmachtsumfang bleiben erhalten. Replay, vor Entzug
+erstellter offener Antrag und Signieren nach importiertem Entzug scheitern;
+lokale Identitaet bleibt erhalten. Synthetischer Speicherschutz in einem Prozess,
+kein nativer Bedienlauf und keine echte Zweitbenutzerabnahme.
+CI Exit 0, 71/71, CLI/WPF ohne Warnungen/Fehler:
+tmp/group-delegation-handover-ci.log. Schnellstart und Freigabeabgleich aktualisiert.
+Naechste offene Abnahmen: native Dialoge/Gesamtablauf und Prozessabbruchverhalten;
+echte getrennte Windows-Umgebung weiterhin nicht nachgewiesen. Ziel aktiv.
+
 Offline-Verwaltungswechsel gezielt nachgewiesen (2026-10-23):
 VerifyOfflineTransition nutzt drei getrennte synthetisch geschuetzte Trustdateien.
 Wechsel/Updates des ersten Arbeitsplatzes lassen offline Datei bytegleich unter
