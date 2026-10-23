@@ -328,12 +328,22 @@ der neue Vault dokumentiert den konkret angewendeten Richtlinienstand. Spaetere
 Updates erfordern erneuten Abgleich. Nicht kooperierende Fremdschreiber unmittelbar
 zwischen letzter Pruefung und Rename sind durch den lokalen Anwendungslock nicht
 global ausgeschlossen. Alte Sicherungen bleiben mit alten Schluesseln zugaenglich.
-Bedienvorschau/Einbindung in Projektverwaltung stehen noch aus.
+Bedienvorschau und bestaetigter Abgleich sind inzwischen im Projekteditor
+integriert; die entsprechenden UI-Integrationsnachweise stehen weiter oben.
+
+Gezielte Konfliktpruefungen in GroupVaultTests.VerifyReconciliation behandeln
+Recovery-Entzug waehrend der Entschluesselung, beschaedigte bereits vorhandene
+Sicherung und fremde Vaultaenderung waehrend der Entschluesselung. Der Abgleich
+muss abbrechen und Quelle bzw. fremde Fassung sowie vorhandene Sicherung erhalten.
+Nach ausdruecklicher neuer Recovery-Freigabe mit hoeherer Revision und reparierter
+synthetischer Sicherung wird der erfolgreiche Abgleich weiterhin geprueft.
+Diese Tests verwenden synthetische Dateien in einem Prozess, keine verteilte
+Cloud-Synchronisation oder zweite Windows-Umgebung.
 
 ## Gruppen-Vault-Kern und separate Recovery
 
-Neues getrenntes Format SieEncode-Group-Vault (Version 1), noch ohne Anbindung
-an Projektdateien/Editor. Bestehende v2/v3-Vaults und deren Funktionen bleiben
+Getrenntes Format SieEncode-Group-Vault (Version 1), inzwischen ueber
+ProjectGroupVault an Projektdateien und Editor angebunden. Bestehende v2/v3-Vaults und deren Funktionen bleiben
 unveraendert. AES-256-GCM authentisiert Projekt-ID, Bibliothek, Gruppen-ID,
 Richtlinien-Checkpoint, zufaellige Schluesselgeneration und saemtliche Rollen/
 Fingerabdruecke/RSA-OAEP-SHA256-Schluesselhuellen gemeinsam mit dem Nutzinhalt.

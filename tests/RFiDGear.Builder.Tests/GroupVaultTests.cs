@@ -267,6 +267,47 @@ internal static class GroupVaultTests
             Reject(() => GroupVaultReconciliation.Apply(plan, trust, [recovery], now));
             if (!File.ReadAllBytes(path).SequenceEqual(source)) throw new Exception("Stale preview overwrote source.");
             plan = GroupVaultReconciliation.Preview(path, trust, project, "lokal", [recovery], now, recovery: true);
+            var revokedDuringApply = false;
+            IEnumerable<X509Certificate2> RevokeRecoveryDuringDecryption()
+            {
+                var latest = trust.LoadOffline().Policy;
+                trust.AcceptUpdate(OfflineGroupPolicyService.Sign(latest with
+                {
+                    Revision = latest.Revision + 1,
+                    RecoveryDevices = latest.RecoveryDevices.Select(d => d with { Enabled = false }).ToArray()
+                }, root));
+                revokedDuringApply = true;
+                yield return recovery;
+            }
+            Reject(() => GroupVaultReconciliation.Apply(plan, trust, RevokeRecoveryDuringDecryption(), now));
+            if (!revokedDuringApply || !File.ReadAllBytes(path).SequenceEqual(source) ||
+                Directory.Exists(Path.Combine(directory, "GroupVaultBackups")))
+                throw new Exception("Recovery revoked during decryption still committed a rotation or backup.");
+            // A new explicit signed grant at a higher revision permits a fresh preview; never reset trust.
+            trust.AcceptUpdate(OfflineGroupPolicyService.Sign(targetPolicy with { Revision = trust.LoadOffline().Policy.Revision + 1 }, root));
+            plan = GroupVaultReconciliation.Preview(path, trust, project, "lokal", [recovery], now, recovery: true);
+            var backupDirectory = Path.Combine(directory, "GroupVaultBackups");
+            Directory.CreateDirectory(backupDirectory);
+            var backupPath = Path.Combine(backupDirectory, plan.VaultRevision.Sha256 + ".group-vault.json");
+            var corruptBackup = source.ToArray(); corruptBackup[^1] ^= 1;
+            File.WriteAllBytes(backupPath, corruptBackup);
+            Reject(() => GroupVaultReconciliation.Apply(plan, trust, [recovery], now));
+            if (!File.ReadAllBytes(path).SequenceEqual(source) || !File.ReadAllBytes(backupPath).SequenceEqual(corruptBackup))
+                throw new Exception("Rotation replaced the source or an inconsistent existing backup.");
+            File.WriteAllBytes(backupPath, source); // Repair only the deliberately damaged synthetic fixture.
+            var competingVault = source.Concat(new byte[] { 32, 32, 32 }).ToArray();
+            var replacedDuringApply = false;
+            IEnumerable<X509Certificate2> ReplaceVaultDuringDecryption()
+            {
+                File.WriteAllBytes(path, competingVault);
+                replacedDuringApply = true;
+                yield return recovery;
+            }
+            Reject(() => GroupVaultReconciliation.Apply(plan, trust, ReplaceVaultDuringDecryption(), now));
+            if (!replacedDuringApply || !File.ReadAllBytes(path).SequenceEqual(competingVault) ||
+                !File.ReadAllBytes(backupPath).SequenceEqual(source))
+                throw new Exception("Rotation overwrote a concurrent vault or its existing backup.");
+            File.WriteAllBytes(path, source); // Restore only this synthetic concurrent-writer fixture.
             var result = GroupVaultReconciliation.Apply(plan, trust, [recovery], now);
             var rotated = GroupVaultService.Read(File.ReadAllBytes(path));
             if (!File.ReadAllBytes(result.EncryptedBackupPath).SequenceEqual(source) || result.KeyGeneration == original.Header.KeyGeneration ||

@@ -1,6 +1,22 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Empfaengerabgleich bei spaeten Konflikten geprueft (2026-10-23):
+GroupVaultTests.VerifyReconciliation entzieht Recovery waehrend der tatsaechlichen
+Identitaetsenumeration beim Entschluesseln. Apply bricht ohne Vault-/Backupaenderung
+ab. Weitere Faelle pruefen beschaedigte vorhandene Sicherung und konkurrierend
+ersetzte Vaultdatei waehrend des Entschluesselns: keine Ueberschreibung. Danach
+funktioniert der regulaere Abgleich mit neu signierter Freigabe auf hoeherer
+Revision und reparierter synthetischer Testdatei. Kein Trustreset.
+Erster CI-Lauf: neue Tests bestanden, insgesamt 71/72 wegen UnauthorizedAccess
+beim rfPrj-Dateiersatz in TestOperations; Ursache nicht abschliessend geklaert:
+tmp/group-reconciliation-conflicts-ci.log. Wiederholung mit frischem isoliertem
+TEMP/TMP erfolgreich: Exit 0, 72/72, CLI/WPF ohne Warnungen/Fehler,
+tmp/group-reconciliation-conflicts-ci-verified.log. Kein Produktcode geaendert.
+Zwei veraltete Aussagen zur noch fehlenden Editoranbindung im Konzept korrigiert.
+Nur synthetische lokale Konflikte; keine verteilte Cloud- oder Mehrbenutzerabnahme.
+Ziel aktiv, bestehender Release unveraendert.
+
 Unabhaengige Geraeteschluessel erzwungen (2026-10-23):
 Auftragspruefung fand normale Geraetezuordnung nur nach Zertifikatsfingerabdruck.
 Andere Zertifikate mit identischem RSA-Schluessel konnten mehreren Personen oder
