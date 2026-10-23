@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Installierbarer Offline-Gruppen-Testkandidat gebaut und geprueft (2026-10-23):
+1.3.0-offline-groups.1 aus sauberem Commit 2be1be0, MSI 1.3.0, kein Portable.
+Artefakte: artifacts/offline-groups-1.3.0-preview.1/package. Build Exit 0;
+exakter publizierter UI-Smoke Exit 0, status OK, 60 Checks, stderr leer.
+MSI /a Exit 0, alle 1034 Release-Dateien hashgleich. Zwei Paketmanifest-Eintraege
+geprueft. Runtime komplett bytegleich aus 1.2.1; deren bestehender BUILD-IDENTITY
+mit dirty=true bleibt ehrlich erhalten. Geschuetzte bisherige MSI/Studio-DLL/
+Runtime-EXE/DLL vor/nach Build unveraendert. Keine Installation durchgefuehrt.
+MSI SHA256: 268A850AD71354E702CB850831E226C51D88226FB00FAF05A47AC8BAB8B1DD4D.
+Detailnachweise und offene Gates: OFFLINE-GROUPS-CANDIDATE-1.3.0-1.md.
+Neue OFFLINE-GRUPPEN-ABNAHME.md ist im Installer enthalten und definiert den
+echten Zweitarbeitsplatz-Ablauf. Naechster wesentlicher Nachweis: reale getrennte
+Windows-Installation, Mehrbenutzer-/Offlineablauf und Recoveryinstallation.
+Kein GitHub-Release, keine neue Hardwarefreigabe, Ziel aktiv.
+
 Geraeteeinrichtung weist wiederverwendete Schluessel sofort ab (2026-10-23):
 AddDevice vergleicht den RSA-Schluessel der Einladung mit allen bereits im
 Entwurf zugeordneten Geraeten, auch deaktivierten. Die Meldung nennt Person und
