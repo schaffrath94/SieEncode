@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Testlab-Fortsetzung am 24.10.2026: Erster Windows-26H2-Versuch blieb bei
+42 Prozent; nach Snapshot und einmaligem Neustart meldet Setup eine nicht
+fortsetzbare Installation. Ursache des vorherigen Stillstands ungeklaert.
+Erste VM gestoppt und erhalten. Frische SieEncode-Testlab-LTSC mit offiziellem
+Microsoft-Evaluierungsmedium 26100.1742 aufgebaut; lokale Installation ohne
+Netzwerk laeuft. Noch keine Gast-/Produktabnahme. Siehe OFFLINE-GROUPS-TESTLAB.md.
+
+Neue Freigabe am 24.10.2026: Benutzer autorisiert den eigenstaendigen Aufbau
+einer separaten VirtualBox-Testumgebung. Neue VM SieEncode-Testlab angelegt;
+bestehende fremde VMs und Hostinstallation unveraendert. Windows-11-Enterprise-
+Evaluierungsmedium von Microsoft heruntergeladen und gegen veroeffentlichten
+SHA256 geprueft; unbeaufsichtigte Installation gestartet. Noch keine fertige
+Windows-/SieEncode-Installation oder Mehrbenutzerabnahme behauptet.
+Details und Fortsetzungsstand: OFFLINE-GROUPS-TESTLAB.md.
+
 Auftrag gegen fertigen Kandidaten abgeglichen (2026-10-23):
 OFFLINE-GROUPS-GOAL-AUDIT.md ordnet jede Anforderung konkreten Quellen und
 Nachweisen zu und trennt lokale Belege von offener echter Abnahme. Benutzer

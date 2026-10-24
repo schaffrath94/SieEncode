@@ -1,9 +1,10 @@
 # Auftragsabgleich Offline-Gruppen – 23.10.2026
 
-Gesamtziel **nicht abgeschlossen**. Der Benutzer bestätigt am 23.10.2026:
-Derzeit keine separate Testumgebung. Vorhandene fremde VirtualBox-VMs wurden nur
-aufgelistet, nicht gestartet oder verändert; sie sind keine freigegebene
-Testumgebung. Keine neue Automation und kein weiterer unveränderter Paketbau.
+Gesamtziel **nicht abgeschlossen**. Am 24.10.2026 hat der Benutzer den Aufbau
+einer neuen separaten VirtualBox-Testumgebung autorisiert. Die neue VM ist
+angelegt, Windows-Setup läuft; siehe [Testlab-Stand](OFFLINE-GROUPS-TESTLAB.md).
+Die vorher fehlende Testumgebung wird damit bearbeitet. Vorhandene fremde VMs
+bleiben unverändert. Keine neue Automation und kein weiterer Paketbau.
 
 ## Bewerteter Stand
 
@@ -32,10 +33,10 @@ publizierter Kandidat: `tmp/offline-groups-candidate-smoke/SieEncode/ui-smoke/ui
 | Private Entwicklung und Erhalt bestehender Daten | Privater Branch `codex/offline-vault-groups`; Tests mit synthetischen Daten. Bisherige 1.2.1-MSI/Studio-/Runtime-Dateien vor/nach Paketbau hashgleich. | Keine produktiven Vaults/Identitäten migriert oder gelöscht, vorhandene Installation nicht ersetzt. |
 | Ehrliche Offline-Widerrufsgrenzen | Schnellstart, Dialoge und Matrixworkflow: alte Kopien und offline gebliebene Truststände bleiben nutzbar; spätere Entzüge erst nach Import bekannt. | Dokumentiert und synthetisch demonstriert; keine Behauptung sofortiger globaler Sperrung. |
 
-## Jetzt benötigte externe Voraussetzung
+## Nächster Abnahmenachweis
 
-Eine ausdrücklich geeignete separate Windows-Testumgebung mit zwei tatsächlich
-getrennten Benutzern oder Rechnern. Dort den vorhandenen Kandidaten nach
+Die autorisierte neue Windows-Test-VM fertig einrichten und zwei tatsächlich
+getrennte Windows-Testbenutzer anlegen. Dort den vorhandenen Kandidaten nach
 [Abnahmeanleitung](../OFFLINE-GRUPPEN-ABNAHME.md) installieren und die offenen
 Schritte dokumentieren. Vorhandene Unternehmens-VMs nicht ersatzweise verwenden.
 Hostinstallation, Windows-Benutzer, Sicherheitskonfiguration und Zertifikatsspeicher
