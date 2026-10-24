@@ -1,0 +1,48 @@
+﻿{
+    "Status":  "PASS",
+    "Scope":  "Real MSI installation and upgrade; application built-in tests under administrator; no full multiuser vault or hardware acceptance",
+    "Checks":  [
+                   {
+                       "Check":  "MSI",
+                       "Version":  "1.2.1",
+                       "ExitCode":  0
+                   },
+                   {
+                       "Check":  "InstalledIdentity",
+                       "Version":  "1.2.1",
+                       "Hash":  "C7FFB4E1A2DB661C6E33FEAA1C244000355C452525C3A3CE43B92E14D0776E77",
+                       "Result":  "PASS"
+                   },
+                   {
+                       "Check":  "--self-test",
+                       "Version":  "1.2.1",
+                       "ExitCode":  0
+                   },
+                   {
+                       "Check":  "--ui-smoke-test",
+                       "Version":  "1.2.1",
+                       "ExitCode":  0
+                   },
+                   {
+                       "Check":  "MSI",
+                       "Version":  "1.3.0-offline-groups.1",
+                       "ExitCode":  0
+                   },
+                   {
+                       "Check":  "InstalledIdentity",
+                       "Version":  "1.3.0-offline-groups.1",
+                       "Hash":  "81F79933C67CC007B63A0A8C14F4E7AB939FBA0EDF369C4BADE07D807EBB0F38",
+                       "Result":  "PASS"
+                   },
+                   {
+                       "Check":  "--self-test",
+                       "Version":  "1.3.0-offline-groups.1",
+                       "ExitCode":  0
+                   },
+                   {
+                       "Check":  "--ui-smoke-test",
+                       "Version":  "1.3.0-offline-groups.1",
+                       "ExitCode":  0
+                   }
+               ]
+}

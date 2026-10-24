@@ -2,8 +2,10 @@
 
 Gesamtziel **nicht abgeschlossen**. Am 24.10.2026 hat der Benutzer den Aufbau
 einer neuen separaten VirtualBox-Testumgebung autorisiert. Die neue VM ist
-angelegt, Windows-Setup läuft; siehe [Testlab-Stand](OFFLINE-GROUPS-TESTLAB.md).
-Die vorher fehlende Testumgebung wird damit bearbeitet. Vorhandene fremde VMs
+einsatzbereit. Reale MSI-Installation 1.2.1 und Upgrade auf den Kandidaten,
+installierte DLL-Hashes sowie Self-Test und UI-Smoke beider Versionen bestanden
+(Administrator). Siehe [Testlab-Stand](OFFLINE-GROUPS-TESTLAB.md) und
+[Ergebnis](offline-groups-installed-suite.json). Vorhandene fremde VMs
 bleiben unverändert. Keine neue Automation und kein weiterer Paketbau.
 
 ## Bewerteter Stand
@@ -29,16 +31,16 @@ publizierter Kandidat: `tmp/offline-groups-candidate-smoke/SieEncode/ui-smoke/ui
 | Kontrollierter Empfängerabgleich | Authentisierte Vorschau, Bestätigung im Editor, frischer Inhaltsschlüssel, verschlüsselte Altsicherung; `GroupVaultTests.VerifyReconciliation` und Matrixworkflow. | Stale-Vorschau, später Entzug, beschädigte Sicherung, konkurrierender Vault geprüft. Reale gemeinsame Ablage/Cloud-Konflikte offen. |
 | Separater Recoveryzugang | Eigene Identität und Sicherung, zentrale Freigabe, bibliotheksweite Recovery, ausdrücklicher Editorweg; keine normale Buildfreigabe. | Entschlüsselung und Freigabeprüfung belegt. Tatsächlicher Windows-Installer wurde im Test ersetzt; reale Installation/Neustart zwingend offen. |
 | Verständliche integrierte Einrichtung | Einstellungen, getrennte Rollen, interne Anleitung, leere Dialogzustände, private Sicherung vor öffentlicher Nachfolgeranfrage. | Teile nativ angesehen, Dialogfunktionen getestet; vollständiger nativer Bedienlauf einschließlich Datei-/Bestätigungsdialogen offen. |
-| Sicherheits-/Integrationsprüfungen | CI 72/72; Kandidat 60 UI-Checks; echte Kindprozessabbrüche an Aktivierungsgrenzen und Neustart; MSI-Extraktion mit 1.034 Hashvergleichen. | Keine Stromausfallprüfung, keine tatsächliche Installation/Upgrade, keine echte Mehrbenutzer- oder neue Hardwarefreigabe. |
+| Sicherheits-/Integrationsprüfungen | CI 72/72; Kandidat 60 UI-Checks; echte Kindprozessabbrüche an Aktivierungsgrenzen und Neustart; MSI-Extraktion mit 1.034 Hashvergleichen. | Reale MSI-Installation/Upgrade und installierte Selbst-/UI-Tests in LTSC bestanden. Keine Stromausfallprüfung, keine echte SieEncode-Mehrbenutzer- oder neue Hardwarefreigabe. |
 | Private Entwicklung und Erhalt bestehender Daten | Privater Branch `codex/offline-vault-groups`; Tests mit synthetischen Daten. Bisherige 1.2.1-MSI/Studio-/Runtime-Dateien vor/nach Paketbau hashgleich. | Keine produktiven Vaults/Identitäten migriert oder gelöscht, vorhandene Installation nicht ersetzt. |
 | Ehrliche Offline-Widerrufsgrenzen | Schnellstart, Dialoge und Matrixworkflow: alte Kopien und offline gebliebene Truststände bleiben nutzbar; spätere Entzüge erst nach Import bekannt. | Dokumentiert und synthetisch demonstriert; keine Behauptung sofortiger globaler Sperrung. |
 
 ## Nächster Abnahmenachweis
 
-Die autorisierte neue Windows-Test-VM fertig einrichten und zwei tatsächlich
-getrennte Windows-Testbenutzer anlegen. Dort den vorhandenen Kandidaten nach
-[Abnahmeanleitung](../OFFLINE-GRUPPEN-ABNAHME.md) installieren und die offenen
-Schritte dokumentieren. Vorhandene Unternehmens-VMs nicht ersatzweise verwenden.
+Die eingerichteten normalen Windows-Testbenutzer testerA/testerB fuer den
+SieEncode-Gesamtablauf nach [Abnahmeanleitung](../OFFLINE-GRUPPEN-ABNAHME.md)
+verwenden. Windows-DPAPI-Isolation ist bereits belegt, die echten Produktablaeufe
+einschliesslich Recovery bleiben offen. Vorhandene Unternehmens-VMs nicht verwenden.
 Hostinstallation, Windows-Benutzer, Sicherheitskonfiguration und Zertifikatsspeicher
 nicht als Ersatz für diese fehlende Testumgebung verändern.
 

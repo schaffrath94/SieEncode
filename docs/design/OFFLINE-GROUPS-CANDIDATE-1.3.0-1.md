@@ -38,13 +38,20 @@ Bekannte Installerwarnungen ICE40/ICE61; interner Kandidat ohne Code-Signatur.
 
 ## Ausstehende Abnahme
 
+Fortschreibung 24.10.2026: Reale MSI-Neuinstallation 1.2.1 und Upgrade auf
+1.3.0-offline-groups.1 in der separaten LTSC-VM bestanden (MSI jeweils Exit 0).
+Beide installierten Studio-DLL-Hashes stimmen; Self-Test und UI-Smoke beider
+Versionen Exit 0. Ausfuehrung als Administrator. Nachweis:
+[Installationssuite](offline-groups-installed-suite.json). Keine Hardware- oder
+vollstaendige Mehrbenutzerfreigabe daraus.
+
 Die [Arbeitsplatz-Abnahmeanleitung](../OFFLINE-GRUPPEN-ABNAHME.md) ist im
 Installer unter Studio/Docs enthalten. Sie beschreibt Registrierung, Gruppen-
 und Offlinezugriff, Entzug/Abgleich, begrenzte Delegation, separate Recovery
 und Verwaltungsnachfolge einschließlich Neustart und Artefaktidentität.
 
-Tatsächliche Installation/Upgrade, native Gesamtbedienung, reale zweite
-Windows-Umgebung und tatsächliche Windows-Recoveryinstallation sind offen.
+Native Gesamtbedienung, SieEncode-Gesamtablauf mit getrennten Windows-Benutzern
+und tatsächliche Windows-Recoveryinstallation sind offen.
 Der Installer verwendet den regulären Upgradepfad und kann vorhandenes
 SieEncode ersetzen: für diese Abnahme einen separaten Testrechner/eine Test-VM
 verwenden. Extraktion und synthetische Tests ersetzen diese Nachweise nicht.

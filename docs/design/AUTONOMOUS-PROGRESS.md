@@ -1,6 +1,32 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Abgeschlossener Installationsmeilenstein (24.10.2026): Benutzer meldet PASS;
+installed-suite.json und Transcript aus dem Gast gesichert und Ergebnis geprueft.
+Reale MSI-Neuinstallation 1.2.1 und Upgrade auf 1.3.0-offline-groups.1 jeweils
+Exit 0; beide installierten Studio-DLL-Hashes stimmen. Self-Test und UI-Smoke
+beider Versionen jeweils Exit 0. Tests liefen als Administrator in der LTSC-VM.
+Der fruehere ExitCode=null-Harnessfehler ist damit fuer diesen Lauf behoben.
+Nachweis: offline-groups-installed-suite.json neben dieser Datei; volle lokale
+Logs unter D:/VirtualBox/SieEncode-Testlab/Evidence. Keine erneuten Paketbauten.
+Naechster Nachweis: SieEncode-Vault-Gesamtablauf unter testerA/testerB mit
+Gruppenzugriff, Offlinebetrieb, Entzug/Rotation und echter Recoveryinstallation.
+Native Gesamtbedienung, Deinstallation und Hardwareabnahme bleiben offen.
+
+Aktueller VM-Teststand (24.10.2026): LTSC-Gast eingerichtet, Guest Additions
+7.2.20 vorhanden, Secure Boot/TPM bestaetigt, automatische Anmeldung entfernt.
+Zwei normale Benutzer angelegt; synthetische Windows-DPAPI-Isolation mit
+testerA/testerB bestanden (keine SieEncode-Vault-Abnahme).
+Reale MSI-Neuinstallation 1.2.1 Exit 0 und installierter DLL-Hash bestaetigt.
+Erster Self-Test wurde vom Harness wegen ExitCode=null abgebrochen; stdout/stderr
+leer, daher kein belegter Produktfehler und kein bestandener Self-Test.
+Harness auf direkten System.Diagnostics.Process-Start umgestellt, lokal mit
+Exitcodes 0 und 7 geprueft und in den Gast kopiert. Kontrollierte Fortsetzung
+prueft vorhandene 1.2.1 samt Hash, erhaelt vorheriges Ergebnis und wiederholt
+die Anwendungspruefung ohne erneute MSI-Installation. Benutzer startet denselben
+Desktop-Launcher erneut. Upgrade/Kandidaten-/Mehrbenutzerabnahme weiter offen.
+Keine Statusschleifen; auf Benutzerergebnis warten.
+
 Testlab-Fortsetzung am 24.10.2026: Erster Windows-26H2-Versuch blieb bei
 42 Prozent; nach Snapshot und einmaligem Neustart meldet Setup eine nicht
 fortsetzbare Installation. Ursache des vorherigen Stillstands ungeklaert.

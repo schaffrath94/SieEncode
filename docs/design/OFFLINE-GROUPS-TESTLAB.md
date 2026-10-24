@@ -1,9 +1,12 @@
 # Separate VirtualBox-Testumgebung
 
 Stand 24.10.2026: vom Benutzer ausdruecklich autorisierter Neuaufbau.
-Erster Windows-Installationsversuch fehlgeschlagen; zweiter Versuch mit LTSC
-gestartet. Einsatzbereitschaft und Produktabnahme noch offen.
-Die bisher fehlende Testumgebung wird aufgebaut, bestehende Unternehmens-VMs
+Erster Windows-Installationsversuch fehlgeschlagen; LTSC-Test-VM einsatzbereit.
+Reale Installation 1.2.1 und Upgrade 1.3.0-offline-groups.1 bestanden, jeweils
+MSI Exit 0, Studio-DLL-Identitaet bestaetigt sowie Self-Test/UI-Smoke Exit 0.
+Nachweis: [Installergebnis](offline-groups-installed-suite.json).
+Die Anwendungstests liefen als Administrator; echte SieEncode-Mehrbenutzer-,
+Recovery- und native Gesamtabnahme bleiben offen. Bestehende Unternehmens-VMs
 werden nicht wiederverwendet. Keine Hostinstallation von SieEncode.
 
 ## Identitaet und Isolation
@@ -65,7 +68,18 @@ Frischer zweiter Versuch:
 Die vorbereiteten Gastskripte liegen lokal unter `tmp/`: Initialisierung,
 Windows-DPAPI-Benutzerprobe, MSI-Installation und begrenzter Abschlusslauf.
 Sie erlauben keine Ausfuehrung ihrer Gastaktionen auf dem Host (Namenspruefung).
-Noch keine erfolgreichen Gastpruefungen aus diesen Skripten.
+Fortschreibung 24.10.2026: LTSC-Einrichtung abgeschlossen, Guest Additions
+7.2.20 vorhanden. guest-baseline.json bestaetigt Secure Boot/TPM, zwei normale
+Benutzer und deaktivierte automatische Anmeldung. windows-user-isolation.json
+belegt drei erfolgreiche synthetische Windows-DPAPI-Pruefungen (Anlegen und
+Wiederlesen durch testerA, Ablehnung durch testerB). Keine Produktabnahme daraus.
+
+MSI 1.2.1 real installiert (Exit 0), installierter Studio-DLL-Hash stimmt.
+Self-Test-Harness brach mit ExitCode=null ab; beide Ausgabelogs leer.
+Direkter Process-Start ersetzt Start-Process fuer die Anwendungstests; lokale
+Exitcode-Proben 0/7 bestanden. Korrigierter Launcher liegt im Gast, kontrollierte
+Fortsetzung ohne erneute 1.2.1-Installation vorbereitet. Benutzerergebnis abwarten,
+kein Statuspolling. Upgrade und echte Vault-Gesamtabnahme noch offen.
 
 Die unveraenderten MSI-Pakete 1.2.1 und 1.3.0-offline-groups.1 liegen unter
 `Packages`. Hashwerte vor dem Kopieren bestaetigt; Kandidatenidentitaet siehe
