@@ -38,6 +38,13 @@ Bekannte Installerwarnungen ICE40/ICE61; interner Kandidat ohne Code-Signatur.
 
 ## Ausstehende Abnahme
 
+Fortschreibung 26.10.2026: [Acht VM-Vault-Phasen](offline-groups-vm-vault-results.json)
+unter zwei normalen Windows-Benutzern bestanden: Gruppenrechte, Vault-Erstellung,
+Entzug/Rotation, alte lokale Kopie, Rollbackablehnung sowie echte Recoveryinstallation
+und Entschluesselung nach Prozessneustart. Produkt-API-Integration, kein nativer
+Gesamtbedienlauf. Harnessruntime 8.0.30 gegen identifizierte installierte DLLs;
+keine Wiederholung des Recoverytests nach Betriebssystemneustart.
+
 Fortschreibung 24.10.2026: Reale MSI-Neuinstallation 1.2.1 und Upgrade auf
 1.3.0-offline-groups.1 in der separaten LTSC-VM bestanden (MSI jeweils Exit 0).
 Beide installierten Studio-DLL-Hashes stimmen; Self-Test und UI-Smoke beider
@@ -50,8 +57,8 @@ Installer unter Studio/Docs enthalten. Sie beschreibt Registrierung, Gruppen-
 und Offlinezugriff, Entzug/Abgleich, begrenzte Delegation, separate Recovery
 und Verwaltungsnachfolge einschließlich Neustart und Artefaktidentität.
 
-Native Gesamtbedienung, SieEncode-Gesamtablauf mit getrennten Windows-Benutzern
-und tatsächliche Windows-Recoveryinstallation sind offen.
+Native Gesamtbedienung, vollstaendiger Projekt-/Delegations-/Nachfolgeablauf mit
+getrennten Windows-Benutzern und Recoverybedienung nach OS-Neustart sind offen.
 Der Installer verwendet den regulären Upgradepfad und kann vorhandenes
 SieEncode ersetzen: für diese Abnahme einen separaten Testrechner/eine Test-VM
 verwenden. Extraktion und synthetische Tests ersetzen diese Nachweise nicht.

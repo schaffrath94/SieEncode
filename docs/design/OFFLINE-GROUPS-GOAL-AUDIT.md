@@ -21,17 +21,17 @@ publizierter Kandidat: `tmp/offline-groups-candidate-smoke/SieEncode/ui-smoke/ui
 
 | Anforderung aus dem Auftrag | Konkrete Umsetzung und vorhandene Evidenz | Bewertung / verbleibender Nachweis |
 | --- | --- | --- |
-| Überlappende zentral verwaltete Gruppen | `OfflineGroupAdministrationStore`, `OfflineGroupDirectory`; `OfflineGroupMatrixWorkflowTests` entschlüsselt alle 24 Kombinationen der acht Personen und drei gewünschten Gruppen mit unabhängigen Schlüsseln. | Synthetisch belegt; echter gemeinsamer Ordner unter getrennten Benutzern offen. |
+| Überlappende zentral verwaltete Gruppen | `OfflineGroupAdministrationStore`, `OfflineGroupDirectory`; `OfflineGroupMatrixWorkflowTests` entschlüsselt alle 24 Kombinationen der acht Personen und drei gewünschten Gruppen mit unabhängigen Schlüsseln. | Matrix synthetisch belegt; zwei reale Windows-Benutzer mit gemeinsamem lokalem Ordner und zwei Gruppen per Produkt-API bestanden. |
 | Explizite Vertrauensregistrierung | `OfflineGroupTrustStore.Enroll`, Registrierungsdialog; Kandidaten-Smoke prüft fehlende Bestätigung, falschen Fingerabdruck und Überschreibschutz. | Lokale Dialogfunktionen und DPAPI belegt; unabhängiger Fingerabdruckabgleich im echten Anwenderlauf offen. |
-| Persistenter Versionsstand und Offlinebetrieb | Signierte Richtlinien, gebundene lokale DPAPI-Datei, Rücksprung-/Konfliktprüfung; `OfflineGroupTrustTests`, `VerifyOfflineTransition`. | Neuladen und getrennte synthetische Trustdateien belegt; echte zweite Windows-Umgebung/offline Benutzerprüfung offen. |
+| Persistenter Versionsstand und Offlinebetrieb | Signierte Richtlinien, gebundene lokale DPAPI-Datei, Rücksprung-/Konfliktprüfung; `OfflineGroupTrustTests`, `VerifyOfflineTransition`. | Persistenter Trust und alte lokale Kopie in neuem Prozess unter B bestanden; keine getrennte Maschine oder unerreichbare Netzwerkablage getestet. |
 | Getrennte Verwaltungsrechte | Separater Signierspeicher; Schlüsseltrennung zu Geräten, Delegation und Recovery; Hauptverwalter ist nicht automatisch Vaultempfänger. | Core-/Windows-Integration belegt. Vollständiger nativer Rollenablauf offen. |
 | Gruppenbegrenzte Delegation | `OfflineGroupDelegationService`, `OfflineGroupDelegateStore`; Signatur, Umfang, veraltete Anträge, Replay, Entzug und Verwaltungsnachfolge geprüft. | Synthetischer Dateiaustausch und lokale DPAPI-Neuladung belegt; Rollen auf getrennten Benutzern offen. |
 | Personen-/Geräteverwaltung | Mehrere Geräte pro Person, Aktivierung/Entzug; unabhängige RSA-Schlüssel pro Gerät. Wiederverwendung bereits beim Einladungsimport abgewiesen, Entwurf unverändert. | Coretests und Kandidaten-Verwaltungsdialogtest bestanden. |
 | Authentisierte Projektzuordnung | `GroupVaultService` bindet Bibliothek, Projekt-ID, Gruppe, Richtlinienstand und Empfänger kryptografisch; `ProjectGroupVault`, Erstellungs-/Kopierassistent. | Manipulationen, erhaltene Originale, neue Kopie und vollständige Schlüsselnutzdaten synthetisch geprüft. |
-| Kontrollierter Empfängerabgleich | Authentisierte Vorschau, Bestätigung im Editor, frischer Inhaltsschlüssel, verschlüsselte Altsicherung; `GroupVaultTests.VerifyReconciliation` und Matrixworkflow. | Stale-Vorschau, später Entzug, beschädigte Sicherung, konkurrierender Vault geprüft. Reale gemeinsame Ablage/Cloud-Konflikte offen. |
-| Separater Recoveryzugang | Eigene Identität und Sicherung, zentrale Freigabe, bibliotheksweite Recovery, ausdrücklicher Editorweg; keine normale Buildfreigabe. | Entschlüsselung und Freigabeprüfung belegt. Tatsächlicher Windows-Installer wurde im Test ersetzt; reale Installation/Neustart zwingend offen. |
+| Kontrollierter Empfängerabgleich | Authentisierte Vorschau, Bestätigung im Editor, frischer Inhaltsschlüssel, verschlüsselte Altsicherung; `GroupVaultTests.VerifyReconciliation` und Matrixworkflow. | Stale-Vorschau, später Entzug, beschädigte Sicherung, konkurrierender Vault geprüft. Rotation mit Altsicherung in lokalem gemeinsamen VM-Ordner bestanden; Cloud-Konflikte offen. |
+| Separater Recoveryzugang | Eigene Identität und Sicherung, zentrale Freigabe, bibliotheksweite Recovery, ausdrücklicher Editorweg; keine normale Buildfreigabe. | Echte Windows-Schluesselinstallation durch Produkt-API und Entschluesselung in separatem Prozess bestanden. Native Dialoge und erneute Entschluesselung nach OS-Neustart offen. |
 | Verständliche integrierte Einrichtung | Einstellungen, getrennte Rollen, interne Anleitung, leere Dialogzustände, private Sicherung vor öffentlicher Nachfolgeranfrage. | Teile nativ angesehen, Dialogfunktionen getestet; vollständiger nativer Bedienlauf einschließlich Datei-/Bestätigungsdialogen offen. |
-| Sicherheits-/Integrationsprüfungen | CI 72/72; Kandidat 60 UI-Checks; echte Kindprozessabbrüche an Aktivierungsgrenzen und Neustart; MSI-Extraktion mit 1.034 Hashvergleichen. | Reale MSI-Installation/Upgrade und installierte Selbst-/UI-Tests in LTSC bestanden. Keine Stromausfallprüfung, keine echte SieEncode-Mehrbenutzer- oder neue Hardwarefreigabe. |
+| Sicherheits-/Integrationsprüfungen | CI 72/72; Kandidat 60 UI-Checks; echte Kindprozessabbrüche an Aktivierungsgrenzen und Neustart; MSI-Extraktion mit 1.034 Hashvergleichen. | Reale MSI-Installation/Upgrade und installierte Selbst-/UI-Tests in LTSC bestanden. Acht Produkt-API-Phasen unter zwei normalen Windows-Benutzern bestanden. Keine Stromausfall-, native Gesamt- oder neue Hardwarefreigabe. |
 | Private Entwicklung und Erhalt bestehender Daten | Privater Branch `codex/offline-vault-groups`; Tests mit synthetischen Daten. Bisherige 1.2.1-MSI/Studio-/Runtime-Dateien vor/nach Paketbau hashgleich. | Keine produktiven Vaults/Identitäten migriert oder gelöscht, vorhandene Installation nicht ersetzt. |
 | Ehrliche Offline-Widerrufsgrenzen | Schnellstart, Dialoge und Matrixworkflow: alte Kopien und offline gebliebene Truststände bleiben nutzbar; spätere Entzüge erst nach Import bekannt. | Dokumentiert und synthetisch demonstriert; keine Behauptung sofortiger globaler Sperrung. |
 
@@ -39,12 +39,14 @@ publizierter Kandidat: `tmp/offline-groups-candidate-smoke/SieEncode/ui-smoke/ui
 
 Die eingerichteten normalen Windows-Testbenutzer testerA/testerB fuer den
 SieEncode-Gesamtablauf nach [Abnahmeanleitung](../OFFLINE-GRUPPEN-ABNAHME.md)
-verwenden. Windows-DPAPI-Isolation ist bereits belegt, die echten Produktablaeufe
-einschliesslich Recovery bleiben offen. Vorhandene Unternehmens-VMs nicht verwenden.
+verwenden. Die acht Produkt-API-Phasen einschliesslich echter Recoveryinstallation
+sind [belegt](offline-groups-vm-vault-results.json). Native Bedienung, vollstaendige
+Projektdateien, Delegation und Verwaltungsnachfolge bleiben offen.
+Vorhandene Unternehmens-VMs nicht verwenden.
 Hostinstallation, Windows-Benutzer, Sicherheitskonfiguration und Zertifikatsspeicher
-nicht als Ersatz für diese fehlende Testumgebung verändern.
+nicht als Ersatz fuer die vorhandene separate Testumgebung veraendern.
 
 Ein neuer unveränderter CI-Lauf oder ein weiterer MSI-Bau schließt diese Lücke
-nicht. Ohne neue Fehlerbefunde oder bereitgestellte Testumgebung bleibt die
+nicht. Bis zum Abschluss der verbleibenden Abnahmeschritte bleibt die
 Gesamtfreigabe offen. Verlorener/kompromittierter Verwaltungsschlüssel hat keinen
 automatischen Ersatzanker; die normale autorisierte Nachfolge ist davon getrennt.

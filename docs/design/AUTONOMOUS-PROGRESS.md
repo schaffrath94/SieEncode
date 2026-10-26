@@ -1,6 +1,25 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Fortsetzung 26.10.2026 nach Hostneustart: Der vorherige VM-Lauf meldete alle
+acht Phasen PASS (testerA/testerB identity, setup, access, rotate, revoked,
+recovery-install, recovery-reopen). Installierte Produkt-DLLs wurden vor jeder
+Phase anhand der Kandidatenhashes geprueft. Normale Windows-Benutzer mit echten
+CurrentUser-Schluesseln; Gruppenfreigabe/-ablehnung, B-eigener Vault, alte lokale
+Kopie, Entzug mit Rotation/Altsicherung, Rollbackablehnung und echte Recovery-
+Schluesselinstallation samt Wiederlesen in separatem Prozess bestanden.
+Dies ist API-Integration, keine native Dialogabnahme oder Hardwarefreigabe.
+Der Helfer nutzt .NET 8.0.30; die installierte Anwendung nutzt 8.0.32.
+Fingerprint wurde synthetisch vom Harness geliefert, kein unabhaengiger
+menschlicher Vertrauensabgleich. Keine komplette Projektdatei-/Delegations-/
+Verwaltungsnachfolgeabnahme daraus ableiten.
+VirtualBox guestcontrol --profile allein lud den Benutzerhive nicht; deshalb
+scheiterte der erste Identitaetsversuch. Windows-Prozessstart mit Credentials
+und LoadUserProfile=true behob den Teststart; keine Produktaenderung.
+Helfer: tmp/GuestVaultProbe und tmp/Run-VaultProbeWithProfile.ps1.
+Alle acht Gastnachweise am 26.10.2026 gesichert und geprueft: offline-groups-vm-vault-results.json.
+Bestandene Phasen nicht wiederholen. Native Projekt-/Dialogablaeufe, Delegation und Verwaltungsnachfolge bleiben offen.
+
 Abgeschlossener Installationsmeilenstein (24.10.2026): Benutzer meldet PASS;
 installed-suite.json und Transcript aus dem Gast gesichert und Ergebnis geprueft.
 Reale MSI-Neuinstallation 1.2.1 und Upgrade auf 1.3.0-offline-groups.1 jeweils

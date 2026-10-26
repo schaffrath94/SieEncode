@@ -1,5 +1,23 @@
 # Separate VirtualBox-Testumgebung
 
+## Gesicherter Vault-Nachweis vom 26.10.2026
+
+Alle acht Phasen des Laufs vom 24.10. aus der VM gesichert und geprueft:
+[Ergebnisse und Hashidentitaet](offline-groups-vm-vault-results.json).
+Zwei normale Windows-Benutzer mit geladenen Profilen; echte persoenliche
+Schluesselspeicher, Gruppenfreigabe/-ablehnung, eigener Vault durch B,
+Entzug/Rotation/Altsicherung, alter lokaler Stand und Rollbackablehnung bestanden.
+Echter Produkt-Recoveryinstaller und Wiederentschluesselung in einem separaten
+Prozess bestanden; normaler Zugang mit Recoveryidentitaet abgewiesen.
+Keine nativen Dialoge, komplette Projektkopien, Delegation oder Verwaltungsnachfolge
+getestet. Ein lokaler gemeinsamer Ordner ersetzt keine SMB-/Cloud-Abnahme.
+Die alte lokale Kopie wurde ohne Zugriff auf den gemeinsamen Vault gelesen;
+die gemeinsame Ablage selbst war nicht getrennt. Harnessruntime 8.0.30,
+installierte App 8.0.32; Produkt-DLLs anhand Hashes identifiziert.
+Keine erneute Ausfuehrung der bestandenen Phasen zur Berichtssicherung.
+
+## Bisheriger Installationsstand
+
 Stand 24.10.2026: vom Benutzer ausdruecklich autorisierter Neuaufbau.
 Erster Windows-Installationsversuch fehlgeschlagen; LTSC-Test-VM einsatzbereit.
 Reale Installation 1.2.1 und Upgrade 1.3.0-offline-groups.1 bestanden, jeweils
