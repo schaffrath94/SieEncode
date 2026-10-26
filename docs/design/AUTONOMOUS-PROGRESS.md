@@ -1,6 +1,19 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Erweiterter Benutzerauftrag: bis zum vollstaendig geprueften internen Release
+weiterarbeiten; Ziel bei Bedarf fortsetzen. Anschliessend eine bebilderte deutsche
+Ersteinrichtungsanleitung fuer Kollegen erstellen (vom Benutzer alternativ zu
+einem Video akzeptiert). Den tatsaechlich abgenommenen Ablauf zeigen: Installation,
+gemeinsame Ordner, eigene Identitaet/Einladung, Teambeitritt mit zentralen Gruppen,
+Offlinezugriff, getrennte Recovery, Leser-Einrichtung und erster sicherer Test.
+Rollen von Hauptverwaltung und normalen Kollegen klar trennen. Screenshots nur
+aus synthetischer Testumgebung, ohne Passwoerter/private Schluessel/Recoverycodes.
+Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
+Zielwerkzeug meldet bestehendes Ziel blocked/unfinished. Neuanlage wurde deshalb
+abgewiesen; Werkzeug kann keinen Status active setzen. Ziel nicht faelschlich
+abschliessen, Arbeitsauftrag trotzdem fortfuehren. Keine neue Automation anlegen.
+
 Native Fortsetzung 26.10.2026 abgeschlossen fuer persoenliche Identitaet und
 Einladungsexport: nach Neustart vorhandene Identitaet labadmin wiedererkannt,
 nativen Speicherdialog benutzt, Einladung im Dokumente-Ordner gespeichert.
