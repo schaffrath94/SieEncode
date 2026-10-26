@@ -1,5 +1,17 @@
 # Separate VirtualBox-Testumgebung
 
+## Vollstaendige Projektdateien und Recovery nach Neustart
+
+Am 26.10.2026 sechs weitere API-Phasen unter den normalen Benutzern bestanden:
+[Projektberichte](offline-groups-vm-project-results.json). Projekt/Vault erstellt,
+entzogenem B Oeffnen und Kopieren verweigert; danach B wieder aufgenommen und
+Vault abgeglichen. B kopiert mit neuer Projekt-ID und identischem vollstaendigem
+Schluesselpayload, Originaldateien bleiben hashgleich. A oeffnet die Kopie;
+manipulierte Projekt-ID wird abgewiesen. Recovery funktioniert auch nach dem
+vom Benutzer durchgefuehrten Host-/VM-Neustart, weiterhin nur explizit als Recovery.
+Kein nativer Dialoglauf und keine vollstaendige Profilvertragspruefung.
+Delegation und Verwaltungsnachfolge bleiben fuer getrennte Benutzer offen.
+
 ## Gesicherter Vault-Nachweis vom 26.10.2026
 
 Alle acht Phasen des Laufs vom 24.10. aus der VM gesichert und geprueft:

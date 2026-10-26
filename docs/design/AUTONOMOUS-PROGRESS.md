@@ -1,6 +1,22 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Projektabnahme 26.10.2026: Sechs weitere Phasen unter testerA/testerB bestanden
+und gesichert (offline-groups-vm-project-results.json). Vollstaendige synthetische
+Projektdatei mit Vault angelegt; Quelle unveraendert, neue ID, Schluesselnutzdaten
+vollstaendig erhalten. Entzogenem B Oeffnen/Kopieren verweigert, kein Kopieordner.
+Nach Wiederaufnahme (Policyrevision 3) und Abgleich kopiert B das Projekt;
+eigene ID, Originaldateien unveraendert. A liest Kopie in neuem Prozess;
+manipulierte Projekt-ID abgewiesen. Echte Recoveryidentitaet nach erfolgtem
+VM-/Hostneustart wiedergefunden und ausdrueckliche Entschluesselung bestanden;
+normaler Zugang mit Recoveryidentitaet weiter verweigert.
+API-Integration gegen identifizierte installierte DLLs, kein nativer Dialoglauf.
+Synthetisches Profil ohne vollstaendige Profilvertrags-/Hardwarepruefung.
+Naechste offene Schritte: Delegation/Verwaltungsnachfolge unter beiden Benutzern,
+native Einrichtung und Projektbedienung, Deinstallation. PDF bleibt zurueckgestellt.
+Helfer tmp/GuestVaultProbe erweitert; neuer Starter tmp/Run-ProjectProbeWithProfile.ps1.
+Vorherige acht Phasen nicht wiederholt. VM-Trust steht jetzt auf Revision 3.
+
 Fortsetzung 26.10.2026 nach Hostneustart: Der vorherige VM-Lauf meldete alle
 acht Phasen PASS (testerA/testerB identity, setup, access, rotate, revoked,
 recovery-install, recovery-reopen). Installierte Produkt-DLLs wurden vor jeder
