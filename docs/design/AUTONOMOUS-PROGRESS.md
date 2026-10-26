@@ -1,6 +1,49 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Native Fortsetzung 26.10.2026 abgeschlossen fuer persoenliche Identitaet und
+Einladungsexport: nach Neustart vorhandene Identitaet labadmin wiedererkannt,
+nativen Speicherdialog benutzt, Einladung im Dokumente-Ordner gespeichert.
+Datei separat validiert (oeffentliches Zertifikat ohne privaten Schluessel,
+Fingerprint korrekt). Assistent geschlossen, Status eine Identitaet/null alte
+Teammitglieder korrekt; keine Teamliste fuer Gruppenbeitritt gespeichert.
+Details und Dateihash: OFFLINE-GROUPS-NATIVE-SETUP-ACCEPTANCE.md.
+Naechste native Abnahme: Gruppenregistrierung und Hauptverwaltungsdialoge;
+Projekt-/Recovery-/Delegationsbedienung sowie Deinstallation weiter offen.
+
+Autologin vom Benutzer ausdruecklich angefordert und eingerichtet (26.10.2026):
+Nur Test-VM SIEENCODE-LAB, Konto labadmin. Benutzer bestaetigte UAC; anschliessend
+AutoAdminLogon=1, DefaultUserName=labadmin und DefaultDomainName=SIEENCODE-LAB
+aus dem Gast gelesen. Erfolgsbericht bestaetigt LSA private secret; kein
+DefaultPassword-Klartextwert in Winlogon und keine temporaere Passwortdatei mehr.
+Passwort unveraendert. Noch kein Neustart zur praktischen Autologin-Abnahme;
+BootVerified=false. Nicht erneut einrichten, beim naechsten geplanten Neustart
+automatische Desktopanmeldung pruefen. Hostanmeldung unveraendert.
+
+Native Erstidentitaet 26.10.2026: Benutzer oeffnete Einstellungen; danach
+Vault-Ersteinrichtung per Computer Use geoeffnet, Neue persoenliche Identitaet
+angeklickt und voreingestellter synthetischer Name labadmin bestaetigt.
+Assistent zeigte anschliessend labadmin mit Fingerabdruck sowie Teamlistenentwurf
+(Aenderungen noch speichern). Damit native Schluesselerstellung ohne sichtbaren
+Fehler belegt; weder Einladungsexport noch Teamlistenspeicherung bestaetigt.
+Bei Fortsetzung VM-Fenster verschwunden; einmalige VBox-Pruefung bestaetigt
+poweroff, VMStateChangeTime 2026-10-26T09:59:34Z. Ursache nicht festgestellt,
+kein behaupteter Anwendungsabsturz. VM sichtbar neu starten; vorhandene Identitaet
+wiederverwenden. Naechster Schritt Einladungsexport, Dialogschliessen und
+Status-/Persistenzpruefung. Keine weitere Identitaet gleichen Namens erzeugen.
+
+Native UI-Fortsetzung 26.10.2026: Installierte SieEncode.exe ueber Gastdienst
+gestartet; sichtbare Startseite im angemeldeten labadmin-Desktop. Leere Bibliothek
+C:/Users/labadmin/Documents/SieEncode-Projekte, Arbeitsplatz meldet Bereit.
+Noch keine native Einrichtungsabnahme: automatische Klicks auf Gast-Suche und
+Startmenue ohne sichtbare Oeffnung; Fenstergroessenwechsel/Computer-Use meldet
+wiederholt user input detected. Letzte Aufnahme zeigt nur 640x480 Gastbereich,
+Anwendungsinhalt abgeschnitten. Benutzer soll VM maximieren und Einstellungen
+oeffnen, danach frische Beobachtung statt erneuter Status-/Klickschleife.
+Windows-Gast zeigt ausdruecklich abgelaufene Evaluierungslizenz. Keine Umgehung
+oder Aktivierung vorgenommen. Erfolgreiche API-Nachweise bleiben erhalten;
+native Gesamtbedienung und Deinstallation weiter offen.
+
 Verwaltungsabnahme 26.10.2026: Neun neue Phasen unter testerA/testerB bestanden,
 gesichert in offline-groups-vm-authority-results.json. B erzeugt separaten
 DPAPI-Signierspeicher, A erteilt Vollmacht nur fuer Lokal. Lokal2-Aenderung
