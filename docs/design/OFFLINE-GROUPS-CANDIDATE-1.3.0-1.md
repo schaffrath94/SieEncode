@@ -38,6 +38,13 @@ Bekannte Installerwarnungen ICE40/ICE61; interner Kandidat ohne Code-Signatur.
 
 ## Ausstehende Abnahme
 
+Verwaltungsnachweis 26.10.2026: [Neun Phasen](offline-groups-vm-authority-results.json)
+unter zwei normalen Windows-Benutzern bestanden: begrenzte Delegation,
+Scope-/Replay-/Entzugspruefung und autorisierte Hauptverwaltungsnachfolge.
+Nachfolger signiert in neuem Prozess, bisheriger Benutzer akzeptiert neuen Stand;
+alte Root-Signatur abgewiesen, bestehende Projekt- und Recoveryrechte erhalten.
+Native Bedienung und unabhaengiger menschlicher Fingerprintabgleich bleiben offen.
+
 Ergaenzung 26.10.2026: [Sechs Projektphasen](offline-groups-vm-project-results.json)
 bestanden: vollstaendige synthetische Projektdatei, verweigerter Zugriff/Kopie,
 Wiederfreigabe, Kopie mit neuer ID und erhaltenen Schluesseln/Originaldateien,
@@ -63,8 +70,9 @@ Installer unter Studio/Docs enthalten. Sie beschreibt Registrierung, Gruppen-
 und Offlinezugriff, Entzug/Abgleich, begrenzte Delegation, separate Recovery
 und Verwaltungsnachfolge einschließlich Neustart und Artefaktidentität.
 
-Native Gesamtbedienung sowie Delegations-/Nachfolgeablauf mit getrennten
-Windows-Benutzern sind offen; Projekt-API und Recovery nach OS-Neustart belegt.
+Native Gesamtbedienung und Deinstallation sind offen; Projekt-, Delegations- und
+Nachfolge-APIs unter getrennten Windows-Benutzern sowie Recovery nach OS-Neustart
+sind belegt. Keine neue Hardwarefreigabe.
 Der Installer verwendet den regulären Upgradepfad und kann vorhandenes
 SieEncode ersetzen: für diese Abnahme einen separaten Testrechner/eine Test-VM
 verwenden. Extraktion und synthetische Tests ersetzen diese Nachweise nicht.

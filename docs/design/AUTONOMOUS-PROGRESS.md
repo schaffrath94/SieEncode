@@ -1,6 +1,24 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+Verwaltungsabnahme 26.10.2026: Neun neue Phasen unter testerA/testerB bestanden,
+gesichert in offline-groups-vm-authority-results.json. B erzeugt separaten
+DPAPI-Signierspeicher, A erteilt Vollmacht nur fuer Lokal. Lokal2-Aenderung
+abgewiesen; erlaubter Antrag durch A autorisiert, andere Gruppe/Recovery
+unveraendert, Replay ohne Mutation abgewiesen. Entzug verhindert neue Antraege
+bei erhaltenem Delegatenschluessel. B bereitet Nachfolger samt privater Sicherung
+vor; A prueft/autorisiert (falscher Fingerabdruck abgewiesen), B importiert und
+aktiviert, signiert in neuem Prozess; A akzeptiert neuen Stand. Alte Root-Signatur
+abgewiesen, bestehender Projekt- und separater Recoveryzugang erhalten.
+API-Nachweise gegen installierte Produkt-DLLs, synthetisch bereitgestellte
+Fingerabdruecke, kein nativer Dialog-/unabhaengiger Fingerprintkanaltest.
+Helfer tmp/GuestVaultProbe und tmp/Run-AuthorityProbeWithProfile.ps1.
+VM-Hauptverwaltung liegt jetzt bei testerB; testerA besitzt weiterhin seinen
+alten Verwaltungsspeicher, den aktueller Trust nicht mehr akzeptiert.
+Noch offen: nativer Einrichtungs-/Projekt-/Verwaltungsbedienlauf und
+Deinstallationsabnahme. Hardwarefreigabe bleibt separat; PDF zurueckgestellt.
+Keine bestandenen Phasen erneut ausfuehren und keine alten Truststaende laden.
+
 Projektabnahme 26.10.2026: Sechs weitere Phasen unter testerA/testerB bestanden
 und gesichert (offline-groups-vm-project-results.json). Vollstaendige synthetische
 Projektdatei mit Vault angelegt; Quelle unveraendert, neue ID, Schluesselnutzdaten

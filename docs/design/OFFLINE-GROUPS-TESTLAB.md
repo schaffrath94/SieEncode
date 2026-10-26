@@ -1,5 +1,18 @@
 # Separate VirtualBox-Testumgebung
 
+## Delegation und autorisierte Verwaltungsnachfolge
+
+26.10.2026: [Neun weitere Phasen](offline-groups-vm-authority-results.json)
+bestanden. Getrennte Windows-Benutzer, persistente DPAPI-Signierspeicher,
+Vollmacht nur fuer Lokal, Ablehnung von Lokal2, autorisierter Antrag, Replay-
+Ablehnung ohne Mutation, Entzug bei erhaltenem Schluessel. Autorisierte Nachfolge
+von A zu B einschliesslich privater Sicherung, falschem Fingerabdruck,
+Aktivierung und Signieren nach Prozessneustart bestanden. A akzeptiert B;
+alter Root-Schluessel wird abgewiesen; Projekt-/Recoveryzugang bleibt erhalten.
+API-Integration; Fingerprintbestaetigung synthetisch, native Dialoge offen.
+Aktuelle Hauptverwaltung liegt bei testerB. Alte bestandene Phasen nicht erneut
+ausfuehren; sie erwarten fruehere Policy-/Truststaende.
+
 ## Vollstaendige Projektdateien und Recovery nach Neustart
 
 Am 26.10.2026 sechs weitere API-Phasen unter den normalen Benutzern bestanden:

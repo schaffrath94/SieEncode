@@ -1,0 +1,121 @@
+{
+  "Status": "PASS",
+  "RetrievedOn": "2026-10-26",
+  "Candidate": "1.3.0-offline-groups.1",
+  "Vm": "SieEncode-Testlab-LTSC",
+  "ProductHashes": {
+    "SieEncode.dll": "81F79933C67CC007B63A0A8C14F4E7AB939FBA0EDF369C4BADE07D807EBB0F38",
+    "RFiDGear.Builder.Core.dll": "53B6870875DA9F1BBEAF9C8021D020413205F02D836B8A741267F424DF352B3F"
+  },
+  "HarnessRuntime": "8.0.30",
+  "InstalledApplicationRuntime": "8.0.32",
+  "HarnessSourceSHA256": "43AFEFD1FD23EB3E4C22DFA52D2356C328D6B5AF26CB3295371674CFF5FF87D1",
+  "LauncherSHA256": "63DC8D7CE544FCF414354A63A4D1A566E0559B85E9943B16E23C1D4F883C48BF",
+  "Limits": [
+    "Installed product API integration, not native dialogs",
+    "Trust fingerprints supplied synthetically by harness; no human independent channel test",
+    "Two normal Windows users in one VM; local shared folder",
+    "Authorized planned administrator succession, not recovery from lost or compromised administrator"
+  ],
+  "Results": [
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "delegate-approve-revoke",
+      "Checks": [
+        "A authorized proposal; other group and recovery unchanged; replay rejected without mutation; authority revoked"
+      ],
+      "At": "2026-10-26T10:10:26.7329783+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "delegate-grant",
+      "Checks": [
+        "A restored actual administration store and granted B authority only for Lokal"
+      ],
+      "At": "2026-10-26T10:10:24.4435937+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "successor-accept",
+      "Checks": [
+        "A accepted successor update; old root update rejected; existing member and separate recovery access retained"
+      ],
+      "At": "2026-10-26T10:10:35.2788915+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "successor-authorize",
+      "Checks": [
+        "Wrong successor fingerprint denied; A authorized public transition without silently switching trust"
+      ],
+      "At": "2026-10-26T10:10:31.4414327+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "delegate-invite",
+      "Checks": [
+        "B created separate persisted DPAPI signing identity and public delegation invitation"
+      ],
+      "At": "2026-10-26T10:10:21.5467527+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "delegate-propose",
+      "Checks": [
+        "B signing identity survived new process; out-of-scope Lokal2 denied, Lokal proposal signed"
+      ],
+      "At": "2026-10-26T10:10:25.5262751+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "delegate-revoked",
+      "Checks": [
+        "Revoked B signing rejected with existing identity preserved; successor prepared with private backup and public request"
+      ],
+      "At": "2026-10-26T10:10:30.1374617+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "successor-activate",
+      "Checks": [
+        "B imported authorized transition and activated DPAPI-protected successor administrator"
+      ],
+      "At": "2026-10-26T10:10:32.5774355+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "successor-sign",
+      "Checks": [
+        "New process reopened successor signing key, published update, retained normal project access"
+      ],
+      "At": "2026-10-26T10:10:33.8449332+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    }
+  ]
+}
