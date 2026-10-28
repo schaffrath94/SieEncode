@@ -29,5 +29,11 @@ die separaten VM-API-Nachweise decken diese Oberflaechen nicht ab.
 Kein Reader in der VM freigegeben. Einstellungen melden korrekt fehlende
 Leserkonfiguration/settings.xml; daraus folgt keine Hardwareabnahme.
 Windows zeigt eine abgelaufene Evaluierungslizenz. Keine Lizenzumgehung vorgenommen.
-Autologin fuer labadmin auf Benutzerwunsch eingerichtet, aber noch nicht durch
-einen gezielten anschliessenden Neustart bestaetigt.
+Autologin fuer labadmin auf Benutzerwunsch eingerichtet und am 28.10.2026
+praktisch bestaetigt: VBox meldete zuvor poweroff, startvm --type gui erfolgreich;
+anschliessend erschien ohne Passworteingabe der Desktop. Gastabfrage
+Win32_ComputerSystem.UserName lieferte SIEENCODE-LAB\labadmin. Installierter
+SieEncode-Kandidat danach erfolgreich mit sichtbarer Uebersicht gestartet.
+Kein Passwort in diesem Nachweis gespeichert. Native Gruppenregistrierung bleibt
+offen; die Fortsetzung der UI-Pruefung wurde wegen gleichzeitiger Hostbedienung
+unterbrochen, ohne weitere Klicks oder Trustaenderungen vorzunehmen.

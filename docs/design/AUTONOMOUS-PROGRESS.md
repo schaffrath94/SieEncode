@@ -10,9 +10,14 @@ Offlinezugriff, getrennte Recovery, Leser-Einrichtung und erster sicherer Test.
 Rollen von Hauptverwaltung und normalen Kollegen klar trennen. Screenshots nur
 aus synthetischer Testumgebung, ohne Passwoerter/private Schluessel/Recoverycodes.
 Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
-Zielwerkzeug meldet bestehendes Ziel blocked/unfinished. Neuanlage wurde deshalb
-abgewiesen; Werkzeug kann keinen Status active setzen. Ziel nicht faelschlich
-abschliessen, Arbeitsauftrag trotzdem fortfuehren. Keine neue Automation anlegen.
+Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
+Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
+
+Fortsetzung 28.10.2026: VM war nachweislich poweroff (letzter Zustandswechsel
+26.10.2026 19:40:58 UTC). Sichtbar gestartet; ohne Passworteingabe erschien der
+Desktop. Gastabfrage Win32_ComputerSystem.UserName bestaetigt
+SIEENCODE-LAB\labadmin. Damit praktische Autologin-Abnahme bestanden.
+Installierten Kandidaten erneut gestartet; keine Neuinstallation/Identitaetsanlage.
 
 Native Fortsetzung 26.10.2026 abgeschlossen fuer persoenliche Identitaet und
 Einladungsexport: nach Neustart vorhandene Identitaet labadmin wiedererkannt,
