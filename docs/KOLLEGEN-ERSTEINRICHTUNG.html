@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SieEncode · Gemeinsam starten</title>
+<style>
+:root{font-family:Segoe UI,Arial,sans-serif;color:#173b40;background:#edf3f3;line-height:1.55}
+*{box-sizing:border-box}body{max-width:1080px;margin:auto;padding:28px}header,section{background:white;padding:32px;margin:0 0 22px;border-radius:16px}
+h1{font-size:2.5rem;line-height:1.1;margin:14px 0}h2{font-size:1.65rem;margin:0 0 16px}h3{margin:0 0 8px}p{margin:10px 0}a{color:#006b71}strong{font-weight:650}
+.eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:#006b71}.draft{background:#fff1d5;border-left:5px solid #a46600;padding:12px 16px;color:#674000}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}.card{padding:20px;background:#eef7f6;border:1px solid #c6dedb;border-radius:10px}.number{display:inline-grid;place-items:center;width:34px;height:34px;background:#006b71;color:white;border-radius:50%;margin-bottom:10px;font-weight:700}
+.check{border-left:4px solid #16846b;background:#eff8f4;padding:12px 16px}.note{color:#4e686c;font-size:.95rem}.steps li{padding:0 0 14px 8px}.steps li::marker{font-weight:700;color:#006b71}
+table{width:100%;border-collapse:collapse;margin:16px 0}th,td{text-align:left;padding:10px;border-bottom:1px solid #d9e4e4}thead{background:#edf5f5}.matrix th,.matrix td{text-align:center}.matrix th:first-child{text-align:left}.yes{color:#006b71;font-weight:700}.no{color:#6f7f80}
+.diagram{width:100%;height:auto;display:block;margin:18px 0}nav a{display:inline-block;margin:0 15px 6px 0}code{overflow-wrap:anywhere}.pill{display:inline-block;background:#d9efeb;color:#075b50;padding:3px 9px;border-radius:6px;font-size:.85rem}
+@media(max-width:700px){body{padding:12px}header,section{padding:20px}.flow{grid-template-columns:1fr}h1{font-size:2rem}.matrix th,.matrix td{padding:6px 3px}}
+@media print{body{padding:0;background:white;font-size:10pt;max-width:none}header,section{border-radius:0;padding:12mm 0;margin:0;break-after:page}section:last-child{break-after:auto}nav{display:none}h1{font-size:28pt}.card,table,.check,.draft,svg{break-inside:avoid}a{color:inherit}*{print-color-adjust:exact}}
+</style>
+<header>
+<div class="eyebrow">SieEncode · Anleitung für Kollegen</div>
+<h1>Gemeinsam starten.<br>Mit dem eigenen Zugang.</h1>
+<p>Eine zentrale Verwaltung, mehrere Gruppen und ein persönlicher Zugang je Arbeitsplatz. Nach der Einrichtung lassen sich lokal vorhandene, freigegebene Projekte auch offline entschlüsseln.</p>
+<p class="draft"><strong>Entwurf für 1.3.0-offline-groups.1 · 28.10.2026.</strong> Nicht für Version 1.2.1. Beschriftungen mit dem Quellstand abgeglichen; vollständiger sichtbarer Bedienlauf noch offen. Die Abbildungen erklären den Ablauf und sind keine Programm-Screenshots. Screenshots aus der abgeschlossenen Testabnahme folgen.</p>
+<nav aria-label="Inhalt"><a href="#kollegen">Mein Arbeitsplatz</a><a href="#verwaltung">Hauptverwaltung</a><a href="#alltag">Alltag &amp; Offline</a><a href="#hilfe">Wenn es hakt</a></nav>
+<div class="flow">
+<div class="card"><span class="number">1</span><h3>Ich richte meinen Zugang ein</h3><p>Eigene Identität auswählen und eine <strong>öffentliche Einladung</strong> an die Hauptverwaltung geben.</p></div>
+<div class="card"><span class="number">2</span><h3>Die Verwaltung ordnet mich zu</h3><p>Meine Person und mein Gerät werden den passenden Gruppen zugeordnet.</p></div>
+<div class="card"><span class="number">3</span><h3>Ich bestätige die Verwaltung</h3><p>Öffentliche Registrierung importieren und den Fingerabdruck unabhängig abgleichen.</p></div>
+</div>
+<div class="check"><strong>Vorher bereitlegen:</strong> freigegebenen MSI-Installer, Projekt- und Profilordner vom Verantwortlichen sowie dessen Kontakt für den Fingerabdruckabgleich. Die Hauptverwaltung muss Gruppen und einen separaten Recovery-Zugang vorbereitet haben.</div>
+</header>
+<section id="kollegen">
+<span class="pill">Jedes Teammitglied · einmal je Windows-Benutzer</span>
+<h2>Mein Arbeitsplatz in sechs Schritten</h2>
+<ol class="steps">
+<li><strong>SieEncode installieren und öffnen.</strong> Den bereitgestellten MSI-Installer ausführen. Bei fehlenden Installationsrechten die zuständige IT hinzuziehen. Ein Update kann eine ältere SieEncode-Version ersetzen; es erfordert keine neue persönliche Identität.</li>
+<li><strong>Gemeinsame Ordner einstellen.</strong> Unter <b>Einstellungen</b> die <b>Projektbibliothek</b> und <b>Gemeinsame Profilbibliothek</b> auswählen, dann <b>Einstellungen speichern</b>. Die Verwaltung nennt die passenden Ordner. Dateizugriff und Vaultfreigabe sind getrennte Voraussetzungen.</li>
+<li><strong>Persönliche Identität verwenden.</strong> <b>Vault-Ersteinrichtung starten</b>, vorhandene eigene Identität auswählen oder einmalig eine neue erstellen. <b>Öffentliche Einladung exportieren</b> und nur diese Datei an die Hauptverwaltung geben. Für Gruppen-Vaults keine alte Teamliste pflegen oder speichern; anschließend den Dialog schließen.</li>
+<li><strong>Nach Aufnahme die Verwaltung registrieren.</strong> Unter <b>Offline-Gruppenverwaltung</b> → <b>Gruppenverwaltung registrieren</b> die erhaltene <code>.group-enrollment.json</code> öffnen. Bibliotheks-ID und Verwaltungsfingerabdruck persönlich oder über einen unabhängig bestätigten Kontakt abgleichen. Den erhaltenen SHA-256-Fingerabdruck eingeben und bestätigen. Eine passende Datei allein beweist nicht, dass sie vom eigenen Team stammt.</li>
+<li><strong>Leser lokal einstellen.</strong> Leser anschließen, <b>Reader-Einstellungen in RFiDGear öffnen</b>. Passenden Anbieter und gegebenenfalls Port wählen, dort speichern und RFiDGear schließen. Zurück in SieEncode <b>Leserkonfiguration neu prüfen</b>. Diese Prüfung liest die Konfiguration; sie bestätigt noch keine funktionierende Kartenkommunikation.</li>
+<li><strong>Mit einem freigegebenen Testprojekt prüfen.</strong> Projekt öffnen, schließen und erneut öffnen. Für die erste Leserprüfung nur eine ausdrücklich geeignete Testkarte in <b>Karten untersuchen</b> verwenden. Unbekannte Karten nicht beschreiben. Ein fehlender Leser verhindert nicht die Einrichtung der Gruppenregistrierung.</li>
+</ol>
+<div class="check"><strong>Erwarteter Zustand:</strong> Die eigene Identität bleibt vorhanden; die richtige Bibliothek ist registriert; berechtigte Projekte öffnen. Die Anzeige „Teammitglieder“ im alten Team-Vault-Bereich belegt keine Gruppenmitgliedschaft.</div>
+</section>
+<section id="verwaltung">
+<span class="pill">Nur Hauptverwaltung</span><h2>Ein Team, drei überlappende Gruppen</h2>
+<p>Eine Verwaltung genügt für dieses Beispiel. Jede Person kann mehreren Gruppen angehören und mehrere eigene Geräteidentitäten besitzen.</p>
+<table class="matrix"><caption>Gewünschte Freigaben · ✓ Mitglied · – kein Mitglied</caption><thead><tr><th>Gruppe / Person</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead><tbody>
+<tr><th>Lokal</th><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><th>Lokal 2</th><td class="no">–</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+<tr><th>Lokal 3</th><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr></tbody></table>
+<ol class="steps">
+<li><b>Einstellungen → Offline-Gruppen verwalten</b>: Verwaltung einmalig erstellen. Für eine vorhandene Bibliothek keine Ersatzverwaltung anlegen. <b>Privaten Schlüssel sichern</b>; Sicherungsdatei und Passphrase getrennt verwahren.</li>
+<li>Personen anlegen, öffentliche Geräteeinladungen aufnehmen und Fingerabdrücke unabhängig bestätigen. Jedes weitere Gerät benötigt eine eigene Identität. Personen den passenden Gruppen zuordnen und <b>Gruppen signiert speichern</b>.</li>
+<li><b>Separate Recovery-Identität einrichten</b>: eigene verschlüsselte Sicherung erstellen; nur die öffentliche Recovery-Einladung an die Hauptverwaltung geben. Unter <b>Separate Recovery-Zugänge</b> nach Fingerabdruckabgleich aufnehmen und den Gruppenstand signiert speichern. Recovery gilt für die ganze Bibliothek.</li>
+<li><b>Gespeicherten Stand öffentlich exportieren</b>. Die öffentliche Datei verteilen und Bibliotheks-ID sowie Verwaltungsfingerabdruck unabhängig bestätigen lassen. Jeder Arbeitsplatz registriert seinen Stand lokal.</li>
+</ol>
+<p class="check"><strong>Verwalten heißt nicht automatisch entschlüsseln.</strong> Auch die Hauptverwaltung braucht für normale Projektarbeit eine persönliche Gruppenmitgliedschaft. Beauftragte Gruppenverwalter dürfen nur Anträge für ihre freigegebenen Gruppen vorbereiten; die Hauptverwaltung bestätigt und verteilt die Änderungen.</p>
+</section>
+<section id="alltag">
+<span class="pill">Im Alltag</span><h2>Projekte anlegen und Berechtigungen ändern</h2>
+<p><strong>Auch Kollegen können Projekte anlegen.</strong> Im Projekteditor <b>Als neues Gruppenprojekt erstellen / migrieren</b> wählen, Bibliothek, berechtigte Gruppe und neuen Projektnamen auswählen. Erforderlich sind eigener Gruppenzugang, ein aktiver Recovery-Zugang der Bibliothek sowie Schreibzugriff auf den Zielordner. Eine Migration erstellt eine neue Kopie und lässt das Original bestehen.</p>
+<p>Für Gruppenprojekte ist <strong>keine Recovery-Passphrase je Projekt</strong> nötig. Private Verwaltungs- und Recovery-Sicherungen behalten ihre eigenen Passphrasen. Bisherige Team-Vaults behalten ihre bisherigen Regeln.</p>
+<svg class="diagram" viewBox="0 0 960 175" role="img" aria-labelledby="update-title update-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="update-title">Drei getrennte Schritte einer Rechteänderung</title><desc id="update-desc">Die Verwaltung signiert und verteilt den neuen Stand. Arbeitsplätze importieren diesen. Ein berechtigter Benutzer gleicht bestehende Vaults nach Vorschau ab. Alte Kopien bleiben bestehen.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#006b71"/></marker></defs>
+<g fill="#eef7f6" stroke="#a9cfca"><rect x="0" y="10" width="286" height="130" rx="12"/><rect x="337" y="10" width="286" height="130" rx="12"/><rect x="674" y="10" width="286" height="130" rx="12"/></g>
+<g stroke="#006b71" stroke-width="3" marker-end="url(#arrow)"><path d="M294 75H326"/><path d="M631 75H663"/></g>
+<g font-family="Segoe UI,Arial,sans-serif" fill="#173b40" text-anchor="middle"><g font-size="21" font-weight="600"><text x="143" y="48">1 · Zentral ändern</text><text x="480" y="48">2 · Lokal übernehmen</text><text x="817" y="48">3 · Vault abgleichen</text></g><g font-size="17"><text x="143" y="83">Signieren und öffentlichen</text><text x="143" y="108">Gruppenstand verteilen</text><text x="480" y="83">Registrierte Gruppen</text><text x="480" y="108">aktualisieren</text><text x="817" y="83">Empfängervorschau prüfen</text><text x="817" y="108">und ausdrücklich bestätigen</text></g></g>
+</svg>
+<p><strong>Ein gemeinsamer Ordner erledigt Schritt 2 nicht automatisch.</strong> Nach Änderungen <b>Registrierte Gruppen aktualisieren</b> verwenden. Für den Abgleich bestehender Vaults braucht der ausführende Arbeitsplatz den aktuellen Gruppenstand und einen berechtigten Entschlüsselungszugang.</p>
+<div class="draft"><strong>Offline-Grenze:</strong> Offline gebliebene Geräte kennen spätere Entzüge nicht. Alte Vaultkopien bleiben mit damals berechtigten Schlüsseln entschlüsselbar. Ein neuer Gruppenstand oder ein Empfängerabgleich kann diese Kopien nicht aus der Ferne sperren. Für Offlinearbeit müssen die benötigten Projektdateien tatsächlich lokal verfügbar sein.</div>
+<p class="note">Recovery ist ein ausdrücklich gewählter Wiederherstellungsweg mit separatem Schlüssel. Es ist kein allgemeines Team-Passwort und erteilt keine normale Stations- oder Buildfreigabe.</p>
+</section>
+<section id="hilfe">
+<h2>Wenn es hakt</h2>
+<table><thead><tr><th>Beobachtung</th><th>Nächster sinnvoller Schritt</th></tr></thead><tbody>
+<tr><td>Identität vorhanden, Projekt bleibt gesperrt</td><td>Hauptverwaltung prüft Person, genau dieses Gerät und die Projektgruppe. Danach aktuellen öffentlichen Gruppenstand importieren. Keine zweite Identität auf Verdacht erzeugen.</td></tr>
+<tr><td>Gruppenverwaltung registriert, aber kein Zugriff</td><td>Registrierung bestätigt den Verwaltungsschlüssel; sie erteilt keine Mitgliedschaft. Aufnahme des Geräts und Gruppenzuordnung prüfen lassen.</td></tr>
+<tr><td>Alter Gruppenstand wird abgewiesen</td><td>Aktuellen Stand anfordern. Lokale Registrierung nicht löschen oder zurücksetzen.</td></tr>
+<tr><td>Verwaltungsfingerabdruck passt nicht</td><td>Abbrechen und Bibliothek sowie Fingerabdruck unabhängig mit dem Verantwortlichen klären. Nicht den Wert aus einer ungeprüften Datei übernehmen.</td></tr>
+<tr><td>Leserkonfiguration vorhanden, Karte wird nicht erkannt</td><td>Anbieter, Anschluss, Treiber und freigegebene Testkarte prüfen. „Leserkonfiguration neu prüfen“ ist kein Hardwaretest.</td></tr>
+<tr><td>Neuer Rechner oder anderes Windows-Konto</td><td>Eigene Geräteidentität anlegen, öffentliche Einladung aufnehmen lassen und Verwaltung registrieren. Der gemeinsame Ordner überträgt keine privaten Schlüssel.</td></tr>
+</tbody></table>
+<p><strong>Für eine Fehlermeldung weitergeben:</strong> SieEncode-Version, verwendete Schaltfläche und genaue Meldung. Passphrasen, private Schlüssel, Recovery-Sicherungen und Vaultinhalte nicht in Screenshots aufnehmen.</p>
+<p>Vertiefung für Verantwortliche: <a href="OFFLINE-GRUPPEN-SCHNELLSTART.md">vollständiger Schnellstart einschließlich Verwaltungsnachfolge</a>. Prüfstand: <a href="design/OFFLINE-GROUPS-GOAL-AUDIT.md">offene und belegte Abnahmen</a>.</p>
+<p class="note">Diese Anleitung enthält ausschließlich allgemeine Abläufe und synthetische Gruppennummern. Vollständige native Einrichtung, Releaseabschluss und reale Leserabnahme werden hier nicht als erledigt behauptet.</p>
+</section>
+</html>

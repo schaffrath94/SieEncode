@@ -13,6 +13,16 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+28.10.2026: Kollegenanleitung als eigenstaendige lokale HTML-Datei vorbereitet:
+docs/KOLLEGEN-ERSTEINRICHTUNG.html. Getrennte Rollenwege, exakte Gruppenmatrix,
+illustrierter Aenderungsablauf, Einrichtung einschliesslich Leser und Fehlerhilfe.
+Beschriftungen mit MainWindow.xaml und Gruppendialogen/Schnellstart abgeglichen.
+Expliziter Entwurf: Diagramme sind keine Screenshots, native Gesamtpruefung und
+finale Bilder fehlen. SVG-Struktur, lokale Links und Anker statisch geprueft.
+Visuelle Browserpruefung nicht erfolgt: Browser-Sicherheitsrichtlinie verweigert
+file:-URLs; keine Umgehung. Bestehender Installer unveraendert, Anleitung liegt
+zunaechst nur im Quellrepository. Native Fortsetzung bei freiem Host-Eingabefokus.
+
 Fortsetzung 28.10.2026: VM war nachweislich poweroff (letzter Zustandswechsel
 26.10.2026 19:40:58 UTC). Sichtbar gestartet; ohne Passworteingabe erschien der
 Desktop. Gastabfrage Win32_ComputerSystem.UserName bestaetigt
