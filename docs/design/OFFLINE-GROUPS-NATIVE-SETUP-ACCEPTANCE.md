@@ -56,6 +56,40 @@ Fingerabdruecke; Bilder nicht als Nachweis weiterer ungepruefter Schritte verwen
 
 ## Verbleibende Grenzen
 
+### Hauptverwaltung: nativer Teillauf 29.10.2026
+
+Gespeicherte Test-VM sichtbar fortgesetzt. Bestehende geschuetzte Dateien
+`testerB/AppData/Local/SieEncodeLab/VaultProbe1/{trust,admin}.bin` ohne Veraenderung
+der Originale in die normalen GroupTrust-/Administrationspfade dieses Benutzers
+kopiert. Vorab Konfliktpruefung (abweichende Zieldateien werden nicht ersetzt),
+danach Hashvergleich. Dies ist Testvorbereitung, kein nativer Wiederherstellungs-
+oder Ersteinrichtungsnachweis. Helfer in tmp/Open-NativeAdministrator.ps1 und
+tmp/Start-NativeAdministratorWithProfile.ps1; LoadUserProfile=true, installierter
+Studio-DLL-Hash vor Start gegen Kandidatenbaseline geprueft.
+
+Sichtbarer App-Prozess unter testerB (PID 4100, eigene Profilpfade) gestartet.
+Einstellungen / Offline-Gruppen verwalten / bestehende Bibliothek ausgewaehlt:
+Personen A/B und zwei bestehende Gruppen geladen, Revision 8 angezeigt.
+**Gruppe hinzufuegen** erzeugte leere Gruppe `Neue Gruppe`, ID
+`gruppe-8b2767cc5eef4ed88036c26f875eede9`. **Gruppen signiert speichern** zeigte
+Revision 9 und lokal aktiven signierten Stand. **Gespeicherten Stand oeffentlich
+exportieren** oeffnete nativen Speicherdialog; im Dokumente-Ordner unter dem
+vorgeschlagenen Namen gespeichert, anschliessend sichtbare Erfolgsmeldung.
+Aufnahmen 06-verwaltung-signiert.png und 07-verwaltung-exportiert.png.
+
+Erwartete Exportdatei:
+`C:/Users/testerB/Documents/494f0a91fc194e0d8a7330b4b4578e76.group-enrollment.json`.
+Vor unabhaengiger Datei-/Signaturpruefung meldete VBox copyfrom ausdruecklich
+powered off. Ursache nicht belegt. Exportdatei noch nicht zum Host kopiert;
+Hash, inhaltlicher Vergleich und Import auf labadmin bleiben offen. Nicht erneut
+die Gruppe anlegen oder Revision 9 nochmals erzeugen. Originale API-Testdateien
+liegen weiterhin getrennt; normale B-App-Dateien jetzt Revision 9, labadmin 8.
+Launcher beendet mit Exit 0 und finally-Loeschung der temporaeren Credentialdatei;
+separate Existenzkontrolle wegen ausgeschalteter VM noch nicht ausgefuehrt.
+
+Der sichtbare Teillauf ersetzt weder Personen-/Geraeteaenderungen, private
+Sicherung/Restore, Recovery-/Delegationsdialoge noch den Gesamtprojektablauf.
+
 Kein vollstaendiger nativer Gruppen- oder Projektbedienlauf. Neuere Gruppenstaende, Hauptverwaltung,
 Recoverydialoge, Delegation, Nachfolge und Projektkopien sind weiter nativ abzunehmen;
 die separaten VM-API-Nachweise decken diese Oberflaechen nicht ab.

@@ -13,6 +13,20 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+29.10.2026 Verwaltungsfortschritt: vorhandene geschuetzte B-Testfixtures ohne
+Ueberschreiben/Originalaenderung fuer normalen App-Pfad bereitgestellt; sichtbare
+App mit echtem testerB-Profil gestartet. Native Bibliotheksauswahl, Laden A/B,
+dritte leere Gruppe hinzufuegen, signiert als Revision 9 speichern und oeffentlich
+in B/Dokumente exportieren bestanden laut sichtbarer Statusmeldung. Aufnahmen
+06/07 und genauer Ablauf in OFFLINE-GROUPS-NATIVE-SETUP-ACCEPTANCE.md.
+Danach VM unerwartet powered off (VBox beim copyfrom); kein belegter Appabsturz.
+Naechster Schritt einmaliger Neustart und Exportdatei aus B/Dokumente abholen,
+Signatur/Inhalt pruefen, auf labadmin aktualisieren. Nicht Gruppe erneut anlegen.
+B normale GroupTrust-Dateien Revision 9; B API-Fixtures weiterhin 8, labadmin 8.
+Temp-Credentialdatei laut erfolgreich beendetem Launcher entfernt; separate
+Existenzkontrolle noch offen. Wiederholtes Ausschalten anhand Gast-Ereignislog
+klaeren; abgelaufene Windows-Evaluation ist sichtbar, Ursache bisher unbewiesen.
+
 29.10.2026 gesichert: Nativer Bedienlauf vom 28.10. erfolgreich abgeschlossen
 fuer Gruppenregistrierung unter labadmin (Bibliothek 494f0a91-fc19-4e0d-8a73-30b4b4578e76,
 Revision 8, zwei Gruppen). Nach regulaerem App-Ende und neuem Start denselben

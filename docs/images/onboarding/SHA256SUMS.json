@@ -18,5 +18,13 @@
   {
     "file": "05-stand-nach-neustart.png",
     "sha256": "E4A265511F0BC79E68134807EDE90F5FFC4985A81F56D00BF90865B7B3C6EDFE"
+  },
+  {
+    "file": "06-verwaltung-signiert.png",
+    "sha256": "A26BF4BE52DF7966D01D4960E462ED67AB548348047DA8E994417307607A0306"
+  },
+  {
+    "file": "07-verwaltung-exportiert.png",
+    "sha256": "97B58C392F8DEBB625B352680136AE5D8F912E5893DCA99189BFE107E672D68D"
   }
 ]
