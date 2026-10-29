@@ -1,8 +1,12 @@
-# Auftragsabgleich Offline-Gruppen – 23.10.2026
+# Auftragsabgleich Offline-Gruppen – 29.10.2026
 
 Gesamtziel **nicht abgeschlossen**. Am 24.10.2026 hat der Benutzer den Aufbau
 einer neuen separaten VirtualBox-Testumgebung autorisiert. Die neue VM ist
-einsatzbereit. Reale MSI-Installation 1.2.1 und Upgrade auf den Kandidaten,
+nicht mehr fuer verlaessliche laengere Abnahmen einsatzbereit: Windows-Systemlog
+1074 belegt automatische Abschaltungen wegen abgelaufener Evaluierung.
+Der Benutzer bestaetigte am 29.10., dass derzeit keine gueltig lizenzierte
+Ersatz-Testumgebung verfuegbar ist. Bestehende VM und Testdaten erhalten;
+keine Neustartschleife oder Lizenzumgehung. Reale MSI-Installation 1.2.1 und Upgrade auf den Kandidaten,
 installierte DLL-Hashes sowie Self-Test und UI-Smoke beider Versionen bestanden
 (Administrator). Siehe [Testlab-Stand](OFFLINE-GROUPS-TESTLAB.md) und
 [Ergebnis](offline-groups-installed-suite.json). Vorhandene fremde VMs
@@ -36,6 +40,25 @@ publizierter Kandidat: `tmp/offline-groups-candidate-smoke/SieEncode/ui-smoke/ui
 | Ehrliche Offline-Widerrufsgrenzen | Schnellstart, Dialoge und Matrixworkflow: alte Kopien und offline gebliebene Truststände bleiben nutzbar; spätere Entzüge erst nach Import bekannt. | Dokumentiert und synthetisch demonstriert; keine Behauptung sofortiger globaler Sperrung. |
 
 ## Nächster Abnahmenachweis
+
+### Native Nachweise seit 26.10.2026
+
+Siehe [Bedienprotokoll](OFFLINE-GROUPS-NATIVE-SETUP-ACCEPTANCE.md), Originalbilder
+und [unabhaengige Exportpruefung](offline-groups-native-export-result.json).
+
+| Bedienablauf | Aktueller Nachweis | Verbleibend |
+| --- | --- | --- |
+| Persoenliche Identitaet und Einladung | Nativ angelegt, nach Neustart erhalten; oeffentlicher Export ohne privaten Schluessel separat validiert. | Vollstaendiger neuer Arbeitsplatzablauf mit Reader. |
+| Verwaltung registrieren | Nativ unter labadmin registriert; neuer App-Prozess erkennt denselben Stand. | Unabhaengiger menschlicher Fingerprintkanal. |
+| Bestehende Hauptverwaltung | Unter echtem testerB-Profil geladen; neue leere Gruppe nativ signiert als Revision 9; oeffentlicher Export separat validiert. | Native Erstverwaltung, private Sicherung/Restore, Personen-/Geraeteaenderungen. Testfixtures wurden vorbereitend kopiert. |
+| Neueren Stand uebernehmen | Export Revision 9 gueltig; labadmin noch Revision 8. | Native Vorschau, Bestaetigung und Wiederlesen auf labadmin. |
+| Projekt-/Recovery-/Delegationsablauf | Produkt-API-Nachweise unter getrennten Windows-Benutzern vorhanden. | Durchgehende native Dialogablaeufe inklusive Datei-/Bestaetigungsdialogen. |
+| Installerlebenszyklus | Installation und Upgrade bestanden. | Deinstallation mit Erhalt der Testidentitaeten/-daten. |
+| Kollegenanleitung | HTML-Entwurf mit Rollenwegen, Gruppenmatrix, Ablaufgrafik und fuenf Originalansichten vorhanden. | Visuelle Gesamtkontrolle und Bilder der verbleibenden geprueften Bedienablaeufe; keine finale Releaseanleitung. |
+
+Das Lizenzproblem entwertet abgeschlossene Nachweise nicht, blockiert aber die
+planbare Fortsetzung der restlichen VM-Abnahme. Softwaretests werden nicht als
+Ersatz fuer diese Bediennachweise gewertet. PDF-Weiterentwicklung bleibt zurueckgestellt.
 
 Die eingerichteten normalen Windows-Testbenutzer testerA/testerB fuer den
 SieEncode-Gesamtablauf nach [Abnahmeanleitung](../OFFLINE-GRUPPEN-ABNAHME.md)

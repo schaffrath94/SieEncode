@@ -13,6 +13,13 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+29.10.2026 Benutzerantwort: gueltig lizenzierte Testumgebung derzeit nicht
+verfuegbar. VM/Testdaten erhalten, keine weiteren Neustartschleifen.
+Auftragsabgleich um konkrete native Nachweise und verbleibende Gates aktualisiert.
+Kollegenanleitung um die Originalansichten fuer signiertes Speichern und
+oeffentlichen Export ergaenzt; fuenf Bilder integriert, visuelle Gesamtpruefung
+und die noch ausstehenden Bedienablaeufe weiterhin offen. Kein Releaseabschluss.
+
 29.10.2026 Exportpruefung abgeschlossen: native Revision 9 auf Host gesichert,
 mit identifiziertem Kandidaten-Core Signatur und Inhalt validiert. Genau eine
 neue leere Gruppe, bestehende Gruppen/Personen/Recovery/Delegationen/Root erhalten.
