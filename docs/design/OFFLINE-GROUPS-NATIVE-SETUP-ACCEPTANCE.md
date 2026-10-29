@@ -1,6 +1,6 @@
 # Native Einrichtung in der Test-VM
 
-Stand 26.10.2026. Installierter Kandidat 1.3.0-offline-groups.1,
+Stand 29.10.2026, letzter Bedienlauf 28.10.2026. Installierter Kandidat 1.3.0-offline-groups.1,
 SieEncode-Testlab-LTSC, Windows-Benutzer labadmin. Ausschliesslich synthetische
 Identitaet. Diese Pruefung verwendet sichtbare Dialoge, nicht Testability-Aufrufe.
 
@@ -21,9 +21,42 @@ Identitaet. Diese Pruefung verwendet sichtbare Dialoge, nicht Testability-Aufruf
   und null bisherige Teammitglieder; die Anzeige grenzt sich ausdruecklich von
   Gruppenrechten ab. Fuer Gruppenbeitritt wurde keine alte Teamliste gespeichert.
 
-## Grenzen und naechste Schritte
+## Gruppenregistrierung am 28.10.2026 bestanden
 
-Kein vollstaendiger nativer Gruppen- oder Projektbedienlauf. Import, Hauptverwaltung,
+Im nativen Dateidialog die vorbereitete synthetische Datei
+`C:/Users/labadmin/Documents/native-test.group-enrollment.json` gewaehlt.
+Registrierungsdialog zeigt Bibliothek `494f0a91-fc19-4e0d-8a73-30b4b4578e76`,
+Revision 8 und zwei Gruppen. Oeffentlichen SHA256-Verwaltungsfingerabdruck aus
+der kontrollierten Testdatei eingegeben, Bestaetigung angekreuzt und
+**Verwaltung registrieren** angeklickt. Dialog schliesst; Status bestaetigt
+Registrierung fuer diesen Windows-Benutzer, ohne Projekt-Vaults zu veraendern.
+
+Anwendung ueber Gast-Taskleiste regulaer geschlossen und installierte EXE neu
+gestartet. Unter **Registrierte Gruppen aktualisieren** dieselbe Datei erneut
+gewaehlt: **Dieser Gruppenstand ist bereits registriert.** Damit hat der neue
+App-Prozess den geschuetzten lokalen Trust geladen und denselben signierten
+Stand erkannt. Keine zweite Registrierung und kein Zuruecksetzen vorgenommen.
+
+Grenze: Fingerabdruck aus synthetischem Testmaterial, kein unabhaengiger
+menschlicher Vertrauenskanal. labadmin wurde keiner Gruppe hinzugefuegt;
+Registrierung belegt keine Vaultberechtigung. Echte Windows-Benutzertrennung
+ist separat in den VM-API-Pruefungen dokumentiert.
+
+Computer-Use-Texteingaben und Tastenkombinationen kamen in der VM nicht an.
+Oeffentlichen Testfingerabdruck deshalb als Textdatei uebertragen, im Gast-Editor
+per Maus markiert/kopiert und per Kontextmenue in den Dialog eingefuegt.
+Keine geteilte Host-Zwischenablage aktiviert und keine privaten Schluessel kopiert.
+Direkte Notepad-Aufrufe mit VBox-start hatten Dateinamenfehler; der Gastaufruf
+ueber PowerShell Start-Process oeffnete die Datei korrekt. Kein Produktfehler.
+
+Originalaufnahmen unter `../images/onboarding/`, Hashes in `SHA256SUMS.json`:
+01 Arbeitsplatz, 02 Gruppenbereich, 03 Registrierungsdialog, 04 Erfolgsmeldung,
+05 Wiedererkennung nach App-Neustart. Nur synthetische Daten/oeffentliche
+Fingerabdruecke; Bilder nicht als Nachweis weiterer ungepruefter Schritte verwenden.
+
+## Verbleibende Grenzen
+
+Kein vollstaendiger nativer Gruppen- oder Projektbedienlauf. Neuere Gruppenstaende, Hauptverwaltung,
 Recoverydialoge, Delegation, Nachfolge und Projektkopien sind weiter nativ abzunehmen;
 die separaten VM-API-Nachweise decken diese Oberflaechen nicht ab.
 Kein Reader in der VM freigegeben. Einstellungen melden korrekt fehlende
@@ -34,6 +67,5 @@ praktisch bestaetigt: VBox meldete zuvor poweroff, startvm --type gui erfolgreic
 anschliessend erschien ohne Passworteingabe der Desktop. Gastabfrage
 Win32_ComputerSystem.UserName lieferte SIEENCODE-LAB\labadmin. Installierter
 SieEncode-Kandidat danach erfolgreich mit sichtbarer Uebersicht gestartet.
-Kein Passwort in diesem Nachweis gespeichert. Native Gruppenregistrierung bleibt
-offen; die Fortsetzung der UI-Pruefung wurde wegen gleichzeitiger Hostbedienung
-unterbrochen, ohne weitere Klicks oder Trustaenderungen vorzunehmen.
+Kein Passwort in diesem Nachweis gespeichert. Die zunaechst wegen Hostbedienung
+unterbrochene Gruppenregistrierung wurde spaeter wie oben beschrieben fortgesetzt.

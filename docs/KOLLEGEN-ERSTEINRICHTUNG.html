@@ -12,6 +12,7 @@ h1{font-size:2.5rem;line-height:1.1;margin:14px 0}h2{font-size:1.65rem;margin:0 
 .check{border-left:4px solid #16846b;background:#eff8f4;padding:12px 16px}.note{color:#4e686c;font-size:.95rem}.steps li{padding:0 0 14px 8px}.steps li::marker{font-weight:700;color:#006b71}
 table{width:100%;border-collapse:collapse;margin:16px 0}th,td{text-align:left;padding:10px;border-bottom:1px solid #d9e4e4}thead{background:#edf5f5}.matrix th,.matrix td{text-align:center}.matrix th:first-child{text-align:left}.yes{color:#006b71;font-weight:700}.no{color:#6f7f80}
 .diagram{width:100%;height:auto;display:block;margin:18px 0}nav a{display:inline-block;margin:0 15px 6px 0}code{overflow-wrap:anywhere}.pill{display:inline-block;background:#d9efeb;color:#075b50;padding:3px 9px;border-radius:6px;font-size:.85rem}
+figure{margin:22px 0;break-inside:avoid}figure img{display:block;width:100%;height:auto;border:1px solid #c6dedb}figcaption{font-size:.92rem;color:#4e686c;padding:8px 0}
 @media(max-width:700px){body{padding:12px}header,section{padding:20px}.flow{grid-template-columns:1fr}h1{font-size:2rem}.matrix th,.matrix td{padding:6px 3px}}
 @media print{body{padding:0;background:white;font-size:10pt;max-width:none}header,section{border-radius:0;padding:12mm 0;margin:0;break-after:page}section:last-child{break-after:auto}nav{display:none}h1{font-size:28pt}.card,table,.check,.draft,svg{break-inside:avoid}a{color:inherit}*{print-color-adjust:exact}}
 </style>
@@ -19,7 +20,7 @@ table{width:100%;border-collapse:collapse;margin:16px 0}th,td{text-align:left;pa
 <div class="eyebrow">SieEncode · Anleitung für Kollegen</div>
 <h1>Gemeinsam starten.<br>Mit dem eigenen Zugang.</h1>
 <p>Eine zentrale Verwaltung, mehrere Gruppen und ein persönlicher Zugang je Arbeitsplatz. Nach der Einrichtung lassen sich lokal vorhandene, freigegebene Projekte auch offline entschlüsseln.</p>
-<p class="draft"><strong>Entwurf für 1.3.0-offline-groups.1 · 28.10.2026.</strong> Nicht für Version 1.2.1. Beschriftungen mit dem Quellstand abgeglichen; vollständiger sichtbarer Bedienlauf noch offen. Die Abbildungen erklären den Ablauf und sind keine Programm-Screenshots. Screenshots aus der abgeschlossenen Testabnahme folgen.</p>
+<p class="draft"><strong>Entwurf für 1.3.0-offline-groups.1 · 29.10.2026.</strong> Nicht für Version 1.2.1. Beschriftungen mit dem Quellstand abgeglichen; vollständiger sichtbarer Bedienlauf noch offen. Die gekennzeichneten Originalansichten stammen aus der synthetischen Test-VM vom 28.10.2026. Weitere Verwaltungs- und Projektabläufe sowie die Leserabnahme stehen noch aus.</p>
 <nav aria-label="Inhalt"><a href="#kollegen">Mein Arbeitsplatz</a><a href="#verwaltung">Hauptverwaltung</a><a href="#alltag">Alltag &amp; Offline</a><a href="#hilfe">Wenn es hakt</a></nav>
 <div class="flow">
 <div class="card"><span class="number">1</span><h3>Ich richte meinen Zugang ein</h3><p>Eigene Identität auswählen und eine <strong>öffentliche Einladung</strong> an die Hauptverwaltung geben.</p></div>
@@ -40,6 +41,14 @@ table{width:100%;border-collapse:collapse;margin:16px 0}th,td{text-align:left;pa
 <li><strong>Mit einem freigegebenen Testprojekt prüfen.</strong> Projekt öffnen, schließen und erneut öffnen. Für die erste Leserprüfung nur eine ausdrücklich geeignete Testkarte in <b>Karten untersuchen</b> verwenden. Unbekannte Karten nicht beschreiben. Ein fehlender Leser verhindert nicht die Einrichtung der Gruppenregistrierung.</li>
 </ol>
 <div class="check"><strong>Erwarteter Zustand:</strong> Die eigene Identität bleibt vorhanden; die richtige Bibliothek ist registriert; berechtigte Projekte öffnen. Die Anzeige „Teammitglieder“ im alten Team-Vault-Bereich belegt keine Gruppenmitgliedschaft.</div>
+</section>
+<section id="ansichten">
+<h2>So sieht die Einrichtung aus</h2>
+<p>Originalansichten des Testkandidaten. Die Beispielpfade und Bibliotheks-ID nicht übernehmen: Verwende die Angaben deiner Hauptverwaltung.</p>
+<figure><a href="images/onboarding/01-arbeitsplatz.png"><img src="images/onboarding/01-arbeitsplatz.png" alt="SieEncode-Einstellungen mit den vier Einrichtungsschritten und den Feldern für Projekt- und Profilbibliothek" loading="lazy"></a><figcaption><strong>1 · Arbeitsplatz.</strong> In Einstellungen die vom Team verwendeten Ordner auswählen. Die abgebildeten lokalen Testpfade sind keine Vorgabe.</figcaption></figure>
+<figure><a href="images/onboarding/02-gruppenbereich.png"><img src="images/onboarding/02-gruppenbereich.png" alt="Offline-Gruppenbereich mit getrennten Aktionen für Teammitglied, Hauptverwalter und beauftragten Gruppenverwalter" loading="lazy"></a><figcaption><strong>2 · Die eigene Rolle wählen.</strong> Als Teammitglied einmal „Gruppenverwaltung registrieren“ verwenden; spätere Änderungen über „Registrierte Gruppen aktualisieren“ übernehmen.</figcaption></figure>
+<figure><a href="images/onboarding/03-registrierung.png"><img src="images/onboarding/03-registrierung.png" alt="Registrierungsdialog mit Bibliotheks-ID, Richtlinienstand, leerem Fingerabdruckfeld und ausdrücklicher Bestätigung" loading="lazy"></a><figcaption><strong>3 · Verwaltung bestätigen.</strong> Bibliotheks-ID und Fingerabdruck unabhängig prüfen. Der Test zeigt zwei Gruppen; euer Team kann mehr Gruppen verwenden. Niemals einen Beispiel-Fingerabdruck aus einer Anleitung eingeben.</figcaption></figure>
+<p class="check">Im dokumentierten Test meldete SieEncode anschließend die erfolgreiche Registrierung. Nach Schließen und erneutem Öffnen erkannte die Anwendung denselben Gruppenstand wieder. Das bestätigt die lokale Speicherung; eine Gruppenmitgliedschaft entsteht dadurch noch nicht.</p>
 </section>
 <section id="verwaltung">
 <span class="pill">Nur Hauptverwaltung</span><h2>Ein Team, drei überlappende Gruppen</h2>

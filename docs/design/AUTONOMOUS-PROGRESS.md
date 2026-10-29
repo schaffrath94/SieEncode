@@ -13,6 +13,18 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+29.10.2026 gesichert: Nativer Bedienlauf vom 28.10. erfolgreich abgeschlossen
+fuer Gruppenregistrierung unter labadmin (Bibliothek 494f0a91-fc19-4e0d-8a73-30b4b4578e76,
+Revision 8, zwei Gruppen). Nach regulaerem App-Ende und neuem Start denselben
+Stand ueber Aktualisierung erkannt: Dieser Gruppenstand ist bereits registriert.
+Details/Grenzen in OFFLINE-GROUPS-NATIVE-SETUP-ACCEPTANCE.md. Kein echter
+unabhaengiger Fingerprintkanal, sondern kontrollierte synthetische Daten;
+labadmin weiterhin kein Gruppenmitglied. Fuenf Originalansichten samt Hashliste
+gesichert, drei davon in Kollegenanleitung integriert. Keine weitere Registrierung
+dieser Bibliothek wiederholen. Naechster offener Schritt: native Hauptverwaltung
+unter testerB (aktueller Rootinhaber), Projekt-/Recovery-/Delegationsablauf,
+Deinstallation; Layoutkontrolle der Anleitung weiter offen.
+
 28.10.2026: Kollegenanleitung als eigenstaendige lokale HTML-Datei vorbereitet:
 docs/KOLLEGEN-ERSTEINRICHTUNG.html. Getrennte Rollenwege, exakte Gruppenmatrix,
 illustrierter Aenderungsablauf, Einrichtung einschliesslich Leser und Fehlerhilfe.
