@@ -13,6 +13,16 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+29.10.2026 Exportpruefung abgeschlossen: native Revision 9 auf Host gesichert,
+mit identifiziertem Kandidaten-Core Signatur und Inhalt validiert. Genau eine
+neue leere Gruppe, bestehende Gruppen/Personen/Recovery/Delegationen/Root erhalten.
+Ergebnis offline-groups-native-export-result.json. Temp-Credentialdatei im Gast
+nachweislich entfernt. Zweitimport auf labadmin weiterhin offen.
+Ursache wiederholter Abschaltungen belegt: Systemlog 1074 nennt wlms.exe und
+abgelaufenen Windows-Lizenzzeitraum (vier letzte 1074-Ereignisse). Kein Produktcrash.
+Keine Lizenz-/Zeit-/Dienstmanipulation, keine Neustartschleife. Gueltig lizenzierte
+Testumgebung fuer verlaessliche laengere Abnahme erforderlich.
+
 29.10.2026 Verwaltungsfortschritt: vorhandene geschuetzte B-Testfixtures ohne
 Ueberschreiben/Originalaenderung fuer normalen App-Pfad bereitgestellt; sichtbare
 App mit echtem testerB-Profil gestartet. Native Bibliotheksauswahl, Laden A/B,

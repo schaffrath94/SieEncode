@@ -90,6 +90,26 @@ separate Existenzkontrolle wegen ausgeschalteter VM noch nicht ausgefuehrt.
 Der sichtbare Teillauf ersetzt weder Personen-/Geraeteaenderungen, private
 Sicherung/Restore, Recovery-/Delegationsdialoge noch den Gesamtprojektablauf.
 
+### Unabhaengige Exportpruefung am 29.10.2026
+
+Nach einmaligem VM-Neustart Export erfolgreich abgeholt. Mit dem per SHA256
+identifizierten Kandidaten-Core gelesen und Signatur validiert. Ergebnis in
+`offline-groups-native-export-result.json`: Revision 8 -> 9, drei Gruppen,
+genau eine neue leere Gruppe; bisherige Gruppen, Personen, Recovery, Delegationen
+und Verwaltungsschluessel unveraendert. Export-SHA256
+`7C2009EE47C114AF7A3087DAB55B768DA12DF408C7FA59FE4BFB6B9E23BB61C7`.
+Pruefung auf dem Host mit Kandidaten-Core, kein behaupteter nativer Zweitimport.
+Gastabfrage bestaetigt temporaere Credentialdatei nicht vorhanden.
+
+Abschaltursache jetzt belegt: Windows-Systemlog, Ereignis 1074, Initiator
+`C:\WINDOWS\system32\wlms\wlms.exe`, Benutzer SYSTEM, geplanter Shutdown,
+Kommentar: Lizenzzeitraum dieser Windows-Installation abgelaufen.
+Die letzten vier 1074-Ereignisse nennen diesen Grund; ein aelteres Ereignis 41
+meldet zusaetzlich einen unsauberen Neustart mit unbestimmter Ursache.
+Die lizenzbedingt geplanten Abschaltungen sind keine SieEncode-Abstuerze.
+Keine Lizenz-/Dienst-/Zeitmanipulation vorgenommen. Fuer verlaessliche laengere
+Abnahmen wird eine gueltig lizenzierte Testumgebung benoetigt.
+
 Kein vollstaendiger nativer Gruppen- oder Projektbedienlauf. Neuere Gruppenstaende, Hauptverwaltung,
 Recoverydialoge, Delegation, Nachfolge und Projektkopien sind weiter nativ abzunehmen;
 die separaten VM-API-Nachweise decken diese Oberflaechen nicht ab.

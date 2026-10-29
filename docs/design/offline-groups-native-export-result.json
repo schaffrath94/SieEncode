@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-29",
+  "evidence": "native public export validated with identified candidate Core",
+  "coreSha256": "53B6870875DA9F1BBEAF9C8021D020413205F02D836B8A741267F424DF352B3F",
+  "exportSha256": "7C2009EE47C114AF7A3087DAB55B768DA12DF408C7FA59FE4BFB6B9E23BB61C7",
+  "libraryId": "494f0a91-fc19-4e0d-8a73-30b4b4578e76",
+  "previousRevision": 8,
+  "revision": 9,
+  "groupCount": 3,
+  "addedGroup": "gruppe-8b2767cc5eef4ed88036c26f875eede9",
+  "signatureValid": true,
+  "existingGroupsPreserved": true,
+  "peopleRecoveryDelegationsPreserved": true,
+  "administratorKeyPreserved": true,
+  "credentialFileAbsent": true,
+  "nativeSecondUserImportVerified": false
+}
