@@ -13,6 +13,17 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+30.10.2026 Native Rollentrennung geprueft: unter labadmin ohne privaten
+Verwaltungsschluessel war keine Bibliothek verwaltbar; Gruppen signiert speichern
+wurde mit "Bitte eine Verwaltung auswaehlen oder erstellen" abgewiesen.
+Screenshot 12 gesichert. Danach separate synthetische Erstverwaltung nativ
+angelegt: d9c6ffd7-0081-4189-b965-518c9204c10c. Neue .admin.bin und .trust.bin
+per Dateiinventar bestaetigt, bestehende Registrierung 494f... weiterhin vorhanden.
+Keine neue Berechtigung an der bisherigen A/B-Bibliothek. Privaten Sicherungs-
+dialog geoeffnet; automatisierte Texteingabe bleibt leer. Benutzer um zweimalige
+Eingabe einer eigenen Testpassphrase und Speichern gebeten; Antwort/Erfolg noch
+offen. Keine Sicherung oder Wiederherstellung als bestanden behaupten.
+
 30.10.2026 Vorbereitung fuer echte Deinstallations-/Wiederinstallationsabnahme:
 tools/Test-TestlabUninstallPreservation.ps1 hinzugefuegt. Ausschliesslich VM
 SIEENCODE-LAB, echte Profile labadmin/testerA/testerB; Phasen Capture,

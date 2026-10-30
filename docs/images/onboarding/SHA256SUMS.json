@@ -42,5 +42,9 @@
   {
     "file": "11-alter-stand-abgewiesen.png",
     "sha256": "246318F9D7663646A45872937D4AB8203E7B7A826937C93CCC2620DFD9D2D303"
+  },
+  {
+    "file": "12-keine-verwaltungsrechte.png",
+    "sha256": "2746371EEF1255A02B24F5CF7674D944270B5AA57C14D8E030099CEEF890B60F"
   }
 ]

@@ -90,6 +90,26 @@ separate Existenzkontrolle wegen ausgeschalteter VM noch nicht ausgefuehrt.
 Der sichtbare Teillauf ersetzt weder Personen-/Geraeteaenderungen, private
 Sicherung/Restore, Recovery-/Delegationsdialoge noch den Gesamtprojektablauf.
 
+### Native Rollentrennung und separate Erstanlage am 30.10.2026
+
+Unter labadmin (registrierte Bibliothek 494f0a91..., aber kein dazugehoeriger
+privater Verwaltungsschluessel) Verwaltungsdialog geoeffnet. Leere Auswahl
+privat verwalteter Bibliotheken. **Gruppen signiert speichern** verweigert:
+**Bitte eine Verwaltung auswaehlen oder erstellen.** Screenshot
+`12-keine-verwaltungsrechte.png`. Dies prueft den normalen Oberflaechenweg,
+keinen Angriff auf Windows-Administratorrechte oder Dateisystemberechtigungen.
+
+Danach **Neue Verwaltung erstellen**, bestaetigt: separate neue Testbibliothek
+`d9c6ffd7-0081-4189-b965-518c9204c10c` in der Auswahl sichtbar. Gast-Dateiinventar
+bestaetigt eigenen .admin.bin (3494 Bytes) und .trust.bin (1686 Bytes); bisherige
+494f...-Registrierung bleibt vorhanden. Keine Ersetzung der bisherigen Verwaltung.
+
+**Privaten Schluessel sichern** oeffnet den Dialog mit neuer Bibliotheks-ID,
+zwei Passphrasefeldern und ausdruecklicher Bestaetigung getrennter Aufbewahrung.
+Automatisierte Texteingabe erzeugt keine sichtbaren Passwortzeichen. Deshalb
+Benutzer um manuelle Eingabe einer reinen Testpassphrase und Speichern gebeten.
+Sicherung und Wiederherstellung zu diesem Zeitpunkt noch nicht bestaetigt.
+
 ### Native Ruecksprungabwehr am 30.10.2026
 
 Nach dem unten belegten Import und Neustart mit Revision 9 unter labadmin
