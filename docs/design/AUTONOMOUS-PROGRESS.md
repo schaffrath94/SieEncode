@@ -13,6 +13,21 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+30.10.2026 Private Erstverwaltungssicherung nativ bestanden, Benutzer gab eigene
+Testpassphrase ein. Sichtbarer Erfolg: gespeichert, unveraendert zurueckgelesen,
+Schluesselfunktion nach Entschluesselung geprueft. Screenshot 13. Gastdatei
+labadmin/Documents/verwaltung.group-private.json, 4114 Bytes, SHA256
+5B8B2A748E1C35B2EE41F0BFF3D0478F4E8FC78CFFD0D8CBA05FBCC23F693DAD.
+Verschluesselte Kopie ausserhalb Repository unter Testlab/Private sowie in
+testerB/Documents/verwaltung-native-test.group-private.json bereitgestellt.
+Labadmin-App regulaer geschlossen, App unter echtem testerB-Profil (PID 6552,
+LoadUserProfile=true) gestartet. Temp-Credentialdatei nachweislich entfernt.
+Restore-Dialog bietet nur bereits registrierte 494f...-Bibliothek an; fuer neue
+d9c6... zuerst deren oeffentlichen Stand exportieren und unter B explizit
+registrieren. Restore ohne Aenderung geschlossen, Verwaltungsdialog B offen.
+Keine Wiederherstellung bestanden behaupten. Testpassphrase nur beim Benutzer;
+automatisch erzeugte, nicht erfolgreich eingegebene Testpassphrase verworfen.
+
 30.10.2026 Native Rollentrennung geprueft: unter labadmin ohne privaten
 Verwaltungsschluessel war keine Bibliothek verwaltbar; Gruppen signiert speichern
 wurde mit "Bitte eine Verwaltung auswaehlen oder erstellen" abgewiesen.

@@ -110,6 +110,23 @@ Automatisierte Texteingabe erzeugt keine sichtbaren Passwortzeichen. Deshalb
 Benutzer um manuelle Eingabe einer reinen Testpassphrase und Speichern gebeten.
 Sicherung und Wiederherstellung zu diesem Zeitpunkt noch nicht bestaetigt.
 
+Fortsetzung: Benutzer meldet Sicherung erfolgreich gespeichert. Sichtbare
+Erfolgsmeldung bestaetigt Speichern, unveraendertes Zuruecklesen und gepruefte
+Schluesselfunktion nach Entschluesselung; Screenshot 13. Passphrasefelder nach
+Erfolg leer. `C:/Users/labadmin/Documents/verwaltung.group-private.json`,
+4114 Bytes, SHA256 `5B8B2A748E1C35B2EE41F0BFF3D0478F4E8FC78CFFD0D8CBA05FBCC23F693DAD`.
+Private verschluesselte Datei nicht im Repository. Sicherungskopie im geschuetzten
+Host-Testlab/Private und als verwaltung-native-test.group-private.json in B/Dokumente.
+
+App unter labadmin regulaer geschlossen, mit echtem testerB-Profil neu gestartet
+(LoadUserProfile=true, PID 6552, keine geschuetzten Fixtures kopiert/ersetzt).
+Vorbereitender Launcher entfernte temporaere Testzugangsdatei; separate Abfrage
+ergab False. Sichtbare App-Pfade zeigen testerB. Restore-Dialog verlangt eine
+bereits registrierte Bibliothek; neue d9c6... ist dort noch nicht registriert.
+Dialog ohne Restore verlassen. Naechster Schritt oeffentlicher Export unter
+labadmin, explizite Vertrauensregistrierung unter B, dann Wiederherstellung mit
+der beim Benutzer verbliebenen Testpassphrase. Kein Wiederherstellungsnachweis.
+
 ### Native Ruecksprungabwehr am 30.10.2026
 
 Nach dem unten belegten Import und Neustart mit Revision 9 unter labadmin

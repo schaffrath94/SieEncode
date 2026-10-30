@@ -46,5 +46,9 @@
   {
     "file": "12-keine-verwaltungsrechte.png",
     "sha256": "2746371EEF1255A02B24F5CF7674D944270B5AA57C14D8E030099CEEF890B60F"
+  },
+  {
+    "file": "13-verwaltung-privat-gesichert.png",
+    "sha256": "3DF1601090C099E4DCA562DDB9F7C851DCFB25B5917FBF2E421A24E102296326"
   }
 ]
