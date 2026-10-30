@@ -13,6 +13,15 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+30.10.2026 Vorbereitung fuer echte Deinstallations-/Wiederinstallationsabnahme:
+tools/Test-TestlabUninstallPreservation.ps1 hinzugefuegt. Ausschliesslich VM
+SIEENCODE-LAB, echte Profile labadmin/testerA/testerB; Phasen Capture,
+VerifyRemoved, VerifyRestored. Vergleicht Fixture-Dateien bytegenau per SHA256
+und prueft private RSA-Zertifikate durch OAEP-SHA256-Roundtrip ohne Schluessel-
+export. Keine Installeraktion im Helfer. Parser und ablehnender Hostguard
+geprueft; noch nicht im Gast ausgefuehrt, keine Deinstallationsfreigabe behauptet.
+Details und Ausfuehrungsreihenfolge in OFFLINE-GROUPS-TESTLAB.md.
+
 30.10.2026 Zusaetzliche native Ruecksprungpruefung unter labadmin bestanden:
 Nach persistierter Revision 9 die bisherige native-test.group-enrollment.json
 (Revision 8) im Aktualisierungsdialog ausgewaehlt. Sichtbare Abweisung:

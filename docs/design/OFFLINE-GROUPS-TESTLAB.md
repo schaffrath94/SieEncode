@@ -136,6 +136,38 @@ Die unveraenderten MSI-Pakete 1.2.1 und 1.3.0-offline-groups.1 liegen unter
 4. Mehrbenutzer-/Offline-/Recoveryablauf nach
    [Abnahmeanleitung](../OFFLINE-GRUPPEN-ABNAHME.md) mit exakten Ergebnissen pruefen.
 
+## Vorbereitete Deinstallationsabnahme (30.10.2026)
+
+`tools/Test-TestlabUninstallPreservation.ps1` ist ein reiner Pruefhelfer;
+keine Installeraktion, kein privater Schluessel wird exportiert. Noch **nicht
+im Gast ausgefuehrt**. Parser und ablehnender Hostguard lokal bestanden.
+
+Nach den noch benoetigten nativen Tests, in jedem der drei wirklich geladenen
+Windows-Testprofile labadmin/testerA/testerB ausfuehren:
+
+1. Alle SieEncode-Prozesse schliessen. `-Phase Capture` verlangt installierten
+   Kandidaten 1.3.0 mit bekanntem Studio-DLL-Hash und sichert Dateihashes sowie
+   Zertifikatinventar im jeweiligen lokalen `SieEncodeLab/UninstallEvidence`.
+   Erfasst werden lokale/roaming SieEncode-Daten, lokale VaultProbe1-Fixtures,
+   Documents/SieEncode-Projekte und der gemeinsame VaultProbe1-Ordner.
+2. Erst nach drei erfolgreichen Captures den identifizierten Kandidaten in
+   dieser VM regulaer per MSI deinstallieren und Installerlog/Exitcode sichern.
+   Keine Anwendung und keine Fixture-Aenderungen zwischen den Vergleichsphasen.
+3. `-Phase VerifyRemoved` unter jedem Benutzer: Produktregistrierung und
+   Studio-/Runtime-EXE muessen entfernt, saemtliche erfassten Dateien identisch
+   und die privaten RSA-Zertifikate weiter fuer OAEP-SHA256 nutzbar sein.
+4. Dasselbe hashgepruefte MSI wieder installieren. Vor App-Start in allen drei
+   Profilen `-Phase VerifyRestored` ausfuehren. Danach native Entsperrung und
+   Gruppenregistrierung erneut pruefen; Datei-/Schluesselprobe ersetzt dies nicht.
+
+Helfer verweigert fehlende/leere Fixtures, falsche Kandidatenidentitaet,
+ueberschriebene Baselines, laufende App und Wiederinstallationspruefung ohne
+vorherige erfolgreiche Entfernungspruefung. Fehler beenden die Phase;
+Teilnachweise sind keine Gesamtabnahme. Belege mit lokalen Pfaden bleiben im
+Testgast, nur bereinigte Ergebniszusammenfassung ins Repository uebernehmen.
+Zertifikatpruefung betrifft vorhandene RSA-Privatschluessel im persoenlichen
+Store; kein Nachweis fuer fremde Rechner, Cloud-Synchronisation oder Hardware.
+
 Die laufende Windows-Einrichtung ist keine Produktfreigabe. Native Bedienablaeufe,
 echte Recoveryinstallation, Gruppenrechte und Benutzerisolation bleiben bis zur
 tatsaechlichen Ausfuehrung offen. Eine VM ersetzt keine Reader-/Kartenabnahme.
