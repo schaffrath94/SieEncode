@@ -1,4 +1,4 @@
-# Auftragsabgleich Offline-Gruppen – 29.10.2026
+# Auftragsabgleich Offline-Gruppen – 30.10.2026
 
 Gesamtziel **nicht abgeschlossen**. Am 24.10.2026 hat der Benutzer den Aufbau
 einer neuen separaten VirtualBox-Testumgebung autorisiert. Die neue VM ist
@@ -11,6 +11,10 @@ installierte DLL-Hashes sowie Self-Test und UI-Smoke beider Versionen bestanden
 (Administrator). Siehe [Testlab-Stand](OFFLINE-GROUPS-TESTLAB.md) und
 [Ergebnis](offline-groups-installed-suite.json). Vorhandene fremde VMs
 bleiben unverändert. Keine neue Automation und kein weiterer Paketbau.
+Am 30.10. einmaliger regulaerer Rearm auf ausdruecklichen Benutzerwunsch:
+erfolgreicher Befehl und Neustart, jedoch weiterhin LicenseStatus 5 und null
+Restzeit. Kein weiterer Rearm. Kurzer nativer Aktualisierungstest bestanden;
+VM weiterhin nicht fuer verlaessliche laengere Abnahmen freigegeben.
 
 ## Bewerteter Stand
 
@@ -51,7 +55,7 @@ und [unabhaengige Exportpruefung](offline-groups-native-export-result.json).
 | Persoenliche Identitaet und Einladung | Nativ angelegt, nach Neustart erhalten; oeffentlicher Export ohne privaten Schluessel separat validiert. | Vollstaendiger neuer Arbeitsplatzablauf mit Reader. |
 | Verwaltung registrieren | Nativ unter labadmin registriert; neuer App-Prozess erkennt denselben Stand. | Unabhaengiger menschlicher Fingerprintkanal. |
 | Bestehende Hauptverwaltung | Unter echtem testerB-Profil geladen; neue leere Gruppe nativ signiert als Revision 9; oeffentlicher Export separat validiert. | Native Erstverwaltung, private Sicherung/Restore, Personen-/Geraeteaenderungen. Testfixtures wurden vorbereitend kopiert. |
-| Neueren Stand uebernehmen | Export Revision 9 gueltig; labadmin noch Revision 8. | Native Vorschau, Bestaetigung und Wiederlesen auf labadmin. |
+| Neueren Stand uebernehmen | Export Revision 9 gueltig; native Vorschau 8 -> 9, explizite Bestaetigung und Wiedererkennung nach App-Neustart unter labadmin am 30.10. bestanden. | Kein Nachweis einer zweiten Maschine; Projekt-/Vaultabgleich separat offen. |
 | Projekt-/Recovery-/Delegationsablauf | Produkt-API-Nachweise unter getrennten Windows-Benutzern vorhanden. | Durchgehende native Dialogablaeufe inklusive Datei-/Bestaetigungsdialogen. |
 | Installerlebenszyklus | Installation und Upgrade bestanden. | Deinstallation mit Erhalt der Testidentitaeten/-daten. |
 | Kollegenanleitung | HTML-Entwurf mit Rollenwegen, Gruppenmatrix, Ablaufgrafik und fuenf Originalansichten vorhanden. | Visuelle Gesamtkontrolle und Bilder der verbleibenden geprueften Bedienablaeufe; keine finale Releaseanleitung. |

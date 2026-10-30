@@ -26,5 +26,17 @@
   {
     "file": "07-verwaltung-exportiert.png",
     "sha256": "97B58C392F8DEBB625B352680136AE5D8F912E5893DCA99189BFE107E672D68D"
+  },
+  {
+    "file": "08-aktualisierung-vorschau.png",
+    "sha256": "C9FA49BE88146940C15BF5CDA01758F31FD1BE6E9E6C92FB328E6D557CA582B6"
+  },
+  {
+    "file": "09-aktualisierung-uebernommen.png",
+    "sha256": "84BB4518770778C1FA4C5AC16A087E2D5731B9543AEE247072CA13257CE4B33C"
+  },
+  {
+    "file": "10-aktualisierung-nach-neustart.png",
+    "sha256": "73EE771942BCE3BC72FCCAFD04EEB9E8532E4E39CF07CA4DDAB6DBDDA91382F1"
   }
 ]

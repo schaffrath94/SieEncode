@@ -90,6 +90,31 @@ separate Existenzkontrolle wegen ausgeschalteter VM noch nicht ausgefuehrt.
 Der sichtbare Teillauf ersetzt weder Personen-/Geraeteaenderungen, private
 Sicherung/Restore, Recovery-/Delegationsdialoge noch den Gesamtprojektablauf.
 
+### Native Aktualisierung und Neustart am 30.10.2026
+
+Unter labadmin den unabhaengig validierten oeffentlichen Export Revision 9
+ueber **Registrierte Gruppen aktualisieren** und nativen Dateidialog geladen.
+Vorschau zeigt dieselbe Bibliothek, Revision 8 -> 9, alte zwei Gruppen und
+zusaetzlich die leere Neue Gruppe; Personen A/B und Recovery bleiben erhalten.
+Checkbox bestaetigt, **Geprueften Stand uebernehmen** angeklickt. Status meldet
+erfolgreiche Aktualisierung und unveraenderte bestehende Vault-Dateien.
+Keine Projektdateien in diesem Test geoeffnet oder bearbeitet.
+
+App per Taskleistenmenue regulaer geschlossen (Desktop ohne App sichtbar),
+installierte EXE erneut gestartet. Dieselbe Exportdatei erneut ueber die
+Aktualisierungsaktion ausgewaehlt: **Dieser Gruppenstand ist bereits registriert.**
+Damit ist das Wiederlesen des geschuetzten lokalen Stands im neuen App-Prozess
+nativ belegt. Screenshots 08-aktualisierung-vorschau.png,
+09-aktualisierung-uebernommen.png und 10-aktualisierung-nach-neustart.png.
+Normale App-Staende testerB/labadmin nun Revision 9, API-Testfixtures weiterhin 8.
+labadmin erhaelt hierdurch keine Gruppenmitgliedschaft. Kein echter zweiter
+Rechner, keine neue Projekt-/Recovery-/Hardwareabnahme.
+
+Einmaliger vom Benutzer autorisierter Windows-Rearm nach UAC-Bestaetigung
+erfolgreich ausgefuehrt, regulaerer VM-Neustart abgeschlossen. Danach Rearmcount 1
+statt 2, aber LicenseStatus=5 und GracePeriodRemaining=0 unveraendert.
+Eine wirksame Verlaengerung ist nicht belegt; kein weiterer Rearm ausgefuehrt.
+
 ### Unabhaengige Exportpruefung am 29.10.2026
 
 Nach einmaligem VM-Neustart Export erfolgreich abgeholt. Mit dem per SHA256
@@ -110,8 +135,9 @@ Die lizenzbedingt geplanten Abschaltungen sind keine SieEncode-Abstuerze.
 Keine Lizenz-/Dienst-/Zeitmanipulation vorgenommen. Fuer verlaessliche laengere
 Abnahmen wird eine gueltig lizenzierte Testumgebung benoetigt.
 
-Kein vollstaendiger nativer Gruppen- oder Projektbedienlauf. Neuere Gruppenstaende, Hauptverwaltung,
-Recoverydialoge, Delegation, Nachfolge und Projektkopien sind weiter nativ abzunehmen;
+Kein vollstaendiger nativer Gruppen- oder Projektbedienlauf. Die Aktualisierung
+auf einen neueren Gruppenstand ist seit 30.10. nativ belegt. Hauptverwaltung,
+Recoverydialoge, Delegation, Nachfolge und Projektkopien sind weiter vollstaendig nativ abzunehmen;
 die separaten VM-API-Nachweise decken diese Oberflaechen nicht ab.
 Kein Reader in der VM freigegeben. Einstellungen melden korrekt fehlende
 Leserkonfiguration/settings.xml; daraus folgt keine Hardwareabnahme.

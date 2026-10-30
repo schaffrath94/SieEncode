@@ -13,6 +13,18 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+30.10.2026 Native Aktualisierung unter labadmin abgeschlossen: geprueften Export
+Revision 9 per Dateidialog geladen, Vorschau 8 -> 9 mit dritter leerer Gruppe
+und unveraenderten Personen/Recovery angezeigt, explizit bestaetigt, Erfolg.
+App regulaer geschlossen und neu gestartet; erneute Auswahl derselben Datei
+meldet "Dieser Gruppenstand ist bereits registriert." Persistenz damit nativ
+belegt. Aufnahmen 08-10 gesichert. Normale App-Staende B und labadmin jetzt 9,
+separate API-Fixtures weiterhin 8. Keine Projekt-/Vaultdateien bearbeitet.
+Rearm-Nachkontrolle nach abgeschlossenem Boot: verbleibend 1 (vorher 2),
+LicenseStatus weiterhin 5, StatusReason 3221549065, GracePeriodRemaining=0.
+Keine wirksame Verlaengerung belegt; kein weiterer Rearm. VM aktuell nutzbar,
+Abschaltrisiko bleibt. Native Restablaeufe/Anleitung/Release weiterhin offen.
+
 30.10.2026 Benutzer autorisiert einmaligen regulaeren Rearm der Test-VM und
 beschafft parallel eine Lizenz. Vorher: EnterpriseSEval / TIMEBASED_EVAL,
 LicenseStatus=5, GracePeriodRemaining=0, RemainingWindowsReArmCount=2.
