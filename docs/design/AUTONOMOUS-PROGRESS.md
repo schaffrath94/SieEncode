@@ -13,6 +13,14 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+30.10.2026 Zusaetzliche native Ruecksprungpruefung unter labadmin bestanden:
+Nach persistierter Revision 9 die bisherige native-test.group-enrollment.json
+(Revision 8) im Aktualisierungsdialog ausgewaehlt. Sichtbare Abweisung:
+"Veraltete oder widerspruechliche Gruppenfreigabe." Screenshot 11 gesichert.
+Danach Host-Patchmeldung ueber VM, Benutzereingabe erkannt, VM minimiert;
+keine weitere Mausbedienung. Fehlermeldung moeglicherweise noch offen.
+Pruefung fehlender Verwaltungsrechte unter labadmin noch nicht ausgefuehrt.
+
 30.10.2026 Native Aktualisierung unter labadmin abgeschlossen: geprueften Export
 Revision 9 per Dateidialog geladen, Vorschau 8 -> 9 mit dritter leerer Gruppe
 und unveraenderten Personen/Recovery angezeigt, explizit bestaetigt, Erfolg.

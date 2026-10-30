@@ -90,6 +90,20 @@ separate Existenzkontrolle wegen ausgeschalteter VM noch nicht ausgefuehrt.
 Der sichtbare Teillauf ersetzt weder Personen-/Geraeteaenderungen, private
 Sicherung/Restore, Recovery-/Delegationsdialoge noch den Gesamtprojektablauf.
 
+### Native Ruecksprungabwehr am 30.10.2026
+
+Nach dem unten belegten Import und Neustart mit Revision 9 unter labadmin
+erneut **Registrierte Gruppen aktualisieren** ausgewaehlt. Im nativen
+Dateidialog die bisherige `native-test.group-enrollment.json` (Revision 8)
+geoeffnet. Anwendung verweigert den Import mit
+**Veraltete oder widerspruechliche Gruppenfreigabe.**
+Originalaufnahme `11-alter-stand-abgewiesen.png` gesichert.
+Damit ist die native Abweisung dieses konkreten Ruecksprungs belegt;
+ein anschliessendes unabhaengiges Wiederlesen wurde noch nicht ausgefuehrt.
+Die weitere Bedienung wurde bei erkannter Benutzereingabe und minimierter VM
+unterbrochen. Noch keine native Abnahme fehlender Verwaltungsrechte unter
+labadmin, keine Aenderung an Verwaltungsschluesseln oder Mitgliedschaften.
+
 ### Native Aktualisierung und Neustart am 30.10.2026
 
 Unter labadmin den unabhaengig validierten oeffentlichen Export Revision 9
