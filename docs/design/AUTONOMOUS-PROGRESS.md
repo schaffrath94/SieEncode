@@ -13,6 +13,15 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+30.10.2026 Benutzer autorisiert einmaligen regulaeren Rearm der Test-VM und
+beschafft parallel eine Lizenz. Vorher: EnterpriseSEval / TIMEBASED_EVAL,
+LicenseStatus=5, GracePeriodRemaining=0, RemainingWindowsReArmCount=2.
+Nicht erhoehter Aufruf abgewiesen (0xC004F025); nach ausdruecklicher UAC-
+Bestaetigung des Benutzers meldet slmgr /rearm Erfolg und verlangt Neustart.
+Regulaerer Neustart angestossen, sichtbar noch "Wird neu gestartet".
+Wirksame Dauer und Lizenzstatus nach Boot noch nicht bestaetigt. Kein zweiter
+Rearm, keine Registry-/Zeit-/Dienstmanipulation. Testdaten/Kandidat unveraendert.
+
 29.10.2026 Benutzerantwort: gueltig lizenzierte Testumgebung derzeit nicht
 verfuegbar. VM/Testdaten erhalten, keine weiteren Neustartschleifen.
 Auftragsabgleich um konkrete native Nachweise und verbleibende Gates aktualisiert.
