@@ -50,5 +50,9 @@
   {
     "file": "13-verwaltung-privat-gesichert.png",
     "sha256": "3DF1601090C099E4DCA562DDB9F7C851DCFB25B5917FBF2E421A24E102296326"
+  },
+  {
+    "file": "14-neue-verwaltung-wiedergeladen.png",
+    "sha256": "99E8DB44F2C88303F7C983E02794853EA8687E7CD0E3BCFB78BF52F38DDE7D0C"
   }
 ]

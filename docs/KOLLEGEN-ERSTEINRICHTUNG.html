@@ -71,6 +71,18 @@ figure{margin:22px 0;break-inside:avoid}figure img{display:block;width:100%;heig
 <figure><a href="images/onboarding/07-verwaltung-exportiert.png"><img src="images/onboarding/07-verwaltung-exportiert.png" alt="Verwaltungsdialog nach öffentlichem Export mit Bibliotheks-ID und öffentlichem Verwaltungsfingerabdruck" loading="lazy"></a><figcaption><strong>5 · Gespeicherten Stand öffentlich exportieren.</strong> Diese Aktion erzeugt die öffentliche Registrierungsdatei für Kollegen. „Privaten Schlüssel sichern“ ist eine andere Funktion; deren Datei wird nicht im Team verteilt.</figcaption></figure>
 <p>Die Bilder zeigen ausschließlich Testgruppen. Im dokumentierten Lauf wurden die Signatur der exportierten Datei und der Erhalt aller bisherigen Gruppen, Personen, Recovery-Zugänge und Vollmachten zusätzlich geprüft.</p>
 </section>
+<section id="verwaltung-sichern">
+<h2>Verwaltung sichern und auf einem Ersatzarbeitsplatz wiederherstellen</h2>
+<p>Diese Schritte sind für Verantwortliche mit Verwaltungsrechten. Normale Kollegen benötigen die öffentliche Registrierung und ihre persönliche Geräteidentität.</p>
+<ol class="steps">
+<li><b>Privaten Schlüssel sichern</b>: die gewünschte Verwaltung auswählen, eine eigene Passphrase mit mindestens 20 Zeichen zweimal eingeben und die getrennte Aufbewahrung bestätigen. <b>Verschlüsselte Sicherung speichern</b> erzeugt eine <code>.group-private.json</code>. Erfolg erst annehmen, wenn die Anwendung das Zurücklesen und die Schlüsselfunktion bestätigt.</li>
+<li>Die private Datei außerhalb des gemeinsamen Projektordners aufbewahren, die Passphrase getrennt. Für die Registrierung zusätzlich den gespeicherten öffentlichen Stand als <code>.group-enrollment.json</code> exportieren und Bibliotheks-ID sowie geprüften Verwaltungsfingerabdruck festhalten.</li>
+<li>Auf dem Ersatzarbeitsplatz zuerst die öffentliche Datei über <b>Gruppenverwaltung registrieren</b> öffnen und den Fingerabdruck unabhängig abgleichen. Danach unter <b>Offline-Gruppen verwalten → Privaten Schlüssel wiederherstellen</b> genau diese Bibliotheks-ID auswählen.</li>
+<li>Passphrase eingeben, Wiederherstellung bestätigen und über <b>Sicherungsdatei wählen und wiederherstellen</b> die passende private Sicherung öffnen. Die Erfolgsmeldung abwarten. Eine noch nicht registrierte Bibliothek erscheint nicht in der Auswahlliste.</li>
+</ol>
+<figure><a href="images/onboarding/13-verwaltung-privat-gesichert.png"><img src="images/onboarding/13-verwaltung-privat-gesichert.png" alt="Erfolgsmeldung nach Speicherung und Funktionsprüfung der privaten Verwaltungssicherung; Passphrasefelder sind leer" loading="lazy"></a><figcaption>Private Sicherung im synthetischen Test erfolgreich gespeichert und geprüft. Die Passphrase bleibt beim Verantwortlichen.</figcaption></figure>
+<p class="note"><strong>Prüfstand 02.11.2026:</strong> Anlegen, erneutes Laden, private Sicherung und öffentliche Registrierung im zweiten Windows-Profil sind nativ belegt. Die anschließende private Wiederherstellung und Funktionsprüfung im zweiten Profil stehen noch aus. Verwaltungssicherung und separate Recovery-Identität für Projekt-Vaults erfüllen unterschiedliche Aufgaben.</p>
+</section>
 <section id="alltag">
 <span class="pill">Im Alltag</span><h2>Projekte anlegen und Berechtigungen ändern</h2>
 <p><strong>Auch Kollegen können Projekte anlegen.</strong> Im Projekteditor <b>Als neues Gruppenprojekt erstellen / migrieren</b> wählen, Bibliothek, berechtigte Gruppe und neuen Projektnamen auswählen. Erforderlich sind eigener Gruppenzugang, ein aktiver Recovery-Zugang der Bibliothek sowie Schreibzugriff auf den Zielordner. Eine Migration erstellt eine neue Kopie und lässt das Original bestehen.</p>

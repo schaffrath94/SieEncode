@@ -13,6 +13,19 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+02.11.2026 Fortsetzung: VM laeuft, App unter echtem testerB-Profil gestartet
+(PID 5680), temporaere Testzugangsdatei nachweislich entfernt. Oeffentliche
+Datei der neuen d9c6...-Verwaltung ist seit 30.10. nativ exportiert und nach B
+uebertragen. Heute mit hashgeprueftem Kandidaten-Core validiert: Revision 1,
+Fingerprint 9A6F17C6C287614C8C140B8328276F6C92918F802260C5771EAD4653B2D72CCD,
+Export-SHA256 7D65FBC8642F5EF3B443E95A5D58F16C726816BE1532B9AE6DF1B2E16419B87B.
+Passt zum zuvor nativ angezeigten Fingerabdruck. Screenshot 14 belegt erneutes
+Laden unter labadmin nach App-Neustart. B besitzt anfangs weiterhin nur 494f...
+Trust/Admin; neue d9c6... noch nicht vorhanden. Registrierungsdialog unter B
+mit neuer Datei geoeffnet. Benutzer um Fingerprinteingabe/Bestaetigung gebeten,
+weil automatisierte Texteingabe im Gast nicht verlaesslich funktioniert.
+Registrierung vom Benutzer erfolgreich abgeschlossen und nativ bestaetigt. Restore-Dialog bietet neue d9c6... nun an; richtige Bibliothek ausgewaehlt. Benutzer um Eingabe seiner geheim bleibenden Testpassphrase und Wiederherstellung aus Dokumente/verwaltung-native-test.group-private.json gebeten. Privater Restore und anschliessende Signatur-/Persistenzpruefung noch offen.
+
 30.10.2026 Private Erstverwaltungssicherung nativ bestanden, Benutzer gab eigene
 Testpassphrase ein. Sichtbarer Erfolg: gespeichert, unveraendert zurueckgelesen,
 Schluesselfunktion nach Entschluesselung geprueft. Screenshot 13. Gastdatei
