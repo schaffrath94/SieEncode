@@ -1,4 +1,4 @@
-# Auftragsabgleich Offline-Gruppen – 30.10.2026
+# Auftragsabgleich Offline-Gruppen – 02.11.2026
 
 Gesamtziel **nicht abgeschlossen**. Am 24.10.2026 hat der Benutzer den Aufbau
 einer neuen separaten VirtualBox-Testumgebung autorisiert. Die neue VM ist
@@ -19,7 +19,7 @@ VM weiterhin nicht fuer verlaessliche laengere Abnahmen freigegeben.
 ## Bewerteter Stand
 
 Testkandidat `1.3.0-offline-groups.1` aus sauberer Studio-Quelle
-`2be1be0857c1933e5bc91c95d3296f84052ce6b7`. Danach ausschließlich Dokumentation.
+`2be1be0857c1933e5bc91c95d3296f84052ce6b7`. Danach Dokumentation und Testlab-Pruefhelfer; keine Aenderung der gebauten Produktquelle.
 Die [Kandidatennachweise](OFFLINE-GROUPS-CANDIDATE-1.3.0-1.md) enthalten exakte
 Hashwerte und Grenzen. CI: `tmp/group-device-import-ci.log`, 72/72 Tests;
 publizierter Kandidat: `tmp/offline-groups-candidate-smoke/SieEncode/ui-smoke/ui-smoke-result.json`,
@@ -54,7 +54,8 @@ und [unabhaengige Exportpruefung](offline-groups-native-export-result.json).
 | --- | --- | --- |
 | Persoenliche Identitaet und Einladung | Nativ angelegt, nach Neustart erhalten; oeffentlicher Export ohne privaten Schluessel separat validiert. | Vollstaendiger neuer Arbeitsplatzablauf mit Reader. |
 | Verwaltung registrieren | Nativ unter labadmin registriert; neuer App-Prozess erkennt denselben Stand. | Unabhaengiger menschlicher Fingerprintkanal. |
-| Bestehende Hauptverwaltung | Unter echtem testerB-Profil geladen; neue leere Gruppe nativ signiert als Revision 9; oeffentlicher Export separat validiert. | Native Erstverwaltung, private Sicherung/Restore, Personen-/Geraeteaenderungen. Testfixtures wurden vorbereitend kopiert. |
+| Bestehende Hauptverwaltung | Unter echtem testerB-Profil geladen; neue leere Gruppe nativ signiert als Revision 9; oeffentlicher Export separat validiert. | Personen-/Geraeteaenderungen nativ noch offen. Fuer diese bestehende Bibliothek wurden Testfixtures vorbereitend kopiert. |
+| Neue Hauptverwaltung und private Wiederherstellung | Separate Bibliothek d9c6... nativ angelegt, gesichert, unter testerB oeffentlich registriert und privat wiederhergestellt. Revision 2 nativ signiert, Export unabhaengig gegen Ursprungsschluessel geprueft; nach App-Neustart erneut geladen. Siehe offline-groups-native-restore-result.json und Bilder 13–17. | Keine separate Maschine; weitere Gruppen-/Projektbedienablaeufe offen. |
 | Neueren Stand uebernehmen | Export Revision 9 gueltig; native Vorschau 8 -> 9, explizite Bestaetigung und Wiedererkennung nach App-Neustart unter labadmin am 30.10. bestanden. | Kein Nachweis einer zweiten Maschine; Projekt-/Vaultabgleich separat offen. |
 | Projekt-/Recovery-/Delegationsablauf | Produkt-API-Nachweise unter getrennten Windows-Benutzern vorhanden. | Durchgehende native Dialogablaeufe inklusive Datei-/Bestaetigungsdialogen. |
 | Installerlebenszyklus | Installation und Upgrade bestanden. | Deinstallation mit Erhalt der Testidentitaeten/-daten. |

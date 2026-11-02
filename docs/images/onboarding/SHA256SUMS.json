@@ -62,5 +62,9 @@
   {
     "file": "16-wiederhergestellte-verwaltung-signiert.png",
     "sha256": "872CF58966D73E778F535795FEEE2A5928404F9D7E59BB5C24BFD9EE418F9368"
+  },
+  {
+    "file": "17-wiederherstellung-nach-neustart.png",
+    "sha256": "15FE01AD7DCEA115D32A444136E4C290CF292D46D15A71A26AF2E7A3DE0B45FA"
   }
 ]

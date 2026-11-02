@@ -13,6 +13,14 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+02.11.2026 Wiederherstellungs-Persistenz nativ bestanden: App regulaer ueber
+Gast-Taskleiste geschlossen, kein SieEncode-Prozess mehr per Gastabfrage.
+Danach mit LoadUserProfile=true als testerB neu gestartet, PID 4500,
+FixturesCopied=0. Verwaltung erneut geoeffnet, d9c6... ausgewaehlt:
+gespeicherte Revision 2 und urspruenglicher Fingerabdruck sichtbar, eigener
+signierter Stand lokal aktiv. Screenshot 17. Vorherige offene Persistenzpruefung
+damit erledigt; keine vollstaendige native Gruppen-/Projektabnahme behauptet.
+
 02.11.2026 Native private Wiederherstellung unter testerB erfolgreich: Benutzer
 gab seine Testpassphrase ein, Erfolgsmeldung selbst beobachtet (Screenshot 15).
 Neue Bibliothek d9c6ffd7-0081-4189-b965-518c9204c10c danach im Verwaltungsdialog
