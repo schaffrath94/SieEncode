@@ -66,5 +66,9 @@
   {
     "file": "17-wiederherstellung-nach-neustart.png",
     "sha256": "15FE01AD7DCEA115D32A444136E4C290CF292D46D15A71A26AF2E7A3DE0B45FA"
+  },
+  {
+    "file": "18-person-geraet-gruppen-signiert.png",
+    "sha256": "F0922EB32D2609FEF2E5145BD1B305A0C10C021C5DB112BDAC7273E4C4AAF43F"
   }
 ]

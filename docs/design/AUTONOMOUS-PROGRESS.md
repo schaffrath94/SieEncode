@@ -13,6 +13,23 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+02.11.2026 Personen-/Geraete-/Gruppenzuordnung nativ bestanden: in neuer d9c6...
+Verwaltung Testperson B angelegt (Name durch Benutzer, da Texteingabe VM nicht
+erreicht). Vorhandenes oeffentliches testerB-Zertifikat per PowerShell als reine
+Importfixture in Documents/native-testerB.recipient.json exportiert, keine neue
+Identitaet/kein privater Export. Fingerprint aus Quellzertifikat
+EEB1B9D4AE2ACE50174B5E0948D0A86A7A4EE4AE5DDA19081918A043EE1C0414
+gegen nativen Importdialog abgeglichen. Geraet importiert, zwei neue Gruppen
+nativ angelegt und dieselbe Person beiden zugeordnet. Revision 3 signiert und
+oeffentlich exportiert. Kandidaten-Core validiert Signatur, Ursprungsverwaltung,
+genau eine aktive Person/ein aktives Geraet sowie dieselbe Personen-ID in beiden
+Gruppen. Ergebnis offline-groups-native-people-result.json, Screenshot 18.
+Gruppen tragen noch Testnamen Neue Gruppe, unterscheiden sich durch stabile IDs.
+Keine Projektentschluesselung oder unabhaengiger menschlicher Vertrauenskanal
+damit behauptet. Neue Bibliothek besitzt weiter keinen Recovery-Zugang.
+Naechster nativer Schritt: separaten Recovery-Zugang einrichten/aufnehmen,
+danach Gruppenprojekt erstellen und Empfaenger-/Recoveryablaeufe pruefen.
+
 02.11.2026 Wiederherstellungs-Persistenz nativ bestanden: App regulaer ueber
 Gast-Taskleiste geschlossen, kein SieEncode-Prozess mehr per Gastabfrage.
 Danach mit LoadUserProfile=true als testerB neu gestartet, PID 4500,
