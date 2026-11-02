@@ -13,6 +13,17 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+02.11.2026 Native private Wiederherstellung unter testerB erfolgreich: Benutzer
+gab seine Testpassphrase ein, Erfolgsmeldung selbst beobachtet (Screenshot 15).
+Neue Bibliothek d9c6ffd7-0081-4189-b965-518c9204c10c danach im Verwaltungsdialog
+geladen und ohne Inhaltsaenderung als Revision 2 signiert (Screenshot 16).
+Oeffentlichen Export nativ im B-Dokumenteordner gespeichert, per VBox abgeholt
+und mit hashgeprueftem Kandidaten-Core unabhaengig validiert. Signatur und
+urspruenglicher Fingerprint 9A6F17C6...D72CCD stimmen; maschinenlesbarer Nachweis
+offline-groups-native-restore-result.json. Keine Passphrase/private Sicherung im
+Repository. App-Neustart/Persistenz dieser Wiederherstellung noch offen.
+Die weiter unten beschriebene ausstehende Passphrase ist damit erledigt.
+
 02.11.2026 Deinstallations-Pruefhelfer gehaertet: VerifyRestored akzeptiert nicht
 mehr die blosse Existenz von VerifyRemoved.json. Phase, Windows-SID, Kandidatenhash
 und SHA256 der Capture-Baseline muessen passen. Parser geprueft; isolierte Pruefung

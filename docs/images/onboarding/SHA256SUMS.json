@@ -54,5 +54,13 @@
   {
     "file": "14-neue-verwaltung-wiedergeladen.png",
     "sha256": "99E8DB44F2C88303F7C983E02794853EA8687E7CD0E3BCFB78BF52F38DDE7D0C"
+  },
+  {
+    "file": "15-verwaltung-privat-wiederhergestellt.png",
+    "sha256": "862B187823C7DD07EC2B8E9DC0DFF4CACFD998A8D5110DF484F260B7BAA355E0"
+  },
+  {
+    "file": "16-wiederhergestellte-verwaltung-signiert.png",
+    "sha256": "872CF58966D73E778F535795FEEE2A5928404F9D7E59BB5C24BFD9EE418F9368"
   }
 ]

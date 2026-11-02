@@ -1,0 +1,8 @@
+{
+  "LibraryId": "d9c6ffd7-0081-4189-b965-518c9204c10c",
+  "Revision": 2,
+  "Fingerprint": "9A6F17C6C287614C8C140B8328276F6C92918F802260C5771EAD4653B2D72CCD",
+  "ExportSHA256": "26A42C1A97E964365385A7A834E5AF141EB6A065D230022B556AE5D5AA325B96",
+  "SignatureValidated": true,
+  "Scope": "Native restore and signing under testerB; restart persistence pending"
+}
