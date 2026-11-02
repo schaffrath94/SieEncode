@@ -13,6 +13,13 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+02.11.2026 Deinstallations-Pruefhelfer gehaertet: VerifyRestored akzeptiert nicht
+mehr die blosse Existenz von VerifyRemoved.json. Phase, Windows-SID, Kandidatenhash
+und SHA256 der Capture-Baseline muessen passen. Parser geprueft; isolierte Pruefung
+der tatsaechlichen Validierungsfunktion akzeptiert passenden Datensatz und weist
+vier Abweichungen (je ein Feld) ab. Kein Gast-/Deinstallationstest damit behauptet.
+Native private Wiederherstellung wartet weiterhin auf die Testpassphrase des Benutzers.
+
 02.11.2026 Fortsetzung: VM laeuft, App unter echtem testerB-Profil gestartet
 (PID 5680), temporaere Testzugangsdatei nachweislich entfernt. Oeffentliche
 Datei der neuen d9c6...-Verwaltung ist seit 30.10. nativ exportiert und nach B

@@ -31,8 +31,20 @@ $evidence = Join-Path $env:LOCALAPPDATA 'SieEncodeLab\UninstallEvidence'
 $baselinePath = Join-Path $evidence 'before.json'
 if ($Phase -eq 'Capture' -and (Test-Path -LiteralPath $baselinePath)) { throw 'Existing baseline must not be overwritten.' }
 if ($Phase -ne 'Capture' -and -not (Test-Path -LiteralPath $baselinePath)) { throw 'Capture must run first in this profile.' }
-if ($Phase -eq 'VerifyRestored' -and -not (Test-Path -LiteralPath (Join-Path $evidence 'VerifyRemoved.json'))) {
-    throw 'Successful removal verification is required before restoration verification.'
+function Assert-RemovalEvidence($Removal, [string]$UserSid, [string]$CandidateHash, [string]$BaselineHash) {
+    if ($Removal.Phase -ne 'VerifyRemoved' -or $Removal.UserSid -ne $UserSid -or
+        $Removal.CandidateDllSHA256 -ne $CandidateHash -or $Removal.BaselineSHA256 -ne $BaselineHash) {
+        throw 'Removal evidence does not match this profile, candidate and baseline.'
+    }
+}
+$baselineHash = if ($Phase -ne 'Capture') { (Get-FileHash -LiteralPath $baselinePath -Algorithm SHA256).Hash } else { $null }
+if ($Phase -eq 'VerifyRestored') {
+    $removedPath = Join-Path $evidence 'VerifyRemoved.json'
+    if (-not (Test-Path -LiteralPath $removedPath)) {
+        throw 'Successful removal verification is required before restoration verification.'
+    }
+    $removed = Get-Content -LiteralPath $removedPath -Raw | ConvertFrom-Json
+    Assert-RemovalEvidence $removed $identity.User.Value $expectedDll $baselineHash
 }
 $roots = @(
     (Join-Path $env:LOCALAPPDATA 'SieEncode'),
@@ -76,7 +88,7 @@ try {
 } finally { $store.Close() }
 if ($certificates.Count -eq 0) { throw 'No usable RSA identity found in this Windows profile.' }
 $record = [ordered]@{ Phase=$Phase; UserSid=$identity.User.Value; CandidateDllSHA256=$expectedDll;
-    Files=$files; Certificates=@($certificates | Sort-Object); RecordedUtc=[DateTime]::UtcNow.ToString('o') }
+    BaselineSHA256=$baselineHash; Files=$files; Certificates=@($certificates | Sort-Object); RecordedUtc=[DateTime]::UtcNow.ToString('o') }
 if ($Phase -ne 'Capture') {
     $before = Get-Content -LiteralPath $baselinePath -Raw | ConvertFrom-Json
     if ($before.UserSid -ne $identity.User.Value -or $before.CandidateDllSHA256 -ne $expectedDll) { throw 'Baseline belongs to a different identity or candidate.' }
