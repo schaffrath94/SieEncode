@@ -13,6 +13,15 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+03.11.2026 Nach VM-Neustart Kandidat unveraendert als testerB mit geladenem
+Benutzerprofil erneut gestartet (PID 5856); temporäre Anmeldedatei danach
+unabhaengig als entfernt bestaetigt. Benutzer stellte vorhandene Recovery-
+Sicherung im nativen Dialog wieder her. Erfolg selbst beobachtet, Screenshot 21.
+Separater Windows-Prozess unter testerB findet exakt erwarteten Recovery-
+Fingerprint mit privatem Schluessel; RSA-OAEP-SHA256 Roundtrip erfolgreich.
+Verschluesselte Sicherung weiterhin vorhanden, SHA256 im Recovery-Nachweis.
+Keine Passphrase/privaten Schluessel exportiert. Projekt-Recovery bleibt offen.
+Vorheriger Push von e2330cb wurde vom Benutzer abgelehnt; kein erneuter Push.
 03.11.2026 Recovery zentral nativ freigegeben: Benutzer bestaetigte Fingerprint,
 Verwaltung zeigt Separate Team-Recovery aktiv und Revision 4 (Screenshot 20).
 Oeffentlichen Stand exportiert und unabhaengig mit hashgeprueftem Kandidaten-Core
@@ -1478,3 +1487,4 @@ Automation sieencode-ui-und-pdf-fertigstellen: stuendlicher Heartbeat dieser Auf
 Keine doppelten Aufgaben/Automationen. Nur wesentliche Meilensteine/Fehler/erforderliche
 Benutzeraktionen melden. Nach echtem Abschluss oder wiederholt unloesbarer Blockade
 konkret berichten und pausieren; keine endlosen unveraenderten Pruefungen.
+

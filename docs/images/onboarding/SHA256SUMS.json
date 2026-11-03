@@ -78,5 +78,9 @@
   {
     "file": "20-recovery-zentral-freigegeben.png",
     "sha256": "BB1F7B00F6D95B3BDB7C9360698BECF94AEB5E03F01F45F3BBD504C12EF9A589"
+  },
+  {
+    "file": "21-recovery-wiederhergestellt.png",
+    "sha256": "002598818507A391BC974B5D475C2AF7C56A14EBBAA785B2B856A8ABB98C9CD9"
   }
 ]

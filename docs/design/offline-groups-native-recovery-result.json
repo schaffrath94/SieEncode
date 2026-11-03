@@ -6,5 +6,14 @@
   "RecoveryEnabled": true,
   "PreviousPeopleGroupsDelegationsUnchanged": true,
   "ExportSHA256": "F6E88794DEA49C280EA43E8A4DBFC9B478DDB5FCA2135AE5F0DB48A450A54B2E",
-  "Scope": "Native backup, public export and central recovery grant; Windows restore and project recovery pending"
+  "Scope": "Native backup, public export, central grant and Windows restore with independent RSA roundtrip; project recovery pending",
+  "WindowsRestore": {
+    "User": "testerB",
+    "NativeSuccessObserved": true,
+    "HasPrivateKey": true,
+    "PrivateKeyRoundTrip": true,
+    "BackupExists": true,
+    "BackupSHA256": "930FCC3FD121433617335E6320334F8DFD14118DD1B207E6D17C79519F34D111",
+    "Screenshot": "21-recovery-wiederhergestellt.png"
+  }
 }
