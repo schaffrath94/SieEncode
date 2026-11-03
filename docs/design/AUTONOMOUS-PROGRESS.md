@@ -13,6 +13,46 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+03.11.2026 Recovery zentral nativ freigegeben: Benutzer bestaetigte Fingerprint,
+Verwaltung zeigt Separate Team-Recovery aktiv und Revision 4 (Screenshot 20).
+Oeffentlichen Stand exportiert und unabhaengig mit hashgeprueftem Kandidaten-Core
+validiert: Ursprungsverwaltung, genau erwarteter aktiver Recovery-Fingerprint,
+Personen/Gruppen/Delegationen gegen Revision 3 unveraendert. Nachweis
+offline-groups-native-recovery-result.json. Nach erneuter ausdruecklicher
+Freigabe der VM-Bedienung Recovery-Assistent geoeffnet, d9c6... gewaehlt und
+freigegebener Recovery-Schluessel zur Wiederherstellung angeboten. Benutzer um
+Passphrase und Dokumente/recovery.group-private.json gebeten. Windows-Installation
+dieses Recovery-Schluessels und Projektentschluesselung noch offen.
+
+03.11.2026 VM wieder sichtbar verfuegbar, gespeicherter Recovery-Dialog erhalten.
+Erfolgreiche private Sicherung erneut beobachtet und Screenshot 19 gespeichert.
+Oeffentliche recovery.recipient.json nativ unter testerB/Documents exportiert.
+Zentrale Verwaltung d9c6... mit Revision 3 geladen und Recovery-Einladung
+ausgewaehlt. Benutzer um Eingabe des zuvor im Recovery-Assistenten angezeigten
+Fingerprints A44D1E2A656C8864DAADBD3598F3249A66863613C04BCFCF252A4E0480CD83B8
+gebeten; zentraler Freigabeerfolg noch offen. Oeffentliche Datei separat zum Host
+abgeholt: reines Zertifikat ohne privaten Schluessel, SHA256 des Zertifikats stimmt
+mit angezeigtem Fingerprint und Einladungsfeld ueberein. Keine private Datei
+ins Repository kopiert; Passphrase bleibt beim Benutzer.
+
+03.11.2026 Fortsetzung: VBox showvminfo meldet VMState=saved, seit
+2026-11-02T12:21:25Z. Sichtbarer Start per startvm --type gui wurde mit
+"rejected by user" abgelehnt; kein Ersatzweg/erneuter Startversuch.
+Am 02.11. hatte der Benutzer die Recovery-Sicherung abgeschlossen. Native
+Erfolgsmeldung selbst beobachtet: private Sicherung gespeichert und
+wiederhergestellt geprueft, noch kein Windows-Schluessel installiert und
+keine Freigabe erteilt. Das unten genannte Warten auf diese Eingabe ist erledigt.
+Oeffentlicher Recovery-Export, zentrale Freigabe, Windows-Wiederherstellung
+und Gruppenprojektablaeufe bleiben offen. Gespeicherten VM-Zustand erhalten.
+
+02.11.2026 Recovery-Gesamtablauf vorbereitet: Verwaltungsdialog nach gespeichertem
+Stand 3 geschlossen, separate Recovery-Einrichtung unter testerB geoeffnet und
+d9c6ffd7-0081-4189-b965-518c9204c10c ausgewaehlt. Benutzer um eigene Testpassphrase,
+private Sicherung unter Documents/recovery.group-private.json und offene
+Erfolgsmeldung gebeten. Antwort steht aus; keine erzeugte Recovery-Identitaet
+oder Sicherung behaupten. Danach oeffentliche Einladung nativ exportieren,
+Fingerprint dokumentieren, zentral freigeben und Wiederherstellung pruefen.
+
 02.11.2026 Personen-/Geraete-/Gruppenzuordnung nativ bestanden: in neuer d9c6...
 Verwaltung Testperson B angelegt (Name durch Benutzer, da Texteingabe VM nicht
 erreicht). Vorhandenes oeffentliches testerB-Zertifikat per PowerShell als reine

@@ -70,5 +70,13 @@
   {
     "file": "18-person-geraet-gruppen-signiert.png",
     "sha256": "F0922EB32D2609FEF2E5145BD1B305A0C10C021C5DB112BDAC7273E4C4AAF43F"
+  },
+  {
+    "file": "19-recovery-privat-gesichert.png",
+    "sha256": "7AA5E2C72DD08EA03D6AD2BD6DA8808D83524DD6C0FB16F950C17D07F53DCE1D"
+  },
+  {
+    "file": "20-recovery-zentral-freigegeben.png",
+    "sha256": "BB1F7B00F6D95B3BDB7C9360698BECF94AEB5E03F01F45F3BBD504C12EF9A589"
   }
 ]
