@@ -13,6 +13,17 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+03.11.2026 Nativen Projektlauf begonnen: testerB besitzt noch keine Projekte.
+Neues Projekt meldet: Die Profilbibliothek enthaelt kein Grundprofil.
+Gegen docs/GRUNDPROFILE.md und ProjectDraftFactory geprueft: Installer liefert
+absichtlich kein fachliches Profil; kein Vaultfehler. Noch kein Testprojekt
+angelegt. Fuer Fortsetzung synthetisches Grundprofil im Testprofil erstellen
+oder importieren, bestehende Identitaeten/Dateien erhalten. Parallele
+Hosteingaben unterbrachen VM-Bedienung; keine weiteren Klickversuche.
+Kollegenanleitung um getrennten Recovery-Ablauf mit Originalbild 21 und Hilfe
+bei fehlendem Grundprofil erweitert. Zielaudit auf tatsaechlich abgeschlossene
+native Registrierung und Recovery-Schluesselwiederherstellung aktualisiert.
+Visuelle Gesamtabnahme der Anleitung und native Projekt-Recovery bleiben offen.
 03.11.2026 Nach VM-Neustart Kandidat unveraendert als testerB mit geladenem
 Benutzerprofil erneut gestartet (PID 5856); temporäre Anmeldedatei danach
 unabhaengig als entfernt bestaetigt. Benutzer stellte vorhandene Recovery-
@@ -1487,4 +1498,3 @@ Automation sieencode-ui-und-pdf-fertigstellen: stuendlicher Heartbeat dieser Auf
 Keine doppelten Aufgaben/Automationen. Nur wesentliche Meilensteine/Fehler/erforderliche
 Benutzeraktionen melden. Nach echtem Abschluss oder wiederholt unloesbarer Blockade
 konkret berichten und pausieren; keine endlosen unveraenderten Pruefungen.
-
