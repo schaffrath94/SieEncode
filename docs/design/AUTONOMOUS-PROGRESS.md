@@ -13,6 +13,16 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+03.11.2026 Nativer Gruppenprojekt-/Recoverylauf bestanden: unter testerB ein
+neues synthetisches Grundprofil mit AES-Application 000001 nativ erstellt und
+gespeichert. Projektentwurf, zufaellige Schluessel und Gruppenprojekt samt Vault
+nativ erzeugt: Neues Projekt Gruppe, Bibliothek d9c6..., Revision 4, erste Gruppe.
+Separater Recovery-Button entsperrt; Recovery-Zugang pruefen bestaetigt Zugang,
+Projektbindung und Integritaet. Build bleibt sichtbar gesperrt. Ausdrueckliches
+normales Entsperren aktiviert Build wieder. Bilder 22/23 und Projekt-/Vaulthashes
+in offline-groups-native-project-result.json. Beide getrennten Identitaeten liegen
+im selben Testprofil: keine neue Recovery-only-/zweite-Maschinen-Abnahme behauptet.
+Projektkopie, Empfaengerwechsel und Installer-Deinstallation weiter offen.
 03.11.2026 Nativen Projektlauf begonnen: testerB besitzt noch keine Projekte.
 Neues Projekt meldet: Die Profilbibliothek enthaelt kein Grundprofil.
 Gegen docs/GRUNDPROFILE.md und ProjectDraftFactory geprueft: Installer liefert

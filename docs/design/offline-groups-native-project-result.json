@@ -1,0 +1,23 @@
+{
+  "Date": "2026-11-03",
+  "Candidate": "1.3.0-offline-groups.1",
+  "User": "testerB",
+  "ProjectId": "8ffff467-4236-42ac-969c-be9db8b4dffb",
+  "LibraryId": "d9c6ffd7-0081-4189-b965-518c9204c10c",
+  "GroupId": "gruppe-f96d623a10a84f1fb80b660539135e7f",
+  "PolicyRevisionAtCreation": 4,
+  "ProjectName": "Neues Projekt Gruppe",
+  "SyntheticProfile": "Neues-Grundprofil",
+  "SyntheticApplication": "000001 / DF_KEY_AES / one application key",
+  "NativeProfileCreation": true,
+  "NativeGroupProjectCreation": true,
+  "NativeRecoveryUnlock": true,
+  "NativeRecoveryIntegrityCheck": true,
+  "BuildDisabledDuringRecoveryObserved": true,
+  "ExplicitNormalUnlockSucceeded": true,
+  "BuildEnabledAfterNormalUnlockObserved": true,
+  "ProjectSHA256": "05EEA85DE0F5C30B33788E77473C506A27DC91607AF418173E05EC981BDBBA6C",
+  "VaultSHA256": "178118394C8E4194DA00CDE0B14401CC173F735BF9AFC4F757BE5D764170A421",
+  "Screenshots": ["22-gruppenprojekt-recovery.png", "23-gruppenprojekt-normal.png"],
+  "Scope": "Native creation and explicit recovery/normal editor paths in one Windows profile containing both separate identities. No recovery-only profile, second machine, card operation, recipient rotation or project copy acceptance claimed."
+}

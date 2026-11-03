@@ -82,5 +82,13 @@
   {
     "file": "21-recovery-wiederhergestellt.png",
     "sha256": "002598818507A391BC974B5D475C2AF7C56A14EBBAA785B2B856A8ABB98C9CD9"
+  },
+  {
+    "file": "22-gruppenprojekt-recovery.png",
+    "sha256": "91D7DEB54B55AC199E2E98E7D3B27832E0E7963C0A38AC5059AC6783DDCE5E93"
+  },
+  {
+    "file": "23-gruppenprojekt-normal.png",
+    "sha256": "87320701427FA9CDC8ED0EE55E591F7C900C91D461808664EADB2D5FC785BDD8"
   }
 ]
