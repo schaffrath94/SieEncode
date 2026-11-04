@@ -18,6 +18,23 @@
   "BuildEnabledAfterNormalUnlockObserved": true,
   "ProjectSHA256": "05EEA85DE0F5C30B33788E77473C506A27DC91607AF418173E05EC981BDBBA6C",
   "VaultSHA256": "178118394C8E4194DA00CDE0B14401CC173F735BF9AFC4F757BE5D764170A421",
-  "Screenshots": ["22-gruppenprojekt-recovery.png", "23-gruppenprojekt-normal.png"],
-  "Scope": "Native creation and explicit recovery/normal editor paths in one Windows profile containing both separate identities. No recovery-only profile, second machine, card operation, recipient rotation or project copy acceptance claimed."
+  "Screenshots": [
+    "22-gruppenprojekt-recovery.png",
+    "23-gruppenprojekt-normal.png"
+  ],
+  "Scope": "Native creation, recovery/normal editor paths, reopen and full project copy in one Windows profile containing both separate identities. No recovery-only profile, second machine, card operation or recipient rotation acceptance claimed.",
+  "NativeCopy": {
+    "Date": "2026-11-04",
+    "OriginalReopenedAfterAppRestart": true,
+    "OriginalNormalUnlock": true,
+    "Name": "Neues Projekt Gruppe Kopie",
+    "ProjectId": "6fd126e2-5401-45d9-9c6f-d7c75dccd081",
+    "SameLibraryAndGroup": true,
+    "OriginalProjectAndVaultHashesUnchanged": true,
+    "CopyNormalUnlock": true,
+    "CopyProjectSHA256": "AF99002953786EB30C19E6B361E2314267C7156E18B45BD10E6EF80813EF51CB",
+    "CopyVaultSHA256": "70C9A02928DDEDD661AF95F1786E1D59D79C6848F64DBF8A0C56DD184F421B51",
+    "Screenshot": "24-gruppenprojekt-kopie.png",
+    "CopyRecoveryChecked": false
+  }
 }

@@ -13,6 +13,17 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+04.11.2026 Native Projektkopie bestanden: VM lief, SieEncode war geschlossen.
+Geprueften Kandidaten als testerB gestartet (PID 4832), Profil und Entfernung
+der temporaeren Anmeldedatei separat bestaetigt. Vorhandenes Gruppenprojekt
+wieder geladen und normal entsperrt. Speichern unter erzeugte vollstaendige
+Kopie mit neuer ID 6fd126e2-5401-45d9-9c6f-d7c75dccd081; gleiche Bibliothek/Gruppe.
+Kopie nativ normal entsperrt. Originalprojekt und Originalvault separat gehasht:
+beide identisch mit Nachweis vom 03.11. Bild 24 und Metadaten im nativen
+Projektnachweis. Recovery der Kopie noch offen: Hostfenster verdeckte Klick,
+Aktivierung meldete Benutzereingabe; kein erfolgreicher Recoveryklick behauptet.
+Weiterhin offen: nativer Empfaengerwechsel, Delegationsgesamtweg,
+Deinstallation/Datenbewahrung und abschliessende Anleitungskontrolle.
 03.11.2026 Nativer Gruppenprojekt-/Recoverylauf bestanden: unter testerB ein
 neues synthetisches Grundprofil mit AES-Application 000001 nativ erstellt und
 gespeichert. Projektentwurf, zufaellige Schluessel und Gruppenprojekt samt Vault
