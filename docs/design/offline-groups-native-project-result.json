@@ -35,6 +35,20 @@
     "CopyProjectSHA256": "AF99002953786EB30C19E6B361E2314267C7156E18B45BD10E6EF80813EF51CB",
     "CopyVaultSHA256": "70C9A02928DDEDD661AF95F1786E1D59D79C6848F64DBF8A0C56DD184F421B51",
     "Screenshot": "24-gruppenprojekt-kopie.png",
-    "CopyRecoveryChecked": false
+    "CopyRecoveryChecked": true
+  },
+  "NativeRecoveryRotation": {
+    "Date": "2026-11-04",
+    "ProjectId": "6fd126e2-5401-45d9-9c6f-d7c75dccd081",
+    "RecipientsChanged": false,
+    "ConfirmedNativePreview": true,
+    "RecoveryIntegrityCheckAfterRotation": true,
+    "BuildStillDisabledInRecovery": true,
+    "EncryptedBackupSHA256": "70C9A02928DDEDD661AF95F1786E1D59D79C6848F64DBF8A0C56DD184F421B51",
+    "BackupEqualsPriorVault": true,
+    "RotatedVaultSHA256": "99ADAE130069EA3A558B212DCB836B39955379C8725BF79373AFC319EBF91DAB",
+    "ProjectFileUnchanged": true,
+    "NormalUnlockAfterRotationObserved": false,
+    "Scope": "Native content-key rotation with unchanged recipients; normal unlock clicked but result obscured by desktop interaction"
   }
 }

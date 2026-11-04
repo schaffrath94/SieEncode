@@ -13,6 +13,15 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+04.11.2026 Recovery der nativen Projektkopie und Inhaltsschluesselrotation
+bestanden: separater Recovery-Button, Integritaetspruefung und Build-Sperre
+beobachtet (Bild 25). Empfaenger-Vorschau zeigt keine Hinzufuegungen/Entfernungen;
+bestaetigte Neuverschluesselung erzeugt verschluesselte Altsicherung (Bild 26).
+Deren Hash entspricht exakt dem Kopie-Vault vor Rotation. Projektdatei bleibt
+hashgleich; neuer Vault-Hash und Details im nativen Projektnachweis. Recovery-
+Integritaetspruefung danach erneut erfolgreich. Normales Entsperren angeklickt,
+aber Ergebnis durch Fenstergroessenwechsel/Hosteingaben verdeckt: bleibt offen.
+Dies belegt Rotation bei unveraenderten Empfaengern, keinen Rechteentzug.
 04.11.2026 Native Projektkopie bestanden: VM lief, SieEncode war geschlossen.
 Geprueften Kandidaten als testerB gestartet (PID 4832), Profil und Entfernung
 der temporaeren Anmeldedatei separat bestaetigt. Vorhandenes Gruppenprojekt
