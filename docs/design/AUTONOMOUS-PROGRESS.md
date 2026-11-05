@@ -13,6 +13,17 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+05.11.2026 Kandidat 2 nativ gestartet als testerB (PID 2260), Besitzer separat
+bestaetigt; temporaere Anmeldedatei entfernt, keine Fixtures kopiert. Uebersicht
+zeigt beide bestehenden Projekte und Version 1.3.0-offline-groups.2. Bestehende
+rotierte Kopie nativ ausgewaehlt und im Editor geladen. Noch KEIN normales oder
+Recovery-Entsperren nach Upgrade: fremdes Hostfenster verdeckte VM, nach einmaliger
+Fokuskorrektur wechselte Fenstergroesse; Tool meldete Benutzereingaben. Keine
+weiteren Klicks. App bleibt offen; bei Wiederaufnahme frisch beobachten.
+Kollegenanleitung um konkrete normale/Recovery-Projektwege und Originalbilder
+22/23 ergaenzt; Bilder vor Verwendung angesehen, alle lokalen Bildverweise
+vorhanden. Entwurf auf Kandidat 2 aktualisiert, alte Bildversionen explizit benannt.
+Visuelle Gesamtkontrolle weiterhin offen, keine fertige Anleitung behauptet.
 05.11.2026 Reales MSI-Upgrade Kandidat 1 -> 1.3.0-offline-groups.2 bestanden:
 MSI Exit 0, installierte DLL C84C1772... exakt erwartet. Vorher-/Nachherpruefung
 in allen drei geladenen Profilen PASS: labadmin 7 Dateien/1 RSA-Identitaet,
