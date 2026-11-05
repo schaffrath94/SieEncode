@@ -13,6 +13,18 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+05.11.2026 Kandidat 2 fertig gebaut und lokal geprueft: Paketversion
+1.3.0-offline-groups.2, MSI ProductVersion 1.3.0, Quelle 8dcde39 (sauber).
+Publizierter UI-Smoke OK/60 mit exakter neuer Version. MSI administrativ
+extrahiert, alle 1076 Release-Dateien hashgleich. Runtime 495 Dateien bytegleich
+zu Kandidat 1, dessen Paketpruefsummen unveraendert. Exakte Identitaet in
+OFFLINE-GROUPS-CANDIDATE-1.3.0-2.md und offline-groups-candidate2-verification.json.
+WiX ICE40/ICE61 Hinweise wie dokumentiert; Build Exit 0. Kein portables Paket,
+keine Installation auf Host/VM, keine neue Releasefreigabe. VM laeuft; separate
+Abfrage bestaetigt keine SieEncode-Prozesse und weiterhin Kandidat-1-DLL.
+Naechster Schritt: Daten-/Identitaetsbaseline vor Installerlebenszyklus und
+Upgrade erfassen; Deinstallationserhalt-Helfer ist noch an Kandidat 1 gebunden.
+GitHub-Push weiterhin nicht wiederholt nach frueherer Ablehnung.
 05.11.2026 Konkreten UI-Kontextfehler aus nativer Kopierabnahme behoben:
 Nach Kopie/Neuanlage lud der Editor das neue Gruppenprojekt, RefreshProjects
 waehlte jedoch das alte Bibliotheksprojekt erneut. Kopfzeile und nachgelagerte

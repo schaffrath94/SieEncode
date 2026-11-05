@@ -1,0 +1,52 @@
+{
+  "packageVersion": "1.3.0-offline-groups.2",
+  "msiProductVersion": "1.3.0",
+  "sourceCommit": "8dcde39b0f1e28b923538f30bb791d615a44f87b",
+  "sourceWasClean": true,
+  "verifiedUtc": "2026-11-05T10:03:07.5769210Z",
+  "status": "candidate-verified-not-release-approved",
+  "verifiedMsiFiles": 1076,
+  "packageHashes": [
+    {
+      "File": "SieEncode_1.3.0-offline-groups.2_internal_x64.msi",
+      "SHA256": "280D3162B1FF913A056B32127688AE9CC8F234C9132792BFAA0E1034733546B9",
+      "Bytes": 136837714
+    },
+    {
+      "File": "SieEncode_1.3.0-offline-groups.2_internal_acceptance-testkit.zip",
+      "SHA256": "BBFB9300258580F4D8FBA952209C09A8338BD0C9ACF03FC6D352150AF2A14357",
+      "Bytes": 31458
+    }
+  ],
+  "studioDllSha256": "C84C1772A6E3D6FD9E73A7DEB18A2069DAED4487A35B6BE0CEBAD71CA4661B39",
+  "runtimeCopiedByteIdentically": true,
+  "runtimeFilesCompared": 495,
+  "priorCandidatePackagesUnchanged": true,
+  "uiSmokeVersion": "1.3.0-offline-groups.2",
+  "uiSmokeChecks": 60,
+  "actualInstallationPerformed": false,
+  "remainingGates": [
+    "VM upgrade and corrected native project selection",
+    "Native recipient changes and delegation",
+    "Uninstall/reinstall data preservation",
+    "Final guide visual review"
+  ],
+  "runtimeIdentity": {
+    "schemaVersion": "1.0",
+    "createdUtc": "2026-09-14T07:45:11.1181133Z",
+    "sourceRoot": "D:\\OneDrive - Siemens AG\\Documents\\ChatGPT\\RFiDGear Projektbuilder\\GitHub\\SieEncode.Runtime",
+    "sourceCommit": "c959bd4a930833af094b696100a71e248a1dc7c4",
+    "sourceHadUncommittedChanges": true,
+    "testsExecuted": true,
+    "executable": {
+      "file": "SieEncode.Runtime.exe",
+      "sha256": "AEE487BC89FCF308D53360570B00B54F0253FFECA84374FF46FBED38A1570E95",
+      "bytes": 283136
+    },
+    "assembly": {
+      "file": "SieEncode.Runtime.dll",
+      "sha256": "FFF3C419DE115BFDA2EF3AE31C971D66441E79F6B39DEB6CED55055D1B7C7AA7",
+      "bytes": 2084864
+    }
+  }
+}
