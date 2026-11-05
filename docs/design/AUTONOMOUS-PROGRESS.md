@@ -13,6 +13,16 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+05.11.2026 RSA-Providerfehler als Startkontextproblem eingegrenzt: derselbe
+Windows-PowerShell-Pruefer besteht mit ProcessStartInfo.LoadUserProfile=true.
+Guestcontrol --profile allein reichte fuer testerA nicht. Keine Zertifikate oder
+Schluessel ersetzt. Capture PASS: labadmin 7 Dateien/1 RSA-Identitaet,
+testerA 69/2, testerB 104/2. Temporaere Anmeldedatei danach separat als entfernt
+bestaetigt. Gemeinsame Fixtures unter beiden berechtigten normalen Benutzern.
+Echter Kandidat-1-Deinstallations-/Wiederinstallationstest abgeschlossen, PID 4948 beendet,
+Protokoll C:/SieEncodeLab/Evidence/preservation-20261105/lifecycle.log. Ergebnis
+PASS: MSI Deinstallation und Wiederinstallation jeweils Exit 0. Nicht wiederholen. Installer hashgeprueft, App geschlossen,
+alle drei Baselines vorhanden, VerifyRemoved und VerifyRestored unter allen drei Konten PASS. DLL-Hash nach Wiederinstallation exakt Kandidat 1; temporaere Anmeldedatei entfernt. Nachweis offline-groups-uninstall-preservation-result.json. Kandidat-2-Upgrade und natives Wiederoeffnen bleiben offen.
 05.11.2026 Installer-Datenerhalt begonnen, noch keine Deinstallation/Upgrade:
 VM laeuft, Worktree vor Test sauber. Shared-VaultProbe1-ACL erlaubt testerA/B,
 Administratoren und SYSTEM; labadmin-Gastprozess hat gefilterten Token und
@@ -1566,4 +1576,3 @@ Automation sieencode-ui-und-pdf-fertigstellen: stuendlicher Heartbeat dieser Auf
 Keine doppelten Aufgaben/Automationen. Nur wesentliche Meilensteine/Fehler/erforderliche
 Benutzeraktionen melden. Nach echtem Abschluss oder wiederholt unloesbarer Blockade
 konkret berichten und pausieren; keine endlosen unveraenderten Pruefungen.
-

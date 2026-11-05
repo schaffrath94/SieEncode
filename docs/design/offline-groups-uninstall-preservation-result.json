@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-05",
+  "environment": "SIEENCODE-LAB, real Windows profiles in VirtualBox",
+  "candidate": "1.3.0-offline-groups.1",
+  "msiSHA256": "268A850AD71354E702CB850831E226C51D88226FB00FAF05A47AC8BAB8B1DD4D",
+  "installedDllAfterReinstallSHA256": "81F79933C67CC007B63A0A8C14F4E7AB939FBA0EDF369C4BADE07D807EBB0F38",
+  "actualUninstallExitCode": 0,
+  "actualReinstallExitCode": 0,
+  "profiles": [
+    {"user": "labadmin", "files": 7, "usableRsaIdentities": 1, "capture": "PASS", "removed": "PASS", "restored": "PASS", "scope": "Own profile only; shared fixtures checked by both ordinary users"},
+    {"user": "testerA", "files": 69, "usableRsaIdentities": 2, "capture": "PASS", "removed": "PASS", "restored": "PASS", "scope": "Own profile and shared fixtures"},
+    {"user": "testerB", "files": 104, "usableRsaIdentities": 2, "capture": "PASS", "removed": "PASS", "restored": "PASS", "scope": "Own profile and shared fixtures"}
+  ],
+  "checks": ["File hashes and counts unchanged", "Certificate inventory unchanged", "RSA OAEP SHA256 roundtrip for every private RSA identity", "Application registration and binaries absent after removal", "Exact installed DLL identity after reinstall", "Temporary credentials independently confirmed removed"],
+  "profileLaunch": "ProcessStartInfo.LoadUserProfile=true; VBox guestcontrol --profile alone produced provider errors for testerA",
+  "guestEvidenceDirectory": "C:/SieEncodeLab/Evidence/preservation-20261105",
+  "evidenceSHA256": {
+    "lifecycle.log": "575D0CD886CA2CB44AB3C7B4D538342247DFEDC46E83CB37C46C4F239EB73E9B",
+    "uninstall.log": "C3F923298D93E8838D6A32D6ED9219FD5D73B87614AC59663718BB79204AAFC9",
+    "reinstall.log": "93448066F45A26B24A4634F6FCE706C6DECF97F307EC185161523956F27EA68A"
+  },
+  "limitations": ["No candidate2 upgrade yet", "Native application reopening after reinstall not yet checked", "No hardware acceptance", "No second computer acceptance", "Overlapping shared file counts must not be summed as unique files"]
+}

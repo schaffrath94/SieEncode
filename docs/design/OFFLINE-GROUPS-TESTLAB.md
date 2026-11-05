@@ -171,3 +171,14 @@ Store; kein Nachweis fuer fremde Rechner, Cloud-Synchronisation oder Hardware.
 Die laufende Windows-Einrichtung ist keine Produktfreigabe. Native Bedienablaeufe,
 echte Recoveryinstallation, Gruppenrechte und Benutzerisolation bleiben bis zur
 tatsaechlichen Ausfuehrung offen. Eine VM ersetzt keine Reader-/Kartenabnahme.
+
+## Abgeschlossene Deinstallationsabnahme (05.11.2026)
+
+Reale Deinstallation und Wiederinstallation von Kandidat 1 jeweils Exit 0.
+Capture, VerifyRemoved und VerifyRestored fuer labadmin/testerA/testerB bestanden.
+Dateien und private RSA-Identitaeten erhalten; exakte Zahlen und Logpruefsummen:
+[Ergebnis](offline-groups-uninstall-preservation-result.json). Normale Benutzer
+muessen mit ProcessStartInfo.LoadUserProfile=true gestartet werden; guestcontrol
+--profile allein fuehrte zu RSA-Providerfehlern. Gemeinsame Fixtures werden unter
+beiden berechtigten normalen Benutzern geprueft, labadmin erfasst eigene Daten.
+Native App-Wiederoeffnung und Upgrade auf Kandidat 2 weiterhin offen.
