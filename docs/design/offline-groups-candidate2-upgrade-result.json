@@ -1,0 +1,43 @@
+{
+  "Date": "2026-11-05",
+  "FromCandidate": "1.3.0-offline-groups.1",
+  "ToCandidate": "1.3.0-offline-groups.2",
+  "MsiSHA256": "280D3162B1FF913A056B32127688AE9CC8F234C9132792BFAA0E1034733546B9",
+  "InstalledDllSHA256": "C84C1772A6E3D6FD9E73A7DEB18A2069DAED4487A35B6BE0CEBAD71CA4661B39",
+  "ActualUpgradeExitCode": 0,
+  "Profiles": [
+    {
+      "BeforeUpgrade": "PASS",
+      "UsableRsaIdentities": 1,
+      "AfterUpgrade": "PASS",
+      "User": "labadmin",
+      "Files": 7
+    },
+    {
+      "BeforeUpgrade": "PASS",
+      "UsableRsaIdentities": 2,
+      "AfterUpgrade": "PASS",
+      "User": "testerA",
+      "Files": 69
+    },
+    {
+      "BeforeUpgrade": "PASS",
+      "UsableRsaIdentities": 2,
+      "AfterUpgrade": "PASS",
+      "User": "testerB",
+      "Files": 104
+    }
+  ],
+  "TemporaryCredentialsRemoved": true,
+  "GuestEvidenceDirectory": "C:/SieEncodeLab/Evidence/upgrade-candidate2-20261105",
+  "EvidenceSHA256": {
+    "lifecycle.log": "66794D55DA12460D38FA29660D69D61545B3744168AA88C7FE383D35D139CF85",
+    "upgrade.log": "467ECC7B2A09E2B17E91D6B5FD9A048917D49044ACB35E44E665EDB7B09B6CC3"
+  },
+  "Limitations": [
+    "Native project reopening and copy-selection check pending",
+    "No hardware acceptance",
+    "No second computer acceptance",
+    "Shared files overlap between normal user counts"
+  ]
+}

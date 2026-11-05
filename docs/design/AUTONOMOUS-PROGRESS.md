@@ -13,6 +13,17 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+05.11.2026 Reales MSI-Upgrade Kandidat 1 -> 1.3.0-offline-groups.2 bestanden:
+MSI Exit 0, installierte DLL C84C1772... exakt erwartet. Vorher-/Nachherpruefung
+in allen drei geladenen Profilen PASS: labadmin 7 Dateien/1 RSA-Identitaet,
+testerA 69/2, testerB 104/2. Alle Dateihashes und Zertifikatinventare unveraendert,
+RSA-OAEP-SHA256 weiter nutzbar. Temporaere Anmeldedatei separat als entfernt
+bestaetigt, Upgradeprozess beendet. Keine native Bedienabnahme daraus ableiten.
+Nachweis offline-groups-candidate2-upgrade-result.json. Helfer ergaenzt um
+BeforeUpgrade/AfterUpgrade, gebunden an alte Baseline, Benutzer-SID und exakten
+neuen DLL-Hash; Originalbelege nicht ueberschrieben. Nativ Projekt wieder oeffnen,
+normal/Recovery entsperren und Kopie-Auswahlkorrektur pruefen bleibt naechster Schritt.
+Vorbereiteter Launcher tmp/Start-Candidate2WithProfile.ps1 noch nicht ausgefuehrt.
 05.11.2026 RSA-Providerfehler als Startkontextproblem eingegrenzt: derselbe
 Windows-PowerShell-Pruefer besteht mit ProcessStartInfo.LoadUserProfile=true.
 Guestcontrol --profile allein reichte fuer testerA nicht. Keine Zertifikate oder
