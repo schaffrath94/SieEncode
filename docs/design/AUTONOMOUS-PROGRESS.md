@@ -13,6 +13,18 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+05.11.2026 Konkreten UI-Kontextfehler aus nativer Kopierabnahme behoben:
+Nach Kopie/Neuanlage lud der Editor das neue Gruppenprojekt, RefreshProjects
+waehlte jedoch das alte Bibliotheksprojekt erneut. Kopfzeile und nachgelagerte
+Projektaktionen konnten weiter auf das Original zeigen. Gemeinsamer Ladepfad
+waehlt nun den neu angelegten Katalogeintrag wie beim normalen Speichern.
+Gezielte UI-Regression prueft Kopie-Pfad, Kopfzeile, Abnahmepfad und gesperrten
+Vault. Test-CI Exit 0, 72/72; isolierter UI-Smoke Exit 0, OK, 60 Checks.
+Nachweis: offline-groups-copy-selection-fix-result.json. Gebaute lokale Quelle
+traegt die Standardversion 1.1.0-rc15; dies ist kein RC15-Releasepaket.
+Installierter Kandidat 1.3.0-offline-groups.1 bleibt unveraendert und enthaelt
+diese Korrektur noch nicht. Neues MSI mit eigener Identitaet und gezielte
+Upgrade-/Bedienabnahme erforderlich, bevor die Korrektur freigegeben wird.
 04.11.2026 Recovery der nativen Projektkopie und Inhaltsschluesselrotation
 bestanden: separater Recovery-Button, Integritaetspruefung und Build-Sperre
 beobachtet (Bild 25). Empfaenger-Vorschau zeigt keine Hinzufuegungen/Entfernungen;

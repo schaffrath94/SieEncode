@@ -14,8 +14,7 @@ public partial class MainWindow
             "Neuen eindeutigen Projekt-/Ordnernamen eingeben. Projekt und Vault werden gemeinsam mit neuer Projekt-ID kopiert. Bibliothek und Gruppe bleiben gleich; aktuelle zentrale Empfänger gelten. Offene Editor- und geladene Schlüsseländerungen werden in die Kopie übernommen. Originaldateien bleiben unverändert.", editorProject.Project.Name + " Kopie");
         if (name is null) return false;
         var result = CopyEditorGroupProject(name);
-        LoadEditor(ProjectJson.Load(result.ProjectPath), result.ProjectPath);
-        RefreshProjects();
+        LoadCreatedGroupProject(result);
         SetStatus("Vollständige Gruppenprojektkopie mit neuer ID gespeichert. Zum Arbeiten erneut entsperren; Originaldateien bleiben unverändert.");
         return true;
     }
@@ -47,11 +46,18 @@ public partial class MainWindow
             if (migration && (editorDirty || editorVaultPayload is not null && !editorKeysPersisted)) throw new InvalidOperationException("Vor der Migration Projekt- und Schlüsseländerungen speichern oder verwerfen.");
             var dialog = new GroupProjectSetupWindow(this, localGroupTrustDirectory, editorProject.Project.Name + " Gruppe", migration, CreateEditorGroupProject);
             if (dialog.ShowDialog() != true || dialog.Result is null) return;
-            LoadEditor(ProjectJson.Load(dialog.Result.ProjectPath), dialog.Result.ProjectPath);
-            RefreshProjects();
+            LoadCreatedGroupProject(dialog.Result);
             SetStatus("Neue Gruppenprojektkopie vollständig gespeichert und geprüft. Zum Arbeiten mit normalem Gruppenzugang entsperren. Originale bleiben erhalten.");
         }
         catch (Exception exception) { ShowError(exception); }
+    }
+
+    private void LoadCreatedGroupProject(GroupProjectCreationResult result)
+    {
+        LoadEditor(ProjectJson.Load(result.ProjectPath), result.ProjectPath);
+        RefreshProjects();
+        var entry = projects.FirstOrDefault(item => string.Equals(item.SourcePath, editorSourcePath, StringComparison.OrdinalIgnoreCase));
+        if (entry is not null) { SelectProject(entry); ProjectsGrid.SelectedItem = entry; }
     }
 
     private GroupProjectCreationResult CreateEditorGroupProject(Guid library, string group, GroupPolicyCheckpoint policy, string name, string? phrase)

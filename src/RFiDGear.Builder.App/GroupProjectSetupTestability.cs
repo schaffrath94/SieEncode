@@ -20,7 +20,7 @@ public partial class MainWindow
             try { create.CreateSelected("UI Group New", null, false); throw new Exception("Unconfirmed group creation accepted."); }
             catch (InvalidDataException) { }
             var result = create.CreateSelected("UI Group New", null, true);
-            LoadEditor(ProjectJson.Load(result.ProjectPath), result.ProjectPath);
+            LoadCreatedGroupProject(result);
             if (editorVaultVerified || editorVaultVersion != ProjectGroupVault.ProtectionLevel) throw new Exception("New group project not locked/classified.");
             var lockedCopy = CopyEditorGroupProject("UI Group Locked Copy");
             if (lockedCopy.ProjectId == result.ProjectId) throw new Exception("Copy reused project identity.");
@@ -35,6 +35,11 @@ public partial class MainWindow
                 ConcurrentFileWriter.Capture(result.ProjectPath) != result.ProjectRevision ||
                 ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(result.ProjectPath)) != result.VaultRevision)
                 throw new Exception("Editor copy lost edits, changed binding or modified original files.");
+            LoadCreatedGroupProject(editedCopy);
+            if (selectedProject?.SourcePath != editedCopy.ProjectPath ||
+                !CurrentProject.Text.StartsWith("UI Group Edited Copy ·", StringComparison.Ordinal) ||
+                AcceptancePath.Text != Path.GetDirectoryName(editedCopy.ProjectPath) || editorVaultVerified)
+                throw new Exception("Group copy left the original selected in the header or downstream project actions.");
         }
         finally { create.Close(); }
         var legacy = Path.Combine(projectsDirectory, "UI Legacy Source", "source.project.json");

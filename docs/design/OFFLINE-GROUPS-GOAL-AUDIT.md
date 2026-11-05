@@ -19,7 +19,7 @@ VM weiterhin nicht fuer verlaessliche laengere Abnahmen freigegeben.
 ## Bewerteter Stand
 
 Testkandidat `1.3.0-offline-groups.1` aus sauberer Studio-Quelle
-`2be1be0857c1933e5bc91c95d3296f84052ce6b7`. Danach Dokumentation und Testlab-Pruefhelfer; keine Aenderung der gebauten Produktquelle.
+`2be1be0857c1933e5bc91c95d3296f84052ce6b7`. Danach Dokumentation und Testlab-Pruefhelfer. Am 05.11. wurde die Projektauswahl nach Gruppenprojektkopie/Neuanlage in der Quelle korrigiert und mit CI 72/72 sowie isoliertem UI-Smoke (60 Checks) geprueft. Der installierte Kandidat enthaelt diese Korrektur noch nicht; eigener neuer Kandidat samt gezielter Abnahme erforderlich (offline-groups-copy-selection-fix-result.json).
 Die [Kandidatennachweise](OFFLINE-GROUPS-CANDIDATE-1.3.0-1.md) enthalten exakte
 Hashwerte und Grenzen. CI: `tmp/group-device-import-ci.log`, 72/72 Tests;
 publizierter Kandidat: `tmp/offline-groups-candidate-smoke/SieEncode/ui-smoke/ui-smoke-result.json`,
