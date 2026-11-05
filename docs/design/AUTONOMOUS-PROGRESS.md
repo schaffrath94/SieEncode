@@ -13,6 +13,20 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+05.11.2026 Installer-Datenerhalt begonnen, noch keine Deinstallation/Upgrade:
+VM laeuft, Worktree vor Test sauber. Shared-VaultProbe1-ACL erlaubt testerA/B,
+Administratoren und SYSTEM; labadmin-Gastprozess hat gefilterten Token und
+kann Shared nicht lesen. Pruefhelfer erfasst Shared deshalb ausdruecklich unter
+beiden normalen Benutzern, labadmin nur eigene Daten; ScopeRoots im Nachweis.
+Keine ACL geaendert. Labadmin Capture PASS: 7 Dateien, 1 nutzbare RSA-Identitaet.
+TesterA Capture bricht vor Baseline-Schreiben ab: GetRSAPrivateKey meldet unter
+Windows PowerShell fuer beide RSA-Zertifikate "Ungueltigen Anbietertyp angegeben".
+Separate Diagnose bestaetigt HasPrivateKey=true fuer Synthetic VM testera und
+Separate Group Recovery, aber denselben Providerfehler bei beiden. TesterB noch
+nicht ausgefuehrt. Kein Schluessel geloescht/exportiert, kein Installer gestartet.
+Naechster Schritt: Provider-/Prozessumgebung gegen installierten .NET-App-Zugriff
+pruefen; Fehler nicht ueberspringen. Bestehende labadmin-Baseline nicht ersetzen.
+Parser und git diff --check fuer Helferanpassung bestanden.
 05.11.2026 Kandidat 2 fertig gebaut und lokal geprueft: Paketversion
 1.3.0-offline-groups.2, MSI ProductVersion 1.3.0, Quelle 8dcde39 (sauber).
 Publizierter UI-Smoke OK/60 mit exakter neuer Version. MSI administrativ
@@ -1552,3 +1566,4 @@ Automation sieencode-ui-und-pdf-fertigstellen: stuendlicher Heartbeat dieser Auf
 Keine doppelten Aufgaben/Automationen. Nur wesentliche Meilensteine/Fehler/erforderliche
 Benutzeraktionen melden. Nach echtem Abschluss oder wiederholt unloesbarer Blockade
 konkret berichten und pausieren; keine endlosen unveraenderten Pruefungen.
+

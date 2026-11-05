@@ -50,9 +50,12 @@ $roots = @(
     (Join-Path $env:LOCALAPPDATA 'SieEncode'),
     (Join-Path $env:APPDATA 'SieEncode'),
     (Join-Path $env:LOCALAPPDATA 'SieEncodeLab\VaultProbe1'),
-    (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'SieEncode-Projekte'),
-    'C:\SieEncodeLab\Shared\VaultProbe1'
+    (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'SieEncode-Projekte')
 )
+# The shared fixture ACL grants testerA/testerB and elevated administrators.
+# Guest-control labadmin runs with a filtered token. Do not change that ACL or
+# silently skip access failures: both ordinary users must verify the shared root.
+if ($env:USERNAME -ne 'labadmin') { $roots += 'C:\SieEncodeLab\Shared\VaultProbe1' }
 $files = @{}
 foreach ($root in $roots) {
     if (-not (Test-Path -LiteralPath $root)) { continue }
@@ -88,7 +91,7 @@ try {
 } finally { $store.Close() }
 if ($certificates.Count -eq 0) { throw 'No usable RSA identity found in this Windows profile.' }
 $record = [ordered]@{ Phase=$Phase; UserSid=$identity.User.Value; CandidateDllSHA256=$expectedDll;
-    BaselineSHA256=$baselineHash; Files=$files; Certificates=@($certificates | Sort-Object); RecordedUtc=[DateTime]::UtcNow.ToString('o') }
+    BaselineSHA256=$baselineHash; ScopeRoots=$roots; Files=$files; Certificates=@($certificates | Sort-Object); RecordedUtc=[DateTime]::UtcNow.ToString('o') }
 if ($Phase -ne 'Capture') {
     $before = Get-Content -LiteralPath $baselinePath -Raw | ConvertFrom-Json
     if ($before.UserSid -ne $identity.User.Value -or $before.CandidateDllSHA256 -ne $expectedDll) { throw 'Baseline belongs to a different identity or candidate.' }
