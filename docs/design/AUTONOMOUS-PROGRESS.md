@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+06.11.2026 MSI-Kandidat 1.3.0-offline-groups.4 fertig aus sauberem 2c2a6af.
+Stationsfix fuer Passphrasen-Vaults enthalten. Publizierter Anwendungstest
+Exit 0, korrekte Version, OK/61. MSI-Bau und administrative Extraktion Exit 0,
+1086 Release-Dateien hashgleich, 495 Runtime-Dateien bytegleich Kandidat 3.
+MSI SHA256 0F1AABF98BF91D72A4B2475757C97017563766414EFD2E60D64ACD48F8E7FD73.
+Nachweis offline-groups-candidate4-verification.json. Intern unsigniert, kein
+portables Paket. Keine Installation oder Kartenaktion fuer Kandidat 4 durchgefuehrt.
+Naechster Schritt durch Benutzer: MSI installieren, kurze Anleitung
+ABNAHME-PASSPHRASEN-STATION.md ausfuehren und Ergebnisse zur Dokumentation melden.
+Weitere native Gruppen-/Recovery-Restabnahmen bleiben offen; Bilder nachrangig.
+Keine automatische Desktopbedienung; GitHub-Push weiterhin nicht wiederholt.
+
 06.11.2026 Stationsfix synthetisch bestanden: Test-CI 72/72, CLI/App Build
 ohne Warnungen/Fehler (tmp/legacy-station-ci.log). Zusaetzlicher Anwendungstest
 Exit 0 (tmp/legacy-station-smoke/stdout2.log): v2-Passphrase ohne Identitaet,

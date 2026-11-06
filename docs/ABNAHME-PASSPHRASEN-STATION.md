@@ -1,6 +1,7 @@
 # Kurze manuelle Abnahme: Station mit Passphrasen-Vault
 
-Erst mit einem neuen Installer ausfuehren, dessen Build den Stationsfix enthaelt.
+Mit Kandidat **1.3.0-offline-groups.4** ausfuehren (MSI, kein portables Paket).
+SHA256: `0F1AABF98BF91D72A4B2475757C97017563766414EFD2E60D64ACD48F8E7FD73`.
 Kandidat 1.3.0-offline-groups.3 enthaelt diesen Fix noch nicht. Exakte Version
 und Installer-Pruefsumme im Ergebnis notieren. Keine Passphrase oder Schluessel
 in die Rueckmeldung aufnehmen.
