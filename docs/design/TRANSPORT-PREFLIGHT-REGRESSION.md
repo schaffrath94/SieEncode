@@ -37,3 +37,7 @@ Diese Anleitung ist vorbereitet; die manuelle Abnahme ist noch offen.
 
 Automatischer Nachweis: Test-CI.ps1 Exit 0, 72/72 Tests; CLI und App ohne
 Warnungen/Fehler. Log: tmp/transport-preflight-ci.log. Noch nicht paketiert.
+
+Korrigiertes MSI: artifacts/offline-groups-1.3.0-preview.3/package/SieEncode_1.3.0-offline-groups.3_internal_x64.msi.
+Kandidat 3: UI-Smoke 60/60, 1081 MSI-Dateien hashgleich. Echte Installation und
+manuelle Benutzerabnahme noch offen. Installer kann die vorhandene Version ersetzen.

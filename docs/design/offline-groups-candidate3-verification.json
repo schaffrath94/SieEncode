@@ -1,0 +1,24 @@
+{
+  "packageVersion": "1.3.0-offline-groups.3",
+  "sourceCommit": "ec5ca1c5d87faa2c3a18c7bc1751e2b2f8b4f82c",
+  "sourceWasClean": true,
+  "verifiedMsiFiles": 1081,
+  "runtimeFilesCompared": 495,
+  "runtimeCopiedByteIdentically": true,
+  "packageHashes": [
+    {
+      "File": "SieEncode_1.3.0-offline-groups.3_internal_acceptance-testkit.zip",
+      "SHA256": "E074F878DAE727ADD1FA329C64E9A11C12D6A6A4FEAC8BA23CC174ED1DC4A8B3",
+      "Bytes": 31458
+    },
+    {
+      "File": "SieEncode_1.3.0-offline-groups.3_internal_x64.msi",
+      "SHA256": "2F02A5FDE4A35B580479C5C311E9375A758AE517E90AFE52E5B0E4BC1D75CEE3",
+      "Bytes": 136842618
+    }
+  ],
+  "studioDllSHA256": "254F375A472C6DF1BE9111141032ECCA73D1A023A2920481AC5497EE83B179AB",
+  "uiSmokeChecks": 60,
+  "actualInstallationPerformed": false,
+  "status": "candidate-verified-not-release-approved"
+}

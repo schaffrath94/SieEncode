@@ -13,6 +13,16 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+06.11.2026 MSI-Kandidat 1.3.0-offline-groups.3 aus sauberem ec5ca1c gebaut.
+Transport-Preflight-Fix enthalten. UI-Smoke der publizierten Anwendung Exit 0,
+OK/60 mit korrekter Version. Administrative MSI-Extraktion Exit 0, alle 1081
+Release-Dateien hashgleich; 495 Runtime-Dateien unveraendert gegen Kandidat 2.
+MSI SHA256 2F02A5FDE4A35B580479C5C311E9375A758AE517E90AFE52E5B0E4BC1D75CEE3.
+Exakte Identitaet: offline-groups-candidate3-verification.json. Kein portables
+Paket, keine echte Installation von Kandidat 3, keine abgeschlossene Freigabe.
+WiX ICE40/ICE61 wie bisher; Build Exit 0. Manuelle Abnahme des Benutzerfalls
+nach Installation steht offen; Anleitung TRANSPORT-PREFLIGHT-REGRESSION.md.
+GitHub-Push nach frueherer Ablehnung weiterhin nicht wiederholt.
 06.11.2026 Benutzerfehler in Hostversion 1.2.1 priorisiert: native Anzeige der
 Projektbibliothek gelesen, fuenf TRANSPORT-Befunde bei Projekt pruefen. Keine
 Kartenauthentisierung beobachtet, keine Kundendaten/Schluessel veraendert oder
