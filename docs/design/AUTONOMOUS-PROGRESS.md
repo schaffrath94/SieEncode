@@ -13,6 +13,15 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+06.11.2026 Kandidat 3 real in Test-VM installiert: Upgrade von Kandidat 2 Exit 0,
+DLL-Hash exakt 254F375A...; Capture/BeforeUpgrade/AfterUpgrade unter drei geladenen
+Profilen PASS (labadmin 7/1, testerA 69/2, testerB 104/2 Dateien/RSA-Identitaeten).
+Neue Baselines in Candidate3UpgradeEvidence, bisherige Nachweise erhalten.
+Temporaere Anmeldedatei entfernt. Installierter Self-Test Exit 0, UI-Smoke Exit 0,
+Version 1.3.0-offline-groups.3 OK/60. Keine laufenden Testprozesse aus diesem Lauf.
+Nachweis offline-groups-candidate3-installed-result.json. Host 1.2.1 unveraendert.
+Kandidat bereit fuer gezielte manuelle Benutzerabnahme nach kurzer Anleitung;
+Fehlerfall im echten Projekt und native Restablaeufe weiterhin nicht bestaetigt.
 06.11.2026 MSI-Kandidat 1.3.0-offline-groups.3 aus sauberem ec5ca1c gebaut.
 Transport-Preflight-Fix enthalten. UI-Smoke der publizierten Anwendung Exit 0,
 OK/60 mit korrekter Version. Administrative MSI-Extraktion Exit 0, alle 1081

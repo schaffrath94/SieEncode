@@ -1,0 +1,47 @@
+{
+  "Date": "2026-11-06",
+  "Candidate": "1.3.0-offline-groups.3",
+  "MsiSHA256": "2F02A5FDE4A35B580479C5C311E9375A758AE517E90AFE52E5B0E4BC1D75CEE3",
+  "InstalledDllSHA256": "254F375A472C6DF1BE9111141032ECCA73D1A023A2920481AC5497EE83B179AB",
+  "UpgradeFrom": "1.3.0-offline-groups.2",
+  "MsiExitCode": 0,
+  "Preservation": [
+    {
+      "Before": "PASS",
+      "User": "labadmin",
+      "After": "PASS",
+      "RsaKeys": 1,
+      "Files": 7
+    },
+    {
+      "Before": "PASS",
+      "User": "testerA",
+      "After": "PASS",
+      "RsaKeys": 2,
+      "Files": 69
+    },
+    {
+      "Before": "PASS",
+      "User": "testerB",
+      "After": "PASS",
+      "RsaKeys": 2,
+      "Files": 104
+    }
+  ],
+  "TemporaryCredentialsRemoved": true,
+  "InstalledSelfTestExitCode": 0,
+  "InstalledUiSmokeExitCode": 0,
+  "InstalledUiSmokeVersion": "1.3.0-offline-groups.3",
+  "InstalledUiChecks": 60,
+  "GuestLogs": "C:/SieEncodeLab/Evidence/upgrade-candidate3-20261106",
+  "LogSHA256": {
+    "lifecycle.log": "CF79C1C721A106B19DCD29F9E8ECA9D1F971331C1AF4C32D8A33D0C7C191B728",
+    "upgrade.log": "E5275B68E72723EDECDE93760EA1016C6052F4592BA28E4D6949E2E714135A62"
+  },
+  "Limitations": [
+    "User reported project issue not yet retested in installed host application",
+    "Native recipient/delegation and final guide review remain open",
+    "No new hardware acceptance",
+    "Not a completed release approval"
+  ]
+}

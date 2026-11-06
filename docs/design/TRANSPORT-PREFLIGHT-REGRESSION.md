@@ -41,3 +41,7 @@ Warnungen/Fehler. Log: tmp/transport-preflight-ci.log. Noch nicht paketiert.
 Korrigiertes MSI: artifacts/offline-groups-1.3.0-preview.3/package/SieEncode_1.3.0-offline-groups.3_internal_x64.msi.
 Kandidat 3: UI-Smoke 60/60, 1081 MSI-Dateien hashgleich. Echte Installation und
 manuelle Benutzerabnahme noch offen. Installer kann die vorhandene Version ersetzen.
+
+06.11.: Kandidat 3 in Test-VM erfolgreich von Kandidat 2 aktualisiert;
+Daten-/Schluesselerhalt in drei Profilen, installierter Self-Test und UI-Smoke
+(60 Checks) bestanden. Benutzerprojekt in Hostinstallation noch nicht nachgeprueft.
