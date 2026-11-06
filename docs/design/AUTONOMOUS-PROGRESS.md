@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+06.11.2026 Auf Benutzerauftrag tokenarme Skriptabnahme ohne Desktopsteuerung:
+Kandidat 4 real in vorhandener Test-VM installiert, Upgrade von Kandidat 3
+MSI Exit 0, exakter DLL-Hash 85B3BDB2... bestaetigt. Benutzer schloss vorher
+SieEncode in der VM. Capture/BeforeUpgrade/AfterUpgrade fuer alle drei geladenen
+Profile PASS: labadmin 7 Dateien/1 RSA, testerA 69/2, testerB 104/2.
+Installierter Self-Test und UI-Smoke Exit 0, Version .4, OK/61. Temporaere
+Zugangsdaten-Datei entfernt, separat kontrolliert. Protokolle lokal gesichert,
+Hashnachweis offline-groups-candidate4-installed-result.json. Keine neue
+Hostinstallation/Kartenaktion, keine Hardwarefreigabe. Native Empfaengerwechsel-,
+Delegations- und Recovery-Restablaeufe bleiben offen; synthetische Tests ersetzen
+diese nicht. Keine neue Paketgeneration, kein GitHub-Push.
+
 06.11.2026 MSI-Kandidat 1.3.0-offline-groups.4 fertig aus sauberem 2c2a6af.
 Stationsfix fuer Passphrasen-Vaults enthalten. Publizierter Anwendungstest
 Exit 0, korrekte Version, OK/61. MSI-Bau und administrative Extraktion Exit 0,
