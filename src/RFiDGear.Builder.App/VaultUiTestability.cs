@@ -301,6 +301,49 @@ public partial class MainWindow
             ClickWithPassphrase(EditorSaveVaultButton, "Keys verschlüsselt speichern");
             checks.Add("Vault-Anleitung: gesperrter Vault und Entsperrabbruch erhalten Bausperre/Datei; ungültiger Grundschlüssel separat angezeigt und gesperrt.");
             checks.Add("Editor-Vault v2: Speichern und Entsperren über tatsächliche Editor-Clicks/Passwortdialoge; automatische unabhängige Sicherung wieder geöffnet, Sitzung nach erneutem Projektladen erst durch Entsperren freigegeben. Synthetische Daten.");
+            var stationEntry = new ProjectCatalog().Scan(projectsDirectory).Single(item => item.SourcePath == Path.GetFullPath(path));
+            var savedSource = File.ReadAllBytes(path);
+            var savedVault = File.ReadAllBytes(vault);
+            loadEditorVaultIdentities = () => throw new InvalidOperationException("Passphrasen-Vault darf keine persönliche Identität benötigen.");
+            try
+            {
+                var materialized = MaterializeSecureStationEntry(stationEntry, () => passphrase);
+                if (secureOperationalSession is null || projectSecretServer is null ||
+                    secureOperationalSession.Build.SessionSecrets.Count == 0 ||
+                    materialized.ProjectDirectory == stationEntry.ProjectDirectory ||
+                    !Directory.EnumerateFiles(materialized.ProjectDirectory, "*.rfPrj", SearchOption.AllDirectories)
+                        .Any(file => RFiDGear.Builder.RfPrj.RfPrjArchive.Load(file).Tasks.Any(task => task.ToString().Contains("secret://", StringComparison.Ordinal))))
+                    throw new InvalidOperationException("Passphrasen-Station stellt keine geschützte Sitzung mit Secretverweisen bereit.");
+                projectSecretServer.AuthorizeClient(Environment.ProcessId);
+                using (var pipe = new System.IO.Pipes.NamedPipeClientStream(".", projectSecretServer.Descriptor.PipeName, System.IO.Pipes.PipeDirection.InOut))
+                {
+                    pipe.Connect(5000);
+                    using var reader = new StreamReader(pipe, leaveOpen: true);
+                    using var writer = new StreamWriter(pipe, leaveOpen: true) { AutoFlush = true };
+                    var secret = secureOperationalSession.Build.SessionSecrets.First();
+                    writer.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { Reference = secret.Key }));
+                    var response = reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+                    using var json = System.Text.Json.JsonDocument.Parse(response!);
+                    if (!json.RootElement.GetProperty("Success").GetBoolean() || json.RootElement.GetProperty("Secret").GetString() != secret.Value)
+                        throw new InvalidOperationException("Stations-Secretserver liefert den freigegebenen synthetischen Schlüssel nicht.");
+                }
+                try { MaterializeSecureStationEntry(stationEntry, () => "Incorrect-Synthetic-Passphrase!"); throw new InvalidOperationException("Falsche Passphrase akzeptiert."); }
+                catch (CryptographicException) { }
+                if (projectSecretServer is not null || secureOperationalSession is not null)
+                    throw new InvalidOperationException("Fehlgeschlagenes Entsperren behält eine alte Schlüsselsitzung.");
+                try { MaterializeSecureStationEntry(stationEntry, () => null); throw new InvalidOperationException("Abbruch ignoriert."); }
+                catch (OperationCanceledException) { }
+                if (projectSecretServer is not null || secureOperationalSession is not null ||
+                    !File.ReadAllBytes(path).SequenceEqual(savedSource) || !File.ReadAllBytes(vault).SequenceEqual(savedVault))
+                    throw new InvalidOperationException("Stationsentsperren verändert Quelle/Vault oder hinterlässt nach Abbruch Schlüssel.");
+                checks.Add("Passphrasen-Station v2: geschützte Sitzung/Secretserver ohne Identität, falsche Passphrase und Abbruch ohne alte Sitzung; Quelle/Vault bytegleich.");
+            }
+            finally
+            {
+                projectSecretServer?.Dispose(); projectSecretServer = null;
+                secureOperationalSession?.Dispose(); secureOperationalSession = null;
+                loadEditorVaultIdentities = oldIdentities;
+            }
             using var identityKey = RSA.Create(3072);
             using var identityCertificate = new CertificateRequest("CN=Synthetic Editor Identity", identityKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
                 .CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));

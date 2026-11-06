@@ -1,6 +1,26 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+06.11.2026 Stationsfix synthetisch bestanden: Test-CI 72/72, CLI/App Build
+ohne Warnungen/Fehler (tmp/legacy-station-ci.log). Zusaetzlicher Anwendungstest
+Exit 0 (tmp/legacy-station-smoke/stdout2.log): v2-Passphrase ohne Identitaet,
+echte lokale Secretpipe-Aufloesung, falsche Passphrase/Abbruch ohne alte Sitzung,
+Projekt/Vault bytegleich. Erster Testlauf scheiterte an falscher Textlesepruefung
+des ZIP-basierten rfPrj-Formats; Test korrigiert auf RfPrjArchive.Load, App neu
+gebaut und vollstaendigen Anwendungstest erfolgreich wiederholt. Keine echte
+Kartenaktion. Manuelle Anleitung: docs/ABNAHME-PASSPHRASEN-STATION.md.
+
+06.11.2026 Neue Benutzersteuerung: keine automatische Desktopbedienung mehr;
+native Abnahme durch Benutzer nach kurzen schriftlichen Schritten. Doku bleibt
+Pflicht, Bilder duerfen nachgereicht werden. Upstream HEAD 8ec3ba5e und Issues
+232/233/234 gelesen (alle offen, jeweils 0 Kommentare). PR 231 aktiviert
+Host-Service fuer Application Extensions, IAutoModeHost bleibt dokumentierter
+Stub. Architekturentscheidung und Umstiegskriterien siehe
+UPSTREAM-EXTERNAL-ENGINE-2026-11-06.md; aktuelle Runtime vorerst erhalten.
+Studio-Fix in Arbeit: Passphrasen-Vault v2 fuer geschuetzte Stationssitzung,
+lokale Passphraseabfrage, keine Identitaet/Migration erforderlich. Regression
+fuer Secretpipe, falsche Passphrase, Abbruch und unveraenderte Dateien ergaenzt.
+
 Erweiterter Benutzerauftrag: bis zum vollstaendig geprueften internen Release
 weiterarbeiten; Ziel bei Bedarf fortsetzen. Anschliessend eine bebilderte deutsche
 Ersteinrichtungsanleitung fuer Kollegen erstellen (vom Benutzer alternativ zu

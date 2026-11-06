@@ -619,7 +619,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private ProjectCatalogEntry MaterializeSecureStationEntry(ProjectCatalogEntry entry)
+    private ProjectCatalogEntry MaterializeSecureStationEntry(ProjectCatalogEntry entry, Func<string?>? requestPassphrase = null)
     {
         projectSecretServer?.Dispose();
         projectSecretServer = null;
@@ -627,14 +627,27 @@ public partial class MainWindow : Window
         secureOperationalSession = null;
         if (!entry.SecureOnDemand) return entry;
         var source = ProjectJson.Load(entry.SourcePath);
-        var identities = loadEditorVaultIdentities();
+        var passphraseVault = entry.VaultVersion == KeyVaultService.CurrentVersion &&
+            source.Project.GroupVault is null && !ProjectGroupVault.IsGroupVaultFile(ProjectKeyVault.GetPath(entry.SourcePath));
+        var identities = passphraseVault ? [] : loadEditorVaultIdentities();
         try
         {
-            if (identities.Count == 0)
-                throw new CryptographicException("Auf diesem Windows-Benutzer ist keine persönliche SieEncode-Identität vorhanden. Bitte das Projekt bearbeiten und unter ‚Mehrbenutzerzugriff‘ zuerst eine Identität anlegen oder freigeben lassen.");
-            var payload = source.Project.GroupVault is not null || ProjectGroupVault.IsGroupVaultFile(ProjectKeyVault.GetPath(entry.SourcePath))
-                ? ProjectGroupVault.Load(entry.SourcePath, source, GroupTrust(source), identities.Select(identity => identity.Certificate))
-                : ProjectKeyVault.LoadWithCertificates(ProjectKeyVault.GetPath(entry.SourcePath), identities.Select(identity => identity.Certificate));
+            ProjectKeyVaultPayload payload;
+            if (passphraseVault)
+            {
+                var passphrase = requestPassphrase is not null ? requestPassphrase() : PasswordPrompt.Show(this,
+                    "Vault für Kodierstation entsperren", "Passphrase des Projekt-Vaults eingeben. Die Schlüssel werden nur für die geschützte lokale Sitzung bereitgestellt.");
+                if (passphrase is null) throw new OperationCanceledException("Entsperren der Kodierstation abgebrochen. Es wurde keine Kartenaktion gestartet.");
+                payload = ProjectKeyVault.Load(ProjectKeyVault.GetPath(entry.SourcePath), passphrase);
+            }
+            else
+            {
+                if (identities.Count == 0)
+                    throw new CryptographicException("Auf diesem Windows-Benutzer ist keine persönliche SieEncode-Identität vorhanden. Bitte das Projekt bearbeiten und unter ‚Mehrbenutzerzugriff‘ zuerst eine Identität anlegen oder freigeben lassen.");
+                payload = source.Project.GroupVault is not null || ProjectGroupVault.IsGroupVaultFile(ProjectKeyVault.GetPath(entry.SourcePath))
+                    ? ProjectGroupVault.Load(entry.SourcePath, source, GroupTrust(source), identities.Select(identity => identity.Certificate))
+                    : ProjectKeyVault.LoadWithCertificates(ProjectKeyVault.GetPath(entry.SourcePath), identities.Select(identity => identity.Certificate));
+            }
             var hydrated = ProjectKeyVault.Apply(ProjectJson.WithoutProductiveSecrets(source), payload);
             var shells = TaskShellLibrary.Load(Path.Combine(AppContext.BaseDirectory, "assets", "task-shells"));
             secureOperationalSession = new SecureOperationalSessionService().Materialize(

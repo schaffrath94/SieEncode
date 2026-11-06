@@ -1066,7 +1066,7 @@ static void TestSettingsAndCatalog()
         Assert(!new ProjectCatalog().Scan(projectsRoot).Single(entry => entry.Name == "Editable").HasVault, "Beschädigter Vault wird als gültig ausgewiesen.");
         ProjectKeyVault.Save(ProjectKeyVault.GetPath(editablePath), ProjectKeyVault.FromProject(editable), "Catalog-Test-Passphrase");
         var securedEntry = new ProjectCatalog().Scan(projectsRoot).Single(entry => entry.Name == "Editable");
-        Assert(securedEntry.HasVault && securedEntry.Kind == "Neu bauen" && securedEntry.KeyState == "Neubau mit Vault" && !securedEntry.CanOpenStation,
+        Assert(securedEntry.HasVault && securedEntry.Kind == "Sicher bereitstellbar" && securedEntry.KeyState == "Vault mit Passphrase" && securedEntry.SecureOnDemand && securedEntry.CanOpenStation,
             "Passphrasen-Altvault wird im Katalog falsch ausgewiesen oder unsicher für die Kodierstation freigegeben.");
 
         using var stationKey = RSA.Create(3072);

@@ -18,10 +18,10 @@ public sealed record ProjectCatalogEntry(
     int VaultVersion = 0,
     bool HasCoding = false)
 {
-    public bool SecureOnDemand => !ArtifactOnly && VaultVersion >= KeyVaultService.CertificateVersion;
+    public bool SecureOnDemand => !ArtifactOnly && VaultVersion >= KeyVaultService.CurrentVersion;
     public bool CanOpenStation => HasCoding && (SecureOnDemand || HasOperationalBuild);
     public string Kind => ArtifactOnly ? "Nur gebaut" : SecureOnDemand ? "Sicher bereitstellbar" : !HasOperationalBuild ? "Neu bauen" : HasRecognition ? "Einsatzbereit" : "Altbuild nutzbar";
-    public string KeyState => ArtifactOnly ? "Schlüssel im Build" : SecureOnDemand ? "Persönlich freigegebener Vault" : HasVault ? "Neubau mit Vault" : "Neubau gesperrt";
+    public string KeyState => ArtifactOnly ? "Schlüssel im Build" : VaultVersion == KeyVaultService.CurrentVersion ? "Vault mit Passphrase" : SecureOnDemand ? "Persönlich freigegebener Vault" : HasVault ? "Neubau mit Vault" : "Neubau gesperrt";
 }
 
 public sealed class ProjectCatalog
