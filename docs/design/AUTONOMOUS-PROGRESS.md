@@ -13,6 +13,25 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+06.11.2026 Hostabnahme Kandidat 3 tatsaechlich beobachtet: native Hostinstanz
+mit Version 1.3.0-offline-groups.3 und exaktem DLL-Hash 254F375A...; zuvor
+beanstandetes Benutzerprojekt zeigt PROJEKT BEREIT, 8 Projekte, keine Befunde.
+Keine Kundennamen/Pfade/Schluessel ins Repository uebernommen. Danach Benutzer-
+Kartenaktion beobachtet, keine Kartenaktion vom Agenten ausgeloest. Erkenntnis:
+PICCApplicationInventory scheitert am nicht aufloesbaren secret://-Verweis.
+Runtime meldet DeviceDiscovery.Success, TaskLoop.Failure, InvalidOperationException.
+Projektkatalog zeigt VaultVersion 2, SecureOnDemand false; MaterializeSecureStationEntry
+bereitet nur Zertifikat-/Gruppenvaults vor. Vorhandene neuere Builds enthalten aber
+Secretverweise und benoetigen den lokalen Schluesselserver. Separater konkreter
+Stationsfehler, kein Nachweis falscher Kartenschluessel. Auch MissingManifestResource-
+Exception im Runtime-Fehlerpfad beobachtet; fuer Diagnose separat beachten.
+Benutzer bestaetigt angeschlossenen Reader und aufgelegte Karte; keine Hardware-
+Freigabe. Naechster Fix: sicherer Stationszugang fuer Passphrasen-Vault v2,
+Passphrase nur lokal abfragen, keine Migration/Schluesselersetzung erzwingen.
+Danach Regression fuer Abbruch/falsche Passphrase und echte Secretserver-Nutzung.
+VM Kandidat 3 als testerB PID 1844 gestartet; keine native Testaktion erfolgreich
+weitergefuehrt, weil Hostbenutzer parallel arbeitet. Temporaere Credentialdatei
+wird vom Launcher entfernt; unabhaengige erneute Kontrolle noch offen.
 06.11.2026 Autorisierte manuelle Restabnahme konkret vorbereitet:
 docs/MANUELLE-RESTABNAHME-1.3.0.md mit vier getrennten Antwortbloecken A-D,
 exakter Kandidatenidentitaet und Erwartungen fuer gemeldeten Preflightfehler,

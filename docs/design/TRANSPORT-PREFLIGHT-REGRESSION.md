@@ -45,3 +45,10 @@ manuelle Benutzerabnahme noch offen. Installer kann die vorhandene Version erset
 06.11.: Kandidat 3 in Test-VM erfolgreich von Kandidat 2 aktualisiert;
 Daten-/Schluesselerhalt in drei Profilen, installierter Self-Test und UI-Smoke
 (60 Checks) bestanden. Benutzerprojekt in Hostinstallation noch nicht nachgeprueft.
+
+06.11.2026 Hostanzeige direkt beobachtet: korrigierter Kandidat 3 (DLL-Hash
+254F375A472C6DF1BE9111141032ECCA73D1A023A2920481AC5497EE83B179AB),
+Projekt bereit, acht Betriebsprojekte, keine Befunde. Transport-Preflightfall
+damit am Benutzerprojekt beobachtet bestanden. Anschliessende Kartenerkennung
+scheitert separat an einem nicht aufgeloesten Secretverweis bei Vault v2;
+keine Gesamtfreigabe und keine bestaetigte Kartenauthentisierung.
