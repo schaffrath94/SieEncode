@@ -2824,10 +2824,17 @@ static void TestRealAssets(string profileDirectory, string projectTemplate, stri
             Assert(RfPrjSecretProtection.FindPlaintextSecretElements(protectedDocument).Count == 0,
                 "rfPrj enthält weiterhin ein Klartext-Schlüsselfeld: " + protectedRfPrjPath);
         }
+        ProjectJson.Save(sourcePath, ProjectJson.WithoutAllSecrets(project));
         var operationalPreflight = ProjectPreflight.Inspect(ProjectJson.Load(sourcePath), library, sourcePath, result.ProjectDirectory, ProjectPreflightScope.Operational);
         Assert(operationalPreflight.Status == "OK" && operationalPreflight.Scope == ProjectPreflightScope.Operational,
             "Schlüsselfreie Projektdefinition besteht den operativen Preflight nicht.");
         var strictKeylessPreflight = ProjectPreflight.Inspect(ProjectJson.Load(sourcePath), library, sourcePath, result.ProjectDirectory);
+        Assert(strictKeylessPreflight.Issues.Any(issue => issue.Code.StartsWith("TRANSPORT_", StringComparison.Ordinal)),
+            "Build-Preflight darf fehlende Grundkeys nicht akzeptieren.");
+        var malformedTransport = ProjectJson.Load(sourcePath);
+        malformedTransport.Transport.PiccKey.Value = "invalid";
+        Assert(ProjectPreflight.Inspect(malformedTransport, library, sourcePath, result.ProjectDirectory, ProjectPreflightScope.Operational)
+            .Issues.Any(issue => issue.Code == "TRANSPORT_PICC"), "Betriebscheck darf vorhandene ungueltige Grundkeys nicht ignorieren.");
         Assert(strictKeylessPreflight.Issues.Any(issue => issue.Code.StartsWith("PRODUCTIVE", StringComparison.Ordinal)),
             "Strenger Build-Preflight akzeptiert eine keyfreie Coding-Konfiguration ohne Vaultdaten.");
         var artifactPreflight = ProjectPreflight.InspectArtifacts(result.ProjectDirectory);

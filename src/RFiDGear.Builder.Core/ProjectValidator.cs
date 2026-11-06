@@ -13,7 +13,7 @@ public static partial class ProjectValidator
         ["DF_KEY_3K3DES"] = 48
     };
 
-    public static IReadOnlyList<ValidationIssue> Validate(ProjectDefinition definition, bool requireProductiveSecrets = false)
+    public static IReadOnlyList<ValidationIssue> Validate(ProjectDefinition definition, bool requireProductiveSecrets = false, bool requireTransportSecrets = true)
     {
         ArgumentNullException.ThrowIfNull(definition);
         var issues = new List<ValidationIssue>();
@@ -26,9 +26,9 @@ public static partial class ProjectValidator
         if (!CardModes.Contains(definition.Project.CardMode ?? ""))
             issues.Add(new("CARD_MODE", "Kartenvorgang muss FullCard oder ExtendExisting sein."));
 
-        ValidateKey(issues, definition.Transport.PiccKey, "TRANSPORT_PICC", required: true);
+        ValidateKey(issues, definition.Transport.PiccKey, "TRANSPORT_PICC", required: requireTransportSecrets);
         foreach (var pair in definition.Transport.ApplicationKeys)
-            ValidateKeyValue(issues, pair.Key, pair.Value, "TRANSPORT_APP_KEY", required: true);
+            ValidateKeyValue(issues, pair.Key, pair.Value, "TRANSPORT_APP_KEY", required: requireTransportSecrets);
 
         if (!CardOperationMode.IsExtension(definition) && !PiccSettingsRegex().IsMatch(definition.Productive.PiccKeySettings ?? ""))
             issues.Add(new("PICC_SETTINGS", "Produktive PICC KeySettings müssen zwischen 00 und 0F liegen."));

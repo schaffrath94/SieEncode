@@ -13,6 +13,19 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+06.11.2026 Benutzerfehler in Hostversion 1.2.1 priorisiert: native Anzeige der
+Projektbibliothek gelesen, fuenf TRANSPORT-Befunde bei Projekt pruefen. Keine
+Kartenauthentisierung beobachtet, keine Kundendaten/Schluessel veraendert oder
+ins Repository uebernommen. Ursache: operativer Preflight verlangt absichtlich
+aus Projektdefinition entfernte Transportwerte. Korrektur: nur Operational
+akzeptiert fehlende Werte, vorhandene ungueltige Werte/Typen bleiben Fehler,
+Build weiterhin strikt. Integrationstest jetzt WithoutAllSecrets statt nur
+WithoutProductiveSecrets, positive Betriebspruefung und negative Build-/Format-
+pruefungen. Test-CI Exit 0, 72/72, CLI/App ohne Warnungen/Fehler; Protokoll
+ tmp/transport-preflight-ci.log. Noch kein neues MSI und kein Hostupdate.
+Manuelle Abnahmeanleitung: TRANSPORT-PREFLIGHT-REGRESSION.md. Benutzer akzeptiert
+manuelle Schritte mit schriftlicher Anleitung und anschliessender Dokumentation.
+Naechstes Release muss diesen Fix enthalten; Kandidat 2 enthaelt ihn noch nicht.
 05.11.2026 Kandidat 2 nativ gestartet als testerB (PID 2260), Besitzer separat
 bestaetigt; temporaere Anmeldedatei entfernt, keine Fixtures kopiert. Uebersicht
 zeigt beide bestehenden Projekte und Version 1.3.0-offline-groups.2. Bestehende
