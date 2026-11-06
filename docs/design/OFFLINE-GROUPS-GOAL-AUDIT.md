@@ -1,4 +1,4 @@
-# Auftragsabgleich Offline-Gruppen – 05.11.2026
+# Auftragsabgleich Offline-Gruppen – 06.11.2026
 
 Gesamtziel **nicht abgeschlossen**. Am 24.10.2026 hat der Benutzer den Aufbau
 einer neuen separaten VirtualBox-Testumgebung autorisiert. Die neue VM ist
@@ -16,6 +16,21 @@ erfolgreicher Befehl und Neustart, jedoch weiterhin LicenseStatus 5 und null
 Restzeit. Kein weiterer Rearm. Kurzer nativer Aktualisierungstest bestanden;
 VM weiterhin nicht fuer verlaessliche laengere Abnahmen freigegeben.
 
+## Aktueller Kandidat und manuelle Restabnahme
+
+Kandidat **1.3.0-offline-groups.3**, Quelle `ec5ca1c`, enthaelt zusaetzlich den
+Transport-Preflight-Fix fuer vollstaendig schluesselfreie Projektdefinitionen.
+CI 72/72, publizierter UI-Smoke 60/60, 1081 MSI-Dateihashes geprueft. Reales
+VM-Upgrade von Kandidat 2 mit Erhalt aller erfassten Dateien und RSA-Identitaeten
+in drei Windows-Profilen bestanden; installierter Self-Test und UI-Smoke 60/60
+bestanden (offline-groups-candidate3-installed-result.json).
+
+Der Benutzer erlaubt gezielte manuelle Tests mit schriftlicher Anleitung und
+anschliessender Dokumentation. [Restabnahme](../MANUELLE-RESTABNAHME-1.3.0.md)
+enthaelt getrennte Punkte fuer gemeldeten Fehler, Projektkopie/Recovery,
+Empfaengerwechsel und begrenzte Delegation. Alle manuellen Rueckmeldungen stehen
+noch aus; dies ersetzt keine Abnahme. Vorherige Kandidaten bleiben unveraendert.
+Die folgenden historischen Belege behalten ihren jeweiligen Kandidatenbezug.
 ## Bewerteter Stand
 
 Testkandidat `1.3.0-offline-groups.1` aus sauberer Studio-Quelle
@@ -68,7 +83,7 @@ Ersatz fuer diese Bediennachweise gewertet. PDF-Weiterentwicklung bleibt zurueck
 Die eingerichteten normalen Windows-Testbenutzer testerA/testerB fuer den
 SieEncode-Gesamtablauf nach [Abnahmeanleitung](../OFFLINE-GRUPPEN-ABNAHME.md)
 verwenden. Die acht Produkt-API-Phasen einschliesslich echter Recoveryinstallation
-sind [belegt](offline-groups-vm-vault-results.json). Delegation und autorisierte Verwaltungsnachfolge unter A/B per Produkt-API bestanden (offline-groups-vm-authority-results.json). Native Bedienung und Deinstallation bleiben offen.
+sind [belegt](offline-groups-vm-vault-results.json). Delegation und autorisierte Verwaltungsnachfolge unter A/B per Produkt-API bestanden (offline-groups-vm-authority-results.json). Native Restbedienung bleibt offen; reale Deinstallation/Wiederinstallation und Upgrades auf Kandidat 2 und 3 mit Datenerhalt sind belegt.
 Vorhandene Unternehmens-VMs nicht verwenden.
 Hostinstallation, Windows-Benutzer, Sicherheitskonfiguration und Zertifikatsspeicher
 nicht als Ersatz fuer die vorhandene separate Testumgebung veraendern.

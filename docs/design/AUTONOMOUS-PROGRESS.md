@@ -13,6 +13,14 @@ Anleitung ist Teil des Abschlusses, kein Ersatz fuer offene Abnahmen.
 Bestehendes Ziel vom Benutzer wieder aktiviert; aktive Fortsetzung bestaetigt.
 Kein neues Ziel und keine neue Automation anlegen. Abschluss erst nach Abnahme.
 
+06.11.2026 Autorisierte manuelle Restabnahme konkret vorbereitet:
+docs/MANUELLE-RESTABNAHME-1.3.0.md mit vier getrennten Antwortbloecken A-D,
+exakter Kandidatenidentitaet und Erwartungen fuer gemeldeten Preflightfehler,
+Projektkopie/Recovery, zentralen Empfaengerwechsel und begrenzte Delegation.
+Schaltflaechen gegen aktuelle XAML/Verwaltungsdialoge abgeglichen. Ergebnisse
+bleiben offen bis tatsaechlicher Ausfuehrung, Benutzerrueckmeldung wird getrennt
+von eigener Toolbeobachtung dokumentiert. Audit um Kandidat-3-Nachweise ergaenzt.
+Kein weiterer Paketbau fuer diese reine Dokumentationsaenderung.
 06.11.2026 Kandidat 3 real in Test-VM installiert: Upgrade von Kandidat 2 Exit 0,
 DLL-Hash exakt 254F375A...; Capture/BeforeUpgrade/AfterUpgrade unter drei geladenen
 Profilen PASS (labadmin 7/1, testerA 69/2, testerB 104/2 Dateien/RSA-Identitaeten).
