@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+07.11.2026 Benutzer meldet ausgefuehrten Normal-/Recovery-Wechsel und Fehler
+bei vorheriger Projektpruefung; keine bestaetigte Build-Sperre/Freigabe gemeldet.
+Auf Wunsch Protokollablagen im Profil testerB schreibfrei untersucht: keine
+passenden Projektpruefungs-/Runtime-Logs gefunden. Quellcode Preflight_Click /
+DisplayProjectPreflight zeigt Report nur in UI, persistiert keinen Bedienverlauf.
+Beide nativen Projekte (Neues Projekt Gruppe / Kopie, Neues-Grundprofil,
+Mastering+Coding, Output '.') enthalten 0 rfPrj-Dateien und kein builder.manifest.
+Operational-Preflight vor sicherer Stationsmaterialisierung verlangt diese
+Artefakte. Fehlende Buildartefakte somit nachgewiesen; historischer konkreter
+Meldungstext nicht rekonstruierbar. Kein Vault-/Schluesselfehler daraus ableiten,
+Recovery-/Normal-Bediennachweis weiterhin nicht als bestanden markieren.
+
 07.11.2026 Benutzer meldete leere Projektbibliothek in VM. Per Skript Ursache
 geprueft: sichtbare SieEncode-Instanz gehoerte labadmin, vorhandene native
 Gruppenprojekte liegen in testerB/Documents/SieEncode-Projekte. Nach bestaetigtem
