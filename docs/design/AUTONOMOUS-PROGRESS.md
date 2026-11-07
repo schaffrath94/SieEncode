@@ -1,6 +1,17 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+07.11.2026 Kollegenanleitung auf Kandidat 4 aktualisiert. Veraltete Aussage
+zum Kandidat-2-Upgrade ersetzt durch genaue aktuelle Nachweisgrenzen. Zugangstabelle
+erklaert Gruppenmitgliedschaft, Projekterstellung durch normale Mitglieder,
+alte Passphrasen-Vaults, getrennte Recovery und Verwaltungsrechte. Kein gemeinsames
+Recovery-Passwort pro Gruppenprojekt erforderlich; Gruppenregistrierung migriert
+alte Vaults nicht automatisch. 26 lokale Bild-/Linkreferenzen geprueft, alle
+vorhanden. Keine neue visuelle Abnahme behauptet, historische Bilder klar benannt;
+aktuelle Bilder gemaess Benutzerauftrag nachrangig. Kein erneuter Build/Testlauf.
+Native Dialogabnahme und geeignete Testkarte bleiben die naechsten erforderlichen
+externen Nachweise; vorhandene Softwaretests nicht erneut ausfuehren.
+
 07.11.2026 Tokenarme Gruppen-/Recovery-Restpruefung abgeschlossen: 22/22
 Produkt-API-Phasen gegen die installierten Kandidat-4-Assemblies mit Hashguard,
 unter zwei normal berechtigten geladenen Windows-Profilen. Neue isolierte

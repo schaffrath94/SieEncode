@@ -20,7 +20,7 @@ figure{margin:22px 0;break-inside:avoid}figure img{display:block;width:100%;heig
 <div class="eyebrow">SieEncode · Anleitung für Kollegen</div>
 <h1>Gemeinsam starten.<br>Mit dem eigenen Zugang.</h1>
 <p>Eine zentrale Verwaltung, mehrere Gruppen und ein persönlicher Zugang je Arbeitsplatz. Nach der Einrichtung lassen sich lokal vorhandene, freigegebene Projekte auch offline entschlüsseln.</p>
-<p class="draft"><strong>Entwurf für 1.3.0-offline-groups.2 · 05.11.2026.</strong> Nicht für Version 1.2.1. Beschriftungen mit dem Quellstand abgeglichen; vollständiger sichtbarer Bedienlauf noch offen. Die Originalansichten zeigen Kandidat 1 in der synthetischen Test-VM vom 28.10. bis 04.11.2026. Das Upgrade auf Kandidat 2 mit Erhalt der Testdaten und Schlüssel ist geprüft; weitere native Bedienprüfungen und die Leserabnahme stehen noch aus.</p>
+<p class="draft"><strong>Anleitungsstand für 1.3.0-offline-groups.4 · 07.11.2026.</strong> Nicht für Version 1.2.1. Installation und Upgrade in der Test-VM, Datenerhalt in drei Windows-Profilen, 61 Anwendungsprüfungen und 22 Gruppen-/Recovery-Prüfschritte unter zwei Windows-Benutzern sind belegt. Vollständiger sichtbarer Bedienlauf und Leserabnahme bleiben offen. Die vorhandenen Bilder zeigen Kandidat 1 mit synthetischen Testdaten; aktuelle Bilder werden nachgereicht. Diese Anleitung ist keine abgeschlossene Releasefreigabe.</p>
 <nav aria-label="Inhalt"><a href="#kollegen">Mein Arbeitsplatz</a><a href="#verwaltung">Hauptverwaltung</a><a href="#alltag">Alltag &amp; Offline</a><a href="#hilfe">Wenn es hakt</a></nav>
 <div class="flow">
 <div class="card"><span class="number">1</span><h3>Ich richte meinen Zugang ein</h3><p>Eigene Identität auswählen und eine <strong>öffentliche Einladung</strong> an die Hauptverwaltung geben.</p></div>
@@ -126,6 +126,14 @@ figure{margin:22px 0;break-inside:avoid}figure img{display:block;width:100%;heig
 <p class="note">Recovery ist ein ausdrücklich gewählter Wiederherstellungsweg mit separatem Schlüssel. Es ist kein allgemeines Team-Passwort und erteilt keine normale Stations- oder Buildfreigabe.</p>
 </section>
 <section id="hilfe">
+<h2>Welchen Zugang brauche ich?</h2>
+<table><thead><tr><th>Situation</th><th>Was ich eingebe oder einrichte</th></tr></thead><tbody>
+<tr><td>Neues Gruppenprojekt, eigenes Gerät freigegeben</td><td>Eigene Geräteidentität und registrierter Gruppenstand genügen. Keine gemeinsame Recovery-Passphrase für jedes Projekt eingeben. Auch normale Gruppenmitglieder können Projekte für ihre freigegebenen Gruppen anlegen, sofern sie im Projektordner schreiben dürfen.</td></tr>
+<tr><td>Älteres Projekt mit Passphrasen-Vault</td><td>Beim Öffnen der Kodierstation erscheint „Vault für Kodierstation entsperren“. Die bisherige Projektpassphrase lokal eingeben. Eine neue Identität oder Migration ist dafür nicht erforderlich. Abbruch oder falsche Passphrase geben keine neue Sitzung frei.</td></tr>
+<tr><td>Recovery-Sicherung wiederherstellen</td><td>Nur die beauftragte Person verwendet die separate Sicherungsdatei und deren Passphrase. Danach den ausdrücklichen Recovery-Weg wählen. Recovery ersetzt keine normale Gruppenmitgliedschaft und erlaubt keinen normalen Build.</td></tr>
+<tr><td>Nur Gruppen verwalten</td><td>Verwaltungsrechte und Projektzugriff sind getrennt. Eine öffentliche Registrierung oder Verwaltungsvollmacht allein entschlüsselt keine Projekte.</td></tr>
+</tbody></table>
+<p>Eine ältere Passphrasen-Vault-Datei wird durch die Gruppenregistrierung nicht automatisch zu einem Gruppenprojekt. Für neue Teamprojekte die vereinbarte Gruppe wählen. Passphrasen, private Sicherungen und persönliche Schlüssel nicht im gemeinsamen Projektordner verteilen.</p>
 <h2>Wenn es hakt</h2>
 <table><thead><tr><th>Beobachtung</th><th>Nächster sinnvoller Schritt</th></tr></thead><tbody>
 <tr><td>„Die Profilbibliothek enthält kein Grundprofil“</td><td>Unter Einstellungen den vom Team bereitgestellten Profilordner wählen und speichern. SieEncode liefert bewusst kein fachliches Grundprofil mit. Falls noch keines existiert, muss eine fachlich verantwortliche Person im Expertenmodus unter „Profile und Historie“ ein Grundprofil erstellen oder importieren. Ein neuer Vault-Schlüssel behebt dieses Problem nicht.</td></tr>
