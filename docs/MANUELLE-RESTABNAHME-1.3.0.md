@@ -5,6 +5,12 @@ Entsperren, ausdrückliche Recovery-Prüfung mit Build-Sperre und erneutes norma
 Entsperren mit verfügbarer Build-Aktion. Keine eigene UI-Beobachtung des Agenten.
 Nachweis: [manueller Recovery-Wechsel](design/offline-groups-candidate4-native-recovery-result.json).
 Die übrigen unten aufgeführten Bediennachweise bleiben offen.
+Kopie und Wiederöffnen des konkreten Projekts „Neues Projekt Gruppe Kopie“ sind
+inzwischen zusätzlich per installierter Produkt-API in zwei getrennten Prozessen
+bestanden: neue ID, identische Schlüssel und unveränderte Quelldateien.
+[Nachweis](design/offline-groups-candidate4-existing-project-copy-result.json).
+B4/B5 bleiben ausschließlich als Prüfung der Dialogbedienung und des vollständigen
+Anwendungsneustarts offen; den fachlichen Skripttest nicht erneut ausführen.
 Installation/Upgrade in der VM, Erhalt der Dateien und RSA-Schlüssel in drei
 Windows-Profilen sowie installierter Self-Test und 61 Anwendungsprüfungen sind bereits
 belegt. Diese Prüfungen müssen für dieselbe unveränderte Umgebung nicht erneut

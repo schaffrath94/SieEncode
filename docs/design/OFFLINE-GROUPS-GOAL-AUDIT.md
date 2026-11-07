@@ -18,6 +18,13 @@ VM weiterhin nicht fuer verlaessliche laengere Abnahmen freigegeben.
 
 ## Aktueller Kandidat und manuelle Restabnahme
 
+07.11.2026: Konkretes natives Projekt „Neues Projekt Gruppe Kopie“ mittels
+installierter Produkt-API unter testerB kopiert und in separatem Prozess normal
+wieder geoeffnet. Neue ID, gleiche Gruppenbindung/Schluesselnutzdaten, Quellen
+unveraendert. `offline-groups-candidate4-existing-project-copy-result.json`.
+Dies schliesst den fachlichen Nachweis fuer diese Testdaten, nicht die native
+Dialogbedienung oder einen vollstaendigen App-Neustart.
+
 07.11.2026: B1–B3 unter Kandidat 4 durch Benutzer bestaetigt: normal entsperren,
 Recovery pruefen mit gesperrter Build-Aktion, wieder normal entsperren mit
 verfuegbarer Build-Aktion. Benutzerbericht, keine eigene UI-Beobachtung;

@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+07.11.2026 Auf ausdruecklichen Wunsch vorhandenes natives Testprojekt selbst
+per Produkt-API geprueft: Neues Projekt Gruppe Kopie unter testerB normal
+entsperrt, neue Kopie ausschliesslich in LocalAppData/SieEncodeLab/NativeCopyCandidate4
+erstellt und in zweitem Prozess normal wieder geoeffnet. Beide Phasen PASS:
+neue Projekt-ID, gleiche Gruppenbindung, vollstaendig gleiche Schluesselnutzdaten,
+Quelldefinition/Vault vor/nach Kopie und zwischen Prozessen unveraendert.
+Installierte Kandidat-4-Assemblies per Hashguard geprueft; keine neuen Identitaeten,
+keine Desktopsteuerung/Kartenaktion. Temporaere Zugangsdaten separat entfernt
+bestaetigt. Nachweis offline-groups-candidate4-existing-project-copy-result.json.
+Fachlicher Kopier-/Wiederoeffnungsnachweis fuer das konkrete Bedienprojekt damit
+erbracht; B4/B5-Dialog-/vollstaendiger App-Neustartnachweis nicht behauptet.
+
 07.11.2026 Benutzer bestaetigt den ausgefuehrten Normal-/Recovery-Wechsel:
 Build waehrend Recovery gesperrt, nach normalem Entsperren wieder verfuegbar.
 Damit B1-B3 fuer Kandidat 4 als benutzerberichtete manuelle Abnahme bestanden;

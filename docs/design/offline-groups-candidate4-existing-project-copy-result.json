@@ -1,0 +1,43 @@
+{
+  "Date": "2026-11-07",
+  "Candidate": "1.3.0-offline-groups.4",
+  "Profile": "testerB",
+  "SourceProject": "Neues Projekt Gruppe Kopie",
+  "ProductHashes": {
+    "SieEncode.dll": "85B3BDB2D4261E3740EA8DA1AB7FA979F52121004400B1232BCE2207DA3C9B33",
+    "RFiDGear.Builder.Core.dll": "7FDDD4F9D453CD3CE7222738C023D7160C8F1E344CDE43A6E4CFF98249D1EDC5"
+  },
+  "HarnessSourceSHA256": "042E9B640A1A317DFBE76D8620217671D81C9F037FD7A2ECA9F78158C076BF07",
+  "HarnessDllSHA256": "6070030CBB474F1F903625E1426ADC9CF114DD298B3BE5E3845547CAAD8D6D92",
+  "LogSHA256": "34D1AA1895DAEF233653EC30A72A856C5B58BED3E8BCE929596F5F40D5F7C367",
+  "TemporaryCredentialsRemoved": true,
+  "Results": [
+    {
+      "Status": "PASS",
+      "Phase": "create",
+      "ProcessId": 6252,
+      "NormalAccess": true,
+      "DistinctProjectId": true,
+      "SameGroupBinding": true,
+      "CompleteKeyPayloadPreserved": true,
+      "SourceFilesUnchanged": true,
+      "Scope": "Installed product API, separate process; not native dialog or application restart acceptance"
+    },
+    {
+      "Status": "PASS",
+      "Phase": "reopen",
+      "ProcessId": 6872,
+      "NormalAccess": true,
+      "DistinctProjectId": true,
+      "SameGroupBinding": true,
+      "CompleteKeyPayloadPreserved": true,
+      "SourceFilesUnchanged": true,
+      "Scope": "Installed product API, separate process; not native dialog or application restart acceptance"
+    }
+  ],
+  "Limitations": [
+    "Product API against installed binaries with real loaded testerB profile",
+    "No native Save As dialog or complete application restart observed",
+    "No card operation; existing source project and vault preserved"
+  ]
+}
