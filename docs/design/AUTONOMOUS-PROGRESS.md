@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+07.11.2026 Neue Benutzerprioritaet: ausschliesslich bisher ungetestete Szenarien,
+Anleitung und interner Kollegenrelease bis Montag 09.11.2026 anstreben. Keine
+automatische Desktopbedienung autorisiert. Konkrete Restliste ohne Testwiederholungen:
+RELEASE-RESTLISTE-2026-11-09.md. Kollegen-Kurzstart docs/KOLLEGEN-KURZSTART.md
+ergänzt (Rollen, Anmeldung, Reader, Offlinegrenzen, Fehlerhilfe).
+Neuer Offline-Nachweis erfolgreich: VM war bereits NAT-Kabel getrennt, keine
+weiteren Adapter; zusaetzlich 0 aktive Nicht-Loopback-Interfaces im Testprozess
+geprueft. Vorhandene lokale Projektkopie normal UND per separatem Recoveryzugang
+mit installierten Kandidat-4-Assemblies entschluesselt, Nutzdaten gleich,
+Quelldateien unveraendert. Netzwerk nicht veraendert. Resultat und Hashprovenienz
+offline-groups-candidate4-offline-result.json. Startskript-Arrayfehler vor dem
+ersten Produktlauf korrigiert; erst zweiter Start erreichte Produktpruefung.
+Temporaere Zugangsdaten separat entfernt bestaetigt. Kein Nachweis fuer
+unerreichbaren SMB-Pfad, Cloudkonflikte, zweite Maschine oder Kartenbetrieb.
+
 07.11.2026 Auf ausdruecklichen Wunsch vorhandenes natives Testprojekt selbst
 per Produkt-API geprueft: Neues Projekt Gruppe Kopie unter testerB normal
 entsperrt, neue Kopie ausschliesslich in LocalAppData/SieEncodeLab/NativeCopyCandidate4

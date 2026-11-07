@@ -18,6 +18,13 @@ VM weiterhin nicht fuer verlaessliche laengere Abnahmen freigegeben.
 
 ## Aktueller Kandidat und manuelle Restabnahme
 
+07.11.2026: Zusaetzlicher echter Offline-Nachweis fuer lokale Daten bestanden:
+virtuelles Netzwerkkabel getrennt, Windows 0 aktive Nicht-Loopback-Schnittstellen;
+normaler Zugang und Recovery mit Kandidat 4 erfolgreich. Nachweis
+`offline-groups-candidate4-offline-result.json`. Dies schliesst die bisherige
+Luecke zum tatsaechlich getrennten Netzwerk fuer lokal vorhandene Daten;
+unerreichbare Netzwerkdateien und Synchronisationskonflikte bleiben ungeprueft.
+
 07.11.2026: Konkretes natives Projekt „Neues Projekt Gruppe Kopie“ mittels
 installierter Produkt-API unter testerB kopiert und in separatem Prozess normal
 wieder geoeffnet. Neue ID, gleiche Gruppenbindung/Schluesselnutzdaten, Quellen
