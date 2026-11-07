@@ -1,6 +1,14 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+07.11.2026 Benutzer meldete leere Projektbibliothek in VM. Per Skript Ursache
+geprueft: sichtbare SieEncode-Instanz gehoerte labadmin, vorhandene native
+Gruppenprojekte liegen in testerB/Documents/SieEncode-Projekte. Nach bestaetigtem
+Schliessen durch Benutzer Kandidat 4 mit LoadUserProfile=true als testerB
+gestartet (PID 2328), keine Fixtures kopiert oder Identitaeten veraendert.
+Restabnahmeanleitung um konkretes richtiges Profil/Projekte ergaenzt. Noch kein
+neuer manueller Normal-/Recovery-Bediennachweis, keine Desktopsteuerung.
+
 07.11.2026 Kollegenanleitung auf Kandidat 4 aktualisiert. Veraltete Aussage
 zum Kandidat-2-Upgrade ersetzt durch genaue aktuelle Nachweisgrenzen. Zugangstabelle
 erklaert Gruppenmitgliedschaft, Projekterstellung durch normale Mitglieder,

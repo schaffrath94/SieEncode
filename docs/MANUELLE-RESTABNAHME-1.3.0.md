@@ -30,6 +30,14 @@ Dieser Schritt bestätigt weder Kartenschlüssel noch vollständige Buildfähigk
 Nur ein synthetisches Gruppenprojekt verwenden. Normale Mitgliedschaft und
 separate Recovery-Identität müssen bereits eingerichtet sein.
 
+In der bestehenden Test-VM dafür **testerB** verwenden. Die Bedienprojekte
+„Neues Projekt Gruppe“ und „Neues Projekt Gruppe Kopie“ liegen unter
+`C:\Users\testerB\Documents\SieEncode-Projekte`; dort wurden auch die getrennten
+normalen und Recovery-Identitäten eingerichtet. Eine unter labadmin gestartete
+Anwendung zeigt diese eigene Bibliothek nicht automatisch. Nicht nur den Ordner
+umstellen oder neue Identitäten anlegen, sondern die Anwendung unter testerB
+starten. Die zusätzlichen API-Fixtures VaultProbe4 sind separate Skripttestdaten.
+
 1. **Bearbeiten → Vault entsperren**: normaler Zugang muss bestätigt werden.
 2. **Mit Recovery-Schlüssel öffnen → Recovery-Zugang prüfen**: Zugang,
    Projektbindung und Integrität müssen bestätigt, Build muss gesperrt bleiben.
