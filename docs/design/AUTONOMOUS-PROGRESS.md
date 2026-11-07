@@ -1,6 +1,21 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+07.11.2026 Tokenarme Gruppen-/Recovery-Restpruefung abgeschlossen: 22/22
+Produkt-API-Phasen gegen die installierten Kandidat-4-Assemblies mit Hashguard,
+unter zwei normal berechtigten geladenen Windows-Profilen. Neue isolierte
+Bibliothek/Testdaten VaultProbe4, historische Fixtures unveraendert. Enthalten:
+Gruppenzugang/-entzug, Rotation mit Altsicherung, Offline-Altkopie/Rollbackabwehr,
+separate Recovery-Installation und Wiederoeffnung, volle Projektkopie mit neuer
+ID/erhaltenen Schluesseln, Wiederfreigabe, Delegationsscope/Replay/Entzug,
+Verwaltungsnachfolge mit Erhalt von Mitglieder- und Recoveryzugang. Alle PASS.
+Nachweis offline-groups-candidate4-group-results.json, Protokoll lokal gesichert,
+temporaere Zugangsdaten separat als entfernt bestaetigt. Keine Desktopsteuerung,
+Kartenaktion oder zweite Maschine. Native Dialog-/Hardwareabnahme bleibt offen.
+Testhelfer-DLL neu gebaut, vorhandener Testhost 8.0.30 wiederverwendet;
+Produktassemblies stammen ausschliesslich aus installierter Version (8.0.32).
+Kein neues MSI, keine unveraenderten Gesamttests wiederholt, kein GitHub-Push.
+
 06.11.2026 Auf Benutzerauftrag tokenarme Skriptabnahme ohne Desktopsteuerung:
 Kandidat 4 real in vorhandener Test-VM installiert, Upgrade von Kandidat 3
 MSI Exit 0, exakter DLL-Hash 85B3BDB2... bestaetigt. Benutzer schloss vorher

@@ -18,6 +18,18 @@ VM weiterhin nicht fuer verlaessliche laengere Abnahmen freigegeben.
 
 ## Aktueller Kandidat und manuelle Restabnahme
 
+**Aktualisierung 07.11.2026:** Massgeblich ist Kandidat
+**1.3.0-offline-groups.4**, Quelle `2c2a6af`. MSI-Dateivergleich 1086/1086,
+unveraenderte Runtime 495 Dateien, CI 72/72, installierter Anwendungstest 61/61.
+Reales Upgrade von Kandidat 3 und Erhalt aller erfassten Dateien/RSA-Identitaeten
+in drei Profilen bestanden: `offline-groups-candidate4-installed-result.json`.
+Zusaetzlich 22/22 Produkt-API-Phasen unter zwei normalen Windows-Benutzern mit
+frischen synthetischen Fixtures bestanden: `offline-groups-candidate4-group-results.json`.
+Dies aktualisiert die Software-Nachweise fuer Gruppen, Projektkopie, Recovery,
+Delegation und Verwaltungsnachfolge auf Kandidat 4. Keine native Dialogabnahme,
+zweite Maschine oder Hardwarefreigabe daraus ableiten. Nachfolgender Absatz
+beschreibt den historischen Kandidaten 3.
+
 Kandidat **1.3.0-offline-groups.3**, Quelle `ec5ca1c`, enthaelt zusaetzlich den
 Transport-Preflight-Fix fuer vollstaendig schluesselfreie Projektdefinitionen.
 CI 72/72, publizierter UI-Smoke 60/60, 1081 MSI-Dateihashes geprueft. Reales

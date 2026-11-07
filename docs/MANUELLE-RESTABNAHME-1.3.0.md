@@ -1,17 +1,23 @@
-# Kurze manuelle Restabnahme – Kandidat 1.3.0-offline-groups.3
+# Kurze manuelle Restabnahme – Kandidat 1.3.0-offline-groups.4
 
-Stand 06.11.2026. Alle unten aufgeführten Ergebnisse sind noch offen.
+Stand 07.11.2026. Die unten aufgeführten manuellen Bediennachweise bleiben offen.
 Installation/Upgrade in der VM, Erhalt der Dateien und RSA-Schlüssel in drei
-Windows-Profilen sowie installierter Self-Test und 60 UI-Prüfungen sind bereits
+Windows-Profilen sowie installierter Self-Test und 61 Anwendungsprüfungen sind bereits
 belegt. Diese Prüfungen müssen für dieselbe unveränderte Umgebung nicht erneut
 ausgeführt werden. Der Installer ersetzt eine vorhandene SieEncode-Version.
 
-MSI SHA256: `2F02A5FDE4A35B580479C5C311E9375A758AE517E90AFE52E5B0E4BC1D75CEE3`.
+Zusätzlich sind 22 Produkt-API-Phasen für Gruppen/Recovery/Projektkopie/Delegation
+und Verwaltungsnachfolge unter zwei Windows-Benutzern bestanden. Diese fachlichen
+Skripttests nicht wiederholen; B–D prüfen hier nur noch die tatsächliche Bedienung
+einschließlich Dialogen und Rollenwechsel. Für den Stationsfehler zuerst die
+[gezielte Passphrasen-Abnahme](ABNAHME-PASSPHRASEN-STATION.md) verwenden.
+
+MSI SHA256: `0F1AABF98BF91D72A4B2475757C97017563766414EFD2E60D64ACD48F8E7FD73`.
 Keine Schlüsselwerte oder privaten Sicherungen in Rückmeldungen aufnehmen.
 
 ## A – Gemeldeten Fehler prüfen (ohne Karte)
 
-1. Version **1.3.0-offline-groups.3** im Fenster kontrollieren.
+1. Version **1.3.0-offline-groups.4** im Fenster kontrollieren.
 2. Dasselbe Projekt in **Projekte → Bibliothek** auswählen, **Projekt prüfen**.
 3. Erwartung: Keine Transport-Key-Längenfehler allein wegen der im Vault
    gespeicherten Werte. Andere Meldungen wörtlich notieren, nicht übergehen.
