@@ -1,6 +1,15 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+07.11.2026 Benutzer bestaetigt den ausgefuehrten Normal-/Recovery-Wechsel:
+Build waehrend Recovery gesperrt, nach normalem Entsperren wieder verfuegbar.
+Damit B1-B3 fuer Kandidat 4 als benutzerberichtete manuelle Abnahme bestanden;
+keine eigene UI-Beobachtung behauptet. Nachweis
+offline-groups-candidate4-native-recovery-result.json. Keine Buildausfuehrung,
+Kartenfreigabe oder B4/B5/C/D daraus ableiten. Vorherige Projektpruefungsfehler
+separat belassen; genaue Meldung nicht protokolliert. Die nachfolgende aeltere
+Aussage zum fehlenden Normal-/Recovery-Nachweis ist damit fuer B1-B3 ueberholt.
+
 07.11.2026 Benutzer meldet ausgefuehrten Normal-/Recovery-Wechsel und Fehler
 bei vorheriger Projektpruefung; keine bestaetigte Build-Sperre/Freigabe gemeldet.
 Auf Wunsch Protokollablagen im Profil testerB schreibfrei untersucht: keine

@@ -18,6 +18,12 @@ VM weiterhin nicht fuer verlaessliche laengere Abnahmen freigegeben.
 
 ## Aktueller Kandidat und manuelle Restabnahme
 
+07.11.2026: B1–B3 unter Kandidat 4 durch Benutzer bestaetigt: normal entsperren,
+Recovery pruefen mit gesperrter Build-Aktion, wieder normal entsperren mit
+verfuegbarer Build-Aktion. Benutzerbericht, keine eigene UI-Beobachtung;
+`offline-groups-candidate4-native-recovery-result.json`. B4/B5, C/D und Hardware
+bleiben offen. Vorherige Projektpruefungsfehler sind ein separater Befund.
+
 **Aktualisierung 07.11.2026:** Massgeblich ist Kandidat
 **1.3.0-offline-groups.4**, Quelle `2c2a6af`. MSI-Dateivergleich 1086/1086,
 unveraenderte Runtime 495 Dateien, CI 72/72, installierter Anwendungstest 61/61.

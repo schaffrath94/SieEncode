@@ -1,6 +1,10 @@
 # Kurze manuelle Restabnahme – Kandidat 1.3.0-offline-groups.4
 
-Stand 07.11.2026. Die unten aufgeführten manuellen Bediennachweise bleiben offen.
+Stand 07.11.2026. B1–B3 sind durch Benutzer-Rückmeldung bestanden: normales
+Entsperren, ausdrückliche Recovery-Prüfung mit Build-Sperre und erneutes normales
+Entsperren mit verfügbarer Build-Aktion. Keine eigene UI-Beobachtung des Agenten.
+Nachweis: [manueller Recovery-Wechsel](design/offline-groups-candidate4-native-recovery-result.json).
+Die übrigen unten aufgeführten Bediennachweise bleiben offen.
 Installation/Upgrade in der VM, Erhalt der Dateien und RSA-Schlüssel in drei
 Windows-Profilen sowie installierter Self-Test und 61 Anwendungsprüfungen sind bereits
 belegt. Diese Prüfungen müssen für dieselbe unveränderte Umgebung nicht erneut
