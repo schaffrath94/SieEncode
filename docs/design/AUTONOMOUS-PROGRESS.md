@@ -1,6 +1,20 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+07.11.2026 Auf Benutzerwunsch konkretes Kollegen-Testpaket fertiggestellt:
+artifacts/colleague-test-1.3.0-offline-groups.4-20261107.zip (139801449 Bytes,
+SHA256 8103A64C2A534693B769E445B958AAFDDDFFC90D48962F3BCE7B4642D368DA5E).
+Enthaelt unveraenderten geprueften MSI, START.html, Rollen-/Schrittplan T1-T5,
+Kurzstart, Detailanleitung mit historischen Bildern und Feedbackvorlage.
+Kein portables Programm; ZIP ist Versandhuelle. Button-/Checkboxbeschriftungen
+gegen unveraenderten Installer-Quellstand abgeglichen. HTML-Links lokal geprueft,
+MSI direkt aus ZIP gestreamt und Hashgleichheit bestaetigt. Keine erneute
+Produkttestsuite/Installererzeugung. Keine neue visuelle Abnahme behauptet.
+Quellen docs/KOLLEGEN-TESTPLAN.md, docs/KOLLEGEN-FEEDBACK.md; Liefernachweis
+docs/design/colleague-test-delivery-20261107.json. Interner Testkandidat fuer
+Rueckmeldungen, keine vollstaendige Hardware-/Releasefreigabe oder GitHub-
+Veroeffentlichung. Keine Nachricht an Kollegen versandt. Benutzer verteilt Paket.
+
 07.11.2026 Neue Benutzerprioritaet: ausschliesslich bisher ungetestete Szenarien,
 Anleitung und interner Kollegenrelease bis Montag 09.11.2026 anstreben. Keine
 automatische Desktopbedienung autorisiert. Konkrete Restliste ohne Testwiederholungen:
