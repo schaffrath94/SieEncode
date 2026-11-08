@@ -1,6 +1,17 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+08.11.2026 Folgepruefung nach Benutzerinstallation: Host bestaetigt Kandidat 4,
+Studio-DLL SHA256 85B3BDB2D4261E3740EA8DA1AB7FA979F52121004400B1232BCE2207DA3C9B33.
+Runtime-Prozess 29472 gestartet 12:19:36, kein Hauptfenster; aktuelles Log endet
+12:19:40 bei Online-Updateabruf. Im Runtime-Konstruktor synchronen HTTP-Abruf
+vor erstem await gefunden. Fix a514a14 verlagert Abruf in Hintergrund, wartet
+Fehlerantwort ohne Nutzdaten sicher ab. 11 gezielte Update-/Startup-Tests bestanden,
+inklusive lokalem verzögertem HTTP-Server (200/neue Version und 503/leere Antwort).
+Keine Kartenaktion, keine Desktopautomatisierung, keine Hostinstallation durch Agent.
+Neue Runtime/MSI Kandidat 5 wird gebaut; native Fenster-/Kartenpruefung bleibt offen.
+Bisherige Vault-/Gruppenabnahmen nicht wiederholt. Keine GitHub-Veroeffentlichung.
+
 08.11.2026 Benutzer meldet fehlenden Runtime-Start nach "Transponder erkennen"
 auf Host. Schreibfrei geprueft: Host weiterhin Kandidat 3 (254F375A...),
 konfigurierter Runtimepfad vorhanden. Prozess 27972 SieEncode.Runtime bei erster
@@ -1809,3 +1820,4 @@ Automation sieencode-ui-und-pdf-fertigstellen: stuendlicher Heartbeat dieser Auf
 Keine doppelten Aufgaben/Automationen. Nur wesentliche Meilensteine/Fehler/erforderliche
 Benutzeraktionen melden. Nach echtem Abschluss oder wiederholt unloesbarer Blockade
 konkret berichten und pausieren; keine endlosen unveraenderten Pruefungen.
+
