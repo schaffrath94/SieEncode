@@ -1,6 +1,18 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+08.11.2026 Benutzer meldet fehlenden Runtime-Start nach "Transponder erkennen"
+auf Host. Schreibfrei geprueft: Host weiterhin Kandidat 3 (254F375A...),
+konfigurierter Runtimepfad vorhanden. Prozess 27972 SieEncode.Runtime bei erster
+erweiterter Prozesspruefung vorhanden, bei Folgepruefung nicht mehr vorhanden;
+kein beobachteter Zusammenhang zum Klick, keine Ursache daraus behauptet.
+Neuestes Runtime-Log log-20261108.txt zeigt 12:14:30 ArgumentNullException(bytes)
+in RedCell.Diagnostics.Update.Updater.Check, also Updatepruefung. Kein aktueller
+TaskLoop-Nachweis aus diesem Log. Alte Secretresolver-/Manifest-Fehler vom 06.11.
+nicht als heutiger Lauf ausgegeben. StartOperationAsync blockiert bei bereits
+laufender Runtime; konkreter UI-Meldungstext noch unbekannt. Kandidat-4-MSI-Hash
+erneut bestaetigt; Host noch nicht aktualisiert, keine Kartenaktion ausgeloest.
+
 07.11.2026 Auf Benutzerwunsch konkretes Kollegen-Testpaket fertiggestellt:
 artifacts/colleague-test-1.3.0-offline-groups.4-20261107.zip (139801449 Bytes,
 SHA256 8103A64C2A534693B769E445B958AAFDDDFFC90D48962F3BCE7B4642D368DA5E).
