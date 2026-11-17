@@ -7,6 +7,15 @@ using System;
 using System.Threading;
 using System.Windows.Automation;
 public static class DialogInvoke {
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet=System.Runtime.InteropServices.CharSet.Unicode)]
+    static extern IntPtr SendMessage(IntPtr hwnd, int msg, IntPtr wparam, string value);
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern bool PostMessage(IntPtr hwnd, int msg, IntPtr wparam, IntPtr lparam);
+    public static void Save(int edit, int dialog, string path) {
+        if (edit == 0 || dialog == 0) throw new InvalidOperationException("Missing test dialog handle");
+        SendMessage((IntPtr)edit, 0x000C, IntPtr.Zero, path);
+        if (!PostMessage((IntPtr)dialog, 0x0111, (IntPtr)1, IntPtr.Zero)) throw new InvalidOperationException("Save command failed");
+    }
     public static void Invoke(AutomationElement element) {
         var pattern = (InvokePattern)element.GetCurrentPattern(InvokePattern.Pattern);
         var thread = new Thread(() => { try { pattern.Invoke(); } catch {} });
@@ -105,8 +114,7 @@ function Save-NativeFile([string]$Path) {
     $save=Wait-Until { @(Windows | Where-Object { $_.Current.ClassName -eq '#32770' -and $_.Current.Name -notlike '*Entwicklung*' }) | Select-Object -First 1 } 'save dialog'
     $input=Find-Id $save '1001'
     if($input.Current.ControlType -ne [Windows.Automation.ControlType]::Edit){$input=(Elements $input ([Windows.Automation.ControlType]::Edit))[0]}
-    Set-Value $input $Path
-    Click (Find-Id $save '1')
+    [DialogInvoke]::Save($input.Current.NativeWindowHandle,$save.Current.NativeWindowHandle,$Path)
     try { [void](Wait-Until {Test-Path -LiteralPath $Path} 'exported file') }
     catch { throw ('Export missing. Test windows: ' + (@(Windows | ForEach-Object { $_.Current.Name + ' ' + (@(Elements $_ ([Windows.Automation.ControlType]::Text) | ForEach-Object {$_.Current.Name} | Select-Object -Last 4) -join ' ') }) -join ' | ')) }
 }

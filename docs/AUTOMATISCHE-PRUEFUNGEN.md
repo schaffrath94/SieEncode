@@ -79,3 +79,5 @@ Im Studio-Repository mit PowerShell 7 ausführen:
 ```
 
 Der separate Testbuild verwendet ausschließlich synthetische Identitäten und eine eigene Bibliothek. Der Lauf `20261117-221516-06c52093` bestätigte Projektkopie einschließlich Neustart, unveränderte Quelle, Mitgliedsentzug und gezielte Deaktivierung des zweiten Geräts. Der Delegationstest erreichte den Exportdialog. Gesamtstatus dieses Laufs war FAILED, weil die erwartete Exportdatei fehlte. Der JSON-Bericht jedes Laufs weist abgeschlossene Teilschritte einzeln aus. Die Prüfung verwendet ein Windows-Konto und eine vorbereitete Vollmacht.
+
+Abschlusslauf 20261117-221739-4c0b711c: Alle drei Dialogtests bestanden, einschließlich signiertem Export, Entzug der Vollmacht und leerem Bearbeitungsumfang nach Neustart.

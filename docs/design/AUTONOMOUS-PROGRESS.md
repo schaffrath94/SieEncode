@@ -1,6 +1,8 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+17.11.2026 AppDialogs PASSED (20261117-221739-4c0b711c). Externer Dialogtest auf einem Windows-Benutzer mit synthetischer Bibliothek: Kopieren und Wiederöffnung nach Prozessneustart mit Payload-/Quellhashprüfung, Mitgliedsentzug und Deaktivierung nur des zweiten Geräts, auf eine Gruppe begrenzte Delegation, signierter Export, Entzug und leerer Bearbeitungsumfang nach Neustart. Vollmacht vorab als Fixture eingerichtet. Testbuild und Bedienanleitung in docs/AUTOMATISCHE-PRUEFUNGEN.md.
+
 17.11.2026 Neue ausdrueckliche Autorisierung: Tests auf dem Host statt Test-VM;
 Benutzer schliesst SieEncode und erlaubt sichtbare synthetische Testanwendung.
 Gilt nur fuer eigene Testprozesse/-daten, nicht fuer produktive Einstellungen,
@@ -1856,5 +1858,6 @@ Automation sieencode-ui-und-pdf-fertigstellen: stuendlicher Heartbeat dieser Auf
 Keine doppelten Aufgaben/Automationen. Nur wesentliche Meilensteine/Fehler/erforderliche
 Benutzeraktionen melden. Nach echtem Abschluss oder wiederholt unloesbarer Blockade
 konkret berichten und pausieren; keine endlosen unveraenderten Pruefungen.
+
 
 
