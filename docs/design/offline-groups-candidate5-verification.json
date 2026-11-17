@@ -8,7 +8,10 @@
   "runtimeCommit": "a514a1423b2ef358aa37ae525221382018701754",
   "focusedTestsPassed": 11,
   "actualInstallationPerformed": false,
-  "nativeWindowAndCardTest": "pending-user",
+  "nativeWindowAndCardTest": "window-and-card-recognition-confirmed-by-user",
+  "userConfirmationDate": "2026-11-17",
+  "installedHashRecheckedAtUserConfirmation": false,
+  "confirmationScope": "Window opens and card recognition works; full analysis, encoding and ChangeFileSettings not confirmed. actualInstallationPerformed records the agent package verification, not a user installation audit.",
   "runtimeFramework": "8.0.33",
   "status": "MSI-content-verified"
 }

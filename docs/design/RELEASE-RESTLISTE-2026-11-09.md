@@ -7,6 +7,10 @@ ausdrückliche und nachvollziehbare Releaseentscheidung.
 
 ## Nicht erneut ausführen
 
+17.11.2026: Fensterstart und Kartenerkennung nach Kandidat-5-Uebergabe vom
+Benutzer bestaetigt. Kein erneuter Hashabgleich der installierten Version;
+dieser Bericht ersetzt keine vollstaendige Analyse-/Kodierabnahme.
+
 72 Regressionstests, 61 Anwendungsprüfungen, echte MSI-Upgrades und Datenerhalt
 in drei Profilen; 22 Gruppen-/Recovery-/Delegationsphasen unter zwei Benutzern;
 Normal-/Recovery-Buildsperre vom Benutzer bestätigt; Kopie und normale
@@ -22,7 +26,7 @@ ihres damaligen Versionsstands. Keine künstliche vollständige Neuabnahme.
 | Korrigierte Auswahl nach Kopieren | Nur Editor-/Bibliotheksauswahl nach neuer Kopie manuell bestätigen. Kopierlogik und Schlüssel erneut zu testen ist nicht erforderlich. |
 | Vollständiger Rechte-/Geräteentzug durch Dialoge | Benutzer nach Abschnitt C der manuellen Restabnahme; zusätzliche Geräte separat. Produkt-API bereits bestanden. |
 | Delegation durch Dialoge | Benutzer nach Abschnitt D; keine automatische Desktopbedienung autorisiert. Produkt-API bereits bestanden. |
-| Stationsfix mit Reader/Testkarte und erforderlicher Kartenablauf | Geeignete bekannte Testkarte und passender Zugang erforderlich. Kein Karten-Schreibversuch ohne klare Testumgebung. |
+| Stationsfix mit Reader/Testkarte und erforderlicher Kartenablauf | Fensterstart und Kartenerkennung am 17.11. vom Benutzer bestaetigt. Vollstaendige Analyse/Kodieren und ChangeFileSettings bleiben offen. Kein Karten-Schreibversuch ohne klare Testumgebung. |
 | Zweiter Rechner, nicht erreichbare Netzwerkablage, echte Synchronisationskonflikte | Noch nicht nachgewiesen. Lokale VM-Tests nicht als diesen Nachweis ausgeben. Für Verteilung bekannte Einschränkungen ausdrücklich nennen. |
 | Reale Stromunterbrechung | Nicht getestet; Prozessabbruchtests ersetzen keinen solchen Nachweis. |
 

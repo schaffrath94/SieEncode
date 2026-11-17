@@ -1,6 +1,15 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+17.11.2026 Benutzer bestaetigt nach Kandidat-5-Uebergabe zuerst den Fensterstart,
+danach ausdruecklich: "Gut Kartenerkennung funktioniert aufjedenfall wieder".
+Als Benutzerbericht fuer Runtime-Fenster und Kartenerkennung dokumentiert;
+installierter Datei-Hash dabei nicht erneut erhoben. Kein Nachweis fuer komplette
+Analyse, Kodieren, ChangeFileSettings oder erneute Installerabnahme abgeleitet.
+Keine Wiederholung bestandener Tests, keine neuen Pakete, keine Desktopbedienung.
+Offen bleiben insbesondere Kopierauswahl/Neustart, Rechte-/Geraeteentzug und
+Delegation ueber Dialoge sowie weitergehende Hardware-/Mehrrechnerabnahmen.
+
 17.11.2026 Wiederaufnahme: Build Kandidat 5 vom 08.11. erfolgreich abgeschlossen,
 keinen unveraenderten Neubau gestartet. MSI administrativ nur in isolierten
 admin-image-Ordner extrahiert (Exit 0), keine Hostinstallation. Paketinhalt und
