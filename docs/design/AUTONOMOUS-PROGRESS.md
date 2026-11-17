@@ -1,6 +1,24 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+17.11.2026 Neue ausdrueckliche Autorisierung: Tests auf dem Host statt Test-VM;
+Benutzer schliesst SieEncode und erlaubt sichtbare synthetische Testanwendung.
+Gilt nur fuer eigene Testprozesse/-daten, nicht fuer produktive Einstellungen,
+Karten-Schreibaktionen oder Eingriffe in eine laufende Benutzerinstanz.
+Lokaler Branch codex/host-test-automation trennt diese Arbeit von spaeteren
+Upstream-Uebernahmen; keine neuen Upstream-Aenderungen in diesem Schritt.
+tools/Invoke-Checks.ps1 buendelt Core, RuntimeStartup, AppSelf und AppSmoke mit
+expliziten Eingaben, Zeitlimit, Prozesslogs, Sperrdatei, Fingerabdruck und
+PASSED/REUSED/FAILED-Bericht. Keine versteckte Uebernahme alter VM-Evidenz.
+RuntimeStartup 11/11 bestanden; Wiederverwendung ohne Testwiederholung geprueft.
+AppSmoke Kandidat 5: 61 Pruefungen bestanden. Erster Runner-Abschluss fand
+TMP-Bericht irrtuemlich unter TEMP, anschliessend korrigiert und erfolgreich
+geprueft (artifacts/checks/20261117-215728-cec8dd76/summary.json).
+Native externe Dialogtests fuer Kopie/Neustart, Gruppen/Geraete und Delegation
+weiter offen. Anleitung docs/AUTOMATISCHE-PRUEFUNGEN.md. Kein neues MSI gebaut,
+keine Hostinstallation veraendert, kein Git-Push. Fruehere Desktopverbote unten
+sind durch die obige begrenzte Benutzerfreigabe fuer synthetische Tests ersetzt.
+
 17.11.2026 Benutzer bestaetigt nach Kandidat-5-Uebergabe zuerst den Fensterstart,
 danach ausdruecklich: "Gut Kartenerkennung funktioniert aufjedenfall wieder".
 Als Benutzerbericht fuer Runtime-Fenster und Kartenerkennung dokumentiert;
