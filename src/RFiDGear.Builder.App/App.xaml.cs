@@ -10,6 +10,20 @@ public partial class App : Application
     {
         base.OnStartup(e);
 #if SIEENCODE_DIALOG_TESTS
+        if (e.Args is ["--test-station-layout"])
+        {
+            try
+            {
+                var window = CreateIsolatedTestWindow("TestStation");
+                window.Show();
+                window.UpdateLayout();
+                window.VerifyStationLayout();
+                window.Close();
+                Shutdown(0);
+            }
+            catch (Exception exception) { Console.Error.WriteLine(exception); Shutdown(1); }
+            return;
+        }
         if (e.Args.Length == 3 && e.Args[0] == "--dialog-tests")
         {
             try { DialogTestWorkspace.Start(e.Args[1], e.Args[2]); }

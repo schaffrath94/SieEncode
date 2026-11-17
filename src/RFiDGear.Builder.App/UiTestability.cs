@@ -83,6 +83,28 @@ public partial class MainWindow
             foreach (var descendant in DescendantsAndSelf(child)) yield return descendant;
     }
 
+#if SIEENCODE_DIALOG_TESTS
+    internal void VerifyStationLayout()
+    {
+        Navigate("TestStation", false);
+        var additional = new[] { TestDeepAnalyzeButton, TestProjectRecognitionButton, TestRefreshOperationButton };
+        foreach (var expert in new[] { false, true, false })
+        {
+            ExpertModeToggle.IsChecked = expert;
+            UpdateLayout();
+            if (!TestAnalyzeCardButton.IsVisible || !TestAnalysisTree.IsVisible ||
+                additional.Any(control => control.IsVisible != expert))
+                throw new InvalidOperationException($"Teststationsansicht fehlerhaft (Expertenmodus {expert}).");
+        }
+        var section = DescendantsAndSelf(PageTestStation).OfType<Expander>()
+            .Single(item => Equals(item.Header, "Weitere Analyse und Berichte"));
+        section.SetCurrentValue(Expander.IsExpandedProperty, true);
+        UpdateLayout();
+        if (!TestDeepAnalyzeButton.IsVisible || !TestOpenInventoryPdfButton.IsVisible)
+            throw new InvalidOperationException("Analyseaktionen im Normalmodus nicht aufklappbar.");
+        Console.WriteLine("PASS: Standard, Experte, zurueck zu Standard, Berichte aufklappen.");
+    }
+#endif
     public string RunUiSmokeTest()
     {
         RunSelfTest();
