@@ -1,0 +1,53 @@
+diff --git a/RFiDGear.Tests/ExternalControl/BridgeSampleClientTests.cs b/RFiDGear.Tests/ExternalControl/BridgeSampleClientTests.cs
+index 5909483..d5f4216 100644
+--- a/RFiDGear.Tests/ExternalControl/BridgeSampleClientTests.cs
++++ b/RFiDGear.Tests/ExternalControl/BridgeSampleClientTests.cs
+@@ -428,6 +428,48 @@ namespace RFiDGear.Tests.ExternalControl
+             await Assert.ThrowsAsync<NotSupportedException>(() => other.RegisterKeyProviderAsync());
+         }
+ 
++        [Fact]
++        public async Task ResumeAfterPendingVaultDisconnect()
++        {
++            var (_, pipe, host, keys) = Start();
++            var registry = SecureKeyRegistry.Create(
++                new[] { new SecureKeyProviderRegistration(BridgeKeyProvider.ProviderId, BridgeKeyProvider.DisplayName, keys) },
++                Array.Empty<Lazy<ISecureKeyProvider, ISecureKeyProviderMetadata>>());
++            var client = await ConnectAsync(pipe);
++            var asked = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
++            client.KeyVault = async (_, token) =>
++            {
++                asked.TrySetResult(true);
++                await Task.Delay(Timeout.Infinite, token);
++                throw new InvalidOperationException("Unexpected completion");
++            };
++            await client.RegisterKeyProviderAsync();
++            var gate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
++            host.ExecutionHost.RunGate = gate;
++            async Task ResolveForFakeTask()
++            {
++                try
++                {
++                    using var resolution = await registry.ResolveAsync(BridgeKeyProvider.ProviderId, Request("synthetic/job"), CancellationToken.None);
++                    Assert.Null(resolution.Key);
++                    Assert.Equal(SecureKeyFailureReason.ProviderUnavailable, resolution.FailureReason);
++                    host.ExecutionHost.Result = host.ExecutionHost.Result with { Outcome = ExecutionOutcome.Failure };
++                }
++                finally { gate.TrySetResult(true); }
++            }
++            Task? resolutionTask = null;
++            host.ExecutionHost.OnExecute = _ => resolutionTask = ResolveForFakeTask();
++            var pending = client.RunOnceAsync("synthetic-disconnect", NoVariables);
++            await asked.Task.WaitAsync(TimeSpan.FromSeconds(10));
++            await client.DisposeAsync();
++            Assert.Equal(RunOutcomeKind.Unknown, (await pending.WaitAsync(TimeSpan.FromSeconds(10))).Kind);
++            await resolutionTask!.WaitAsync(TimeSpan.FromSeconds(10));
++            var second = await ConnectAsync(pipe);
++            var resumed = await second.ResumeAsync("synthetic-disconnect").WaitAsync(TimeSpan.FromSeconds(10));
++            Assert.Equal("synthetic-disconnect", resumed.Result!.RequestId);
++            Assert.Equal(RunStatuses.Failure, resumed.Result.Status);
++            Assert.Single(host.ExecutionHost.Requests);
++        }
+         private static SecureKeyRequest Request(string reference) => new SecureKeyRequest
+         {
+             SlotId = "desfire.app.current",

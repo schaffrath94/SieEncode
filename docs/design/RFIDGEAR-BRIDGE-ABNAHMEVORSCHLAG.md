@@ -32,3 +32,9 @@ Am selben Upstream-Commit bestanden fünf gezielte Prüfungen aus BridgeSampleCl
 Nach simuliertem Hostneustart mit erhaltenem Ausführungsjournal wurde ein zuvor laufender Auftrag als unterbrochen erkannt. Ein zuvor abgeschlossener Auftrag blieb als abgeschlossen bekannt, sein Detailergebnis war verloren. In beiden Fällen wurde er nicht erneut gestartet.
 
 Für eine spätere Studio-Anbindung: Auftragskennung vor dem Start persistent speichern, nach Verbindungsverlust den Status abfragen und unklare oder unterbrochene Läufe zur Prüfung anzeigen. Bei fehlenden Detailergebnissen ist vor Kartenfreigabe ein unabhängiger Readback erforderlich. Die Kombination aus Schlüsselauflösung, Abbruch, Wiederverbindung und tatsächlicher Kartenänderung ist noch nicht im Gesamtablauf geprüft.
+
+## Kombinierter Test mit ausstehender Vault-Anfrage
+
+ResumeAfterPendingVaultDisconnect bestand in 911 ms am Upstream-Stand e607c2986cd000c88a6a3101620a963882f738e6 mit lokalem Testzusatz. Der synthetische Ausführungshost fordert während des Auftrags einen Schlüssel über die Bridge an. Erst nachdem der Client die Anfrage erhalten hat, trennt der Test die Pipe. Der Provider liefert ProviderUnavailable und keinen Schlüssel. Der Testhost modelliert diesen Fehler als fehlgeschlagenen Auftrag. Der getrennte Client sieht Unknown. Ein neuer Client erhält bei ResumeAsync zur ursprünglichen requestId den Terminalstatus failure. Der Ausführungszähler bleibt bei eins. Es wird keine Karte angesprochen.
+
+Reproduktion im sauberen Checkout des genannten Commits mit SDK 10.0.404: beiliegenden Patch mit git apply anwenden und dotnet test RFiDGear.Tests/RFiDGear.Tests.csproj -c Release --filter FullyQualifiedName~ResumeAfterPendingVaultDisconnect ausführen. Der Patch ergänzt ausschließlich die Tests. Die Fehlerzuordnung und der physische Kartenzustand in einem realen DESFire-Task bleiben separat abzunehmen.
