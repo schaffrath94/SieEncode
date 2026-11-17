@@ -17,6 +17,10 @@
     <ProjectReference Include="..\RFiDGear.Builder.RfPrj\RFiDGear.Builder.RfPrj.csproj" />
     <ProjectReference Include="..\RFiDGear.Builder.Runtime\RFiDGear.Builder.Runtime.csproj" />
   </ItemGroup>
+  <PropertyGroup Condition="'$(DialogTests)' == 'true'">
+    <DefineConstants>$(DefineConstants);SIEENCODE_DIALOG_TESTS</DefineConstants>
+    <AssemblyName>SieEncode.DialogTests</AssemblyName>
+  </PropertyGroup>
   <ItemGroup>
     <Content Remove="..\..\assets\branding\SieEncode.ico" />
     <Resource Include="..\..\assets\branding\SieEncode.ico">

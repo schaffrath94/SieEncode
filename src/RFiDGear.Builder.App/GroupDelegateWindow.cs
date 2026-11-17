@@ -29,6 +29,8 @@ internal sealed class GroupDelegateWindow : Window
 
     internal GroupDelegateWindow(Window owner, string localDirectory)
     {
+        grid.Name = "GroupsGrid"; members.Name = "MembersList";
+        libraries.Name = "Libraries"; people.Name = "People"; status.Name = "DelegateStatus";
         Owner = owner; Title = "Mein Gruppenverwaltungsplatz · Entwicklung";
         Width = 900; Height = 800; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         directory = Path.GetFullPath(localDirectory);

@@ -9,6 +9,14 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+#if SIEENCODE_DIALOG_TESTS
+        if (e.Args.Length == 3 && e.Args[0] == "--dialog-tests")
+        {
+            try { DialogTestWorkspace.Start(e.Args[1], e.Args[2]); }
+            catch (Exception exception) { Console.Error.WriteLine(exception); Shutdown(1); }
+            return;
+        }
+#endif
         if (e.Args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
         {
             try

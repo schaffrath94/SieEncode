@@ -33,6 +33,9 @@ internal sealed partial class GroupAdministrationWindow : Window
 
     public GroupAdministrationWindow(Window owner, string localTrustDirectory)
     {
+        grid.Name = "GroupsGrid"; members.Name = "MembersList";
+        peopleGrid.Name = "PeopleGrid"; deviceGrid.Name = "DevicesGrid";
+        delegationList.Name = "DelegationsList";
         Owner = owner; Title = "Offline-Gruppen verwalten · Entwicklung"; Width = 880; MaxHeight = 850; SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         localDirectory = Path.Combine(Path.GetFullPath(localTrustDirectory), "Administrations");

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Core','RuntimeStartup','AppSelf','AppSmoke')]
+    [ValidateSet('Core','RuntimeStartup','AppSelf','AppSmoke','AppDialogs')]
     [string[]]$Suite = @('Core','RuntimeStartup'),
     [string]$Executable = '',
     [switch]$Plan,
@@ -26,6 +26,7 @@ function Get-InputHash([string]$Name) {
     $lines = [Collections.Generic.List[string]]::new()
     $lines.Add("$Name|$runnerHash|$sdk|$env:COMPUTERNAME|$env:USERNAME|$($PSVersionTable.PSVersion)|$([Environment]::OSVersion)")
     if ($Name -like 'App*') {
+        if ($Name -eq 'AppDialogs') { $lines.Add((Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'Test-NativeDialogs.ps1')).Hash) }
         if (-not $Executable -or -not (Test-Path -LiteralPath $Executable -PathType Leaf)) { throw 'App suites require -Executable with an explicit SieEncode.exe path.' }
         $appRoot = Split-Path -Parent ([IO.Path]::GetFullPath($Executable))
         $lines.Add($appRoot)
@@ -88,6 +89,11 @@ foreach ($name in ($Suite | Select-Object -Unique)) {
                 if (Get-Process -Name SieEncode -ErrorAction SilentlyContinue) { throw 'Close SieEncode before AppSelf/AppSmoke; no running user instance will be controlled.' }
                 $psi.FileName=[IO.Path]::GetFullPath($Executable)
                 $psi.Arguments=if ($name -eq 'AppSelf') {'--self-test'} else {'--ui-smoke-test'}
+                if ($name -eq 'AppDialogs') {
+                    $psi.FileName=Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
+                    $psi.EnvironmentVariables['PSModulePath']=(Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/Modules') + ';' + (Join-Path $env:ProgramFiles 'WindowsPowerShell/Modules')
+                    $psi.Arguments='-NoProfile -NonInteractive -File "' + (Join-Path $PSScriptRoot 'Test-NativeDialogs.ps1') + '" -Executable "' + [IO.Path]::GetFullPath($Executable) + '"'
+                }
             }
             $process=[Diagnostics.Process]::new()
             $process.StartInfo=$psi
@@ -112,6 +118,10 @@ foreach ($name in ($Suite | Select-Object -Unique)) {
                     $smoke=Get-Content -LiteralPath $smokePath -Raw | ConvertFrom-Json
                     if ($smoke.status -ne 'OK') { throw 'UI smoke report did not pass' }
                 }
+                if ($name -eq 'AppDialogs') {
+                    $dialogReport=Get-Content -LiteralPath (Join-Path $stage 'TMP/native-dialog-result.json') -Raw | ConvertFrom-Json
+                    if ($dialogReport.status -ne 'PASSED' -or -not $dialogReport.actualExternalUiAutomation) { throw 'Native dialog report did not pass' }
+                }
                 # If sources changed during execution, don't create a reusable pass.
                 if ((Get-InputHash $name) -ne $fingerprint) { throw 'Inputs changed during execution; result not reusable' }
                 $result.status='PASSED'
@@ -123,7 +133,7 @@ foreach ($name in ($Suite | Select-Object -Unique)) {
     $results.Add([pscustomobject]$result)
     Write-Output ("{0}: {1}" -f $name,$result.status)
 }
-$report=[ordered]@{ schemaVersion=1; runId=$runId; results=@($results.ToArray()); excluded=@('Hardware/card actions','MSI install/upgrade','Cross-user and second-machine acceptance','Native copy/group/delegation dialog acceptance'); }
+$report=[ordered]@{ schemaVersion=1; runId=$runId; results=@($results.ToArray()); excluded=@('Hardware/card actions','MSI install/upgrade','Cross-user and second-machine acceptance','Initial enrollment and delegation-grant dialogs'); }
 $reportPath=Join-Path $runRoot 'summary.json'
 $report | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath $reportPath -Encoding UTF8
 Write-Output "Report: $reportPath"
