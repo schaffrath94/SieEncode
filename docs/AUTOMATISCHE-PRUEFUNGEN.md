@@ -68,3 +68,14 @@ nach Kompatibilität und Nutzen bewerten und auf separatem Entwicklungsbranch
 selektiv übernehmen. Keine Upstream-Übernahme ist Teil dieses Runner-Schritts.
 Runtime-Start, Studio-/Runtime-Vertrag und Kartenabläufe brauchen unterschiedliche
 Nachweise. Bestandene Softwaretests ersetzen keine reale Hardwareabnahme.
+
+## Externe Dialogprüfung (Stand 17.11.2026)
+
+Im Studio-Repository mit PowerShell 7 ausführen:
+
+```powershell
+./tools/Build-DialogTests.ps1
+./tools/Invoke-Checks.ps1 -Suite AppDialogs -Executable ./artifacts/dialog-test-build/SieEncode.DialogTests.exe
+```
+
+Der separate Testbuild verwendet ausschließlich synthetische Identitäten und eine eigene Bibliothek. Der Lauf `20261117-221516-06c52093` bestätigte Projektkopie einschließlich Neustart, unveränderte Quelle, Mitgliedsentzug und gezielte Deaktivierung des zweiten Geräts. Der Delegationstest erreichte den Exportdialog. Gesamtstatus dieses Laufs war FAILED, weil die erwartete Exportdatei fehlte. Der JSON-Bericht jedes Laufs weist abgeschlossene Teilschritte einzeln aus. Die Prüfung verwendet ein Windows-Konto und eine vorbereitete Vollmacht.

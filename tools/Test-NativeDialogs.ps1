@@ -46,7 +46,12 @@ function Find-Name($Parent,[string]$Name) {
 }
 function Windows {
     $condition=New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::ProcessIdProperty,$script:app.Id)
-    return @([Windows.Automation.AutomationElement]::RootElement.FindAll([Windows.Automation.TreeScope]::Children,$condition))
+    foreach ($top in [Windows.Automation.AutomationElement]::RootElement.FindAll([Windows.Automation.TreeScope]::Children,$condition)) {
+        $top
+        foreach ($owned in (Elements $top ([Windows.Automation.ControlType]::Window))) {
+            if ($owned.Current.ProcessId -eq $script:app.Id) { $owned }
+        }
+    }
 }
 function Window([string]$Title) { Wait-Until { @(Windows | Where-Object {$_.Current.Name -eq $Title}) | Select-Object -First 1 } $Title }
 function Select-Item($Element) { ([Windows.Automation.SelectionItemPattern]$Element.GetCurrentPattern([Windows.Automation.SelectionItemPattern]::Pattern)).Select() }
@@ -102,7 +107,8 @@ function Save-NativeFile([string]$Path) {
     if($input.Current.ControlType -ne [Windows.Automation.ControlType]::Edit){$input=(Elements $input ([Windows.Automation.ControlType]::Edit))[0]}
     Set-Value $input $Path
     Click (Find-Id $save '1')
-    [void](Wait-Until {Test-Path -LiteralPath $Path} 'exported file')
+    try { [void](Wait-Until {Test-Path -LiteralPath $Path} 'exported file') }
+    catch { throw ('Export missing. Test windows: ' + (@(Windows | ForEach-Object { $_.Current.Name + ' ' + (@(Elements $_ ([Windows.Automation.ControlType]::Text) | ForEach-Object {$_.Current.Name} | Select-Object -Last 4) -join ' ') }) -join ' | ')) }
 }
 
 $status='FAILED';$failure=$null
@@ -138,7 +144,13 @@ try {
     Select-Item $bob; Click (Find-Name $admin 'Mitglied aus Gruppe entfernen'); Confirm-Yes
     $people=Find-Id $admin 'GroupAdministration.PeopleGrid'; Select-Item (Row $people 1)
     $devices=Find-Id $admin 'GroupAdministration.DevicesGrid'
-    $cell=Cell $devices 1 1
+    $secondRow = @(Elements $devices ([Windows.Automation.ControlType]::DataItem) | Where-Object {
+        @(Elements $_ ([Windows.Automation.ControlType]::Text) | Where-Object { $_.Current.Name -eq 'Bob second device' }).Count -gt 0
+    })
+    if ($secondRow.Count -ne 1) { throw 'Cannot identify Bob second device uniquely' }
+    Select-Item $secondRow[0]
+    $cell = @(Elements $secondRow[0] ([Windows.Automation.ControlType]::Custom) | Where-Object { @(Elements $_ ([Windows.Automation.ControlType]::CheckBox)).Count -eq 1 })[0]
+    ([Windows.Automation.InvokePattern]$cell.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern)).Invoke()
     $checkbox=(Elements $cell ([Windows.Automation.ControlType]::CheckBox))[0]
     if(-not $checkbox){throw 'Second device checkbox missing'}
     ([Windows.Automation.TogglePattern]$checkbox.GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern)).Toggle()
