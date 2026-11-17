@@ -39,7 +39,7 @@ internal static class DialogTestWorkspace
         if (File.ReadAllText(Path.Combine(Root, ".synthetic-dialog-test")) != "SieEncode synthetic dialog test v1") throw new InvalidDataException("Fixture marker mismatch.");
         var store = new BuilderSettingsStore(Path.Combine(Root, "settings.json"));
         // Explicit paths on every launch; no migration or user-default settings.
-        var settings = new BuilderSettings();
+        var settings = new BuilderSettings { ExpertMode = true };
         settings.Projects.Directory = Path.Combine(Root, "projects");
         settings.Profiles.Directory = Path.Combine(Root, "profiles");
         settings.VaultBackup.Directory = Path.Combine(Root, "backups");
