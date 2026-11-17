@@ -10,6 +10,7 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 required for bounded process-tree cleanup.' }
 $repo = Split-Path -Parent $PSScriptRoot
+if ($Executable) { $Executable = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Executable) }
 $runtime = Join-Path (Split-Path -Parent $repo) 'SieEncode.Runtime'
 $evidence = Join-Path $repo 'artifacts/checks'
 $runId = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8)
