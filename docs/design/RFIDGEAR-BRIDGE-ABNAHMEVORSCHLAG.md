@@ -24,3 +24,11 @@ Offizieller Quellstand e607c2986cd000c88a6a3101620a963882f738e6, Windows x64, lo
 Der getestete StartRunRequest enthält die Projektvorbedingungen ExpectProjectPath und ExpectTaskCount. Ein erwarteter Revisionswert für den geladenen Projektinhalt fehlt im DTO. Die Ablehnung eines Inhaltswechsels bei unverändertem Pfad und gleicher Taskanzahl bleibt daher ein offenes Abnahmekriterium. Der Test nutzte weder den installierten Upstream-Release noch einen Reader.
 
 Der Befund zur Projektbindung wurde in https://github.com/c3rebro/RFiDGear/issues/232#issuecomment-6963270675 übergeben. Auf demselben Commit bestanden zwei weitere hardwarefreie Tests aus BridgeKeyProviderTests (2/2): AClientThatLeavesWhileItIsAsked_CostsTheKey_NotTheWholeTimeout und AKeyThatArrivesAfterTheTimeout_IsNotHandedOut. Sie decken den Verlust des Clients während der Anfrage und die verspätete Antwort nach Timeout ab. Offen bleibt der Gesamtzustand eines laufenden Schreibauftrags nach Verbindungsabbruch und Wiederverbindung.
+
+## Verbindungsverlust und Wiederanlauf
+
+Am selben Upstream-Commit bestanden fünf gezielte Prüfungen aus BridgeSampleClientTests und BridgeRunRecoveryTests (5/5, Named Pipe, synthetischer Host). Nach Verbindungsverlust meldet der SampleClient zunächst Unknown. ResumeAsync mit derselben requestId findet den laufenden Auftrag beim weiterhin aktiven Host wieder. Im Test blieb es bei genau einem Ausführungsauftrag. Bei einem Start-Timeout fragt der Client den Status ab.
+
+Nach simuliertem Hostneustart mit erhaltenem Ausführungsjournal wurde ein zuvor laufender Auftrag als unterbrochen erkannt. Ein zuvor abgeschlossener Auftrag blieb als abgeschlossen bekannt, sein Detailergebnis war verloren. In beiden Fällen wurde er nicht erneut gestartet.
+
+Für eine spätere Studio-Anbindung: Auftragskennung vor dem Start persistent speichern, nach Verbindungsverlust den Status abfragen und unklare oder unterbrochene Läufe zur Prüfung anzeigen. Bei fehlenden Detailergebnissen ist vor Kartenfreigabe ein unabhängiger Readback erforderlich. Die Kombination aus Schlüsselauflösung, Abbruch, Wiederverbindung und tatsächlicher Kartenänderung ist noch nicht im Gesamtablauf geprüft.
