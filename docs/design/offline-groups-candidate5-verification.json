@@ -1,0 +1,14 @@
+{
+  "packageVersion": "1.3.0-offline-groups.5",
+  "verifiedDate": "2026-11-17",
+  "verifiedMsiFiles": 1097,
+  "msiSha256": "E1650CB8DA495EC7237630D5C48D732C2DEAD04A71BD81E398E3CB4403AB57B1",
+  "studioDllSha256": "8533F2FBDFE4888CC8A80E89A8A35025888B9C05FA831B395289D030B291DDEC",
+  "runtimeDllSha256": "453EC36354ED7647B0846E855C259EA655FE6CDA27FC2874D7F38AA4251B9F69",
+  "runtimeCommit": "a514a1423b2ef358aa37ae525221382018701754",
+  "focusedTestsPassed": 11,
+  "actualInstallationPerformed": false,
+  "nativeWindowAndCardTest": "pending-user",
+  "runtimeFramework": "8.0.33",
+  "status": "MSI-content-verified"
+}

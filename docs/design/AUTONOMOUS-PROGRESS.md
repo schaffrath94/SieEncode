@@ -1,6 +1,15 @@
 # Autonome Weiterarbeit - Stand 2026-09-15
 
 ## Auftrag und Grenzen
+17.11.2026 Wiederaufnahme: Build Kandidat 5 vom 08.11. erfolgreich abgeschlossen,
+keinen unveraenderten Neubau gestartet. MSI administrativ nur in isolierten
+admin-image-Ordner extrahiert (Exit 0), keine Hostinstallation. Paketinhalt und
+SHA256SUMS gegen Build geprueft; Nachweis offline-groups-candidate5-verification.json.
+Runtime weiter 495 Dateien; neues enthaltenes .NET 8.0.33 statt vorheriger Version.
+Gezielte Anleitung docs/KANDIDAT-5-STARTTEST.md. Native Fenster-/Kartenpruefung und
+echte Installation von Kandidat 5 offen, Benutzer bedient. Keine Wiederholung der
+unveraenderten Vault-/Gruppentests, keine Desktopautomatisierung, kein Git-Push.
+
 08.11.2026 Folgepruefung nach Benutzerinstallation: Host bestaetigt Kandidat 4,
 Studio-DLL SHA256 85B3BDB2D4261E3740EA8DA1AB7FA979F52121004400B1232BCE2207DA3C9B33.
 Runtime-Prozess 29472 gestartet 12:19:36, kein Hauptfenster; aktuelles Log endet
@@ -1820,4 +1829,5 @@ Automation sieencode-ui-und-pdf-fertigstellen: stuendlicher Heartbeat dieser Auf
 Keine doppelten Aufgaben/Automationen. Nur wesentliche Meilensteine/Fehler/erforderliche
 Benutzeraktionen melden. Nach echtem Abschluss oder wiederholt unloesbarer Blockade
 konkret berichten und pausieren; keine endlosen unveraenderten Pruefungen.
+
 
