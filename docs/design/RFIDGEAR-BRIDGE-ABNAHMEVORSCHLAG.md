@@ -52,3 +52,9 @@ Im Release-Testbuild von f58785f (mit dem lokalen Updater-Patch) bestanden zwei 
 Im Bridge-Vertrag dieses Commits enthält TaskOutcomeDto Position, Projektindex, Typ, Erfolg, Fehlercode und Überspringgrund. Ein Feld für die verglichenen Größen fehlt. Offen bleibt die Übermittlung eines abweichenden Größenpaars (Soll 32, Ist 16) an Studio mit Lauf- und Taskzuordnung.
 
 Der öffentliche Release v2.0.10.0 verweist laut GitHub-API auf 1045f70ac64d0a049dfcd82f8b61b627faa22ea6. Sein vollständig gelisteter Git-Baum enthält keinen Pfad mit RFiDGear.Bridge. GitHub nennt für RFiDGearBundleSetup.exe 285441360 Byte und SHA-256 5584e013e5eacde915b27124518979721bab8e56e25c01a76084ec787cbc9471. Dies ist ein Metadatenabgleich. Der Installerstart und die Abnahme einer offiziell ausgelieferten Bridge stehen aus.
+
+## Automatik bei Kartenpräsenz, 18.11.2026
+
+Vier AutoModeControllerTests im vorhandenen Release-Testbuild f58785f mit lokalem Updater-Patch bestanden (4/4). Eine beim Start bereits aufliegende Karte löst einen Lauf aus. Bei unveränderter Karte über fünf Abfragen bleibt es bei einem Lauf. Nach erkanntem Entfernen und erneutem Auflegen derselben Karte erfolgt ein zweiter Lauf mit neuer RunId. Eine andere UID löst auch ohne dazwischen beobachteten Leerzustand einen Lauf aus. Alle vier Fälle verwenden simulierte Präsenzereignisse.
+
+Für die Stationsintegration folgt daraus: Vor Aktivierung der Automatik muss der beabsichtigte Auftrag feststehen, auch wenn die Karte bereits aufliegt. Der Wechsel vom Schreibauftrag zum reinen Lesetest samt Zählung real ausgelöster Schreibbefehle bleibt gesondert zu prüfen.
