@@ -117,3 +117,7 @@ Separat offen: visuelle Schlusskontrolle der Kollegenanleitung, tatsächliche
 Reader-/Testkartenprüfung und gegebenenfalls eine zweite Rechnerumgebung.
 Die Schritte A–D schreiben keine Karte. Keine erneute Paketproduktion allein
 für Protokolländerungen; Codefehler erfordern einen neuen identifizierten Kandidaten.
+
+## Ergänzung vom 18.11.2026 – Kandidat 5
+
+D1 bestanden im installierten Studio unter testerB. Der Benutzer führte den Export aus. Im offenen Dialog war die Exportbestätigung für Testperson B sichtbar, die Liste der freigegebenen Gruppen war leer. Die öffentliche .group-delegate.json lag in Dokumente. LibraryId und PersonId aus der Datei stimmten mit der im Dialog angezeigten Bibliothek d9c6ffd7-0081-4189-b965-518c9204c10c und der ausgewählten Testperson überein. D2 bis D5 und die native Verwaltungsnachfolge bleiben offen.
