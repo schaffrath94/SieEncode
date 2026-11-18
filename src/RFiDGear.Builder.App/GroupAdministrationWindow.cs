@@ -12,7 +12,7 @@ namespace RFiDGear.Builder.App;
 internal sealed class GroupAdministrationDraft
 {
     public string Id { get; set; } = "gruppe-" + Guid.NewGuid().ToString("N");
-    public string Name { get; set; } = "Neue Gruppe";
+    public required string Name { get; set; }
     public ObservableCollection<string> Members { get; } = [];
 }
 
@@ -71,7 +71,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         grid.CellEditEnding += (_, e) => { if (e.EditAction == DataGridEditAction.Commit) dirty = true; };
         grid.SelectionChanged += (_, _) => RefreshMemberLabels();
         root.Children.Add(grid);
-        root.Children.Add(Action("Gruppe hinzufügen", () => { RequireStore(); var group = new GroupAdministrationDraft(); groups.Add(group); grid.SelectedItem = group; dirty = true; }));
+        root.Children.Add(Action("Gruppe hinzufügen", AddGroup));
         root.Children.Add(Note("Mitglieder der ausgewählten Gruppe. Eine Person darf mehreren Gruppen angehören; ihre Geräte werden zentral bei der Person gepflegt."));
         root.Children.Add(members);
         var memberActions = new WrapPanel();
@@ -126,6 +126,21 @@ internal sealed partial class GroupAdministrationWindow : Window
         RefreshDelegations(verified.Policy);
         RefreshRecovery(verified.Policy);
         status.Text = $"Bibliothek: {id:D}\nGespeicherte Revision: {checkpoint.Revision}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}\n{registrationStatus}";
+    }
+
+    private void AddGroup()
+    {
+        RequireStore();
+        CommitEdits();
+        var name = TextEntryPrompt.Show(this, "Gruppe hinzufügen", "Wie heißt die Gruppe?", "")?.Trim();
+        if (name is null) return;
+        if (name.Length == 0) throw new InvalidOperationException("Bitte einen Gruppennamen eingeben.");
+        if (groups.Any(g => string.Equals(g.Name.Trim(), name, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("Eine Gruppe mit diesem Namen ist bereits vorhanden. Bitte einen anderen Namen wählen.");
+        var group = new GroupAdministrationDraft { Name = name };
+        groups.Add(group);
+        grid.SelectedItem = group;
+        dirty = true;
     }
 
     internal void SaveGroups()

@@ -14,7 +14,7 @@ internal sealed partial class GroupAdministrationWindow
     private void AddDelegationControls(Panel root)
     {
         var panel = new StackPanel();
-        panel.Children.Add(Note("Gruppenverwalter dürfen Namen und Mitgliedschaften ihrer freigegebenen Gruppen ändern. Dafür werden separate Verwaltungseinladungen verwendet. Mehrere Gruppen mit Strg auswählen. Neue Vollmachten sofort signiert speichern; vorher alle Personen-/Gruppenentwürfe speichern."));
+        panel.Children.Add(Note("Wählen Sie oben die Gruppen aus, die diese Person verwalten darf. Für mehrere Gruppen halten Sie Strg gedrückt. Beim Freigeben wird die Vollmacht signiert und gespeichert."));
         panel.Children.Add(delegationList);
         panel.Children.Add(Action("Verwaltungseinladung für ausgewählte Gruppen freigeben", ImportDelegation));
         panel.Children.Add(Action("Ausgewählte Vollmacht entziehen", RevokeSelectedDelegation));
@@ -54,6 +54,8 @@ internal sealed partial class GroupAdministrationWindow
             $"Person: {person.Name}\nGruppen: {string.Join(", ", selected.Select(g => g.Name))}\nDen unabhängig erhaltenen SHA-256-Verwaltungsfingerabdruck eingeben:", "");
         if (fingerprint is null) return;
         GrantInvitation(invitation, fingerprint.Trim().ToUpperInvariant(), selected.Select(g => g.Id).ToArray());
+        status.Text += $"\n{person.Name} darf folgende Gruppen verwalten: {string.Join(", ", selected.Select(g => g.Name))}. Für andere Arbeitsplätze wählen Sie „Gespeicherten Stand öffentlich exportieren“. Dort muss der neue Stand importiert werden.";
+        status.BringIntoView();
     }
 
     private void RevokeSelectedDelegation()
