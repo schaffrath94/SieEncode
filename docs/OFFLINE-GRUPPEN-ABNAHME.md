@@ -62,3 +62,9 @@ Bei Fehlern Aktion und genaue Meldung notieren; keine Geheimnisse fotografieren
 oder mitsenden. Tatsächliche Installation, Neustart, Benutzertrennung,
 Recovery-Installation und Offlineprüfung einzeln bestätigen. Nicht ausgeführte
 Schritte bleiben offen, auch wenn lokale automatisierte Tests grün sind.
+
+## Öffentliche Freigabe an den zweiten Arbeitsplatz übergeben
+
+Am 19.11.2026 auf SieEncode-Testlab-LTSC aus dem lokalen Vertrauensspeicher von testerB über die installierte Kandidat-5-Produkt-API exportiert. Vor dem Schreiben wurden Signatur, bekannter Hauptverwaltungsfingerabdruck, Bibliothek d9c6ffd7-0081-4189-b965-518c9204c10c und Revision 6 geprüft. Die aktive Vollmacht der Testperson B umfasst genau die Gruppe Lokal. Unter testerA wurde dieselbe öffentliche Datei in den öffentlichen Dokumenten des Gasts unabhängig gelesen und gehasht. SHA-256: 1B810097125A1C5EDDDF28221AC225814018B698B5A4D1143DFE56C55A0FA44E.
+
+Nachweisumfang: Übergabe der unveränderten öffentlichen Datei zwischen zwei Windows-Konten. Die ausdrückliche Registrierung im installierten Studio von testerA, die Vollmacht für dessen eigenen Signierschlüssel und die anschließenden Dialogprüfungen sind offen.
