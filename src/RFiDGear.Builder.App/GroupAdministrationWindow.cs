@@ -132,8 +132,14 @@ internal sealed partial class GroupAdministrationWindow : Window
     {
         RequireStore();
         CommitEdits();
-        var name = TextEntryPrompt.Show(this, "Gruppe hinzufügen", "Wie heißt die Gruppe?", "")?.Trim();
-        if (name is null) return;
+        var input = TextEntryPrompt.Show(this, "Gruppe hinzufügen", "Wie heißt die Gruppe?", "");
+        if (input is not null) AddNamedGroup(input);
+    }
+
+    internal void AddNamedGroup(string input)
+    {
+        RequireStore();
+        var name = input.Trim();
         if (name.Length == 0) throw new InvalidOperationException("Bitte einen Gruppennamen eingeben.");
         if (groups.Any(g => string.Equals(g.Name.Trim(), name, StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("Eine Gruppe mit diesem Namen ist bereits vorhanden. Bitte einen anderen Namen wählen.");

@@ -22,6 +22,11 @@ public partial class MainWindow
         {
             VerifyAutomationContract(window);
             window.LoadLibrary(library); window.LoadPerson("alice");
+            var people = DescendantsAndSelf(window).OfType<ComboBox>().Single(box => box.Name == "People");
+            people.SelectedIndex = 1;
+            try { window.GetInvitation(true); throw new Exception("Invitation created for a previously selected person."); }
+            catch (InvalidOperationException) { }
+            window.LoadPerson("alice");
             try { window.GetInvitation(false); throw new Exception("Opening delegate UI created a private key."); }
             catch (InvalidOperationException) { }
             var invitation = GroupDelegationTransport.ReadInvitation(GroupDelegationTransport.WriteInvitation(window.GetInvitation(true)));

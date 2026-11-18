@@ -58,8 +58,7 @@ public partial class MainWindow
                 var ownTrust = new OfflineGroupTrustStore(ownTrustPath, uiLibrary, new WindowsGroupTrustProtection(uiLibrary));
                 if (ownTrust.LoadOffline().Policy.LibraryId != uiLibrary) throw new Exception("New authority was not locally registered.");
                 var uiGrid = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.DataGrid>().Single(table => table.Columns.Any(column => Equals(column.Header, "Gruppe")));
-                var add = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.Button>().Single(button => Equals(button.Content, "Gruppe hinzufügen"));
-                add.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+                administrationWindow.AddNamedGroup("Synthetische Gruppe");
                 var draft = uiGrid.Items.Cast<GroupAdministrationDraft>().Single();
                 var person = administrationWindow.AddPerson("Synthetische Person");
                 using var deviceKey = RSA.Create(3072);

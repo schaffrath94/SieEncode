@@ -91,6 +91,7 @@ internal sealed class GroupDelegateWindow : Window
     internal void LoadPerson(string id)
     {
         if (trust is null) throw new InvalidOperationException("Bitte zuerst eine Bibliothek laden.");
+        RequireSelectedLibrary();
         var current = trust.LoadOffline();
         var person = current.Policy.People.SingleOrDefault(p => p.Id == id && p.Enabled)
             ?? throw new InvalidOperationException("Aktive Person fehlt im registrierten Stand.");
@@ -101,6 +102,7 @@ internal sealed class GroupDelegateWindow : Window
             grant = current.Policy.Delegations.SingleOrDefault(g => g.PersonId == id && g.Enabled && g.SigningPublicKey.SequenceEqual(invitation.SigningPublicKey));
         }
         loaded = current; personId = id; grantId = grant?.Id;
+        people.SelectedItem = people.Items.Cast<PersonLabel>().Single(p => p.Id == id);
         groups.Clear();
         foreach (var group in current.Policy.Groups.Where(g => grant?.GroupIds.Contains(g.Id, StringComparer.Ordinal) == true))
         {
@@ -195,7 +197,18 @@ internal sealed class GroupDelegateWindow : Window
         new GroupPrivateBackupWindow(this, choices, restore).ShowDialog();
     }
     private OfflineGroupDelegateStore KeyStore(Guid libraryId, string id) => new(KeyPath(libraryId, id), libraryId, id, new WindowsGroupDelegateProtection(libraryId, id));
-    private void RequirePerson() { if (loaded is null || personId is null) throw new InvalidOperationException("Bitte Bibliothek und Person laden."); }
+    private void RequireSelectedLibrary()
+    {
+        if (libraries.SelectedItem is not Guid selected || selected != loaded?.Policy.LibraryId)
+            throw new InvalidOperationException("Bitte zuerst die ausgewählte Bibliothek laden.");
+    }
+
+    private void RequirePerson()
+    {
+        RequireSelectedLibrary();
+        if (people.SelectedItem is not PersonLabel selected || selected.Id != personId)
+            throw new InvalidOperationException("Bitte für die ausgewählte Person zuerst „Person und Arbeitsplatz laden“ wählen.");
+    }
     private bool ConfirmDiscard() => !dirty || MessageBox.Show(this, "Nicht exportierte Gruppenänderungen verwerfen?", Title, MessageBoxButton.YesNo) == MessageBoxResult.Yes;
     private Button Action(string text, Action action) { var button = new Button { Content = text }; button.Click += (_, _) => { try { error.Text = ""; action(); } catch (Exception e) { error.Text = e.Message; } }; return button; }
     private static TextBlock Note(string text) => new() { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 8) };
