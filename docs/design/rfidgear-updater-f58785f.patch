@@ -1,0 +1,58 @@
+diff --git a/RFiDGear.Tests/UpdaterTests.cs b/RFiDGear.Tests/UpdaterTests.cs
+index ad35f56..cc9160f 100644
+--- a/RFiDGear.Tests/UpdaterTests.cs
++++ b/RFiDGear.Tests/UpdaterTests.cs
+@@ -6,6 +6,29 @@ namespace RFiDGear.Tests
+ {
+     public class UpdaterTests
+     {
++        [Fact]
++        public async System.Threading.Tasks.Task ConstructorReturnsWhileManifestServerIsWaiting()
++        {
++            using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
++            listener.Start();
++            var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
++            var path = System.IO.Path.GetTempFileName();
++            var timeout = TimeSpan.FromSeconds(10);
++            try
++            {
++                System.IO.File.WriteAllText(path, $"<Manifest version='1.0'><CheckInterval>900</CheckInterval><SecurityToken>test</SecurityToken><RemoteConfigUri>http://127.0.0.1:{port}/update.xml</RemoteConfigUri><BaseUri>http://127.0.0.1/</BaseUri><VersionInfoText>test</VersionInfoText><Payload>test.zip</Payload></Manifest>");
++                var construction = System.Threading.Tasks.Task.Run(() => new Updater(new System.IO.FileInfo(path)));
++                using var client = await listener.AcceptTcpClientAsync().WaitAsync(timeout);
++                using var stream = client.GetStream();
++                using var reader = new System.IO.StreamReader(stream, leaveOpen: true);
++                while (!string.IsNullOrEmpty(await reader.ReadLineAsync().WaitAsync(timeout))) { }
++                var first = await System.Threading.Tasks.Task.WhenAny(construction, System.Threading.Tasks.Task.Delay(1500));
++                await stream.WriteAsync(System.Text.Encoding.ASCII.GetBytes("HTTP/1.1 503 Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"));
++                using var updater = await construction.WaitAsync(timeout);
++                Assert.True(first == construction, "Constructor still blocked 1500 ms after receipt of request; completed after HTTP response.");
++            }
++            finally { System.IO.File.Delete(path); }
++        }
+         [Fact]
+         public void ResolveEffectiveLocalVersion_WhenRunningIsNewer_PrefersRunningVersion()
+         {
+diff --git a/RFiDGear/3rdParty/RedCell/RedCell.Diagnostics.Update/Updater.cs b/RFiDGear/3rdParty/RedCell/RedCell.Diagnostics.Update/Updater.cs
+index 560c20b..98b94ed 100644
+--- a/RFiDGear/3rdParty/RedCell/RedCell.Diagnostics.Update/Updater.cs
++++ b/RFiDGear/3rdParty/RedCell/RedCell.Diagnostics.Update/Updater.cs
+@@ -164,9 +164,9 @@ namespace RedCell.Diagnostics.Update
+                 var http = new Fetch { Retries = 5, RetrySleep = 30000, Timeout = 30000 };
+                 try
+                 {
+-                    http.Load(remoteUri.AbsoluteUri);
++                    await Task.Run(() => http.Load(remoteUri.AbsoluteUri));
+ 
+-                    if (!http.Success)
++                    if (!http.Success || http.ResponseData == null || http.ResponseData.Length == 0)
+                     {
+ 
+                         try
+@@ -180,6 +180,7 @@ namespace RedCell.Diagnostics.Update
+                         }
+ 
+                         _remoteConfig = null;
++                        UpdateAvailable = false;
+                         return;
+                     }
+                 }
