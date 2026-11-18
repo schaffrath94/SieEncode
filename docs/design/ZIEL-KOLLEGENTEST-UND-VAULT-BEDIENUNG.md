@@ -12,3 +12,8 @@ Bestehende Nachweise mit ihrer Version wiederverwenden. Simulierte Tests, Mehrbe
 ## Ausgangslage für den Test mit getrennten Rollen
 
 Die Profilprüfung im Gast ergab für die Bibliothek d9c6ffd7-0081-4189-b965-518c9204c10c: Bei testerB liegen lokale Registrierung und Hauptverwaltungsspeicher vor. Bei testerA fehlen beide. In den öffentlichen Dokumenten lag bei dieser Prüfung kein Registrierungspaket. Für die Abnahme übernimmt testerB die Hauptverwaltung. Auf testerA zuerst den geprüften öffentlichen Stand registrieren, dann eine eigene Verwaltungseinladung für eine getrennte Testperson erstellen und nur die vorgesehene Gruppe freigeben. Die bestehende Vollmacht für Testperson B in Revision 6 ist an deren Signierschlüssel gebunden. Ein Import der öffentlichen Bibliothek allein verschafft testerA diese Vollmacht nicht.
+## Aktueller Einstieg für die Fortsetzung am 19.11.2026
+
+Im installierten Kandidaten 5 hat testerA die Bibliothek offline registriert und den öffentlichen Stand von Revision 6 auf 7 aktualisiert. Der Verwaltungsplatz zeigte für Testperson A die Revision 7, keine aktive Vollmacht und keine verwaltbaren Gruppen. Diese Schritte sind erledigt.
+
+Als Nächstes die öffentliche Einladung von Testperson A fertig exportieren, den Fingerabdruck abgleichen und unter testerB ausschließlich die Gruppe Lokal freigeben. Danach gelten die offenen Bediennachweise aus Schritt 1. Für den Kollegentest soll jede Rolle aus der Oberfläche erkennen können, wer die nächste Aktion an welchem Arbeitsplatz ausführt.
