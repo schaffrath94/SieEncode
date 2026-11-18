@@ -8,3 +8,7 @@ Arbeitsziel vom 18.11.2026. Kandidat 5 bleibt die Referenz für den laufenden Ko
 4. **Externe RFiDGear-Integration parallel erproben.** Die mitgelieferte Runtime für den Kollegentest beibehalten. Die Umstellung auf eine separat installierte offizielle Version setzt nachgewiesene Funktionsparität voraus.
 
 Bestehende Nachweise mit ihrer Version wiederverwenden. Simulierte Tests, Mehrbenutzerprüfung und echte Kartenprüfung getrennt dokumentieren. PDF-Ausbau bleibt zurückgestellt.
+
+## Ausgangslage für den Test mit getrennten Rollen
+
+Die Profilprüfung im Gast ergab für die Bibliothek d9c6ffd7-0081-4189-b965-518c9204c10c: Bei testerB liegen lokale Registrierung und Hauptverwaltungsspeicher vor. Bei testerA fehlen beide. In den öffentlichen Dokumenten lag bei dieser Prüfung kein Registrierungspaket. Für die Abnahme übernimmt testerB die Hauptverwaltung. Auf testerA zuerst den geprüften öffentlichen Stand registrieren, dann eine eigene Verwaltungseinladung für eine getrennte Testperson erstellen und nur die vorgesehene Gruppe freigeben. Die bestehende Vollmacht für Testperson B in Revision 6 ist an deren Signierschlüssel gebunden. Ein Import der öffentlichen Bibliothek allein verschafft testerA diese Vollmacht nicht.
