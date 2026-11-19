@@ -68,6 +68,18 @@ Die Registrierung allein erteilt keine Mitgliedschaft. Jede neue Geräteidentit�
 muss zentral der richtigen Person zugeordnet werden. Updates der Anwendung
 benötigen keine neue persönliche Identität.
 
+## Einer Person die Verwaltung von „Lokal“ übertragen
+
+Für diesen Ablauf ist die Person bereits im Verzeichnis angelegt und hat die Bibliothek auf ihrem Arbeitsplatz registriert. Wer Projekte lediglich öffnen oder bearbeiten soll, braucht hierfür keine Verwaltungsvollmacht.
+
+1. **Am Arbeitsplatz der beauftragten Person:** Unter **Einstellungen → Mein Gruppenverwaltungsplatz** die Bibliothek auswählen und **Bibliothek laden** klicken. Den eigenen Namen auswählen und **Person und Arbeitsplatz laden** klicken. Den Namen in der Statuszeile prüfen. **Öffentliche Verwaltungseinladung exportieren** wählen und die Datei mit der Endung `.group-delegate.json` an die Hauptverwaltung geben. Den angezeigten Fingerabdruck auf einem zweiten Weg übermitteln, etwa telefonisch.
+2. **Bei der Hauptverwaltung:** Unter **Offline-Gruppen verwalten** die bestehende Bibliothek öffnen. In der Gruppentabelle nur **Lokal** markieren. Bei gleichnamigen Gruppen die stabile Gruppen-ID prüfen. Unter **Gruppenverwalter und Vollmachten → Verwaltungseinladung für ausgewählte Gruppen freigeben** die Einladungsdatei öffnen. Im Bestätigungsdialog Person und Gruppen prüfen, den separat erhaltenen Fingerabdruck eingeben und bestätigen. Die Freigabe wird dabei signiert gespeichert.
+3. **Bei der Hauptverwaltung:** **Gespeicherten Stand öffentlich exportieren** wählen und die exportierte Datei an die beauftragte Person geben.
+4. **Wieder am Arbeitsplatz der beauftragten Person:** Unter **Einstellungen → Registrierte Gruppen aktualisieren** diese Datei übernehmen. Unter **Mein Gruppenverwaltungsplatz** Bibliothek und Person erneut laden. Jetzt muss unter **Meine freigegebene Gruppe** ausschließlich **Lokal** stehen.
+5. **Bei der nächsten Änderung:** Die beauftragte Person bearbeitet „Lokal“ und wählt **Änderung signieren und exportieren**. Die Hauptverwaltung öffnet die Datei über **Signierte Gruppenänderung prüfen und übernehmen**, prüft die angezeigten Unterschiede und bestätigt. Den neuen Stand wie in Schritt 3 und 4 verteilen und importieren.
+
+**Vollmacht entziehen:** In **Gruppenverwalter und Vollmachten** den Eintrag mit der richtigen Person und Gruppe markieren, **Ausgewählte Vollmacht entziehen** wählen und bestätigen. Nach Export und Import des neuen Standes die Person erneut laden. Bei dieser einzigen Vollmacht muss die Liste der freigegebenen Gruppen jetzt leer sein. Ein offline gebliebener Arbeitsplatz kann bis zur Aktualisierung noch die alte Vollmacht anzeigen.
+
 ## Projekte und Änderungen im Alltag
 
 Im Projekteditor **Als neues Gruppenprojekt erstellen / migrieren** wählen,
