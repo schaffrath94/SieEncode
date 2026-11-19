@@ -20,6 +20,17 @@
       "testerA": 4,
       "testerB": 10
     },
-    "status": "pending"
+    "status": "passed",
+    "verifiedDate": "2026-11-20",
+    "observedAfter": "1.3.0-offline-groups.7+b27c1d9032acb0324083e90dfdca7026102a6d09",
+    "installedStudioAndRuntimeDllHashesMatch": true,
+    "unchangedGroupTrustFiles": {
+      "testerB": 10,
+      "testerA": 4
+    },
+    "installedSelfTest": {
+      "exitCode": 0,
+      "account": "testerA"
+    }
   }
 }
