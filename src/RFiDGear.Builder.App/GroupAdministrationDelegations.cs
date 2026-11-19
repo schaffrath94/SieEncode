@@ -31,7 +31,14 @@ internal sealed partial class GroupAdministrationWindow
     private void RefreshDelegations(OfflineGroupPolicy policy)
         => delegationList.ItemsSource = policy.Delegations.Select(d => new DelegationLabel(d.Id,
             $"{policy.People.Single(p => p.Id == d.PersonId).Name} · {(d.Enabled ? "aktiv" : "entzogen")} · " +
-            string.Join(", ", d.GroupIds.Select(id => policy.Groups.Single(g => g.Id == id).Name)))).ToArray();
+            string.Join(", ", d.GroupIds.Select(id => DelegationGroupLabel(groups.Single(g => g.Id == id)))))).ToArray();
+
+    internal string DelegationGroupLabel(GroupAdministrationDraft group)
+    {
+        var ambiguous = groups.Any(other => other.Id != group.Id &&
+            string.Equals(other.Name.Trim(), group.Name.Trim(), StringComparison.OrdinalIgnoreCase));
+        return ambiguous ? $"{group.Name} ({group.Id})" : group.Name;
+    }
 
     internal void GrantInvitation(GroupDelegateInvitation invitation, string fingerprint, string[] groupIds)
     {
@@ -50,11 +57,12 @@ internal sealed partial class GroupAdministrationWindow
         var invitation = GroupDelegationTransport.ReadInvitation(GroupDelegationTransport.ReadFile(dialog.FileName));
         var person = people.SingleOrDefault(p => p.Id == invitation.PersonId);
         if (invitation.LibraryId != currentLibrary || person is null) throw new InvalidDataException("Einladung gehört nicht zu einer Person dieser Bibliothek.");
+        var scope = string.Join(", ", selected.Select(DelegationGroupLabel));
         var fingerprint = TextEntryPrompt.Show(this, "Verwaltungsvollmacht bestätigen",
-            $"Person: {person.Name}\nGruppen: {string.Join(", ", selected.Select(g => g.Name))}\nDen unabhängig erhaltenen SHA-256-Verwaltungsfingerabdruck eingeben:", "");
+            $"Person: {person.Name}\nGruppen: {scope}\nDen unabhängig erhaltenen SHA-256-Verwaltungsfingerabdruck eingeben:", "");
         if (fingerprint is null) return;
         GrantInvitation(invitation, fingerprint.Trim().ToUpperInvariant(), selected.Select(g => g.Id).ToArray());
-        status.Text += $"\n{person.Name} darf folgende Gruppen verwalten: {string.Join(", ", selected.Select(g => g.Name))}. Für andere Arbeitsplätze wählen Sie „Gespeicherten Stand öffentlich exportieren“. Dort muss der neue Stand importiert werden.";
+        status.Text += $"\n{person.Name} darf folgende Gruppen verwalten: {scope}. Für andere Arbeitsplätze wählen Sie „Gespeicherten Stand öffentlich exportieren“. Dort muss der neue Stand importiert werden.";
         status.BringIntoView();
     }
 

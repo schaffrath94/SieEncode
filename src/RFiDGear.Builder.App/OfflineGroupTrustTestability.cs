@@ -60,6 +60,15 @@ public partial class MainWindow
                 var uiGrid = DescendantsAndSelf(administrationWindow).OfType<System.Windows.Controls.DataGrid>().Single(table => table.Columns.Any(column => Equals(column.Header, "Gruppe")));
                 administrationWindow.AddNamedGroup("Synthetische Gruppe");
                 var draft = uiGrid.Items.Cast<GroupAdministrationDraft>().Single();
+                var rows = (ICollection<GroupAdministrationDraft>)uiGrid.ItemsSource;
+                var sameName = new GroupAdministrationDraft { Name = draft.Name };
+                rows.Add(sameName);
+                if (administrationWindow.DelegationGroupLabel(draft) != $"{draft.Name} ({draft.Id})" ||
+                    administrationWindow.DelegationGroupLabel(sameName) != $"{sameName.Name} ({sameName.Id})")
+                    throw new Exception("Delegation scope does not distinguish identically named groups.");
+                rows.Remove(sameName);
+                if (administrationWindow.DelegationGroupLabel(draft) != draft.Name)
+                    throw new Exception("Unambiguous delegation scope should use the group name.");
                 var person = administrationWindow.AddPerson("Synthetische Person");
                 using var deviceKey = RSA.Create(3072);
                 using var secondDeviceKey = RSA.Create(3072);
