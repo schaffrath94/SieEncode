@@ -87,23 +87,13 @@ Ein Zugriffsversuch auf eine alte Kopie ersetzt nicht die Prüfung des aktuellen
 
 ## D – Begrenzte Verwaltungsvollmacht prüfen
 
-Dieselbe synthetische Bibliothek verwenden; B ist wieder Mitglied von Lokal.
+A besitzt den privaten Hauptverwaltungsschlüssel der Testbibliothek. B ist dort als Person erfasst und Mitglied von Lokal. Für D1–D5 die beiden zugehörigen Windows-Profile verwenden. Wer mit einem vorhandenen Teststand einsteigt, prüft zuerst Bibliotheks-ID, aktuelle Revision und Vollmacht. Bereits abgeschlossene Schritte mit passendem Stand können entfallen.
 
-1. B: **Einstellungen → Mein Gruppenverwaltungsplatz**. Bibliothek auswählen,
-   **Bibliothek laden**, eigene Person auswählen, **Person und Arbeitsplatz laden**,
-   **Öffentliche Verwaltungseinladung exportieren**. Nur die öffentliche Datei an A.
-2. A: **Offline-Gruppen verwalten**, nur Lokal als Vollmachtsumfang auswählen,
-   **Verwaltungseinladung für ausgewählte Gruppen freigeben**. Fingerabdruck
-   unabhängig abgleichen. Gespeicherten Stand öffentlich exportieren, B importiert.
-3. B lädt seinen Verwaltungsplatz erneut. Nur Lokal darf bearbeitbar sein;
-   Lokal 2, Personen-/Geräteverwaltung und Recovery dürfen nicht freigegeben sein.
-   Lokal testweise umbenennen, **Änderung signieren und exportieren**.
-4. A: **Signierte Gruppenänderung prüfen und übernehmen**. Inhalt prüfen und
-   bestätigen. Erst dieser Schritt veröffentlicht die Änderung; B allein nicht.
-   Denselben Antrag erneut einreichen: muss abgewiesen werden.
-5. A: **Ausgewählte Vollmacht entziehen**, aktuellen Stand exportieren. B
-   importiert und lädt seinen Verwaltungsplatz neu: kein neuer gültiger Antrag
-   mit dieser Vollmacht möglich. Persönliche Identität muss erhalten bleiben.
+1. **B** öffnet **Einstellungen → Mein Gruppenverwaltungsplatz**, wählt die Bibliotheks-ID und klickt **Bibliothek laden**. Eigene Person auswählen, **Person und Arbeitsplatz laden → Öffentliche Verwaltungseinladung exportieren**. Fragt Studio nach einem separaten lokalen Verwaltungsschlüssel, mit **Ja** bestätigen. Die **.group-delegate.json** an A geben. Den anschließend angezeigten Verwaltungsfingerabdruck über einen zweiten Weg mitteilen.
+2. **A** öffnet **Einstellungen → Offline-Gruppen verwalten** und wählt dieselbe Bibliotheks-ID. In der Gruppentabelle genau die Zeile **Lokal** anklicken. Bei gleichen Namen die stabile Gruppen-ID mit dem Testprojekt abgleichen. **Gruppenverwalter und Vollmachten** aufklappen, **Verwaltungseinladung für ausgewählte Gruppen freigeben** klicken und Bs **.group-delegate.json** öffnen. Im Dialog Person und Gruppenumfang prüfen, dann Bs unabhängig erhaltenen Fingerabdruck eingeben und bestätigen. Erwartet wird eine aktive Vollmacht für B und ausschließlich Lokal. Sie ist jetzt gespeichert. **Gespeicherten Stand öffentlich exportieren** wählen. **B** öffnet **Einstellungen → Registrierte Gruppen aktualisieren**, wählt die neue **.group-enrollment.json**, prüft den Stand, setzt den Bestätigungshaken und klickt **Geprüften Stand übernehmen**.
+3. **B** öffnet **Mein Gruppenverwaltungsplatz** erneut und lädt Bibliothek und Person wie in D1. Unter **Meine freigegebene Gruppe** darf nur Lokal bearbeitbar sein. Den Namen dieser Zelle in **Lokal (Abnahme)** ändern, mit Eingabetaste übernehmen und **Änderung signieren und exportieren** klicken. Die **.group-change.json** an A geben. Der gemeinsame Gruppenstand hat zu diesem Zeitpunkt noch den alten Namen.
+4. **A** lädt die Bibliothek in **Offline-Gruppen verwalten**, öffnet **Gruppenverwalter und Vollmachten → Signierte Gruppenänderung prüfen und übernehmen** und wählt Bs **.group-change.json**. Die Vorschau muss genau die beabsichtigte Umbenennung zeigen. Mit **Ja** bestätigen und die neue Revision notieren. Dieselbe Datei über dieselbe Schaltfläche erneut wählen. Erwartet werden eine Ablehnung und dieselbe Revision wie nach der ersten Übernahme.
+5. **A** markiert unter **Gruppenverwalter und Vollmachten** Bs aktive Vollmacht für **Lokal (Abnahme)** und klickt **Ausgewählte Vollmacht entziehen → Ja**. Den Stand öffentlich exportieren. **B** importiert ihn wie in D2 und lädt seinen Verwaltungsplatz erneut. Die Person muss weiterhin auswählbar sein. Bei dieser einzigen Vollmacht muss die Liste freigegebener Gruppen jetzt leer sein.
 
 Antwort: `D1 … bis D5 …`, mit Revisionen und tatsächlichem Ergebnis.
 
