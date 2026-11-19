@@ -87,6 +87,10 @@ Ein Zugriffsversuch auf eine alte Kopie ersetzt nicht die Prüfung des aktuellen
 
 ## D – Begrenzte Verwaltungsvollmacht prüfen
 
+**Für die vorhandene Test-VM:** In der Bibliothek `d9c6ffd7-0081-4189-b965-518c9204c10c` hat testerB die Hauptverwaltung. Die Vollmacht von Testperson A wurde in Revision 10 entzogen. Ihre frühere Datei `Testperson-A.group-delegate.json` enthält weiterhin den bereits zugeordneten Verwaltungsschlüssel. Ein erneuter Export am selben Arbeitsplatz liefert denselben öffentlichen Schlüssel. Studio erlaubt jeden Verwaltungsschlüssel nur in einer Vollmacht, auch nach deren Entzug.
+
+Für einen neuen Durchlauf mit diesen zwei Konten legt die Hauptverwaltung in dieser Testbibliothek eine zusätzliche synthetische Person mit eindeutigem Namen an, speichert den Stand signiert und exportiert ihn. testerA importiert diesen Stand und wählt die neue Testperson in D1. So entsteht für diesen Test ein eigener Verwaltungsschlüssel. Die bisher entzogene Vollmacht bleibt als Vergleich erhalten. In D2 nur die Gruppe **Lokal (Abnahme)** auswählen. In D3 als neuen Namen **Lokal (Dialogtest)** verwenden und diesen Namen auch in D5 prüfen.
+
 A besitzt den privaten Hauptverwaltungsschlüssel der Testbibliothek. B ist dort als Person erfasst und Mitglied von Lokal. Für D1–D5 die beiden zugehörigen Windows-Profile verwenden. Wer mit einem vorhandenen Teststand einsteigt, prüft zuerst Bibliotheks-ID, aktuelle Revision und Vollmacht. Bereits abgeschlossene Schritte mit passendem Stand können entfallen.
 
 1. **B** öffnet **Einstellungen → Mein Gruppenverwaltungsplatz**, wählt die Bibliotheks-ID und klickt **Bibliothek laden**. Eigene Person auswählen, **Person und Arbeitsplatz laden → Öffentliche Verwaltungseinladung exportieren**. Fragt Studio nach einem separaten lokalen Verwaltungsschlüssel, mit **Ja** bestätigen. Die **.group-delegate.json** an A geben. Den anschließend angezeigten Verwaltungsfingerabdruck über einen zweiten Weg mitteilen.
