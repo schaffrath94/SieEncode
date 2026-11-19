@@ -89,9 +89,14 @@ internal sealed partial class GroupAdministrationWindow : Window
         var actions = new WrapPanel();
         actions.Children.Add(Action("Gruppen signiert speichern", SaveGroups));
         actions.Children.Add(Action("Gespeicherten Stand öffentlich exportieren", ExportPublic));
-        root.Children.Add(actions); root.Children.Add(status); root.Children.Add(error);
+        root.Children.Add(actions); root.Children.Add(status);
         root.Children.Add(Action("Schließen", Close));
-        Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        var layout = new DockPanel();
+        DockPanel.SetDock(error, Dock.Bottom);
+        error.Margin = new Thickness(20, 0, 20, 0);
+        layout.Children.Add(error);
+        layout.Children.Add(new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
+        Content = layout;
         Closing += (_, e) => { if (!ConfirmDiscard()) e.Cancel = true; };
         RefreshLibraries(); MainWindow.InitializeAutomationContract(this, "GroupAdministration");
     }
@@ -202,8 +207,6 @@ internal sealed partial class GroupAdministrationWindow : Window
     private void ShowError(Exception exception)
     {
         error.Text = exception.Message;
-        error.UpdateLayout();
-        error.BringIntoView();
     }
 
     private void Run(Action action) { try { error.Text = ""; action(); } catch (Exception e) { ShowError(e); } }

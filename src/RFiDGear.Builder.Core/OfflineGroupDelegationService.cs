@@ -58,7 +58,9 @@ public static class OfflineGroupDelegationService
         // Snapshot the trusted state too: returned policy never shares mutable arrays with a caller.
         var current = JsonSerializer.Deserialize<OfflineGroupPolicy>(JsonSerializer.SerializeToUtf8Bytes(trustedCurrent.Policy, Options), Options)!;
         OfflineGroupPolicyService.Validate(current);
-        if (current.Version != 2 || signed.Payload is null || signed.Payload.Length is 0 or > MaximumBytes ||
+        if (current.Version != 2)
+            throw new InvalidDataException($"Die ausgewählte Bibliothek {current.LibraryId:D} unterstützt keine Verwaltungsvollmachten. Bitte die Bibliothek auswählen, für die der Antrag erstellt wurde.");
+        if (signed.Payload is null || signed.Payload.Length is 0 or > MaximumBytes ||
             signed.Signature is null || signed.Signature.Length is 0 or > 2048)
             throw new InvalidDataException("Ungültige delegierte Gruppenänderung.");
         var payload = signed.Payload.ToArray();
