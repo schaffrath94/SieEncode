@@ -10,8 +10,18 @@
   "runtimeDllSha256": "453EC36354ED7647B0846E855C259EA655FE6CDA27FC2874D7F38AA4251B9F69",
   "selfTest": "passed",
   "uiSmokeTest": "passed",
-  "actualInstallationPerformed": false,
-  "upgradeFromCandidate5": "pending",
+  "actualInstallationPerformed": true,
+  "upgradeFromCandidate5": "passed",
+  "installationEnvironment": "SieEncode-Testlab-LTSC",
+  "msiExitCode": 0,
+  "installedStudioProductVersion": "1.3.0-offline-groups.6+d850fc9749ff7d815da6b392cb7f2b4050b54f00",
+  "installedStudioAndRuntimeDllHashesMatch": true,
+  "groupTrustInventoryIdenticalAfterUpgrade": {
+    "testerA": 4,
+    "testerB": 10
+  },
+  "installedSelfTestUnderTesterA": "passed",
+  "installedErrorScrollVisualCheck": "pending",
   "installerWarnings": [
     "ICE40 REINSTALLMODE",
     "ICE61 AllowSameVersionUpgrades"
