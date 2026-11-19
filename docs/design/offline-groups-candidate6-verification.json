@@ -21,6 +21,9 @@
     "testerB": 10
   },
   "installedSelfTestUnderTesterA": "passed",
+  "installedStudioOverviewVisibleUnderLabadmin": true,
+  "colleagueKit": "SieEncode_Kollegentest_1.3.0-offline-groups.6.zip",
+  "colleagueKitSha256": "3C5E8A1F637340B481D1F1B4CD090C4E411C3CD48889502C1018D5FA390AFE36",
   "installedErrorScrollVisualCheck": "pending",
   "installerWarnings": [
     "ICE40 REINSTALLMODE",
