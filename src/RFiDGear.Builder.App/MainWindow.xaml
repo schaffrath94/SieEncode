@@ -453,14 +453,19 @@
               <TextBlock Text="Teammitglied · Öffentlichen Stand vom Hauptverwalter erhalten" FontWeight="SemiBold"/>
               <TextBlock Text="Einmal registrieren und Bibliotheks-ID sowie Verwaltungsfingerabdruck unabhängig abgleichen. Spätere signierte Änderungen hier importieren. Danach funktioniert der Zugriff offline mit dem zuletzt übernommenen Stand." TextWrapping="Wrap"/>
               <WrapPanel><Button Content="Gruppenverwaltung registrieren" Click="RegisterOfflineGroupAdministration_Click"/><Button Content="Registrierte Gruppen aktualisieren" Click="UpdateOfflineGroups_Click"/></WrapPanel>
+              <Expander Header="Personen, Geräte und Gruppen für das Team verwalten" Margin="0,10,0,0"><StackPanel>
+              <TextBlock Text="Die Hauptverwaltung ist eine Rolle in SieEncode. Öffnen Sie die Teamverwaltung in dem Windows-Profil, in dem Sie den privaten Verwaltungsschlüssel dieser Bibliothek erstellt oder wiederhergestellt haben. Für ein neues Team richten Sie die Verwaltung hier einmal ein." TextWrapping="Wrap"/>
+              <WrapPanel><Button Content="Offline-Gruppen verwalten" Click="ManageOfflineGroups_Click"/><Button Content="Separate Recovery-Identität einrichten" Click="OpenGroupRecoverySetup_Click"/></WrapPanel>
+              </StackPanel></Expander>
+              <Expander Header="Vollmacht anfordern oder zugewiesene Gruppen bearbeiten"><StackPanel>
+              <TextBlock Text="Öffnen Sie Ihren Verwaltungsplatz im eigenen Windows-Profil. Exportieren Sie dort Ihre Verwaltungseinladung. Nach der Freigabe durch die Hauptverwaltung können Sie Änderungen an den zugewiesenen Gruppen zur Bestätigung einreichen." TextWrapping="Wrap"/>
+              <Button Content="Mein Gruppenverwaltungsplatz" Click="OpenGroupDelegate_Click" HorizontalAlignment="Left"/>
+              </StackPanel></Expander>
+              <Expander Header="Hauptverwaltung an eine andere Person übergeben"><StackPanel>
+              <TextBlock Text="Die neue Verwaltungsperson bereitet zuerst die Nachfolge vor. Sobald die bisherige Hauptverwaltung die Übergabe autorisiert hat, importiert jeder Arbeitsplatz den angekündigten Wechsel." TextWrapping="Wrap"/>
               <Button Content="Nachfolge der Hauptverwaltung vorbereiten" Click="OpenGroupSuccessorSetup_Click" HorizontalAlignment="Left"/>
               <Button Content="Angekündigten Verwaltungswechsel importieren" Click="ImportAdministratorTransition_Click" HorizontalAlignment="Left"/>
-              <TextBlock Text="Hauptverwalter · Personen, Geräte und Gruppen einrichten" FontWeight="SemiBold" Margin="0,10,0,0"/>
-              <TextBlock Text="Eine Verwaltung für das Team erstellen, privaten Schlüssel sichern, Personen und Gruppen aufnehmen und einen separaten Recovery-Zugang freigeben. Öffentliche Änderungen anschließend an alle betroffenen Arbeitsplätze verteilen." TextWrapping="Wrap"/>
-              <WrapPanel><Button Content="Offline-Gruppen verwalten" Click="ManageOfflineGroups_Click"/><Button Content="Separate Recovery-Identität einrichten" Click="OpenGroupRecoverySetup_Click"/></WrapPanel>
-              <TextBlock Text="Beauftragter Gruppenverwalter · Nur mit zentral erteilter Vollmacht" FontWeight="SemiBold" Margin="0,10,0,0"/>
-              <TextBlock Text="Änderungen für freigegebene Gruppen vorbereiten. Der Hauptverwalter bestätigt sie und verteilt den neuen signierten Stand." TextWrapping="Wrap"/>
-              <Button Content="Mein Gruppenverwaltungsplatz" Click="OpenGroupDelegate_Click" HorizontalAlignment="Left"/>
+              </StackPanel></Expander>
               <TextBlock Text="Bestehende Gruppen-Vaults benötigen nach geänderten Empfängern einen bestätigten Abgleich im Projekteditor. Offline-Geräte und alte Vaultkopien lassen sich nicht aus der Ferne sperren." Foreground="#8A5A00" TextWrapping="Wrap" Margin="0,8,0,0"/>
             </StackPanel></GroupBox>
             <GroupBox Header="Persönliche Identität und bisherige Team-Vaults"><StackPanel>

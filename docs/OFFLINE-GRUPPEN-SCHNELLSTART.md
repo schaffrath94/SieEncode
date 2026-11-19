@@ -8,6 +8,15 @@ als lokale Datei mitgeliefert.
 
 ## Wer macht was?
 
+Zum Öffnen von Teamprojekten bleiben Sie in Ihrem eigenen Windows-Profil.
+**Gruppenverwaltung registrieren** und **Registrierte Gruppen aktualisieren**
+finden Sie direkt in den Einstellungen unter **Offline-Gruppenverwaltung**.
+Für Verwaltungsaufgaben klappen Sie dort den passenden Abschnitt auf:
+
+- **Personen, Geräte und Gruppen für das Team verwalten** öffnet die Funktionen für die Hauptverwaltung. Eine bestehende Bibliothek verwalten Sie in dem Windows-Profil, das ihren privaten Verwaltungsschlüssel enthält.
+- **Vollmacht anfordern oder zugewiesene Gruppen bearbeiten** führt zu **Mein Gruppenverwaltungsplatz**. Hier beginnen Sie auch dann, wenn Sie Ihre erste Vollmacht erst beantragen.
+- **Hauptverwaltung an eine andere Person übergeben** enthält die Vorbereitung der Nachfolge und den Import des autorisierten Wechsels.
+
 | Rolle | Aufgabe |
 | --- | --- |
 | Teammitglied | Eigene Identität verwenden, öffentliche Einladung weitergeben, Gruppenstand registrieren/aktualisieren und berechtigte Projekte öffnen. |
