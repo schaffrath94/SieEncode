@@ -116,7 +116,13 @@ D2, lokaler Freigabeschritt: Am 18.11.2026 im installierten Kandidaten 5 direkt 
 
 Bedienbefund für die nächste UI-Überarbeitung: Beide Gruppen hießen zunächst „Neue Gruppe“. Die Zuordnung zum Testprojekt erforderte einen externen ID-Abgleich. Die Rollenbezeichnung „Hauptverwaltungsprofil“ wurde als Aufforderung zum Windows-Benutzerwechsel verstanden. Der aktuelle Dialog erklärt auch nach der Freigabe erneut das signierte Speichern, obwohl Revision 6 bereits gespeichert ist. Abnahmekriterium: Eine Person kann die Zielgruppe anhand ihres Namens und Projektbezugs auswählen, erkennt ihre aktuelle Rolle und sieht nach der Freigabe, für wen die Änderung schon gilt und wer den öffentlichen Stand noch importieren muss.
 
-## E – Hauptverwaltung an einen Kollegen übergeben (Kandidat 6)
+## E – Hauptverwaltung an einen Kollegen übergeben (Kandidaten 6 und 7)
+
+**Bedienwege in Kandidat 7.** Für E1, E5 und den ersten Teil von E6 in den Einstellungen **Hauptverwaltung an eine andere Person übergeben** aufklappen. Für E4 und das signierte Speichern nach dem Neustart in E6 **Personen, Geräte und Gruppen für das Team verwalten** aufklappen.
+
+**Was noch praktisch geprüft wird.** A und B führen den Ablauf einmal mit den sichtbaren Bestätigungen und Dateidialogen durch. E2 ist erfolgreich, wenn B die Meldung über die gespeicherte und unverändert zurückgelesene Sicherung sieht und nach **Schließen** der öffentliche Anfrageexport möglich ist. Zwischen E2 und E3 den Nachfolgedialog geöffnet lassen. Wurde er geschlossen, dieselbe Vorbereitung auswählen und eine neue Sicherungsdatei unter einem freien Namen speichern. Die Vorbereitung und die erste Sicherung bleiben erhalten.
+
+Der bestandene UI-Smoke-Test aus dem MSI hat Vorbereitung, Sicherung, Anfrage, Autorisierung, Import und Aktivierung über die Dialoglogik mit synthetischen Daten geprüft. Die Schlüsselwiederherstellung gegen den registrierten Stand ist darin bereits enthalten. Als Rückmeldung genügen die Beobachtungen zur Bedienung, zur Rollenübergabe und zum anschließenden Studio-Neustart.
 
 Für diesen Test eine eigene Testbibliothek verwenden. A besitzt deren bisherigen privaten Verwaltungsschlüssel. B hat dieselbe Bibliotheks-ID und denselben aktuellen Stand bereits registriert. A und B arbeiten in ihren jeweiligen Windows-Profilen.
 
