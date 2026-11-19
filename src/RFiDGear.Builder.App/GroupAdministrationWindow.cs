@@ -51,7 +51,7 @@ internal sealed partial class GroupAdministrationWindow : Window
             try { error.Text = ""; LoadAdministration(id); }
             catch (Exception exception)
             {
-                error.Text = exception.Message;
+                ShowError(exception);
                 loading = true; libraries.SelectedItem = currentLibrary; loading = false;
             }
         };
@@ -199,7 +199,14 @@ internal sealed partial class GroupAdministrationWindow : Window
     }
     private void RequireStore() { if (store is null || checkpoint is null) throw new InvalidOperationException("Bitte eine Verwaltung auswählen oder erstellen."); }
     private bool ConfirmDiscard() => !dirty || MessageBox.Show(this, "Ungespeicherte Gruppenänderungen verwerfen?", Title, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
-    private void Run(Action action) { try { error.Text = ""; action(); } catch (Exception e) { error.Text = e.Message; } }
+    private void ShowError(Exception exception)
+    {
+        error.Text = exception.Message;
+        error.UpdateLayout();
+        error.BringIntoView();
+    }
+
+    private void Run(Action action) { try { error.Text = ""; action(); } catch (Exception e) { ShowError(e); } }
     private Button Action(string label, Action action) { var button = new Button { Content = label }; button.Click += (_, _) => Run(action); return button; }
     private static TextBlock Note(string text) => new() { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 8) };
 }
