@@ -42,6 +42,14 @@ public partial class MainWindow
             var change = GroupDelegationTransport.ReadChange(GroupDelegationTransport.WriteChange(window.CreateChange()));
             package = admin.ApplyDelegatedChange(change, GroupEnrollmentPackages.Validate(package).Checkpoint);
             var updated = GroupEnrollmentPackages.Validate(package);
+            var before = trust.LoadOffline().Policy;
+            var preview = GroupAdministrationWindow.DescribeDelegatedChanges(before, updated.Policy);
+            if (preview != "Lokal (lokal)\nNeuer Name: Lokal bearbeitet\nHinzufügen: Bob (bob)")
+                throw new Exception("Delegate approval preview does not identify the affected group and member.");
+            var reordered = updated.Policy with { Groups = updated.Policy.Groups.Reverse()
+                .Select(g => g with { Members = g.Members.Reverse().ToArray() }).ToArray() };
+            if (GroupAdministrationWindow.DescribeDelegatedChanges(updated.Policy, reordered).Length != 0)
+                throw new Exception("Delegate approval preview treats ordering as an access change.");
             if (updated.Policy.Groups[0].Members.Length != 2 || updated.Policy.Groups[0].Name != "Lokal bearbeitet" || updated.Policy.Groups[1].Name != "Nicht freigegeben")
                 throw new Exception("Delegate UI exchange lost edits or changed another group.");
             trust.AcceptPackageUpdate(package, trust.LoadOffline().Checkpoint);

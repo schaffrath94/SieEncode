@@ -85,11 +85,27 @@ internal sealed partial class GroupAdministrationWindow
         var current = GroupEnrollmentPackages.Validate(store!.ExportPublic());
         if (current.Checkpoint != checkpoint) throw new InvalidOperationException("Verwaltungsstand wurde geändert. Bitte neu laden.");
         var next = OfflineGroupDelegationService.Apply(change, current);
-        string Names(IEnumerable<string> ids) => string.Join(", ", ids.Select(id => current.Policy.People.Single(p => p.Id == id).Name + " (" + id + ")"));
-        var changes = next.Groups.Zip(current.Policy.Groups).Where(pair => pair.First.Name != pair.Second.Name || !pair.First.Members.SequenceEqual(pair.Second.Members))
-            .Select(pair => $"{pair.Second.Name} → {pair.First.Name}\nHinzufügen: {Names(pair.First.Members.Except(pair.Second.Members))}\nEntfernen: {Names(pair.Second.Members.Except(pair.First.Members))}");
-        if (MessageBox.Show(this, string.Join("\n\n", changes) + "\n\nDiese geprüften Änderungen signiert übernehmen?", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        var preview = DescribeDelegatedChanges(current.Policy, next);
+        if (preview.Length == 0) throw new InvalidOperationException("Der Antrag enthält keine Änderungen an Gruppennamen oder Mitgliedschaften.");
+        if (MessageBox.Show(this, preview + "\n\nDiese geprüften Änderungen signiert übernehmen?", Title, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
         store.ApplyDelegatedChange(change, checkpoint!);
         LoadAdministration(currentLibrary!.Value);
+    }
+
+    internal static string DescribeDelegatedChanges(OfflineGroupPolicy current, OfflineGroupPolicy next)
+    {
+        var original = current.Groups.ToDictionary(group => group.Id);
+        var people = current.People.ToDictionary(person => person.Id);
+        var changes = new List<string>();
+        foreach (var group in next.Groups)
+        {
+            var previous = original[group.Id];
+            var lines = new List<string>();
+            if (previous.Name != group.Name) lines.Add($"Neuer Name: {group.Name}");
+            foreach (var id in group.Members.Except(previous.Members)) lines.Add($"Hinzufügen: {people[id].Name} ({id})");
+            foreach (var id in previous.Members.Except(group.Members)) lines.Add($"Entfernen: {people[id].Name} ({id})");
+            if (lines.Count > 0) changes.Add($"{previous.Name} ({group.Id})\n" + string.Join("\n", lines));
+        }
+        return string.Join("\n\n", changes);
     }
 }
