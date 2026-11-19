@@ -32,5 +32,12 @@
       "exitCode": 0,
       "account": "testerA"
     }
+  },
+  "installedErrorFooterVisualCheck": {
+    "status": "passed",
+    "date": "2026-11-20",
+    "source": "operator observation in test VM",
+    "fullyVisibleImmediately": true,
+    "fullyVisibleWhileScrolling": true
   }
 }
