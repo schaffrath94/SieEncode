@@ -1,6 +1,10 @@
 # Kollegentest und Bedienung des Offline-Vaults
 
-Arbeitsziel vom 18.11.2026. Kandidat 5 bleibt die Referenz für den laufenden Kollegentest. Die bereits gebaute erste UI-Änderung liegt auf `codex/vault-bedienung`.
+Für den Kollegentest gilt [Kandidat 6 mit MSI, Anleitung und Testplan](https://github.com/schaffrath94/SieEncode/releases/tag/v1.3.0-offline-groups.6). Das Upgrade von Kandidat 5, die installierten Prüfsummen, der Selbsttest und der Erhalt aller 14 geprüften Verwaltungsdateien sind im [Paketnachweis](offline-groups-candidate6-verification.json) dokumentiert.
+
+Der [Abnahmebericht](../OFFLINE-GRUPPEN-ABNAHME.md) belegt für Kandidat 5 die begrenzte Delegation, Ablehnung wiederholter Anträge, den Entzug und den Verwaltungswechsel über die installierte Produkt-API mit zwei Windows-Profilen. Der sichtbare Studio-Dialog bestätigte Revision 10 und wies den erneut eingereichten Antrag ab. Offen sind die vollständigen positiven Dialogabläufe und die Sichtprüfung des automatischen Scrollens zur Fehlermeldung in Kandidat 6. Der Entwurf für die Integration nach main bleibt bis zum Abgleich der Nachweise offen.
+
+### Arbeitsplan vom 18.11.2026
 
 1. **Vault-Abnahme abschließen.** Revision 6 zeigt lokal „Testperson B · aktiv · Lokal“. Die öffentliche Freigabe zwischen zwei Windows-Profilen übertragen. Am Arbeitsplatz mit begrenzter Vollmacht den Gruppenumfang prüfen, eine Änderung beantragen, durch die Hauptverwaltung genehmigen und die erneute Einreichung prüfen. Nach Entzug den aktuellen Stand importieren und die Wirkung prüfen. Anschließend die autorisierte Verwaltungsnachfolge über die installierte Oberfläche einschließlich Neustart, neuer Signatur und Ablehnung der alten Verwaltung belegen. Die beiden Rollen so einrichten, dass ein zusätzlich vorhandener Hauptverwaltungsschlüssel den Berechtigungstest nicht verfälscht.
 2. **Bedienung nach Aufgabe gliedern.** Projekt öffnen, Teamzugriff verwalten und Verwaltung übergeben oder wiederherstellen erhalten verständliche Einstiege. Die Oberfläche zeigt Rolle, Gruppe, Projektbezug, erlaubte Aktion und nächsten Schritt. Bei Offline-Verteilung unterscheidet sie lokal gespeicherten Stand und erforderlichen Import auf anderen Arbeitsplätzen. Den Erhalt der Funktionen und der Schlüsseltrennung prüfen.
