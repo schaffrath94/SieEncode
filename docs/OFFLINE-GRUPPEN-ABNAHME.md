@@ -88,3 +88,9 @@ Installierter Kandidat 5, Produkt-API im Testgast. testerA übernahm die geprüf
 | Vault-Abnahme-Revision10.group-enrollment.json | 1055FB0F1EE81450E67CEB563FA03E470C1252C4A40464406CB274E36859E1E1 |
 
 Der Nachweis betrifft die installierten Produktbibliotheken und zwei getrennte Windows-Profile auf derselben VM. Die Dialogbedienung dieser Schritte und die Verwaltungsnachfolge sind getrennte Abnahmen.
+
+### Verwaltungsnachfolge zwischen zwei Windows-Profilen
+
+Installierter Kandidat 5 in derselben Test-VM, eigene synthetische Bibliothek 7b0082ce-2af3-4db2-bf21-233289993d31. Unter testerB wurden zwei Gruppen angelegt. Unter testerA wurde der geprüfte öffentliche Ausgangsstand registriert und ein eigener DPAPI-geschützter Nachfolgeschlüssel vorbereitet. Der Test übernahm den alten bzw. neuen öffentlichen Fingerabdruck jeweils direkt aus der Ausgabe des erzeugenden Prozesses. B autorisierte die öffentliche Anfrage. A importierte die Übergabe und aktivierte den Nachfolger bei Revision 3. In einem neuen Prozess öffnete A seinen lokalen Verwaltungsspeicher erneut und signierte die Umbenennung von Lokal in „Lokal nach Übergabe“ als Revision 4. B übernahm Übergabe und Änderung, prüfte die beiden Gruppennamen und wies anschließend einen mit dem alten Schlüssel signierten Stand trotz höherer Revision ab. Der lokale Prüfstand blieb nach der Ablehnung identisch.
+
+Öffentlicher Export der Revision 4, SHA-256: 64C38BFF5ADEC9F88367AA475144629A03D8282A7B600FE92C38C622CFA0CE25. Prüfung über die installierte Produkt-API mit zwei Windows-Konten und neu gestarteten Prüfprozessen. Sichtbare Studio-Dialoge, Neustart der Studio-Anwendung und private Sicherung im Nachfolgedialog wurden in diesem Lauf nicht bedient. Die Bibliothek für die Delegationsabnahme bleibt bei Revision 10.
