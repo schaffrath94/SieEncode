@@ -36,6 +36,7 @@ public static class ConcurrentFileWriter
         try
         {
             writeTemporary(temporary);
+            if (Capture(fullPath) != expected) throw new ConcurrentFileChangeException(fullPath);
             File.Move(temporary, fullPath, true);
             return Capture(fullPath);
         }

@@ -97,6 +97,8 @@ public sealed class VaultBackupService
             VaultSha256 = vaultHash,
             KeySetIdentity = identity
         };
+        if (keyFreeProject.Project.GroupVault is not null)
+            manifest.RecoveryInstruction = "Projektdefinition und Gruppen-Vault gemeinsam wiederherstellen. Die passende bestätigte Gruppenregistrierung und ein freigegebener Geräte- oder separater Recovery-Schlüssel mit privatem Anteil sind erforderlich; diese Sicherung enthält keine privaten Zugangsschlüssel.";
         var manifestPath = Path.Combine(destination, "RECOVERY-MANIFEST.json");
         File.WriteAllText(manifestPath, JsonSerializer.Serialize(manifest, new JsonSerializerOptions
         {

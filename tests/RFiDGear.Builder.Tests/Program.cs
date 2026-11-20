@@ -9,6 +9,11 @@ using RFiDGear.Builder.RfPrj;
 using RFiDGear.Builder.Runtime;
 
 const string ContractPassphrase = "Cross-Runtime-Portable-Test";
+if (args.Length == 3 && args[0] == "group-activation-interruption")
+{
+    GroupActivationInterruptionTests.RunChild(args[1], args[2]);
+    return 0;
+}
 if (args.Length == 3 && args[0] == "vault-unprotect-contract")
 {
     var document = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(args[1])) ?? throw new InvalidDataException("Vault test document is empty.");
@@ -34,13 +39,37 @@ if (args.Length == 2 && args[0] == "hardware-extension-upgrade-rollback")
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Administrator activation survives terminated child processes and restart", GroupActivationInterruptionTests.Verify),
+    ("Explicit dual-signed administrator transition and unchanged-rights verification", GroupAdministratorTransitionTests.Verify),
+    ("Portable private group backups, purpose isolation and current-policy restoration", GroupPrivateKeyBackupTests.Verify),
+    ("Offline group policy signatures, trust binding and rollback rejection", OfflineGroupPolicyTests.Verify),
+    ("Offline trust enrollment, persistence and concurrent update protection", OfflineGroupTrustTests.Verify),
+    ("Signed people/device directory and overlapping access matrix", OfflineGroupDirectoryTests.Verify),
+    ("Eight independent identities across three offline vault groups and scoped recipient change", OfflineGroupMatrixWorkflowTests.Verify),
+    ("Scoped delegation, signed changes, revocation and atomic authority updates", OfflineGroupDelegationTests.Verify),
+    ("Protected delegate key restart, enrolled scope and revocation checks", OfflineGroupDelegateStoreTests.Verify),
+    ("Bound group vault, separate recovery, tamper rejection and fresh-key rotation", GroupVaultTests.Verify),
+    ("Workspace navigation retains context and history", TestWorkspaceNavigation),
+    ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
+    ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
+    ("Observed inventory PDF preserves evidence and payload", TestInventoryPdf),
+    ("Payload comparison requires complete unambiguous reads", TestInventoryComparison),
+    ("Project comparison uses full scoped production payloads", TestProjectInventoryComparison),
+    ("File settings comparison respects metadata evidence and final state", TestInventoryFileSettings),
     ("Key generation", TestKeyGeneration),
     ("Vault roundtrip and tamper rejection", TestVault),
     ("Certificate recipient vault and recovery", TestCertificateVault),
     ("Project vault payload and path compatibility", TestProjectVault),
     ("Verified independent vault recovery backup", TestVaultRecoveryBackup),
+    ("Certificate vault lifecycle: save, recipient change and recovery", TestCertificateVaultLifecycle),
     ("Project validation and secret sanitizing", TestProject),
     ("Key-free multipage PDF card report", TestCardReportPdf),
+    ("Full target report preserves long payloads and fields", TestFullTargetReport),
+    ("Target report respects production variable scopes and validation", TestTargetReportVariableScopes),
+    ("Optional PDF documentation is explicit and paginated", TestReportDocumentation),
+    ("Optional PDF card images preserve RGB and validate dimensions", TestReportImages),
+    ("Card images normalize all eight EXIF orientations", TestReportImageOrientation),
+    ("RC15 XAML controls retain event wiring and dispatch targets", UiWiringParity.Verify),
     ("Project draft profile synchronization", TestProjectDraft),
     ("Managed multi-base profile library", TestManagedBaseProfiles),
     ("Pinned profile identity and version history", TestProfileBindingAndHistory),
@@ -157,6 +186,191 @@ static (RFiDGearHostRunV1 Run, RFiDGearHostResultV1 Result) CompleteApplicationH
     var session = new RFiDGearOperationSession(operation, launch, new RFiDGearLogSnapshot(started, root, new Dictionary<string, long>()), started, TimeSpan.FromMinutes(2));
     var evaluation = RFiDGearOperationService.EvaluateText(session, log, DateTimeOffset.Now);
     return (run, host.CompleteOperation(run, session, evaluation, acceptanceState));
+}
+
+static void TestWorkspaceNavigation()
+{
+    var state = new WorkspaceNavigation();
+    state.Navigate("Editor");
+    state.Navigate("Station");
+    Assert(state.LastPageFor("Projects") == "Editor", "Editor subpage must survive workspace switch.");
+    state.Navigate(state.LastPageFor("Projects"));
+    Assert(state.CurrentPage == "Editor", "Return to last workspace page.");
+    Assert(state.GoBack() && state.CurrentPage == "Station", "Back must follow actual navigation.");
+    state.Navigate("Profiles");
+    state.Navigate("Profiles");
+    Assert(state.GoBack() && state.CurrentPage == "Station", "Selecting current page must not duplicate history.");
+    state.Navigate("Acceptance");
+    Assert(WorkspaceNavigation.WorkspaceFor(state.CurrentPage) == "TestStation", "Acceptance belongs to inspection.");
+    AssertThrows<ArgumentException>(() => state.Navigate("Unknown"));
+    Assert(state.CurrentPage == "Acceptance", "Invalid navigation must not change state.");
+    foreach (var page in new[] { "Home", "Projects", "Editor", "Profiles", "Analysis", "Diff", "Station", "TestStation", "Acceptance", "Settings", "Help" })
+    {
+        state.Navigate(page);
+        Assert(state.LastPageFor(WorkspaceNavigation.WorkspaceFor(page)) == page, "Every RC15 page must retain its workspace route.");
+    }
+}
+
+static void TestInventoryFileSettings()
+{
+    var expected = new FileDefinition { Id = 1, Type = "StdDataFile", Size = 32, Communication = "CM_ENCRYPT",
+        Access = new AccessDefinition { Read = 14, Write = 15, ReadWrite = 2, Change = 0 },
+        CreationSettings = new FileSettingsDefinition { Communication = "CM_PLAIN" } };
+    IReadOnlyList<CardReportSettingComparison> Compare(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        return new InventoryFileSettingsComparisonService().Compare(expected, doc.RootElement.EnumerateArray().ToArray());
+    }
+    const string matching = """
+        [{"fileId":1,"metadataResult":"NoError","contentResult":"PermissionDenied","fileType":"StdDataFile","declaredSize":32,"communicationMode":"CM_ENCRYPT","access":{"read":14,"write":15,"readWrite":2,"change":0}}]
+        """;
+    Assert(Compare(matching).All(row => row.State == ReportComparisonState.Equal), "Readable metadata can match despite denied content; compare final settings, not temporary ones.");
+    Assert(Compare(matching.Replace("NoError", "PermissionDenied")).All(row => row.State == ReportComparisonState.NotComparable), "Denied metadata cannot establish matches from stale values.");
+    var changed = Compare(matching.Replace("CM_ENCRYPT", "CM_PLAIN").Replace("\"read\":14", "\"read\":15"));
+    Assert(changed.Count(row => row.State == ReportComparisonState.Different) == 2 && changed.Single(row => row.Name == "Leserecht").Expected.Contains("frei"), "Communication and special rights differences must be independent.");
+    Assert(Compare("[]").All(row => row.State == ReportComparisonState.NotComparable), "Missing metadata is not evidence of absent settings.");
+    Assert(Compare("[{\"fileId\":1},{\"fileId\":1}]").All(row => row.State == ReportComparisonState.NotComparable), "Duplicate IDs must not pick an arbitrary result.");
+    Assert(Compare(matching.Replace("CM_ENCRYPT", "CM_UNKNOWN")).Single(row => row.Name == "Kommunikation").State == ReportComparisonState.NotComparable, "Unknown enum is not a differing known mode.");
+    Assert(Compare(matching.Replace("StdDataFile", "ValueFile")).Single(row => row.Name == "Dateigröße (Byte)").State == ReportComparisonState.NotComparable, "Value-file union size is not a byte-size observation.");
+    Assert(Compare(matching.Replace("\"read\":14", "\"read\":99")).Single(row => row.Name == "Leserecht").State == ReportComparisonState.NotComparable, "Invalid rights are not trustworthy differences.");
+}
+
+static void TestProjectInventoryComparison()
+{
+    var file = new FileDefinition { Id = 1, Size = 512, Coding = new CodingDefinition
+    {
+        Output = "test.hex", Recipe = [new RecipeStep { Op = "fixedHex", Value = new string('A', 1022) + "FF" }]
+    } };
+    var profiles = new ComposedProfiles([], [new ApplicationDefinition { Id = "A1B2C3", Files = [file] }], []);
+    using var inventory = JsonDocument.Parse(JsonSerializer.Serialize(new
+    {
+        readOnly = true, applicationId = "A1B2C3", listing = "NoError", fileCount = 1,
+        files = new[] { new { fileId = 1, declaredSize = 512, contentResult = "NoError", hex = new string('A', 1022) + "00" } }
+    }));
+    var service = new ProjectInventoryComparisonService();
+    var result = service.CreateReport(profiles, new Dictionary<string, string>(), new Dictionary<string, string>(), inventory.RootElement, "synthetic");
+    Assert(result.Findings.Any(f => f.Severity == "ERROR" && f.Area.Contains("Inhaltsvergleich")), "Difference after byte 256 must not disappear.");
+    Assert(result.Kind == "application-comparison" && result.Applications[0].Files[0].ExpectedHexDump == new string('A', 1022) + "FF", "Comparison needs its own kind and complete expected bytes.");
+    var review = Environment.GetEnvironmentVariable("SIEENCODE_COMPARISON_PDF_REVIEW");
+    var pdfPath = string.IsNullOrWhiteSpace(review) ? Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf") : Path.GetFullPath(review);
+    try
+    {
+        new CardReportPdfService().Save(result, pdfPath);
+        var content = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(pdfPath));
+        Assert(content.Contains("Soll-HEX") && content.Contains("Abweichung") && content.Contains("0.70 0.10 0.10 rg"), "Comparison PDF must expose expected bytes and emphasize difference.");
+        var compactPath = Path.ChangeExtension(pdfPath, ".compact.pdf");
+        try
+        {
+            new CardReportPdfService().Save(result, compactPath, CardReportDetail.Compact);
+            var compact = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(compactPath));
+            Assert(!compact.Contains("Soll-HEX") && !compact.Contains("AAFF") && compact.Contains("Abweichung") &&
+                compact.Contains("Nicht vergleichbar") && compact.Contains("Dateieinstellungen") && compact.Contains("Rohdaten ausgelassen"),
+                "Compact report must omit raw payloads explicitly, while retaining differences and unknown requirements.");
+            Assert(new FileInfo(compactPath).Length < new FileInfo(pdfPath).Length, "Compact output should reduce payload volume.");
+        }
+        finally { if (string.IsNullOrWhiteSpace(review)) File.Delete(compactPath); }
+    }
+    finally { if (string.IsNullOrWhiteSpace(review)) File.Delete(pdfPath); }
+    file.Coding.Recipe = [new RecipeStep { Op = "asciiDigits", Source = "serial", Width = 1 }, new RecipeStep { Op = "zeroPadToFileSize" }];
+    profiles = profiles with { Variables = [new VariableDefinition { Id = "serial", Scope = "card", Type = "digits", Length = 1, Required = true }] };
+    result = service.CreateReport(profiles, new Dictionary<string, string> { ["serial"] = "7" }, new Dictionary<string, string>(), inventory.RootElement, "synthetic");
+    Assert(result.Findings.Any(f => f.Area.Contains("Inhaltsvergleich") && f.Severity == "WARN" && f.Message.Contains("Sollinhalt nicht erzeugbar")), "Project values must not silently substitute missing card values.");
+    result = service.CreateReport(profiles, new Dictionary<string, string>(), new Dictionary<string, string> { ["serial"] = "7" }, inventory.RootElement, "synthetic");
+    Assert(result.Findings.Any(f => f.Area.Contains("Inhaltsvergleich") && f.Severity == "ERROR"), "Explicit card value should permit comparison.");
+}
+
+static void TestInventoryComparison()
+{
+    var service = new InventoryPayloadComparisonService();
+    var expected = new Dictionary<int, byte[]> { [1] = [0, 255] };
+    InventoryPayloadComparison Compare(string files)
+    {
+        using var document = JsonDocument.Parse("{\"readOnly\":true,\"applicationId\":\"A1B2C3\",\"files\":" + files + "}");
+        return service.Compare("a1b2c3", expected, document.RootElement).Single();
+    }
+    Assert(Compare("[{\"fileId\":1,\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"00ff\"}]").State == PayloadComparisonState.Equal, "Equivalent full bytes should match.");
+    Assert(Compare("[{\"fileId\":1,\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"0000\"}]").State == PayloadComparisonState.Different, "Full observed byte difference must be reported.");
+    foreach (var files in new[] {
+        "[]", "[{\"fileId\":1},{\"fileId\":1}]",
+        "[{\"fileId\":1,\"contentResult\":\"PermissionDenied\"}]",
+        "[{\"fileId\":1,\"contentResult\":\"NoError\",\"declaredSize\":4,\"hex\":\"00FF\"}]",
+        "[{\"fileId\":1,\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"00FF\",\"truncated\":true}]" })
+        Assert(Compare(files).State == PayloadComparisonState.NotComparable, "Missing, denied, duplicate or partial reads must never establish equality or difference.");
+    using var wrong = JsonDocument.Parse("{\"readOnly\":true,\"applicationId\":\"FFFFFF\"}");
+    AssertThrows<InvalidDataException>(() => service.Compare("A1B2C3", expected, wrong.RootElement));
+}
+
+static void TestInventoryPdf()
+{
+    var hex = new string('A', 1400) + "DEADBEEF";
+    using var json = JsonDocument.Parse(JsonSerializer.Serialize(new
+    {
+        readOnly = true, applicationId = "A1B2C3", authentication = "NoError", listing = "PermissionDenied",
+        createdUtc = "2026-09-09T10:00:00Z", secret = "DO-NOT-EXPORT-CREDENTIAL",
+        files = new object[] {
+            new { fileId = 1, declaredSize = 8192, fileType = "StdDataFile", communicationMode = "CM_ENCRYPT", metadataResult = "NoError", contentResult = "NoError", truncated = true, hex, ascii = new string('Q', 704) },
+            new { fileId = 2, contentResult = "PermissionDenied" } }
+    }));
+    var report = new InventoryCardReportFactory().Create(json.RootElement, "synthetische Inventur");
+    Assert(report.Applications[0].KeyCount is null && report.Applications[0].Files[1].Size is null, "Unknown metadata must not become zero.");
+    Assert(report.Applications[0].Files[0].HexDump == hex && report.Applications[0].Files[0].DataDefinition.Contains("Teilweise"), "Payload and partial evidence must survive mapping.");
+    Assert(report.Findings.Any(f => f.Message.Contains("Dateiliste nicht vollständig")), "Denied listing must stay incomplete.");
+    var output = Environment.GetEnvironmentVariable("SIEENCODE_INVENTORY_PDF_REVIEW");
+    var path = string.IsNullOrWhiteSpace(output) ? Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf") : Path.GetFullPath(output);
+    try
+    {
+        new CardReportPdfService().Save(report, path);
+        var pdf = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(path));
+        Assert(pdf.Contains("DEADBEEF") && !pdf.Contains("DO-NOT-EXPORT-CREDENTIAL"), "Observed PDF loses trailing bytes or exports unapproved fields.");
+        Assert(System.Text.RegularExpressions.Regex.Matches(pdf, @"/Type /Page\b").Count >= 2, "Long observed payload must paginate.");
+    }
+    finally { if (string.IsNullOrWhiteSpace(output)) File.Delete(path); }
+}
+
+static void TestInventoryEvidence()
+{
+    FileInventoryEvidence Read(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return FileInventoryEvidence.FromRuntime(document.RootElement);
+    }
+    foreach (var status in new[] { "PermissionDenied", "AuthFailure", "AuthenticationError" })
+        Assert(Read(JsonSerializer.Serialize(new { contentResult = status })).State == InventoryReadState.NoAccess, "Denied reads are not empty or different.");
+    foreach (var status in new[] { "NotRequested", "NotAttempted", "EmptyOrUnknownSize" })
+        Assert(Read(JsonSerializer.Serialize(new { contentResult = status })).State == InventoryReadState.NotChecked, "Unperformed reads stay unverified.");
+    Assert(Read("{\"contentResult\":\"DeferredFileType\"}").State == InventoryReadState.Unsupported, "Deferred file types must be explicit.");
+    Assert(Read("{\"contentResult\":\"IOError\"}").State == InventoryReadState.Failed, "Read errors must not imply denied access.");
+    Assert(Read("{}").State == InventoryReadState.Unknown, "Missing result is not success.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":0}").State == InventoryReadState.Unknown, "NoError without bytes is not an empty read.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":0,\"hex\":\"\"}").State == InventoryReadState.Complete, "Explicit successful empty read remains representable.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"00FF\"}").State == InventoryReadState.Complete, "Exact bytes prove a complete read.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":2,\"hex\":\"00\"}").State == InventoryReadState.Partial, "Short bytes cannot prove completeness.");
+    foreach (var hex in new[] { "Z0", "0", "000000" })
+        Assert(Read(JsonSerializer.Serialize(new { contentResult = "NoError", declaredSize = 2, hex })).State == InventoryReadState.Unknown, "Malformed or excessive bytes cannot prove completeness.");
+    var limited = Read(JsonSerializer.Serialize(new { contentResult = "NoError", declaredSize = 8192, truncated = true, hex = new string('A', 8192) }));
+    Assert(limited.State == InventoryReadState.Partial && limited.BytesRead == 4096 && limited.Description.Contains("8192"), "Runtime cap must remain visible.");
+    Assert(Read("{\"contentResult\":\"NoError\",\"declaredSize\":1,\"hex\":\"00\",\"truncated\":true}").State == InventoryReadState.Partial, "Explicit truncation prevents a complete verdict.");
+}
+
+static void TestFileExpertDescription()
+{
+    var file = new FileDefinition {
+        Access = new AccessDefinition { Read = 14, Write = 15, ReadWrite = 2, Change = 0 },
+        CreationSettings = new FileSettingsDefinition { Communication = "CM_PLAIN", Access = new AccessDefinition() },
+        Coding = new CodingDefinition { Recipe = [new RecipeStep { Op = "fixedHex", Value = new string('A', 600) },
+            new RecipeStep { Op = "asciiDigits", Source = "serial", Width = 9, PadLeft = "0", PadRight = " " }] }
+    };
+    var detail = FileExpertDescription.FromFile(file);
+    Assert(detail.FinalRights.Contains("frei (0xE)") && detail.FinalRights.Contains("gesperrt (0xF)") &&
+        detail.FinalRights.Contains("Schlüssel 2") && detail.FinalRights.Contains("Rechte ändern: Schlüssel 0"), "All four rights need correct special values.");
+    Assert(detail.CreationRights.Contains("CM_PLAIN") && !detail.CreationRights.Contains("gesperrt"), "Creation settings must remain distinct.");
+    using var recipe = JsonDocument.Parse(detail.Recipe);
+    Assert(recipe.RootElement[0].GetProperty("value").GetString()!.Length == 600, "Recipe literals must not truncate.");
+    Assert(recipe.RootElement[1].GetProperty("source").GetString() == "serial" && recipe.RootElement[1].GetProperty("padRight").GetString() == " ", "All parameters and order preserved.");
+    file.Coding.Recipe.Clear();
+    using var snapshot = JsonDocument.Parse(detail.Recipe);
+    Assert(snapshot.RootElement.GetArrayLength() == 2, "Details must be a snapshot.");
+    Assert(FileExpertDescription.FromFile(new FileDefinition()).Recipe.Contains("Kein"), "Missing recipe explicitly described.");
 }
 
 static void TestKeyGeneration()
@@ -360,6 +574,75 @@ static void TestVaultRecoveryBackup()
     finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
 }
 
+static void TestCertificateVaultLifecycle()
+{
+    var root = Path.Combine(Path.GetTempPath(), "sieencode-vault-lifecycle-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    using var ownerKey = RSA.Create(3072); using var removedKey = RSA.Create(3072);
+    using var owner = SelfSigned("Lifecycle owner", ownerKey);
+    using var removed = SelfSigned("Lifecycle removed", removedKey);
+    const string recovery = "Synthetic-Recovery-Before-2026!";
+    const string rotatedRecovery = "Synthetic-Recovery-After-2026!";
+    try
+    {
+        var project = ValidProject();
+        project.Project.Name = "Lifecycle";
+        project.Productive.PiccKey = new KeyReference { Type = "DF_KEY_AES", Value = new string('A', 32) };
+        project.Productive.ApplicationKeys["F482D0"] = Enumerable.Range(0, 5).Select(index => new string((char)('B' + index), 32)).ToList();
+        var projectPath = Path.Combine(root, "Lifecycle.project.json");
+        var vaultPath = ProjectKeyVault.GetPath(projectPath);
+        ProjectJson.Save(projectPath, ProjectJson.WithoutAllSecrets(project));
+        var payload = ProjectKeyVault.FromProject(project);
+        var revision = ProjectKeyVault.SaveForRecipients(vaultPath, payload, recovery,
+            [(owner, "Owner"), (removed, "Removed")], ConcurrentFileWriter.Capture(vaultPath));
+        var oldCopy = File.ReadAllBytes(vaultPath);
+        Assert(JsonEquivalent(JsonSerializer.Serialize(payload), JsonSerializer.Serialize(ProjectKeyVault.LoadWithCertificates(vaultPath, [removed]))),
+            "Zweiter synthetischer Empfänger kann den initial gespeicherten Projekt-Vault nicht vollständig öffnen.");
+
+        payload.ProductivePicc.Value = new string('F', 32);
+        revision = ProjectKeyVault.UpdateForExistingRecipients(vaultPath, payload, [owner], revision);
+        Assert(ProjectKeyVault.Load(vaultPath, recovery).ProductivePicc.Value == new string('F', 32) &&
+               ProjectKeyVault.LoadWithCertificates(vaultPath, [removed]).ProductivePicc.Value == new string('F', 32),
+            "Speichern verliert bestehende Empfänger oder Recovery-Zugang.");
+        var staleRevision = revision;
+        revision = ProjectKeyVault.SaveForRecipients(vaultPath, payload, rotatedRecovery, [(owner, "Owner")], revision);
+        AssertThrows<CryptographicException>(() => ProjectKeyVault.LoadWithCertificates(vaultPath, [removed]));
+        AssertThrows<CryptographicException>(() => ProjectKeyVault.Load(vaultPath, recovery));
+        AssertThrows<ConcurrentFileChangeException>(() => ProjectKeyVault.UpdateForExistingRecipients(vaultPath, payload, [owner], staleRevision));
+        Assert(ConcurrentFileWriter.Capture(vaultPath) == revision, "Veraltete Sitzung überschreibt neue Empfängerfreigabe.");
+
+        // Removing a recipient cannot revoke their access to a previously retained copy.
+        var historical = JsonSerializer.Deserialize<KeyVaultDocument>(oldCopy, ProjectJson.Options)!;
+        Assert(CertificateVaultService.UnprotectWithCertificate(historical, [removed]).Contains(new string('A', 32), StringComparison.Ordinal),
+            "Historischer Zugangsvertrag wird fälschlich als rückwirkend gesperrt behandelt.");
+        var verified = ProjectKeyVault.LoadWithCertificates(vaultPath, [owner]);
+        var backup = new VaultBackupService().Create(projectPath, vaultPath, Path.Combine(root, "backup"), verified);
+        File.Delete(projectPath);
+        File.Delete(vaultPath);
+        var restoredDirectory = Path.Combine(root, "restored");
+        Directory.CreateDirectory(restoredDirectory);
+        var restoredProject = Path.Combine(restoredDirectory, Path.GetFileName(backup.ProjectPath));
+        var restoredVault = ProjectKeyVault.GetPath(restoredProject);
+        File.Copy(backup.ProjectPath, restoredProject);
+        File.Copy(backup.VaultPath, restoredVault);
+        var recovered = ProjectKeyVault.Load(restoredVault, rotatedRecovery);
+        Assert(JsonEquivalent(JsonSerializer.Serialize(verified), JsonSerializer.Serialize(recovered)) &&
+               JsonEquivalent(JsonSerializer.Serialize(recovered), JsonSerializer.Serialize(ProjectKeyVault.LoadWithCertificates(restoredVault, [owner]))),
+            "Wiederherstellung ohne Quelldateien verliert Schlüssel oder Zertifikatszugang.");
+        AssertThrows<CryptographicException>(() => ProjectKeyVault.LoadWithCertificates(restoredVault, [removed]));
+        AssertThrows<CryptographicException>(() => ProjectKeyVault.Load(restoredVault, recovery));
+        var restoredDefinition = JsonSerializer.Deserialize<ProjectDefinition>(File.ReadAllText(restoredProject), ProjectJson.Options)!;
+        var hydrated = ProjectKeyVault.Apply(restoredDefinition, recovered);
+        Assert(hydrated.Productive.PiccKey.Value == new string('F', 32) && hydrated.Productive.ApplicationKeys["F482D0"].Count == 5,
+            "Wiederhergestellter Vault lässt sich nicht auf das gesicherte Projekt anwenden.");
+        var manifest = JsonSerializer.Deserialize<VaultBackupManifest>(File.ReadAllText(backup.ManifestPath), ProjectJson.Options)!;
+        Assert(manifest.VaultSha256 == Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(restoredVault))) &&
+               manifest.ProjectSha256 == Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(restoredProject))),
+            "Wiederhergestellte Dateien weichen vom Recovery-Manifest ab.");
+    }
+    finally { Directory.Delete(root, true); }
+}
+
 static void TestCertificateVault()
 {
     using var aliceKey = RSA.Create(3072); using var bobKey = RSA.Create(3072); using var eveKey = RSA.Create(3072);
@@ -416,6 +699,128 @@ static X509Certificate2 SelfSigned(string name, RSA key)
     var request = new CertificateRequest($"CN=SieEncode Test {name}", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
     request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment, true));
     return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddYears(1));
+}
+
+static void TestReportImageOrientation()
+{
+    var pixels = Enumerable.Range(1, 6).SelectMany(i => new byte[] { (byte)i, (byte)(i + 10), (byte)(i + 20) }).ToArray();
+    var image = new CardReportImage("Synthetic", 3, 2, pixels.ToArray());
+    int[][] expected = [[1,2,3,4,5,6], [3,2,1,6,5,4], [6,5,4,3,2,1], [4,5,6,1,2,3],
+        [1,4,2,5,3,6], [4,1,5,2,6,3], [6,3,5,2,4,1], [3,6,2,5,1,4]];
+    for (var orientation = 1; orientation <= 8; orientation++)
+    {
+        var actual = CardReportImageOrientation.Apply(image, orientation);
+        Assert(actual.Width == (orientation >= 5 ? 2 : 3) && actual.Height == (orientation >= 5 ? 3 : 2), "Oriented dimensions");
+        var rgb = expected[orientation - 1].SelectMany(i => new byte[] { (byte)i, (byte)(i + 10), (byte)(i + 20) });
+        Assert(actual.Rgb.SequenceEqual(rgb), $"EXIF orientation {orientation} pixel mapping");
+        Assert(actual.Caption == image.Caption && image.Rgb.SequenceEqual(pixels), "Caption and source preserved");
+    }
+    Assert(CardReportImageOrientation.Apply(image, 0).Rgb.SequenceEqual(pixels), "Missing orientation stays normal");
+    Assert(CardReportImageOrientation.Apply(image, 9).Rgb.SequenceEqual(pixels), "Unknown orientation stays normal");
+    AssertThrows<ArgumentException>(() => CardReportImageOrientation.Apply(new("Invalid", 3, 2, []), 6));
+}
+
+static void TestReportImages()
+{
+    var report = new CardReport("1.0", "project-plan", "SieEncode Kartenbilder", "Synthetische Bildabnahme",
+        DateTimeOffset.Parse("2026-09-10T12:00:00Z"), "synthetisch", [], [], [], []);
+    var pixels = new byte[120 * 75 * 3];
+    for (var y = 0; y < 75; y++)
+        for (var x = 0; x < 120; x++)
+        {
+            var i = (y * 120 + x) * 3;
+            pixels[i] = (byte)(x < 60 ? 220 : 20); pixels[i + 1] = (byte)(y < 38 ? 80 : 190); pixels[i + 2] = 100;
+        }
+    var picture = new CardReportImage("Synthetische Vorderseite", 120, 75, pixels);
+    var documentation = new CardReportDocumentation { Images = [picture, picture with { Caption = "Synthetische Rückseite" }] };
+    var requested = Environment.GetEnvironmentVariable("SIEENCODE_IMAGES_PDF_REVIEW");
+    var output = string.IsNullOrWhiteSpace(requested) ? Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf") : Path.GetFullPath(requested);
+    try
+    {
+        var service = new CardReportPdfService();
+        service.Save(report, output, CardReportDetail.Compact, documentation);
+        var pdf = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(output));
+        Assert(pdf.Split("BI /W 120 /H 75").Length == 3 && pdf.Contains(Convert.ToHexString(pixels)), "Both selected images must retain RGB content, also in compact mode.");
+        AssertThrows<InvalidDataException>(() => service.Save(report, output, documentation: documentation with { Images = [picture, picture, picture] }));
+        AssertThrows<InvalidDataException>(() => service.Save(report, output, documentation: documentation with { Images = [picture with { Width = 1281 }] }));
+        AssertThrows<InvalidDataException>(() => service.Save(report, output, documentation: documentation with { Images = [picture with { Rgb = [0] }] }));
+    }
+    finally { if (string.IsNullOrWhiteSpace(requested)) File.Delete(output); }
+}
+
+static void TestReportDocumentation()
+{
+    var report = new CardReport("1.0", "project-plan", "SieEncode Dokumentation", "Synthetische Abnahme",
+        DateTimeOffset.Parse("2026-09-10T10:00:00+02:00"), "synthetisch", [], [], [], []);
+    var root = Path.Combine(Path.GetTempPath(), "sieencode-doc-test-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    var requested = Environment.GetEnvironmentVariable("SIEENCODE_DOCUMENTATION_PDF_REVIEW");
+    var output = string.IsNullOrWhiteSpace(requested) ? Path.Combine(root, "documented.pdf") : Path.GetFullPath(requested);
+    try
+    {
+        var service = new CardReportPdfService();
+        service.Save(report, Path.Combine(root, "plain.pdf"));
+        service.Save(report, Path.Combine(root, "empty.pdf"), documentation: new());
+        Assert(File.ReadAllBytes(Path.Combine(root, "plain.pdf")).SequenceEqual(File.ReadAllBytes(Path.Combine(root, "empty.pdf"))), "Empty documentation must not produce an extra section or page.");
+        var notes = string.Join("\n", Enumerable.Range(1, 28).Select(i => $"Synthetische Notiz {i:D2}: Prüfung einer längeren Dokumentation mit Zeilenumbruch.")) + "\nDOKUMENTATIONSENDE";
+        service.Save(report, output, CardReportDetail.Compact, new(new DateOnly(2026, 9, 10), "Synthetischer Testort", notes, true));
+        var text = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(output));
+        Assert(text.Contains("10.09.2026") && text.Contains("Synthetischer Testort") && text.Contains("DOKUMENTATIONSENDE") && text.Contains("Name / Unterschrift"), "Selected documentation must remain complete even in compact mode.");
+        Assert(text.Split("/Type /Page ").Length > 2, "Long notes must paginate.");
+        Assert(!System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(Path.Combine(root, "plain.pdf"))).Contains("Unterschrift"), "Unselected signature block must be absent.");
+    }
+    finally { Directory.Delete(root, true); }
+}
+
+static void TestTargetReportVariableScopes()
+{
+    var definition = new ProfileDefinition
+    {
+        Profile = new ProfileMetadata { Id = "SYNTH-SCOPES", Kind = "base" },
+        Variables = [new VariableDefinition { Id = "serial", Scope = "card", Required = true },
+            new VariableDefinition { Id = "site", Scope = "project", Required = true, Type = "digits", Length = 2, Default = "42" }],
+        Applications = [new ApplicationDefinition { Id = "A1B2C3", Files = [
+            new FileDefinition { Id = 1, Size = 2, Coding = new CodingDefinition { Output = "card.hex", Recipe = [new RecipeStep { Op = "asciiDigits", Source = "serial", Width = 2 }] } },
+            new FileDefinition { Id = 2, Size = 2, Coding = new CodingDefinition { Output = "site.hex", Recipe = [new RecipeStep { Op = "asciiDigits", Source = "site", Width = 2 }] } },
+            new FileDefinition { Id = 3, Size = 1, Coding = new CodingDefinition { Output = "fixed.hex", Recipe = [new RecipeStep { Op = "fixedHex", Value = "AA" }] } }
+        ] }]
+    };
+    var project = new ProjectDefinition { Profiles = new ProfileSelection { Base = "SYNTH-SCOPES" },
+        Values = new Dictionary<string, string> { ["serial"] = "99", ["site"] = "" } };
+    var analysis = new ProjectAnalysisReport { Applications = [new ProjectAnalysisApplication("A1B2C3", "Synthetic", "AES", 1, "0B", "0F", "",
+        Enumerable.Range(1, 3).Select(id => new ProjectAnalysisFile(id, "File", "StdDataFile", 2, "CM_PLAIN", "", null, "", "")).ToArray())] };
+    var report = new CardReportFactory().FromProject(project, analysis, "synthetic", ProfileLibrary.FromProfiles([definition]));
+    var files = report.Applications.Single().Files;
+    Assert(files[0].HexDump.StartsWith("nicht verfuegbar"), "Project value must not substitute missing card input.");
+    Assert(files[1].HexDump == "34 32", "Empty project value uses the production default.");
+    Assert(files[2].HexDump == "AA", "Missing unrelated card input must not hide fixed payloads.");
+    project.Values["site"] = "4";
+    report = new CardReportFactory().FromProject(project, analysis, "synthetic", ProfileLibrary.FromProfiles([definition]));
+    Assert(report.Applications[0].Files[1].HexDump.StartsWith("nicht verfuegbar"), "Invalid values must not produce expected bytes.");
+}
+
+static void TestFullTargetReport()
+{
+    var payload = new string('4', 1022) + "FF";
+    var name = string.Join(" ", Enumerable.Repeat("Langer Dateiname", 8)) + " DATEIENDE";
+    var definition = new ProfileDefinition { Profile = new ProfileMetadata { Id = "SYNTH-PDF", Kind = "base" },
+        Applications = [new ApplicationDefinition { Id = "A1B2C3", Files = [new FileDefinition { Id = 1, Size = 512,
+            Coding = new CodingDefinition { Output = "test.hex", Recipe = [new RecipeStep { Op = "fixedHex", Value = payload }] } }] }] };
+    var project = new ProjectDefinition { Project = new ProjectSection { Name = "Synthetische Sollreport-Abnahme" }, Profiles = new ProfileSelection { Base = "SYNTH-PDF" },
+        Values = new Dictionary<string, string> { ["Notiz"] = new string('W', 100) + " FELDENDE" } };
+    var analysis = new ProjectAnalysisReport { Applications = [new ProjectAnalysisApplication("A1B2C3", name, "AES", 14, "0B", "0F", name, [new ProjectAnalysisFile(1, name, "StdDataFile", 512, "CM_PLAIN", "R0/W0/RW0/C0", name, name, name)])] };
+    var report = new CardReportFactory().FromProject(project, analysis, "synthetisch", ProfileLibrary.FromProfiles([definition]));
+    Assert(report.Applications[0].Files[0].HexDump.Replace(" ", "") == payload && report.Applications[0].Files[0].AsciiDump.Length == 512, "Sollreport must retain every payload byte.");
+    var requested = Environment.GetEnvironmentVariable("SIEENCODE_FULL_TARGET_PDF_REVIEW");
+    var path = string.IsNullOrWhiteSpace(requested) ? Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".pdf") : Path.GetFullPath(requested);
+    try
+    {
+        new CardReportPdfService().Save(report, path);
+        var content = System.Text.Encoding.Latin1.GetString(File.ReadAllBytes(path));
+        Assert(content.Contains("DATEIENDE") && content.Contains("FELDENDE") && content.Contains("13: nicht"), "Names, fields and key-version list must not be clipped.");
+        Assert(content.Contains("44 FF") && content.Split("/Type /Page ").Length > 2, "Full payload tail must survive multipage layout.");
+    }
+    finally { if (string.IsNullOrWhiteSpace(requested)) File.Delete(path); }
 }
 
 static void TestCardReportPdf()
@@ -661,7 +1066,7 @@ static void TestSettingsAndCatalog()
         Assert(!new ProjectCatalog().Scan(projectsRoot).Single(entry => entry.Name == "Editable").HasVault, "Beschädigter Vault wird als gültig ausgewiesen.");
         ProjectKeyVault.Save(ProjectKeyVault.GetPath(editablePath), ProjectKeyVault.FromProject(editable), "Catalog-Test-Passphrase");
         var securedEntry = new ProjectCatalog().Scan(projectsRoot).Single(entry => entry.Name == "Editable");
-        Assert(securedEntry.HasVault && securedEntry.Kind == "Neu bauen" && securedEntry.KeyState == "Neubau mit Vault" && !securedEntry.CanOpenStation,
+        Assert(securedEntry.HasVault && securedEntry.Kind == "Sicher bereitstellbar" && securedEntry.KeyState == "Vault mit Passphrase" && securedEntry.SecureOnDemand && securedEntry.CanOpenStation,
             "Passphrasen-Altvault wird im Katalog falsch ausgewiesen oder unsicher für die Kodierstation freigegeben.");
 
         using var stationKey = RSA.Create(3072);
@@ -2419,10 +2824,17 @@ static void TestRealAssets(string profileDirectory, string projectTemplate, stri
             Assert(RfPrjSecretProtection.FindPlaintextSecretElements(protectedDocument).Count == 0,
                 "rfPrj enthält weiterhin ein Klartext-Schlüsselfeld: " + protectedRfPrjPath);
         }
+        ProjectJson.Save(sourcePath, ProjectJson.WithoutAllSecrets(project));
         var operationalPreflight = ProjectPreflight.Inspect(ProjectJson.Load(sourcePath), library, sourcePath, result.ProjectDirectory, ProjectPreflightScope.Operational);
         Assert(operationalPreflight.Status == "OK" && operationalPreflight.Scope == ProjectPreflightScope.Operational,
             "Schlüsselfreie Projektdefinition besteht den operativen Preflight nicht.");
         var strictKeylessPreflight = ProjectPreflight.Inspect(ProjectJson.Load(sourcePath), library, sourcePath, result.ProjectDirectory);
+        Assert(strictKeylessPreflight.Issues.Any(issue => issue.Code.StartsWith("TRANSPORT_", StringComparison.Ordinal)),
+            "Build-Preflight darf fehlende Grundkeys nicht akzeptieren.");
+        var malformedTransport = ProjectJson.Load(sourcePath);
+        malformedTransport.Transport.PiccKey.Value = "invalid";
+        Assert(ProjectPreflight.Inspect(malformedTransport, library, sourcePath, result.ProjectDirectory, ProjectPreflightScope.Operational)
+            .Issues.Any(issue => issue.Code == "TRANSPORT_PICC"), "Betriebscheck darf vorhandene ungueltige Grundkeys nicht ignorieren.");
         Assert(strictKeylessPreflight.Issues.Any(issue => issue.Code.StartsWith("PRODUCTIVE", StringComparison.Ordinal)),
             "Strenger Build-Preflight akzeptiert eine keyfreie Coding-Konfiguration ohne Vaultdaten.");
         var artifactPreflight = ProjectPreflight.InspectArtifacts(result.ProjectDirectory);

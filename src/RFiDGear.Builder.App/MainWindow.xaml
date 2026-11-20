@@ -3,20 +3,21 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="SieEncode Studio" Icon="assets/branding/SieEncode.ico" Height="900" Width="1440" MinHeight="720" MinWidth="1100"
         WindowStartupLocation="CenterScreen" Background="{StaticResource PageBrush}" Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown">
-  <Grid>
+  <Grid Background="{StaticResource PageBrush}">
     <Grid.ColumnDefinitions><ColumnDefinition Width="235"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
     <Border Grid.Column="0" Background="{StaticResource PrimaryDarkBrush}">
       <DockPanel LastChildFill="True">
         <StackPanel DockPanel.Dock="Top" Margin="14,22,14,16">
           <StackPanel Orientation="Horizontal">
             <Image Source="assets/branding/SieEncode.ico" Width="42" Height="42" Margin="0,0,10,0"/>
-            <StackPanel VerticalAlignment="Center"><TextBlock Text="SieEncode" Foreground="White" FontWeight="Bold" FontSize="25"/><TextBlock x:Name="AppVersionText" Text="Studio" Foreground="#BFE0E2" FontSize="12"/></StackPanel>
+            <StackPanel VerticalAlignment="Center"><TextBlock Text="SieEncode" Foreground="White" FontWeight="Bold" FontSize="25"/><TextBlock x:Name="AppVersionText" MaxWidth="145" TextWrapping="Wrap" Text="Studio" Foreground="#BFE0E2" FontSize="12"/></StackPanel>
           </StackPanel>
+          <TextBlock Text="ARBEITSBEREICHE" Foreground="#BFE0E2" FontSize="11" Margin="6,26,0,6"/>
+          <Button x:Name="NavStationButton" Style="{StaticResource NavButton}" Tag="Station" Click="Workspace_Click" Content="Karten kodieren"/>
+          <Button x:Name="NavProjectsButton" Style="{StaticResource NavButton}" Tag="Projects" Click="Workspace_Click" Content="Projekte"/>
+          <Button x:Name="NavTestStationButton" Style="{StaticResource NavButton}" Tag="TestStation" Click="Workspace_Click" Content="Karten untersuchen"/>
+          <Border Height="1" Background="#47656B" Margin="6,18,6,14"/>
           <Button x:Name="NavHomeButton" Style="{StaticResource NavButton}" Tag="Home" Click="Navigate_Click" Content="Übersicht"/>
-          <Button x:Name="NavProjectsButton" Style="{StaticResource NavButton}" Tag="Projects" Click="Navigate_Click" Content="Projekte"/>
-          <Button x:Name="NavStationButton" Style="{StaticResource NavButton}" Tag="Station" Click="Navigate_Click" Content="Kodierstation"/>
-          <Button x:Name="NavTestStationButton" Style="{StaticResource NavButton}" Tag="TestStation" Click="Navigate_Click" Content="Teststation"/>
-          <Button x:Name="NavProfilesButton" Style="{StaticResource NavButton}" Tag="Profiles" Click="Navigate_Click" Content="Profile verwalten"/>
           <Button x:Name="NavHelpButton" Style="{StaticResource NavButton}" Tag="Help" Click="Navigate_Click" Content="Hilfe"/>
           <Button x:Name="NavSettingsButton" Style="{StaticResource NavButton}" Tag="Settings" Click="Navigate_Click" Content="Einstellungen"/>
         </StackPanel>
@@ -27,7 +28,7 @@
     </Border>
 
     <Grid Grid.Column="1">
-      <Grid.RowDefinitions><RowDefinition Height="64"/><RowDefinition Height="*"/><RowDefinition Height="34"/></Grid.RowDefinitions>
+      <Grid.RowDefinitions><RowDefinition Height="64"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="34"/></Grid.RowDefinitions>
       <Border Grid.Row="0" Background="White" BorderBrush="#D5DFE1" BorderThickness="0,0,0,1">
         <Grid Margin="18,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
           <Button x:Name="BackButton" Grid.Column="0" Content="← Zurück" Click="Back_Click" IsEnabled="False" Style="{StaticResource CompactButton}"/>
@@ -36,7 +37,23 @@
         </Grid>
       </Border>
 
-      <Grid Grid.Row="1" Margin="20">
+      <Border Grid.Row="1" Background="White" BorderBrush="#D5DFE1" BorderThickness="0,0,0,1" x:Name="WorkspaceNavigationBar">
+        <StackPanel Margin="20,8">
+          <WrapPanel x:Name="ProjectWorkspaceTabs">
+            <Button Content="Bibliothek" Tag="Projects" Click="Navigate_Click"/>
+            <Button Content="Projekt bearbeiten" Tag="Editor" Click="Navigate_Click"/>
+            <Button x:Name="NavProfilesButton" Content="Profile und Historie" Tag="Profiles" Click="Navigate_Click"/>
+            <Button x:Name="WorkspaceAnalysisButton" Content="Struktur und Taskplan" Tag="Analysis" Click="Navigate_Click"/>
+            <Button x:Name="WorkspaceDiffButton" Content="Projekt-/Profilvergleich" Tag="Diff" Click="Navigate_Click"/>
+          </WrapPanel>
+          <WrapPanel x:Name="InspectWorkspaceTabs">
+            <Button Content="Transponderanalyse" Tag="TestStation" Click="Navigate_Click"/>
+            <Button x:Name="WorkspaceAcceptanceButton" Content="Prüfung und Abnahme" Tag="Acceptance" Click="Navigate_Click"/>
+          </WrapPanel>
+          <TextBlock x:Name="WorkspaceModeHint" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="4,4"/>
+        </StackPanel>
+      </Border>
+      <Grid Grid.Row="2" Margin="20">
         <ScrollViewer x:Name="PageHome" VerticalScrollBarVisibility="Auto">
           <StackPanel>
             <TextBlock Text="Willkommen in SieEncode Studio" FontSize="26" FontWeight="SemiBold"/>
@@ -89,12 +106,19 @@
             <Border Style="{StaticResource InfoBanner}"><TextBlock Text="Analyse und Prüfungen sind grundsätzlich nur lesend. Schreibende Aktionen stehen getrennt im Bereich Wartung und verlangen eine eindeutige Bestätigung." TextWrapping="Wrap"/></Border>
             <GroupBox Header="Transponder untersuchen · nur lesend">
               <StackPanel>
-                <TextBlock Text="Startet mit einer vollständigen AID-Inventur und prüft den PICC-Standardzustand. Nach dem Ergebnis können einzelne Applications mit einem nur für diese Sitzung bereitgestellten Schlüssel tiefer untersucht werden." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                <TextBlock Text="Karte auf den Reader legen und „Transponder analysieren“ wählen. Das Ergebnis erscheint darunter." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,8"/>
                 <WrapPanel>
                   <Button x:Name="TestAnalyzeCardButton" Content="Transponder analysieren" Click="AnalyzeCardWithoutProject_Click" Style="{StaticResource PrimaryButton}"/>
+                </WrapPanel>
+                <Expander Header="Weitere Analyse und Berichte" Margin="4,6" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}">
+                  <WrapPanel>
                   <Button x:Name="TestDeepAnalyzeButton" Content="Application genauer untersuchen" Click="DeepAnalyzeApplication_Click" IsEnabled="False"/>
                   <Button x:Name="TestOpenRecognitionResultButton" Content="Letzten Bericht öffnen" Click="OpenLatestTestReport_Click" IsEnabled="False"/>
+                  <Button x:Name="TestOpenInventoryPdfButton" Content="PDF-Istreport öffnen" Click="OpenInventoryPdf_Click" IsEnabled="False"/>
+                  <Button x:Name="TestExportInventoryPdfButton" Content="PDF-Istreport exportieren" Click="ExportInventoryPdf_Click" IsEnabled="{Binding IsEnabled, ElementName=TestOpenInventoryPdfButton}"/>
+                  <Button x:Name="TestExportInventoryComparisonButton" Content="Dateien mit Sollprojekt vergleichen" Click="ExportInventoryComparison_Click" IsEnabled="False"/>
                 </WrapPanel>
+                </Expander>
                 <TextBlock x:Name="TestAnalysisInfo" Text="Noch keine projektlose Analyse in dieser Sitzung." Foreground="#526B70" TextWrapping="Wrap" Margin="4,5,4,0"/>
                 <Border Margin="4,12,4,0" BorderBrush="#C7D6D8" BorderThickness="1" CornerRadius="5" Background="White" MinHeight="210">
                   <TreeView x:Name="TestAnalysisTree" Padding="8" BorderThickness="0">
@@ -104,7 +128,7 @@
                 <TextBlock Text="Ein Schlüssel wird nur für die gewählte Application und nur in dieser Sitzung verwendet. Nicht lesbar bedeutet niemals leer." Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="4,7,4,0" TextWrapping="Wrap"/>
               </StackPanel>
             </GroupBox>
-            <GroupBox Header="Ausgewähltes Projekt als Prüfvorlage · optional">
+            <Expander Margin="0,4" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}" Header="Ausgewähltes Projekt als Prüfvorlage · optional">
               <StackPanel>
                 <TextBlock x:Name="TestProjectInfo" Text="Kein Projekt ausgewählt. Projektlose Analyse ist trotzdem möglich." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,8"/>
                 <WrapPanel>
@@ -116,14 +140,14 @@
                   <Button x:Name="TestHardwarePlanButton" Content="Hardware-Abnahmeplan" Click="PrepareHardwareAcceptance_Click" IsEnabled="False"/>
                 </WrapPanel>
               </StackPanel>
-            </GroupBox>
-            <GroupBox Header="Reader und Laufdiagnose">
+            </Expander>
+            <Expander Margin="0,4" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}" Header="Reader und Laufdiagnose">
               <WrapPanel>
                 <Button Content="RFiDGear für Lesereinstellungen öffnen" Click="OpenRFiDGearSettings_Click"/>
                 <Button x:Name="TestRefreshOperationButton" Content="Laufstatus aktualisieren" Click="RefreshOperation_Click" IsEnabled="False"/>
                 <Button x:Name="TestCloseRFiDGearButton" Content="RFiDGear-Prozess abschließen" Click="CloseRFiDGear_Click" IsEnabled="False"/>
               </WrapPanel>
-            </GroupBox>
+            </Expander>
             <Expander x:Name="TestMaintenanceActions" Header="Wartung · verändert den Transponder" Background="White" Margin="0,0,0,12">
               <StackPanel Margin="12">
                 <TextBlock Text="Achtung: Formatieren löscht alle Applications und Files. Der aktuelle PICC-Schlüssel wird ausschließlich im Arbeitsspeicher an RFiDGear übergeben und weder im Projekt noch im Bericht gespeichert." Foreground="#8A5A00" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,8"/>
@@ -208,7 +232,8 @@
               <StackPanel>
                 <Border Style="{StaticResource WarningBanner}" Margin="0,0,0,8"><TextBlock x:Name="EditorKeyGuidance" Text="Neues Projekt: Schlüssel erzeugen und danach verschlüsselt speichern. Bestehendes Projekt: vorhandenen Schlüsselspeicher für diese Sitzung entsperren. Die Passphrase wird niemals gespeichert." TextWrapping="Wrap"/></Border>
                 <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="300"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="Ausgangsschlüsselsatz" VerticalAlignment="Center"/><ComboBox x:Name="EditorInitialKeySet" Grid.Column="1" DisplayMemberPath="Name" SelectedValuePath="Id" SelectionChanged="EditorInitialKeySet_Changed" ToolTip="Wählt die Grundkeys, die auf der Karte vor dem Lauf erwartet werden."/><WrapPanel Grid.Column="2" Margin="8,0,0,0"><Button x:Name="EditorAddInitialKeySetButton" Content="Aktuellen Satz hinzufügen" Click="AddInitialKeySet_Click"/><Button x:Name="EditorDeleteInitialKeySetButton" Content="Satz löschen" Click="DeleteInitialKeySet_Click"/></WrapPanel></Grid>
-                <WrapPanel><Button x:Name="EditorGenerateKeysButton" Content="Neue Schlüssel erzeugen" Click="GenerateProductiveKeys_Click"/><Button x:Name="EditorUnlockVaultButton" Content="Vault entsperren" Click="UnlockVault_Click"/><Button x:Name="EditorSaveVaultButton" Content="Einzelbenutzer-Vault speichern" Click="SaveVault_Click"/><Button x:Name="EditorManageVaultAccessButton" Content="Mehrbenutzerzugriff einrichten" Click="ManageVaultAccess_Click" Style="{StaticResource PrimaryButton}"/><Button x:Name="EditorAuditVaultButton" Content="Vault technisch prüfen" Click="AuditVault_Click"/></WrapPanel>
+                <WrapPanel><Button x:Name="EditorGenerateKeysButton" Content="Neue Schlüssel erzeugen" Click="GenerateProductiveKeys_Click"/><Button x:Name="EditorUnlockVaultButton" Content="Vault entsperren" Click="UnlockVault_Click"/><Button x:Name="EditorGroupRecoveryButton" Content="Mit Recovery-Schlüssel öffnen" Click="UnlockGroupRecovery_Click" Visibility="Collapsed"/><Button x:Name="EditorSaveVaultButton" Content="Einzelbenutzer-Vault speichern" Click="SaveVault_Click"/><Button x:Name="EditorManageVaultAccessButton" Content="Mehrbenutzerzugriff einrichten" Click="ManageVaultAccess_Click" Style="{StaticResource PrimaryButton}"/><Button x:Name="EditorAuditVaultButton" Content="Vault technisch prüfen" Click="AuditVault_Click"/></WrapPanel>
+                <Button Content="Als neues Gruppenprojekt erstellen / migrieren" Click="CreateGroupProject_Click" HorizontalAlignment="Left"/>
                 <TextBlock x:Name="EditorVaultStatus" Text="Kein Vault geladen." Foreground="#526B70" TextWrapping="Wrap"/>
                 <Expander x:Name="EditorProductiveKeyDetails" Header="Schlüsselwerte anzeigen oder manuell prüfen" IsExpanded="False" Margin="0,8,0,0"><StackPanel Margin="8"><TextBlock Text="Sensible Werte sind nur für die laufende Sitzung sichtbar. Änderungen müssen anschließend erneut verschlüsselt gespeichert werden." Foreground="#8A5A00" TextWrapping="Wrap" Margin="0,0,0,6"/><Grid x:Name="EditorProductivePiccPanel"><Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions><TextBlock Text="Produktiver PICC-Key" VerticalAlignment="Center"/><ComboBox x:Name="EditorProductivePiccType" Grid.Column="1" SelectionChanged="EditorProductiveControl_Changed"><ComboBoxItem Content="DF_KEY_DES"/><ComboBoxItem Content="DF_KEY_AES"/><ComboBoxItem Content="DF_KEY_3K3DES"/></ComboBox><TextBox x:Name="EditorProductivePiccKey" Grid.Column="2" FontFamily="Consolas" TextChanged="EditorProductiveControl_Changed"/><TextBox x:Name="EditorPiccKeySettings" Grid.Column="3" ToolTip="PICC KeySettings 00 bis 0F" TextChanged="EditorProductiveControl_Changed"/></Grid><ItemsControl x:Name="EditorProductiveKeys"><ItemsControl.ItemTemplate><DataTemplate><Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="280"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Label}" VerticalAlignment="Center"/><TextBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" AutomationProperties.AutomationId="{Binding Id, StringFormat=EditorProductiveKey.{0}}"/></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Expander>
               </StackPanel>
@@ -317,10 +342,61 @@
           <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <StackPanel Grid.Row="0"><TextBlock Text="Erzeugt Karten- und Taskplan vollständig im Speicher und simuliert Credential-Rollen, Keywechsel und Endzustand mit synthetischen Tokens. Produktivkeys oder ein Vault werden weder benötigt noch in Berichte übernommen." Foreground="#526B70" Margin="0,5,0,10" TextWrapping="Wrap"/></StackPanel>
           <StackPanel Grid.Row="1"><WrapPanel><Button x:Name="AnalysisEditorButton" Content="Aktuelles Editorprojekt analysieren" Click="AnalyzeEditorProject_Click"/><Button x:Name="AnalysisSelectedButton" Content="Ausgewähltes Projekt analysieren" Click="AnalyzeSelectedProject_Click" Style="{StaticResource PrimaryButton}"/><Button Content="Projektdatei wählen" Click="AnalyzeFile_Click"/></WrapPanel><TextBlock x:Name="AnalysisSource" Text="Noch keine Analyse ausgeführt." FontFamily="Consolas" Foreground="#607D86" TextWrapping="Wrap" Margin="4"/><Border x:Name="AnalysisResultBorder" Background="#F7F9FA" BorderBrush="#C9D1D4" BorderThickness="1" CornerRadius="4" Padding="10"><TextBlock x:Name="AnalysisResult" Text="Bereit." FontWeight="SemiBold" TextWrapping="Wrap"/></Border></StackPanel>
-          <TabControl Grid.Row="2" Margin="0,8">
-            <TabItem Header="Kartenaufbau"><DataGrid x:Name="AnalysisFilesGrid" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="AID" Binding="{Binding Aid}" Width="90"/><DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="1.5*"/><DataGridTextColumn Header="File" Binding="{Binding File}" Width="1.4*"/><DataGridTextColumn Header="Typ / Größe" Binding="{Binding TypeSize}" Width="1.2*"/><DataGridTextColumn Header="Endzustand" Binding="{Binding FinalSettings}" Width="2*"/><DataGridTextColumn Header="Mastering" Binding="{Binding Mastering}" Width="2*"/><DataGridTextColumn Header="Kodierung" Binding="{Binding Coding}" Width="1.5*"/></DataGrid.Columns></DataGrid></TabItem>
-            <TabItem Header="Mastering-Taskplan"><DataGrid x:Name="AnalysisMasteringGrid" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="#" Binding="{Binding Index}" Width="55"/><DataGridTextColumn Header="Task" Binding="{Binding Type}" Width="1.3*"/><DataGridTextColumn Header="Beschreibung" Binding="{Binding Description}" Width="3*"/><DataGridTextColumn Header="Bedingung" Binding="{Binding ConditionText}" Width="1.4*"/><DataGridTextColumn Header="AID / File" Binding="{Binding Target}" Width="1.2*"/><DataGridTextColumn Header="Keyrollen" Binding="{Binding KeyReference}" Width="1.2*"/></DataGrid.Columns></DataGrid></TabItem>
-            <TabItem Header="Kodier-Taskplan"><DataGrid x:Name="AnalysisCodingGrid" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="#" Binding="{Binding Index}" Width="55"/><DataGridTextColumn Header="Task" Binding="{Binding Type}" Width="1.3*"/><DataGridTextColumn Header="Beschreibung" Binding="{Binding Description}" Width="3*"/><DataGridTextColumn Header="Bedingung" Binding="{Binding ConditionText}" Width="1.4*"/><DataGridTextColumn Header="AID / File" Binding="{Binding Target}" Width="1.2*"/><DataGridTextColumn Header="Keyrollen" Binding="{Binding KeyReference}" Width="1.2*"/></DataGrid.Columns></DataGrid></TabItem>
+          <TabControl x:Name="AnalysisTabs" Grid.Row="2" Margin="0,8">
+            <TabItem Header="Anwendungen und Schlüsselkontext">
+              <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <TextBlock Text="Projektvorgaben · keine ausgelesenen Kartenwerte. Schlüsselwerte werden nicht angezeigt. Ausgangseinstellungen und Produktivzustand bleiben getrennt." TextWrapping="Wrap" Margin="8" Foreground="{StaticResource MutedTextBrush}"/>
+                <DataGrid x:Name="AnalysisApplicationsGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" RowDetailsVisibilityMode="VisibleWhenSelected">
+                  <DataGrid.Columns>
+                    <DataGridTextColumn Header="AID" Binding="{Binding Aid}" Width="90"/>
+                    <DataGridTextColumn Header="Anwendung" Binding="{Binding Name}" Width="*" MinWidth="180"/>
+                    <DataGridTextColumn Header="Schlüsseltyp" Binding="{Binding KeyType}" Width="150"/>
+                    <DataGridTextColumn Header="Anzahl" Binding="{Binding KeyCount}" Width="70"/>
+                    <DataGridTextColumn Header="Ausgangszustand" Binding="{Binding TransportKeySettings}" Width="145"/>
+                    <DataGridTextColumn Header="Produktivzustand" Binding="{Binding ProductiveKeySettings}" Width="145"/>
+                    <DataGridTextColumn Header="Wechselstrategie" Binding="{Binding ChangeKeyMode}" Width="150"/>
+                  </DataGrid.Columns>
+                  <DataGrid.RowDetailsTemplate><DataTemplate><StackPanel Margin="12">
+                    <TextBlock Text="Vollständige Anwendungsbezeichnung" FontWeight="SemiBold"/>
+                    <TextBox Text="{Binding Name, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                    <TextBlock Text="Schlüsselversionen und Chipmerkmale gehören zur Ist-Untersuchung und sind hier nicht als gelesen belegt." TextWrapping="Wrap"/>
+                  </StackPanel></DataTemplate></DataGrid.RowDetailsTemplate>
+                </DataGrid>
+              </Grid>
+            </TabItem>
+            <TabItem Header="Kartenaufbau"><DataGrid x:Name="AnalysisFilesGrid" AutoGenerateColumns="False" IsReadOnly="True" RowDetailsVisibilityMode="VisibleWhenSelected" VirtualizingPanel.ScrollUnit="Pixel">
+              <DataGrid.RowDetailsTemplate><DataTemplate><StackPanel Margin="12" MaxWidth="750" HorizontalAlignment="Left">
+                <TextBlock Text="Vollständige Dateidefinition · Projektvorgabe" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding File, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Kommunikation und Endzustand"/>
+                <TextBox Text="{Binding FinalSettings, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBox Text="{Binding Details.FinalRights, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Temporäre Erstellungseinstellungen"/>
+                <TextBox Text="{Binding Details.CreationRights, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Mastering / Initialisierung"/>
+                <TextBox Text="{Binding Mastering, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Datenrezept · Schritte in Ausführungsreihenfolge"/>
+                <TextBox Text="{Binding Details.Recipe, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+              </StackPanel></DataTemplate></DataGrid.RowDetailsTemplate>
+              <DataGrid.Columns><DataGridTextColumn Header="AID" Binding="{Binding Aid}" Width="90"/><DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="1.5*"/><DataGridTextColumn Header="File" Binding="{Binding File}" Width="1.4*"/><DataGridTextColumn Header="Typ / Größe" Binding="{Binding TypeSize}" Width="1.2*"/><DataGridTextColumn Header="Endzustand" Binding="{Binding FinalSettings}" Width="2*"/><DataGridTextColumn Header="Mastering" Binding="{Binding Mastering}" Width="2*"/><DataGridTextColumn Header="Kodierung" Binding="{Binding Coding}" Width="1.5*"/></DataGrid.Columns></DataGrid></TabItem>
+            <TabItem Header="Mastering-Taskplan"><DataGrid x:Name="AnalysisMasteringGrid" AutoGenerateColumns="False" IsReadOnly="True" RowDetailsVisibilityMode="VisibleWhenSelected">
+              <DataGrid.RowDetailsTemplate><DataTemplate><StackPanel Margin="12">
+                <TextBlock Text="Taskdetails · geplante Aktion, kein Ausführungsnachweis" FontWeight="SemiBold"/>
+                <TextBlock Text="Beschreibung"/><TextBox Text="{Binding Description, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Einstellungen"/><TextBox Text="{Binding Settings, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+                <TextBlock Text="Dateivertrag"/><TextBox Text="{Binding FileContract, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+                <TextBlock Text="Schlüsselrollen"/><TextBox Text="{Binding KeyReference, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+              </StackPanel></DataTemplate></DataGrid.RowDetailsTemplate>
+              <DataGrid.Columns><DataGridTextColumn Header="Pos." Binding="{Binding Position}" Width="55"/><DataGridTextColumn Header="#" Binding="{Binding Index}" Width="55"/><DataGridTextColumn Header="Task" Binding="{Binding Type}" Width="1.3*"/><DataGridTextColumn Header="Beschreibung" Binding="{Binding Description}" Width="3*"/><DataGridTextColumn Header="Bedingung" Binding="{Binding ConditionText}" Width="1.4*"/><DataGridTextColumn Header="AID / File" Binding="{Binding Target}" Width="1.2*"/><DataGridTextColumn Header="Keyrollen" Binding="{Binding KeyReference}" Width="1.2*"/></DataGrid.Columns></DataGrid></TabItem>
+            <TabItem Header="Kodier-Taskplan"><DataGrid x:Name="AnalysisCodingGrid" AutoGenerateColumns="False" IsReadOnly="True" RowDetailsVisibilityMode="VisibleWhenSelected">
+              <DataGrid.RowDetailsTemplate><DataTemplate><StackPanel Margin="12">
+                <TextBlock Text="Taskdetails · geplante Aktion, kein Ausführungsnachweis" FontWeight="SemiBold"/>
+                <TextBlock Text="Beschreibung"/><TextBox Text="{Binding Description, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+                <TextBlock Text="Einstellungen"/><TextBox Text="{Binding Settings, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+                <TextBlock Text="Dateivertrag"/><TextBox Text="{Binding FileContract, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas"/>
+                <TextBlock Text="Schlüsselrollen"/><TextBox Text="{Binding KeyReference, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"/>
+              </StackPanel></DataTemplate></DataGrid.RowDetailsTemplate>
+              <DataGrid.Columns><DataGridTextColumn Header="Pos." Binding="{Binding Position}" Width="55"/><DataGridTextColumn Header="#" Binding="{Binding Index}" Width="55"/><DataGridTextColumn Header="Task" Binding="{Binding Type}" Width="1.3*"/><DataGridTextColumn Header="Beschreibung" Binding="{Binding Description}" Width="3*"/><DataGridTextColumn Header="Bedingung" Binding="{Binding ConditionText}" Width="1.4*"/><DataGridTextColumn Header="AID / File" Binding="{Binding Target}" Width="1.2*"/><DataGridTextColumn Header="Keyrollen" Binding="{Binding KeyReference}" Width="1.2*"/></DataGrid.Columns></DataGrid></TabItem>
             <TabItem Header="Befunde"><DataGrid x:Name="AnalysisIssuesGrid" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="Stufe" Binding="{Binding Severity}" Width="90"/><DataGridTextColumn Header="Bereich" Binding="{Binding Area}" Width="180"/><DataGridTextColumn Header="Befund" Binding="{Binding Message}" Width="*"/></DataGrid.Columns></DataGrid></TabItem>
           </TabControl>
           <WrapPanel Grid.Row="3"><Button x:Name="AnalysisExportPdfButton" Content="PDF-Kartenreport speichern" Click="ExportAnalysisPdf_Click" IsEnabled="False" Style="{StaticResource PrimaryButton}"/><Button x:Name="AnalysisOpenReportButton" Content="Textbericht öffnen" Click="OpenAnalysisReport_Click" IsEnabled="False"/><Button x:Name="AnalysisOpenFolderButton" Content="Berichtsordner öffnen" Click="OpenAnalysisFolder_Click" IsEnabled="False"/><TextBlock x:Name="AnalysisReportPath" Text="Bericht: –" FontFamily="Consolas" Foreground="#526B70" VerticalAlignment="Center" Margin="12,0" TextWrapping="Wrap"/></WrapPanel>
@@ -358,22 +434,53 @@
 
         <ScrollViewer x:Name="PageSettings" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
           <StackPanel><TextBlock Text="Diese Einstellungen liegen dauerhaft im Benutzerprofil und bleiben bei neuen Builder-Versionen erhalten." Foreground="#526B70" Margin="0,5,0,16"/>
+            <GroupBox Header="Arbeitsplatz einrichten – einmal pro Windows-Benutzer"><StackPanel>
+              <TextBlock Text="1 · Gemeinsame Ordner wählen" FontWeight="SemiBold"/>
+              <TextBlock Text="Projekt- und Profilbibliothek unten auswählen. Im Team auf allen Rechnern dieselben gemeinsamen Ordner verwenden. Danach Einstellungen speichern." TextWrapping="Wrap" Margin="0,3,0,10"/>
+              <TextBlock Text="2 · Eigenen Vault-Zugang einrichten" FontWeight="SemiBold"/>
+              <TextBlock Text="Unter Persönliche Identität eine vorhandene Identität auswählen oder einmalig anlegen und die öffentliche Einladung exportieren. Für Gruppen-Vaults ordnet der Hauptverwalter diese Ihrer Person und den passenden Gruppen zu. Danach die öffentliche Gruppenregistrierung auf diesem Windows-Benutzer übernehmen; den Verwaltungsfingerabdruck unabhängig bestätigen lassen." TextWrapping="Wrap" Margin="0,3,0,10"/>
+              <TextBlock Text="3 · Leser auf diesem Rechner auswählen" FontWeight="SemiBold"/>
+              <TextBlock Text="Leser anschließen und unten die Reader-Einstellungen öffnen. In RFiDGear den zum Gerät passenden Anbieter und gegebenenfalls Port wählen, dort speichern und RFiDGear schließen. Anschließend hier Leserkonfiguration neu prüfen. Diese Einstellung gilt lokal, nicht für alle Kollegen." TextWrapping="Wrap" Margin="0,3,0,10"/>
+              <TextBlock Text="4 · Mit einem Testprojekt beginnen" FontWeight="SemiBold"/>
+              <TextBlock Text="Für ein Gruppenprojekt im Projekteditor Als neues Gruppenprojekt erstellen / migrieren wählen. Die gewählte Gruppe bestimmt die Zugänge; eine separate, zentral freigegebene Recovery-Identität ist erforderlich. Keine Recovery-Passphrase je Gruppenprojekt nötig. Bei bisherigen Team-Vaults gilt weiterhin deren Recovery-Passphrase. Den Leser anschließend mit einer ausdrücklich freigegebenen Testkarte in Karten untersuchen prüfen." TextWrapping="Wrap" Margin="0,3,0,3"/>
+            </StackPanel></GroupBox>
             <GroupBox Header="Projektbibliothek"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Übergeordneter Ordner" VerticalAlignment="Center"/><TextBox x:Name="ProjectsDirectoryText" Grid.Column="1"/><Button Grid.Column="2" Content="Ordner wählen" Click="BrowseProjects_Click"/></Grid></GroupBox>
             <GroupBox Header="Gemeinsame Profilbibliothek"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Profilordner" VerticalAlignment="Center"/><TextBox x:Name="ProfilesDirectoryText" Grid.Column="1"/><Button Grid.Column="2" Content="Ordner wählen" Click="BrowseProfiles_Click"/></Grid></GroupBox>
             <GroupBox Header="Vault-Wiederherstellung"><StackPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Sicherungsordner" VerticalAlignment="Center"/><TextBox x:Name="VaultBackupDirectoryText" Grid.Column="1"/><Button Grid.Column="2" Content="Ändern" Click="BrowseVaultBackup_Click"/></Grid><TextBlock Text="SieEncode legt automatisch einen vom Projektordner getrennten Sicherungsordner im lokalen Benutzerprofil an. Ein anderer, gemeinsam gesicherter Ort kann optional gewählt werden." Foreground="#526B70" Margin="4,5,4,0" TextWrapping="Wrap"/></StackPanel></GroupBox>
-            <GroupBox Header="Vault-Ersteinrichtung und Teamzugriff"><StackPanel>
+            <GroupBox Header="Offline-Gruppenverwaltung · Entwicklung"><StackPanel>
+              <TextBlock Text="Für Teams mit zentral verwalteten, auch überlappenden Gruppen. Die Funktionen sind auf diesem Entwicklungsstand integriert; die vollständige Abnahme steht noch aus." TextWrapping="Wrap" Margin="0,0,0,10"/>
+              <Button Content="Schritt-für-Schritt-Anleitung öffnen" Tag="docs/OFFLINE-GRUPPEN-SCHNELLSTART.md" Click="OpenHelpDocument_Click" HorizontalAlignment="Left"/>
+              <TextBlock Text="Teammitglied · Öffentlichen Stand vom Hauptverwalter erhalten" FontWeight="SemiBold"/>
+              <TextBlock Text="Einmal registrieren und Bibliotheks-ID sowie Verwaltungsfingerabdruck unabhängig abgleichen. Spätere signierte Änderungen hier importieren. Danach funktioniert der Zugriff offline mit dem zuletzt übernommenen Stand." TextWrapping="Wrap"/>
+              <WrapPanel><Button Content="Gruppenverwaltung registrieren" Click="RegisterOfflineGroupAdministration_Click"/><Button Content="Registrierte Gruppen aktualisieren" Click="UpdateOfflineGroups_Click"/></WrapPanel>
+              <Expander Header="Personen, Geräte und Gruppen für das Team verwalten" Margin="0,10,0,0"><StackPanel>
+              <TextBlock Text="Die Hauptverwaltung ist eine Rolle in SieEncode. Öffnen Sie die Teamverwaltung in dem Windows-Profil, in dem Sie den privaten Verwaltungsschlüssel dieser Bibliothek erstellt oder wiederhergestellt haben. Für ein neues Team richten Sie die Verwaltung hier einmal ein." TextWrapping="Wrap"/>
+              <WrapPanel><Button Content="Offline-Gruppen verwalten" Click="ManageOfflineGroups_Click"/><Button Content="Separate Recovery-Identität einrichten" Click="OpenGroupRecoverySetup_Click"/></WrapPanel>
+              </StackPanel></Expander>
+              <Expander Header="Vollmacht anfordern oder zugewiesene Gruppen bearbeiten"><StackPanel>
+              <TextBlock Text="Öffnen Sie Ihren Verwaltungsplatz im eigenen Windows-Profil. Exportieren Sie dort Ihre Verwaltungseinladung. Nach der Freigabe durch die Hauptverwaltung können Sie Änderungen an den zugewiesenen Gruppen zur Bestätigung einreichen." TextWrapping="Wrap"/>
+              <Button Content="Mein Gruppenverwaltungsplatz" Click="OpenGroupDelegate_Click" HorizontalAlignment="Left"/>
+              </StackPanel></Expander>
+              <Expander Header="Hauptverwaltung an eine andere Person übergeben"><StackPanel>
+              <TextBlock Text="Die neue Verwaltungsperson bereitet zuerst die Nachfolge vor. Sobald die bisherige Hauptverwaltung die Übergabe autorisiert hat, importiert jeder Arbeitsplatz den angekündigten Wechsel." TextWrapping="Wrap"/>
+              <Button Content="Nachfolge der Hauptverwaltung vorbereiten" Click="OpenGroupSuccessorSetup_Click" HorizontalAlignment="Left"/>
+              <Button Content="Angekündigten Verwaltungswechsel importieren" Click="ImportAdministratorTransition_Click" HorizontalAlignment="Left"/>
+              </StackPanel></Expander>
+              <TextBlock Text="Bestehende Gruppen-Vaults benötigen nach geänderten Empfängern einen bestätigten Abgleich im Projekteditor. Offline-Geräte und alte Vaultkopien lassen sich nicht aus der Ferne sperren." Foreground="#8A5A00" TextWrapping="Wrap" Margin="0,8,0,0"/>
+            </StackPanel></GroupBox>
+            <GroupBox Header="Persönliche Identität und bisherige Team-Vaults"><StackPanel>
               <Border x:Name="VaultSetupStatusBorder" Background="#F7F9FA" BorderBrush="#C9D1D4" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,8"><StackPanel><TextBlock x:Name="VaultSetupStatusTitle" Text="Vault-Status wird geprüft …" FontWeight="SemiBold"/><TextBlock x:Name="VaultSetupStatusText" Text="Die Einrichtung ist unabhängig von einem einzelnen Projekt." Foreground="#526B70" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel></Border>
-              <TextBlock Text="Jeder Benutzer bzw. Arbeitsplatz richtet einmal eine persönliche Windows-Identität ein und gibt nur die öffentliche Einladung weiter. Die gemeinsame Teamliste gilt anschließend automatisch für neue Projekt-Vaults." Foreground="#526B70" TextWrapping="Wrap"/>
+              <TextBlock Text="Persönliche Identitäten und öffentliche Einladungen können für beide Vault-Arten verwendet werden. Für Gruppen-Vaults reicht hier die Identitätsauswahl bzw. Anlage und der Einladungsexport; die Teamliste muss dafür nicht gespeichert werden. Die folgende Statusanzeige und Teamliste gelten nur für bisherige Team-Vaults, nicht für Gruppenmitgliedschaften." Foreground="#526B70" TextWrapping="Wrap"/>
               <WrapPanel><Button x:Name="InitializeTeamVaultButton" Content="Vault-Ersteinrichtung starten" Click="InitializeTeamVault_Click" HorizontalAlignment="Left" Style="{StaticResource PrimaryButton}"/><Button x:Name="ManageTeamVaultButton" Content="Teamzugriff verwalten" Click="ManageTeamVault_Click" HorizontalAlignment="Left"/></WrapPanel>
               <TextBlock Text="Wichtig: Bestehende Vaults behalten ihre bisherige Empfängerliste, bis sie im jeweiligen Projekt kontrolliert neu gespeichert werden." Foreground="#8A5A00" TextWrapping="Wrap" Margin="4,4,4,0"/>
             </StackPanel></GroupBox>
-            <GroupBox Header="RFiDGear-Integration"><StackPanel><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Runtime" VerticalAlignment="Center"/><TextBox x:Name="RFiDGearExecutableText" Grid.Column="1"/><Button Grid.Column="2" Content="Datei wählen" Click="BrowseRFiDGear_Click"/><TextBlock x:Name="RFiDGearVersionText" Grid.Column="1" Grid.Row="1" Foreground="#526B70" Margin="7,2"/><TextBlock x:Name="RFiDGearReaderText" Grid.Column="1" Grid.Row="2" Foreground="#526B70" Margin="7,2" TextWrapping="Wrap"/><TextBlock x:Name="RFiDGearEvidenceText" Grid.Column="1" Grid.Row="3" Grid.ColumnSpan="2" Foreground="#607D86" Margin="7,2" TextWrapping="Wrap"/></Grid><WrapPanel><Button x:Name="UseBundledRuntimeButton" Content="Gebündelte SieEncode Runtime verwenden" Click="UseBundledRuntime_Click" ToolTip="Übernimmt die mit diesem Installer gelieferte und hardwaregeprüfte Runtime. Anschließend Einstellungen speichern."/></WrapPanel><Expander x:Name="SettingsCapabilityDetails" Header="Technische Fähigkeitsmatrix · Experten" Margin="4,8,4,0"><StackPanel><TextBlock Text="Funktionen werden nur bei positivem Binärnachweis freigegeben; die Versionsnummer allein genügt nicht." Margin="4,6,4,5" TextWrapping="Wrap"/><DataGrid x:Name="RFiDGearCapabilitiesGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" MaxHeight="270"><DataGrid.Columns><DataGridTextColumn Header="Fähigkeit" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120"/><DataGridTextColumn Header="Nachweis" Binding="{Binding Evidence}" Width="3*"/></DataGrid.Columns></DataGrid></StackPanel></Expander></StackPanel></GroupBox>
-            <WrapPanel><Button x:Name="OpenRFiDGearSettingsButton" Content="Reader-Einstellungen in RFiDGear öffnen" Click="OpenRFiDGearSettings_Click"/><Button Content="Einstellungen speichern" Click="SaveSettings_Click" Style="{StaticResource PrimaryButton}"/><Button Content="Projektbibliothek neu laden" Click="RefreshProjects_Click"/></WrapPanel>
+            <GroupBox Header="RFiDGear-Integration"><StackPanel><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Runtime" VerticalAlignment="Center"/><TextBox x:Name="RFiDGearExecutableText" Grid.Column="1"/><Button Grid.Column="2" Content="Datei wählen" Click="BrowseRFiDGear_Click"/><TextBlock x:Name="RFiDGearVersionText" Grid.Column="1" Grid.Row="1" Foreground="#526B70" Margin="7,2"/><TextBlock x:Name="RFiDGearReaderText" Grid.Column="1" Grid.Row="2" Foreground="#526B70" Margin="7,2" TextWrapping="Wrap"/><TextBlock x:Name="RFiDGearEvidenceText" Grid.Column="1" Grid.Row="3" Grid.ColumnSpan="2" Foreground="#607D86" Margin="7,2" TextWrapping="Wrap"/></Grid><WrapPanel><Button x:Name="UseBundledRuntimeButton" Content="Gebündelte SieEncode Runtime verwenden" Click="UseBundledRuntime_Click" ToolTip="Übernimmt die mit diesem Installer gelieferte Runtime. Anschließend Einstellungen speichern."/></WrapPanel><Expander x:Name="SettingsCapabilityDetails" Header="Technische Fähigkeitsmatrix · Experten" Margin="4,8,4,0"><StackPanel><TextBlock Text="Funktionen werden nur bei positivem Binärnachweis freigegeben; die Versionsnummer allein genügt nicht." Margin="4,6,4,5" TextWrapping="Wrap"/><DataGrid x:Name="RFiDGearCapabilitiesGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" MaxHeight="270"><DataGrid.Columns><DataGridTextColumn Header="Fähigkeit" Binding="{Binding Name}" Width="2*"/><DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120"/><DataGridTextColumn Header="Nachweis" Binding="{Binding Evidence}" Width="3*"/></DataGrid.Columns></DataGrid></StackPanel></Expander></StackPanel></GroupBox>
+            <WrapPanel><Button x:Name="OpenRFiDGearSettingsButton" Content="Reader-Einstellungen in RFiDGear öffnen" Click="OpenRFiDGearSettings_Click"/><Button Content="Leserkonfiguration neu prüfen" Click="RefreshReaderSetup_Click" ToolTip="Liest die gespeicherte Leserkonfiguration erneut. Keine Verbindung zum Leser und keine Kartenaufgabe."/><Button Content="Einstellungen speichern" Click="SaveSettings_Click" Style="{StaticResource PrimaryButton}"/><Button Content="Projektbibliothek neu laden" Click="RefreshProjects_Click"/></WrapPanel>
             <TextBlock x:Name="SettingsPathText" Foreground="#607D86" FontFamily="Consolas" Margin="4,12" TextWrapping="Wrap"/>
           </StackPanel>
         </ScrollViewer>
       </Grid>
-      <Border Grid.Row="2" Background="#E8EFF0" BorderBrush="#CED9DB" BorderThickness="0,1,0,0"><TextBlock x:Name="StatusText" Text="Bereit" VerticalAlignment="Center" Margin="14,0" Foreground="#38585E" TextTrimming="CharacterEllipsis"/></Border>
+      <Border Grid.Row="3" Background="#E8EFF0" BorderBrush="#CED9DB" BorderThickness="0,1,0,0"><TextBlock x:Name="StatusText" Text="Bereit" VerticalAlignment="Center" Margin="14,0" Foreground="#38585E" TextTrimming="CharacterEllipsis"/></Border>
     </Grid>
   </Grid>
 </Window>

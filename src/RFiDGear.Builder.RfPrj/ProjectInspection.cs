@@ -53,11 +53,12 @@ public static class ProjectPreflight
         };
         var requireProductiveSecrets = scope == ProjectPreflightScope.Build &&
             project.Project.Build.Contains("Coding", StringComparer.OrdinalIgnoreCase);
-        foreach (var issue in ProjectContractValidator.Validate(project, library, requireProductiveSecrets))
+        foreach (var issue in ProjectContractValidator.Validate(project, library, requireProductiveSecrets,
+                     requireTransportSecrets: scope != ProjectPreflightScope.Operational))
             report.Issues.Add(new InspectionIssue(issue.Code, issue.Message));
 
         if (scope == ProjectPreflightScope.Operational)
-            report.Limitations.Add("Produktive Schlüsselwerte werden im Betriebscheck absichtlich nicht geladen. Vollständigkeit und Format werden beim Vault-Speichern und beim Projektbuild geprüft.");
+            report.Limitations.Add("Grundkeys (Transport) und Produktivschlüssel werden im Betriebscheck absichtlich nicht aus dem Vault geladen. Fehlende Werte in der schlüsselfreien Projektdefinition sind kein Schlüsselfehler. Vollständigkeit und Format müssen mit entsperrtem Vault beim Projektbuild geprüft werden; der Betriebscheck bestätigt keine Authentisierung an einer Karte.");
 
         try { _ = library.Compose(project.Profiles.Base, project.Profiles.Customers); }
         catch (Exception exception) { report.Issues.Add(new InspectionIssue("PROFILE_COMPOSITION", exception.Message)); }

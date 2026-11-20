@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SieEncode · Gemeinsam starten</title>
+<style>
+:root{font-family:Segoe UI,Arial,sans-serif;color:#173b40;background:#edf3f3;line-height:1.55}
+*{box-sizing:border-box}body{max-width:1080px;margin:auto;padding:28px}header,section{background:white;padding:32px;margin:0 0 22px;border-radius:16px}
+h1{font-size:2.5rem;line-height:1.1;margin:14px 0}h2{font-size:1.65rem;margin:0 0 16px}h3{margin:0 0 8px}p{margin:10px 0}a{color:#006b71}strong{font-weight:650}
+.eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:#006b71}.draft{background:#fff1d5;border-left:5px solid #a46600;padding:12px 16px;color:#674000}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}.card{padding:20px;background:#eef7f6;border:1px solid #c6dedb;border-radius:10px}.number{display:inline-grid;place-items:center;width:34px;height:34px;background:#006b71;color:white;border-radius:50%;margin-bottom:10px;font-weight:700}
+.check{border-left:4px solid #16846b;background:#eff8f4;padding:12px 16px}.note{color:#4e686c;font-size:.95rem}.steps li{padding:0 0 14px 8px}.steps li::marker{font-weight:700;color:#006b71}
+table{width:100%;border-collapse:collapse;margin:16px 0}th,td{text-align:left;padding:10px;border-bottom:1px solid #d9e4e4}thead{background:#edf5f5}.matrix th,.matrix td{text-align:center}.matrix th:first-child{text-align:left}.yes{color:#006b71;font-weight:700}.no{color:#6f7f80}
+.diagram{width:100%;height:auto;display:block;margin:18px 0}nav a{display:inline-block;margin:0 15px 6px 0}code{overflow-wrap:anywhere}.pill{display:inline-block;background:#d9efeb;color:#075b50;padding:3px 9px;border-radius:6px;font-size:.85rem}
+figure{margin:22px 0;break-inside:avoid}figure img{display:block;width:100%;height:auto;border:1px solid #c6dedb}figcaption{font-size:.92rem;color:#4e686c;padding:8px 0}
+@media(max-width:700px){body{padding:12px}header,section{padding:20px}.flow{grid-template-columns:1fr}h1{font-size:2rem}.matrix th,.matrix td{padding:6px 3px}}
+@media print{body{padding:0;background:white;font-size:10pt;max-width:none}header,section{border-radius:0;padding:12mm 0;margin:0;break-after:page}section:last-child{break-after:auto}nav{display:none}h1{font-size:28pt}.card,table,.check,.draft,svg{break-inside:avoid}a{color:inherit}*{print-color-adjust:exact}}
+</style>
+<header>
+<div class="eyebrow">SieEncode · Anleitung für Kollegen</div>
+<h1>Gemeinsam starten.<br>Mit dem eigenen Zugang.</h1>
+<p>Eine zentrale Verwaltung, mehrere Gruppen und ein persönlicher Zugang je Arbeitsplatz. Nach der Einrichtung lassen sich lokal vorhandene, freigegebene Projekte auch offline entschlüsseln.</p>
+<p class="draft"><strong>Anleitungsstand für 1.3.0-offline-groups.4 · 07.11.2026.</strong> Nicht für Version 1.2.1. Installation und Upgrade in der Test-VM, Datenerhalt in drei Windows-Profilen, 61 Anwendungsprüfungen und 22 Gruppen-/Recovery-Prüfschritte unter zwei Windows-Benutzern sind belegt. Vollständiger sichtbarer Bedienlauf und Leserabnahme bleiben offen. Die vorhandenen Bilder zeigen Kandidat 1 mit synthetischen Testdaten; aktuelle Bilder werden nachgereicht. Diese Anleitung ist keine abgeschlossene Releasefreigabe.</p>
+<nav aria-label="Inhalt"><a href="#kollegen">Mein Arbeitsplatz</a><a href="#verwaltung">Hauptverwaltung</a><a href="#alltag">Alltag &amp; Offline</a><a href="#hilfe">Wenn es hakt</a></nav>
+<div class="flow">
+<div class="card"><span class="number">1</span><h3>Ich richte meinen Zugang ein</h3><p>Eigene Identität auswählen und eine <strong>öffentliche Einladung</strong> an die Hauptverwaltung geben.</p></div>
+<div class="card"><span class="number">2</span><h3>Die Verwaltung ordnet mich zu</h3><p>Meine Person und mein Gerät werden den passenden Gruppen zugeordnet.</p></div>
+<div class="card"><span class="number">3</span><h3>Ich bestätige die Verwaltung</h3><p>Öffentliche Registrierung importieren und den Fingerabdruck unabhängig abgleichen.</p></div>
+</div>
+<div class="check"><strong>Vorher bereitlegen:</strong> freigegebenen MSI-Installer, Projekt- und Profilordner vom Verantwortlichen sowie dessen Kontakt für den Fingerabdruckabgleich. Die Hauptverwaltung muss Gruppen und einen separaten Recovery-Zugang vorbereitet haben.</div>
+</header>
+<section id="kollegen">
+<span class="pill">Jedes Teammitglied · einmal je Windows-Benutzer</span>
+<h2>Mein Arbeitsplatz in sechs Schritten</h2>
+<ol class="steps">
+<li><strong>SieEncode installieren und öffnen.</strong> Den bereitgestellten MSI-Installer ausführen. Bei fehlenden Installationsrechten die zuständige IT hinzuziehen. Ein Update kann eine ältere SieEncode-Version ersetzen; es erfordert keine neue persönliche Identität.</li>
+<li><strong>Gemeinsame Ordner einstellen.</strong> Unter <b>Einstellungen</b> die <b>Projektbibliothek</b> und <b>Gemeinsame Profilbibliothek</b> auswählen, dann <b>Einstellungen speichern</b>. Die Verwaltung nennt die passenden Ordner. Dateizugriff und Vaultfreigabe sind getrennte Voraussetzungen.</li>
+<li><strong>Persönliche Identität verwenden.</strong> <b>Vault-Ersteinrichtung starten</b>, vorhandene eigene Identität auswählen oder einmalig eine neue erstellen. <b>Öffentliche Einladung exportieren</b> und nur diese Datei an die Hauptverwaltung geben. Für Gruppen-Vaults keine alte Teamliste pflegen oder speichern; anschließend den Dialog schließen.</li>
+<li><strong>Nach Aufnahme die Verwaltung registrieren.</strong> Unter <b>Offline-Gruppenverwaltung</b> → <b>Gruppenverwaltung registrieren</b> die erhaltene <code>.group-enrollment.json</code> öffnen. Bibliotheks-ID und Verwaltungsfingerabdruck persönlich oder über einen unabhängig bestätigten Kontakt abgleichen. Den erhaltenen SHA-256-Fingerabdruck eingeben und bestätigen. Eine passende Datei allein beweist nicht, dass sie vom eigenen Team stammt.</li>
+<li><strong>Leser lokal einstellen.</strong> Leser anschließen, <b>Reader-Einstellungen in RFiDGear öffnen</b>. Passenden Anbieter und gegebenenfalls Port wählen, dort speichern und RFiDGear schließen. Zurück in SieEncode <b>Leserkonfiguration neu prüfen</b>. Diese Prüfung liest die Konfiguration; sie bestätigt noch keine funktionierende Kartenkommunikation.</li>
+<li><strong>Mit einem freigegebenen Testprojekt prüfen.</strong> Projekt öffnen, schließen und erneut öffnen. Für die erste Leserprüfung nur eine ausdrücklich geeignete Testkarte in <b>Karten untersuchen</b> verwenden. Unbekannte Karten nicht beschreiben. Ein fehlender Leser verhindert nicht die Einrichtung der Gruppenregistrierung.</li>
+</ol>
+<div class="check"><strong>Erwarteter Zustand:</strong> Die eigene Identität bleibt vorhanden; die richtige Bibliothek ist registriert; berechtigte Projekte öffnen. Die Anzeige „Teammitglieder“ im alten Team-Vault-Bereich belegt keine Gruppenmitgliedschaft.</div>
+</section>
+<section id="ansichten">
+<h2>So sieht die Einrichtung aus</h2>
+<p>Originalansichten des Testkandidaten. Die Beispielpfade und Bibliotheks-ID nicht übernehmen: Verwende die Angaben deiner Hauptverwaltung.</p>
+<figure><a href="images/onboarding/01-arbeitsplatz.png"><img src="images/onboarding/01-arbeitsplatz.png" alt="SieEncode-Einstellungen mit den vier Einrichtungsschritten und den Feldern für Projekt- und Profilbibliothek" loading="lazy"></a><figcaption><strong>1 · Arbeitsplatz.</strong> In Einstellungen die vom Team verwendeten Ordner auswählen. Die abgebildeten lokalen Testpfade sind keine Vorgabe.</figcaption></figure>
+<figure><a href="images/onboarding/02-gruppenbereich.png"><img src="images/onboarding/02-gruppenbereich.png" alt="Offline-Gruppenbereich mit getrennten Aktionen für Teammitglied, Hauptverwalter und beauftragten Gruppenverwalter" loading="lazy"></a><figcaption><strong>2 · Die eigene Rolle wählen.</strong> Als Teammitglied einmal „Gruppenverwaltung registrieren“ verwenden; spätere Änderungen über „Registrierte Gruppen aktualisieren“ übernehmen.</figcaption></figure>
+<figure><a href="images/onboarding/03-registrierung.png"><img src="images/onboarding/03-registrierung.png" alt="Registrierungsdialog mit Bibliotheks-ID, Richtlinienstand, leerem Fingerabdruckfeld und ausdrücklicher Bestätigung" loading="lazy"></a><figcaption><strong>3 · Verwaltung bestätigen.</strong> Bibliotheks-ID und Fingerabdruck unabhängig prüfen. Der Test zeigt zwei Gruppen; euer Team kann mehr Gruppen verwenden. Niemals einen Beispiel-Fingerabdruck aus einer Anleitung eingeben.</figcaption></figure>
+<p class="check">Im dokumentierten Test meldete SieEncode anschließend die erfolgreiche Registrierung. Nach Schließen und erneutem Öffnen erkannte die Anwendung denselben Gruppenstand wieder. Das bestätigt die lokale Speicherung; eine Gruppenmitgliedschaft entsteht dadurch noch nicht.</p>
+</section>
+<section id="verwaltung">
+<span class="pill">Nur Hauptverwaltung</span><h2>Ein Team, drei überlappende Gruppen</h2>
+<p>Eine Verwaltung genügt für dieses Beispiel. Jede Person kann mehreren Gruppen angehören und mehrere eigene Geräteidentitäten besitzen.</p>
+<table class="matrix"><caption>Gewünschte Freigaben · ✓ Mitglied · – kein Mitglied</caption><thead><tr><th>Gruppe / Person</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead><tbody>
+<tr><th>Lokal</th><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+<tr><th>Lokal 2</th><td class="no">–</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td></tr>
+<tr><th>Lokal 3</th><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr></tbody></table>
+<ol class="steps">
+<li><b>Einstellungen → Offline-Gruppen verwalten</b>: Verwaltung einmalig erstellen. Für eine vorhandene Bibliothek keine Ersatzverwaltung anlegen. <b>Privaten Schlüssel sichern</b>; Sicherungsdatei und Passphrase getrennt verwahren.</li>
+<li>Personen anlegen, öffentliche Geräteeinladungen aufnehmen und Fingerabdrücke unabhängig bestätigen. Jedes weitere Gerät benötigt eine eigene Identität. Personen den passenden Gruppen zuordnen und <b>Gruppen signiert speichern</b>.</li>
+<li><b>Separate Recovery-Identität einrichten</b>: eigene verschlüsselte Sicherung erstellen; nur die öffentliche Recovery-Einladung an die Hauptverwaltung geben. Unter <b>Separate Recovery-Zugänge</b> nach Fingerabdruckabgleich aufnehmen und den Gruppenstand signiert speichern. Recovery gilt für die ganze Bibliothek.</li>
+<li><b>Gespeicherten Stand öffentlich exportieren</b>. Die öffentliche Datei verteilen und Bibliotheks-ID sowie Verwaltungsfingerabdruck unabhängig bestätigen lassen. Jeder Arbeitsplatz registriert seinen Stand lokal.</li>
+</ol>
+<p class="check"><strong>Verwalten heißt nicht automatisch entschlüsseln.</strong> Auch die Hauptverwaltung braucht für normale Projektarbeit eine persönliche Gruppenmitgliedschaft. Beauftragte Gruppenverwalter dürfen nur Anträge für ihre freigegebenen Gruppen vorbereiten; die Hauptverwaltung bestätigt und verteilt die Änderungen.</p>
+</section>
+<section id="verwaltung-ansichten">
+<h2>Speichern und Verteilen sind zwei Schritte</h2>
+<figure><a href="images/onboarding/06-verwaltung-signiert.png"><img src="images/onboarding/06-verwaltung-signiert.png" alt="Verwaltungsdialog mit drei Testgruppen und der Bestätigung, dass Revision 9 signiert gespeichert wurde" loading="lazy"></a><figcaption><strong>4 · Gruppen signiert speichern.</strong> Die Bestätigung unten nennt die neue Revision. Der eigene Arbeitsplatz übernimmt diesen Stand; Kollegen müssen ihn weiterhin importieren. Eine leere neue Gruppe gewährt noch niemandem Zugang.</figcaption></figure>
+<figure><a href="images/onboarding/07-verwaltung-exportiert.png"><img src="images/onboarding/07-verwaltung-exportiert.png" alt="Verwaltungsdialog nach öffentlichem Export mit Bibliotheks-ID und öffentlichem Verwaltungsfingerabdruck" loading="lazy"></a><figcaption><strong>5 · Gespeicherten Stand öffentlich exportieren.</strong> Diese Aktion erzeugt die öffentliche Registrierungsdatei für Kollegen. „Privaten Schlüssel sichern“ ist eine andere Funktion; deren Datei wird nicht im Team verteilt.</figcaption></figure>
+<p>Die Bilder zeigen ausschließlich Testgruppen. Im dokumentierten Lauf wurden die Signatur der exportierten Datei und der Erhalt aller bisherigen Gruppen, Personen, Recovery-Zugänge und Vollmachten zusätzlich geprüft.</p>
+</section>
+<section id="verwaltung-sichern">
+<h2>Verwaltung sichern und auf einem Ersatzarbeitsplatz wiederherstellen</h2>
+<p>Diese Schritte sind für Verantwortliche mit Verwaltungsrechten. Normale Kollegen benötigen die öffentliche Registrierung und ihre persönliche Geräteidentität.</p>
+<ol class="steps">
+<li><b>Privaten Schlüssel sichern</b>: die gewünschte Verwaltung auswählen, eine eigene Passphrase mit mindestens 20 Zeichen zweimal eingeben und die getrennte Aufbewahrung bestätigen. <b>Verschlüsselte Sicherung speichern</b> erzeugt eine <code>.group-private.json</code>. Erfolg erst annehmen, wenn die Anwendung das Zurücklesen und die Schlüsselfunktion bestätigt.</li>
+<li>Die private Datei außerhalb des gemeinsamen Projektordners aufbewahren, die Passphrase getrennt. Für die Registrierung zusätzlich den gespeicherten öffentlichen Stand als <code>.group-enrollment.json</code> exportieren und Bibliotheks-ID sowie geprüften Verwaltungsfingerabdruck festhalten.</li>
+<li>Auf dem Ersatzarbeitsplatz zuerst die öffentliche Datei über <b>Gruppenverwaltung registrieren</b> öffnen und den Fingerabdruck unabhängig abgleichen. Danach unter <b>Offline-Gruppen verwalten → Privaten Schlüssel wiederherstellen</b> genau diese Bibliotheks-ID auswählen.</li>
+<li>Passphrase eingeben, Wiederherstellung bestätigen und über <b>Sicherungsdatei wählen und wiederherstellen</b> die passende private Sicherung öffnen. Die Erfolgsmeldung abwarten. Eine noch nicht registrierte Bibliothek erscheint nicht in der Auswahlliste.</li>
+</ol>
+<figure><a href="images/onboarding/13-verwaltung-privat-gesichert.png"><img src="images/onboarding/13-verwaltung-privat-gesichert.png" alt="Erfolgsmeldung nach Speicherung und Funktionsprüfung der privaten Verwaltungssicherung; Passphrasefelder sind leer" loading="lazy"></a><figcaption>Private Sicherung im synthetischen Test erfolgreich gespeichert und geprüft. Die Passphrase bleibt beim Verantwortlichen.</figcaption></figure>
+<p class="note"><strong>Prüfstand 02.11.2026:</strong> Anlegen, erneutes Laden, private Sicherung und öffentliche Registrierung im zweiten Windows-Profil sind nativ belegt. Auch die private Wiederherstellung im zweiten Profil und das Signieren einer neuen Revision sind bestanden; die exportierte Signatur wurde separat gegen den ursprünglichen Verwaltungsschlüssel geprüft. Nach App-Neustart wurde dieselbe Verwaltung mit Revision 2 und unverändertem Fingerabdruck erneut geladen. Verwaltungssicherung und separate Recovery-Identität für Projekt-Vaults erfüllen unterschiedliche Aufgaben.</p>
+</section>
+<section id="recovery">
+<span class="pill">Recovery-Verantwortliche</span><h2>Separaten Recovery-Zugang vorbereiten und wiederherstellen</h2>
+<p>Dieser Schlüssel dient zur Wiederherstellung von Projekt-Vaults. Die Verwaltungssicherung aus dem vorherigen Abschnitt sichert dagegen die Verwaltungsrechte. Beide Dateien enden auf <code>.group-private.json</code>; bewahren Sie sie eindeutig beschriftet auf.</p>
+<ol class="steps">
+<li>Unter <b>Einstellungen → Separate Recovery-Identität einrichten</b> die bereits registrierte Bibliotheks-ID auswählen. Eine eigene Sicherungspassphrase zweimal eingeben, die getrennte Aufbewahrung bestätigen und <b>Neuen Recovery-Schlüssel erzeugen und privat sichern</b> wählen. Die Anwendung prüft die gespeicherte Sicherung durch Wiederherstellung. Dabei wird noch kein Windows-Schlüssel installiert und noch kein Zugang freigegeben.</li>
+<li><b>Öffentliche Recovery-Einladung exportieren</b> wählen. Nur diese <code>.recipient.json</code> an die Hauptverwaltung geben; den angezeigten Fingerabdruck unabhängig abgleichen. Private Sicherung und Passphrase getrennt aufbewahren.</li>
+<li>Die Hauptverwaltung öffnet die richtige Bibliothek unter <b>Offline-Gruppen verwalten → Separate Recovery-Zugänge → Separate Recovery-Einladung freigeben</b>, wählt die öffentliche Einladung und bestätigt den unabhängig erhaltenen Fingerabdruck. Die Freigabe speichert einen neuen signierten Stand. Diesen öffentlich exportieren und an die betroffenen Arbeitsplätze verteilen.</li>
+<li>Auf dem vorgesehenen Recovery-Arbeitsplatz den aktuellen öffentlichen Stand registrieren beziehungsweise aktualisieren. Unter <b>Separate Recovery-Identität einrichten</b> dieselbe Bibliothek wählen und <b>Freigegebene Recovery-Identität wiederherstellen</b> öffnen. Den angebotenen Schlüssel prüfen, die Sicherungspassphrase eingeben, die Bestätigung setzen und über <b>Sicherungsdatei wählen und wiederherstellen</b> die private Recovery-Sicherung auswählen. Erst die Erfolgsmeldung bestätigt die Installation im aktuellen Windows-Benutzer.</li>
+</ol>
+<figure><a href="images/onboarding/21-recovery-wiederhergestellt.png"><img src="images/onboarding/21-recovery-wiederhergestellt.png" alt="Erfolgreiche Wiederherstellung des separaten Recovery-Schlüssels im Windows-Testprofil; das Passphrasefeld ist geleert" loading="lazy"></a><figcaption>Der separate Recovery-Schlüssel wurde passend zur registrierten Bibliothek wiederhergestellt. Die verschlüsselte Sicherungsdatei bleibt erhalten.</figcaption></figure>
+<p class="note"><strong>Prüfstand 03.11.2026:</strong> Private Sicherung, öffentlicher Export, zentrale Freigabe und Windows-Wiederherstellung sind nativ belegt. Ein separater Prozess unter demselben Testbenutzer hat den erwarteten privaten Schlüssel gefunden und damit erfolgreich einen RSA-Verschlüsselungs-/Entschlüsselungstest durchgeführt. Anschließend wurde ein synthetisches Gruppenprojekt nativ erstellt, über den separaten Recovery-Weg geöffnet und auf Projektbindung und Integrität geprüft. Der Build blieb dabei gesperrt; erst ausdrückliches normales Entsperren aktivierte ihn wieder. Beide getrennten Identitäten lagen in diesem Lauf im selben Windows-Testprofil; ein separater Recovery-Arbeitsplatz wurde damit nicht nachgewiesen.</p>
+</section>
+<section id="alltag">
+<span class="pill">Im Alltag</span><h2>Projekte anlegen und Berechtigungen ändern</h2>
+<p><strong>Auch Kollegen können Projekte anlegen.</strong> Im Projekteditor <b>Als neues Gruppenprojekt erstellen / migrieren</b> wählen, Bibliothek, berechtigte Gruppe und neuen Projektnamen auswählen. Erforderlich sind eigener Gruppenzugang, ein aktiver Recovery-Zugang der Bibliothek sowie Schreibzugriff auf den Zielordner. Eine Migration erstellt eine neue Kopie und lässt das Original bestehen.</p>
+<p>Für Gruppenprojekte ist <strong>keine Recovery-Passphrase je Projekt</strong> nötig. Private Verwaltungs- und Recovery-Sicherungen behalten ihre eigenen Passphrasen. Bisherige Team-Vaults behalten ihre bisherigen Regeln.</p>
+<h3>Ein vorhandenes Gruppenprojekt öffnen</h3>
+<ol>
+<li>Unter <b>Projekte → Bibliothek</b> das gewünschte Projekt auswählen und <b>Bearbeiten</b> öffnen. Projektnamen kontrollieren.</li>
+<li>Im Abschnitt <b>3 · Schlüssel sicher verwalten</b> auf <b>Vault entsperren</b> klicken. Für den normalen Gruppenzugang verwendet SieEncode den persönlichen Schlüssel des aktuellen Windows-Benutzers.</li>
+<li>Die Meldung zum normalen Gruppenzugang und die <b>Projektbereitschaft</b> prüfen. Erst wenn die übrigen Projektprüfungen ebenfalls erfüllt sind, ist <b>Projekt speichern, prüfen und bauen</b> verfügbar. Das entsperrte Projekt allein bestätigt noch keine Karten- oder Leserabnahme.</li>
+</ol>
+<figure><a href="images/onboarding/23-gruppenprojekt-normal.png"><img src="images/onboarding/23-gruppenprojekt-normal.png" alt="Synthetisches Gruppenprojekt nach normalem Entsperren; Projektbereitschaft bestätigt den geprüften Vault" loading="lazy"></a><figcaption>Normaler Gruppenzugang mit persönlicher Identität. Beispiel aus Kandidat 1 vom 03.11.2026; die Schlüsselwerte bleiben eingeklappt.</figcaption></figure>
+<h3>Ein Projekt ausdrücklich per Recovery prüfen</h3>
+<ol>
+<li>Auf einem vorbereiteten Recovery-Arbeitsplatz dasselbe Projekt öffnen. Der separate Recovery-Schlüssel muss zuvor für die richtige Bibliothek wiederhergestellt worden sein.</li>
+<li><b>Mit Recovery-Schlüssel öffnen</b> und anschließend <b>Recovery-Zugang prüfen</b> wählen. Die Erfolgsmeldung muss den separaten Zugang, die Projektbindung und die Integrität bestätigen.</li>
+<li>Die Buildfunktion bleibt in der Recovery-Sitzung gesperrt. Für normale Projektarbeit zusätzlich über <b>Vault entsperren</b> mit einer berechtigten persönlichen Gruppenidentität öffnen. Recovery erteilt keine Gruppenmitgliedschaft.</li>
+</ol>
+<figure><a href="images/onboarding/22-gruppenprojekt-recovery.png"><img src="images/onboarding/22-gruppenprojekt-recovery.png" alt="Erfolgreiche Recovery-Prüfung mit weiterhin gesperrter Buildfunktion" loading="lazy"></a><figcaption>Separater Recovery-Zugang mit geprüfter Projektbindung und Integrität. Der native Test verwendete zwei getrennte Identitäten im selben Windows-Profil; ein eigenständiger Recovery-Rechner wurde damit nicht geprüft.</figcaption></figure>
+<svg class="diagram" viewBox="0 0 960 175" role="img" aria-labelledby="update-title update-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="update-title">Drei getrennte Schritte einer Rechteänderung</title><desc id="update-desc">Die Verwaltung signiert und verteilt den neuen Stand. Arbeitsplätze importieren diesen. Ein berechtigter Benutzer gleicht bestehende Vaults nach Vorschau ab. Alte Kopien bleiben bestehen.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#006b71"/></marker></defs>
+<g fill="#eef7f6" stroke="#a9cfca"><rect x="0" y="10" width="286" height="130" rx="12"/><rect x="337" y="10" width="286" height="130" rx="12"/><rect x="674" y="10" width="286" height="130" rx="12"/></g>
+<g stroke="#006b71" stroke-width="3" marker-end="url(#arrow)"><path d="M294 75H326"/><path d="M631 75H663"/></g>
+<g font-family="Segoe UI,Arial,sans-serif" fill="#173b40" text-anchor="middle"><g font-size="21" font-weight="600"><text x="143" y="48">1 · Zentral ändern</text><text x="480" y="48">2 · Lokal übernehmen</text><text x="817" y="48">3 · Vault abgleichen</text></g><g font-size="17"><text x="143" y="83">Signieren und öffentlichen</text><text x="143" y="108">Gruppenstand verteilen</text><text x="480" y="83">Registrierte Gruppen</text><text x="480" y="108">aktualisieren</text><text x="817" y="83">Empfängervorschau prüfen</text><text x="817" y="108">und ausdrücklich bestätigen</text></g></g>
+</svg>
+<p><strong>Ein gemeinsamer Ordner erledigt Schritt 2 nicht automatisch.</strong> Nach Änderungen <b>Registrierte Gruppen aktualisieren</b> verwenden. Für den Abgleich bestehender Vaults braucht der ausführende Arbeitsplatz den aktuellen Gruppenstand und einen berechtigten Entschlüsselungszugang.</p>
+<figure><a href="images/onboarding/08-aktualisierung-vorschau.png"><img src="images/onboarding/08-aktualisierung-vorschau.png" alt="Aktualisierungsvorschau mit Bibliotheks-ID, Revision 8 auf 9 und Gegenüberstellung der bisherigen und neuen Gruppen" loading="lazy"></a><figcaption><strong>6 · Änderungen prüfen und übernehmen.</strong> Die öffentliche Datei vom Hauptverwalter auswählen. Bibliothek und Änderungen kontrollieren, das Bestätigungsfeld markieren und „Geprüften Stand übernehmen“ wählen. Der neue Stand bleibt nach dem Schließen erhalten. Bestehende Vault-Dateien werden durch diesen Import noch nicht neu verschlüsselt.</figcaption></figure>
+<div class="draft"><strong>Offline-Grenze:</strong> Offline gebliebene Geräte kennen spätere Entzüge nicht. Alte Vaultkopien bleiben mit damals berechtigten Schlüsseln entschlüsselbar. Ein neuer Gruppenstand oder ein Empfängerabgleich kann diese Kopien nicht aus der Ferne sperren. Für Offlinearbeit müssen die benötigten Projektdateien tatsächlich lokal verfügbar sein.</div>
+<p class="note">Recovery ist ein ausdrücklich gewählter Wiederherstellungsweg mit separatem Schlüssel. Es ist kein allgemeines Team-Passwort und erteilt keine normale Stations- oder Buildfreigabe.</p>
+</section>
+<section id="hilfe">
+<h2>Welchen Zugang brauche ich?</h2>
+<table><thead><tr><th>Situation</th><th>Was ich eingebe oder einrichte</th></tr></thead><tbody>
+<tr><td>Neues Gruppenprojekt, eigenes Gerät freigegeben</td><td>Eigene Geräteidentität und registrierter Gruppenstand genügen. Keine gemeinsame Recovery-Passphrase für jedes Projekt eingeben. Auch normale Gruppenmitglieder können Projekte für ihre freigegebenen Gruppen anlegen, sofern sie im Projektordner schreiben dürfen.</td></tr>
+<tr><td>Älteres Projekt mit Passphrasen-Vault</td><td>Beim Öffnen der Kodierstation erscheint „Vault für Kodierstation entsperren“. Die bisherige Projektpassphrase lokal eingeben. Eine neue Identität oder Migration ist dafür nicht erforderlich. Abbruch oder falsche Passphrase geben keine neue Sitzung frei.</td></tr>
+<tr><td>Recovery-Sicherung wiederherstellen</td><td>Nur die beauftragte Person verwendet die separate Sicherungsdatei und deren Passphrase. Danach den ausdrücklichen Recovery-Weg wählen. Recovery ersetzt keine normale Gruppenmitgliedschaft und erlaubt keinen normalen Build.</td></tr>
+<tr><td>Nur Gruppen verwalten</td><td>Verwaltungsrechte und Projektzugriff sind getrennt. Eine öffentliche Registrierung oder Verwaltungsvollmacht allein entschlüsselt keine Projekte.</td></tr>
+</tbody></table>
+<p>Eine ältere Passphrasen-Vault-Datei wird durch die Gruppenregistrierung nicht automatisch zu einem Gruppenprojekt. Für neue Teamprojekte die vereinbarte Gruppe wählen. Passphrasen, private Sicherungen und persönliche Schlüssel nicht im gemeinsamen Projektordner verteilen.</p>
+<h2>Wenn es hakt</h2>
+<table><thead><tr><th>Beobachtung</th><th>Nächster sinnvoller Schritt</th></tr></thead><tbody>
+<tr><td>„Die Profilbibliothek enthält kein Grundprofil“</td><td>Unter Einstellungen den vom Team bereitgestellten Profilordner wählen und speichern. SieEncode liefert bewusst kein fachliches Grundprofil mit. Falls noch keines existiert, muss eine fachlich verantwortliche Person im Expertenmodus unter „Profile und Historie“ ein Grundprofil erstellen oder importieren. Ein neuer Vault-Schlüssel behebt dieses Problem nicht.</td></tr>
+<tr><td>Identität vorhanden, Projekt bleibt gesperrt</td><td>Hauptverwaltung prüft Person, genau dieses Gerät und die Projektgruppe. Danach aktuellen öffentlichen Gruppenstand importieren. Keine zweite Identität auf Verdacht erzeugen.</td></tr>
+<tr><td>Gruppenverwaltung registriert, aber kein Zugriff</td><td>Registrierung bestätigt den Verwaltungsschlüssel; sie erteilt keine Mitgliedschaft. Aufnahme des Geräts und Gruppenzuordnung prüfen lassen.</td></tr>
+<tr><td>Alter Gruppenstand wird abgewiesen</td><td>Aktuellen Stand anfordern. Lokale Registrierung nicht löschen oder zurücksetzen.</td></tr>
+<tr><td>Verwaltungsfingerabdruck passt nicht</td><td>Abbrechen und Bibliothek sowie Fingerabdruck unabhängig mit dem Verantwortlichen klären. Nicht den Wert aus einer ungeprüften Datei übernehmen.</td></tr>
+<tr><td>Leserkonfiguration vorhanden, Karte wird nicht erkannt</td><td>Anbieter, Anschluss, Treiber und freigegebene Testkarte prüfen. „Leserkonfiguration neu prüfen“ ist kein Hardwaretest.</td></tr>
+<tr><td>Neuer Rechner oder anderes Windows-Konto</td><td>Eigene Geräteidentität anlegen, öffentliche Einladung aufnehmen lassen und Verwaltung registrieren. Der gemeinsame Ordner überträgt keine privaten Schlüssel.</td></tr>
+</tbody></table>
+<p><strong>Für eine Fehlermeldung weitergeben:</strong> SieEncode-Version, verwendete Schaltfläche und genaue Meldung. Passphrasen, private Schlüssel, Recovery-Sicherungen und Vaultinhalte nicht in Screenshots aufnehmen.</p>
+<p>Vertiefung für Verantwortliche: <a href="OFFLINE-GRUPPEN-SCHNELLSTART.md">vollständiger Schnellstart einschließlich Verwaltungsnachfolge</a>. Prüfstand: <a href="design/OFFLINE-GROUPS-GOAL-AUDIT.md">offene und belegte Abnahmen</a>.</p>
+<p class="note">Diese Anleitung enthält ausschließlich allgemeine Abläufe und synthetische Gruppennummern. Vollständige native Einrichtung, Releaseabschluss und reale Leserabnahme werden hier nicht als erledigt behauptet.</p>
+</section>
+</html>

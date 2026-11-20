@@ -28,7 +28,7 @@ public sealed class TransponderFormatDialog : Window
         keyValue.Password = new string('0', 32);
 
         var root = new StackPanel { Margin = new Thickness(20) };
-        root.Children.Add(new TextBlock { Text = "Alle Applications und Files werden unwiderruflich gelöscht.", FontSize = 18, FontWeight = FontWeights.Bold, Foreground = Brushes.Firebrick });
+        root.Children.Add(new TextBlock { Text = "Alle Applications und Files werden unwiderruflich gelöscht.", FontSize = 18, FontWeight = FontWeights.Bold, Foreground = Brushes.Firebrick, TextWrapping = TextWrapping.Wrap });
         root.Children.Add(new TextBlock { Text = "Geben Sie den aktuell gültigen PICC-Schlüssel an. Er bleibt nur für diesen Lauf im Arbeitsspeicher.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 8, 0, 14) });
         root.Children.Add(new TextBlock { Text = "Schlüsseltyp" });
         root.Children.Add(keyType);
@@ -36,14 +36,15 @@ public sealed class TransponderFormatDialog : Window
         root.Children.Add(keyValue);
         root.Children.Add(validation);
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 18, 0, 0) };
-        var cancel = new Button { Content = "Abbrechen", MinWidth = 100, Margin = new Thickness(4) };
+        var cancel = new Button { Content = "Abbrechen", IsCancel = true, MinWidth = 100, Margin = new Thickness(4) };
         cancel.Click += (_, _) => DialogResult = false;
         var confirm = new Button { Content = "Formatierung vorbereiten", MinWidth = 170, Margin = new Thickness(4), FontWeight = FontWeights.SemiBold };
         confirm.Click += (_, _) => Confirm();
         buttons.Children.Add(cancel);
         buttons.Children.Add(confirm);
         root.Children.Add(buttons);
-        Content = root;
+        Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        MainWindow.InitializeAutomationContract(this, "TransponderFormat");
     }
 
     public TransponderFormatRequest? Request { get; private set; }

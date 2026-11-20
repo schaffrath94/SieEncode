@@ -1,0 +1,88 @@
+{
+  "Status": "PASS",
+  "RetrievedOn": "2026-10-26",
+  "Candidate": "1.3.0-offline-groups.1",
+  "Vm": "SieEncode-Testlab-LTSC",
+  "ProductHashes": {
+    "SieEncode.dll": "81F79933C67CC007B63A0A8C14F4E7AB939FBA0EDF369C4BADE07D807EBB0F38",
+    "RFiDGear.Builder.Core.dll": "53B6870875DA9F1BBEAF9C8021D020413205F02D836B8A741267F424DF352B3F"
+  },
+  "HarnessRuntime": "8.0.30",
+  "InstalledApplicationRuntime": "8.0.32",
+  "HarnessSourceSHA256": "009C6B29AF9501BCBC020A02C4FE6A34BBEB0A476D5556FE06AE57091EB28DF3",
+  "LauncherSHA256": "1BC179176FA8B410A0EDE78C719F2CBD0D46A6CD4752586502D38472259EDE9D",
+  "Limits": [
+    "Product APIs against installed DLLs, not native UI acceptance",
+    "Synthetic project without full profile-contract validation or reader",
+    "Shared local directory on one VM, not separate machines or SMB",
+    "No delegation or administrator succession in this run"
+  ],
+  "Results": [
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "project-create",
+      "Checks": [
+        "Full project published and reopened; new ID; source preserved; complete key payload preserved; public PICC key blank"
+      ],
+      "At": "2026-10-26T10:03:45.2417148+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "project-regrant",
+      "Checks": [
+        "B regranted at revision 3; complete project vault reconciled for access"
+      ],
+      "At": "2026-10-26T10:03:48.094379+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "project-reopen",
+      "Checks": [
+        "A reopened B copy in new process; complete payload equal; forged project ID rejected"
+      ],
+      "At": "2026-10-26T10:03:51.0786102+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "recovery-after-reboot",
+      "Checks": [
+        "Separate process reopened persisted recovery key, decrypted explicitly; normal member access denied"
+      ],
+      "At": "2026-10-26T10:03:52.1584437+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "project-copy",
+      "Checks": [
+        "Reauthorized B opened and copied full project; distinct ID; complete key payload and original files preserved"
+      ],
+      "At": "2026-10-26T10:03:49.6575239+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "project-denied",
+      "Checks": [
+        "Removed member cannot open or copy complete project; no unauthorized output directory"
+      ],
+      "At": "2026-10-26T10:03:46.6970731+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    }
+  ]
+}

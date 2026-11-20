@@ -1,0 +1,19 @@
+{
+  "LibraryId": "d9c6ffd7-0081-4189-b965-518c9204c10c",
+  "Revision": 4,
+  "SignatureValidated": true,
+  "RecoveryFingerprint": "A44D1E2A656C8864DAADBD3598F3249A66863613C04BCFCF252A4E0480CD83B8",
+  "RecoveryEnabled": true,
+  "PreviousPeopleGroupsDelegationsUnchanged": true,
+  "ExportSHA256": "F6E88794DEA49C280EA43E8A4DBFC9B478DDB5FCA2135AE5F0DB48A450A54B2E",
+  "Scope": "Native backup, public export, central grant and Windows restore with independent RSA roundtrip; project recovery pending",
+  "WindowsRestore": {
+    "User": "testerB",
+    "NativeSuccessObserved": true,
+    "HasPrivateKey": true,
+    "PrivateKeyRoundTrip": true,
+    "BackupExists": true,
+    "BackupSHA256": "930FCC3FD121433617335E6320334F8DFD14118DD1B207E6D17C79519F34D111",
+    "Screenshot": "21-recovery-wiederhergestellt.png"
+  }
+}

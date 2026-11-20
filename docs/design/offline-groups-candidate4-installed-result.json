@@ -1,0 +1,48 @@
+{
+  "Date": "2026-11-06",
+  "Candidate": "1.3.0-offline-groups.4",
+  "MsiSHA256": "0F1AABF98BF91D72A4B2475757C97017563766414EFD2E60D64ACD48F8E7FD73",
+  "InstalledDllSHA256": "85B3BDB2D4261E3740EA8DA1AB7FA979F52121004400B1232BCE2207DA3C9B33",
+  "UpgradeFrom": "1.3.0-offline-groups.3",
+  "MsiExitCode": 0,
+  "Preservation": [
+    {
+      "RsaKeys": 1,
+      "Files": 7,
+      "User": "labadmin",
+      "Before": "PASS",
+      "After": "PASS"
+    },
+    {
+      "RsaKeys": 2,
+      "Files": 69,
+      "User": "testerA",
+      "Before": "PASS",
+      "After": "PASS"
+    },
+    {
+      "RsaKeys": 2,
+      "Files": 104,
+      "User": "testerB",
+      "Before": "PASS",
+      "After": "PASS"
+    }
+  ],
+  "TemporaryCredentialsRemoved": true,
+  "InstalledSelfTestExitCode": 0,
+  "InstalledUiSmokeExitCode": 0,
+  "InstalledUiSmokeVersion": "1.3.0-offline-groups.4",
+  "InstalledUiChecks": 61,
+  "GuestLogs": "C:/SieEncodeLab/Evidence/upgrade-candidate4-20261106",
+  "LogSHA256": {
+    "upgrade.log": "7343ED2756B717C3566D12D3F15E03363D19F600E14FEBE5F1D10D3385A355F6",
+    "lifecycle.log": "52540958011D5B4D2A203D0C65E14967565D7778251F306F4750CF8EB15D8DED",
+    "PASS.txt": "A247ACE59C8C16B19EA2E76084CBA08ABE87C50294FE98F35B3B24E8861CFAE1"
+  },
+  "Limitations": [
+    "No new hardware acceptance or host installation",
+    "Native recipient/delegation and recovery manual workflows remain open",
+    "Synthetic station test is not acceptance of the actual user card",
+    "Not a completed release approval"
+  ]
+}

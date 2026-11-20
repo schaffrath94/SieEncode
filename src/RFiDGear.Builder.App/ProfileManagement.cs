@@ -54,6 +54,16 @@ public partial class MainWindow
             RefreshOpenEditorAfterProfileLibraryChange();
             SetStatus("Grundprofil importiert und validiert: " + path);
         }
+        catch (JsonException exception)
+        {
+            var location = exception.LineNumber is long line
+                ? $" Fehler in Zeile {line + 1}."
+                : string.Empty;
+            ShowError(new InvalidDataException(
+                "Die ausgewählte Datei kann nicht als SieEncode-Grundprofil gelesen werden. " +
+                "Das JSON-Format oder ein enthaltenes Datenfeld ist ungültig." + location +
+                " Bitte prüfen Sie die Datei oder wählen Sie eine gültige Profildatei aus.", exception));
+        }
         catch (Exception exception) { ShowError(exception); }
     }
 
@@ -210,11 +220,18 @@ public partial class MainWindow
     {
         if (editorProject is null) return;
         var library = LoadEditorLibrary();
+        var before = JsonSerializer.SerializeToNode(editorProject, ProjectJson.Options);
         ProjectDraftFactory.Synchronize(editorProject, library);
+        var changed = !System.Text.Json.Nodes.JsonNode.DeepEquals(before,
+            JsonSerializer.SerializeToNode(editorProject, ProjectJson.Options));
         suppressEditorChanges = true;
-        try { PopulateDynamicEditorFields(); }
+        try
+        {
+            RefreshEditorProfileChoices(library);
+            PopulateDynamicEditorFields();
+        }
         finally { suppressEditorChanges = false; }
-        SetEditorDirty(true);
+        SetEditorDirty(editorDirty || changed);
         RefreshProfileBindingStatus();
     }
 

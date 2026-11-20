@@ -74,11 +74,16 @@ public partial class MainWindow
         var report = lastAnalysisFiles.Report;
         lastCardReport = new CardReportFactory().FromProject(project, report, source, library);
 
+        var fileDetails = (report.Applications.Count == 0 ? Enumerable.Empty<ApplicationDefinition>() : library.Compose(project.Profiles.Base, project.Profiles.Customers).Applications)
+            .SelectMany(app => app.Files.Select(file => new { Aid = ProfileValidator.NormalizeAid(app.Id), file.Id, Detail = FileExpertDescription.FromFile(file) }))
+            .GroupBy(item => (item.Aid, item.Id))
+            .ToDictionary(group => group.Key, group => group.First().Detail);
         AnalysisFilesGrid.ItemsSource = report.Applications.SelectMany(application => application.Files.Select(file => new AnalysisFileRow(
             application.Aid, application.Name, $"{file.Id:D2} · {file.Name}", $"{file.Type} · {file.Size} B",
             $"{file.Communication} · {file.Access}",
             file.CreationSettings is null ? file.Initialization : $"{file.Initialization} · temporär {file.CreationSettings}",
-            string.IsNullOrWhiteSpace(file.CodingOutput) ? "–" : file.CodingOutput))).ToArray();
+            string.IsNullOrWhiteSpace(file.CodingOutput) ? "–" : file.CodingOutput, fileDetails[(application.Aid, file.Id)]))).ToArray();
+        AnalysisApplicationsGrid.ItemsSource = report.Applications;
         AnalysisMasteringGrid.ItemsSource = report.MasteringTasks.Select(ToTaskRow).ToArray();
         AnalysisCodingGrid.ItemsSource = report.CodingTasks.Select(ToTaskRow).ToArray();
         AnalysisIssuesGrid.ItemsSource = report.Issues;
@@ -100,7 +105,7 @@ public partial class MainWindow
         => new(task.Index, task.Type, task.Description,
             string.IsNullOrWhiteSpace(task.ConditionIndex) ? "–" : $"Task {task.ConditionIndex} = {task.ConditionLevel}",
             string.Join(" / ", new[] { task.Aid.Length == 0 ? "" : "AID " + task.Aid, task.FileId.Length == 0 ? "" : "File " + task.FileId }.Where(value => value.Length > 0)),
-            string.IsNullOrWhiteSpace(task.KeyReference) ? "–" : task.KeyReference);
+            string.IsNullOrWhiteSpace(task.KeyReference) ? "–" : task.KeyReference, task.Position, task.Settings, task.FileContract);
 
     private void OpenAnalysisReport_Click(object sender, RoutedEventArgs e)
     {
@@ -127,6 +132,8 @@ public partial class MainWindow
         try
         {
             if (lastCardReport is null) throw new InvalidOperationException("Bitte zuerst ein Projekt analysieren.");
+            var options = new ComparisonReportOptionsDialog { Owner = this };
+            if (options.ShowDialog() != true) return;
             var dialog = new SaveFileDialog
             {
                 Title = "Schlüsselwertfreien PDF-Kartenreport speichern",
@@ -135,7 +142,7 @@ public partial class MainWindow
                 InitialDirectory = lastAnalysisFiles is null ? projectsDirectory : Path.GetDirectoryName(lastAnalysisFiles.TextPath)
             };
             if (dialog.ShowDialog(this) != true) return;
-            new CardReportPdfService().Save(lastCardReport, dialog.FileName);
+            new CardReportPdfService().Save(lastCardReport, dialog.FileName, options.Detail, options.Documentation);
             AnalysisReportPath.Text = (lastAnalysisFiles is null ? "" : $"Text: {lastAnalysisFiles.TextPath}\nJSON: {lastAnalysisFiles.JsonPath}\n") + $"PDF: {dialog.FileName}";
             Process.Start(new ProcessStartInfo(dialog.FileName) { UseShellExecute = true });
             SetStatus("Schlüsselwertfreier PDF-Kartenreport wurde gespeichert.");
@@ -150,6 +157,6 @@ public partial class MainWindow
         return safe.Length == 0 ? "Entwurf" : safe;
     }
 
-    private sealed record AnalysisFileRow(string Aid, string Application, string File, string TypeSize, string FinalSettings, string Mastering, string Coding);
-    private sealed record AnalysisTaskRow(string Index, string Type, string Description, string ConditionText, string Target, string KeyReference);
+    private sealed record AnalysisFileRow(string Aid, string Application, string File, string TypeSize, string FinalSettings, string Mastering, string Coding, FileExpertDescription Details);
+    private sealed record AnalysisTaskRow(string Index, string Type, string Description, string ConditionText, string Target, string KeyReference, int Position, string Settings, string FileContract);
 }

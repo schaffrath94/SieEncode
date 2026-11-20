@@ -4,7 +4,11 @@ namespace RFiDGear.Builder.App;
 
 internal static class AppIdentity
 {
-    public static string DisplayVersion { get; } = ResolveVersion();
+    public static string DisplayVersion { get; } = ResolveVersion()
+#if SIEENCODE_UI_PREVIEW
+        + " · UI-TEST · keine Hardwarefreigabe"
+#endif
+        ;
 
     private static string ResolveVersion()
     {

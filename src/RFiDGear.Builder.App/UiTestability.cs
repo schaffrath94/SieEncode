@@ -83,18 +83,54 @@ public partial class MainWindow
             foreach (var descendant in DescendantsAndSelf(child)) yield return descendant;
     }
 
+#if SIEENCODE_DIALOG_TESTS
+    internal void VerifyStationLayout()
+    {
+        Navigate("TestStation", false);
+        var additional = new[] { TestDeepAnalyzeButton, TestProjectRecognitionButton, TestRefreshOperationButton };
+        foreach (var expert in new[] { false, true, false })
+        {
+            ExpertModeToggle.IsChecked = expert;
+            UpdateLayout();
+            if (!TestAnalyzeCardButton.IsVisible || !TestAnalysisTree.IsVisible ||
+                additional.Any(control => control.IsVisible != expert))
+                throw new InvalidOperationException($"Teststationsansicht fehlerhaft (Expertenmodus {expert}).");
+        }
+        var section = DescendantsAndSelf(PageTestStation).OfType<Expander>()
+            .Single(item => Equals(item.Header, "Weitere Analyse und Berichte"));
+        section.SetCurrentValue(Expander.IsExpandedProperty, true);
+        UpdateLayout();
+        if (!TestDeepAnalyzeButton.IsVisible || !TestOpenInventoryPdfButton.IsVisible)
+            throw new InvalidOperationException("Analyseaktionen im Normalmodus nicht aufklappbar.");
+        Console.WriteLine("PASS: Standard, Experte, zurueck zu Standard, Berichte aufklappen.");
+    }
+#endif
     public string RunUiSmokeTest()
     {
         RunSelfTest();
         var checks = new List<string>();
+        var startupRoot = Path.GetDirectoryName(settingsStore.SettingsPath)!;
+        if (!Path.GetFileName(startupRoot).StartsWith("startup-test-", StringComparison.Ordinal) ||
+            new[] { projectsDirectory, settingsStore.ResolveProfilesDirectory(settings), settings.VaultBackup.Directory }
+                .Any(path => !Path.GetFullPath(path).StartsWith(startupRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("UI-Smoke benötigt vollständig isolierte Startpfade.");
+        checks.Add("Teststart: Einstellungen, Projektbibliothek, Profile und Vault-Backups in eigenem Testverzeichnis; keine Migration produktiver Einstellungen.");
         checks.Add("Nebenfenster: Profil-Editor, Profilhistorie und rfPrj-Import initialisiert, versioniert und automatisierbar");
         VerifyAutomationContract(checks);
         VerifyDesignContract(checks);
         VerifyOperatingModeContract(checks);
         VerifyPreflightPresentationContract(checks);
         VerifyNavigationContract(checks);
+        VerifyDynamicCardDialogs(checks);
+        VerifyVaultDialogContract(checks);
+        VerifyWindowsGroupTrust(checks);
+        VerifyExpertNavigationClicks(checks);
+        VerifyWorkspaceStateContract(checks);
         VerifyConstrainedLayoutContract(checks);
         VerifyIsolatedProjectFlows(checks);
+        VerifyProfileRefreshDirtyState(checks);
+        VerifyMissingVaultGuidance(checks);
+        VerifyEditorVaultButtons(checks);
 
         var reportDirectory = Path.Combine(Path.GetTempPath(), "SieEncode", "ui-smoke");
         Directory.CreateDirectory(reportDirectory);
@@ -112,16 +148,153 @@ public partial class MainWindow
             version = Version,
             generatedAt = DateTimeOffset.Now,
             status = "OK",
+            startupSettingsPath = settingsStore.SettingsPath,
             checks,
             compatibilityMatrix = new { status = "OK", scenarios = matrix.Report.Scenarios.Count, matrix.TextPath, matrix.JsonPath, hardwareEvidence = false }
         }, new JsonSerializerOptions { WriteIndented = true }));
         return reportPath;
     }
 
+    private void VerifyProfileRefreshDirtyState(List<string> checks)
+    {
+        string? importedPath = null;
+        string? customerPath = null;
+        try
+        {
+            LoadEditor(ProjectDraftFactory.Create(LoadEditorLibrary(), "Synthetic refresh"), "");
+            SetEditorDirty(false);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (editorDirty) throw new InvalidOperationException("Unverändertes Projekt nach Profil-Refresh als geändert markiert.");
+
+            var originalBase = editorProject!.Profiles.Base;
+            var originalBindings = JsonSerializer.Serialize(editorProject.Profiles.Bindings, ProjectJson.Options);
+            var imported = JsonSerializer.Deserialize<ProfileDefinition>(
+                JsonSerializer.Serialize(LoadEditorLibrary().Profiles.First(profile => profile.Profile.Id == originalBase), ProjectJson.Options),
+                ProjectJson.Options)!;
+            imported.Profile.Id = "SYNTHETIC-REFRESH-" + Guid.NewGuid().ToString("N");
+            imported.Profile.Name = "Synthetic imported profile";
+            importedPath = profileStore.SaveBase(imported);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (!EditorBaseProfile.Items.Cast<ProfileChoice>().Any(choice => choice.Id == imported.Profile.Id))
+                throw new InvalidOperationException("Importiertes Profil fehlt in der geöffneten Editorauswahl.");
+            if (EditorBaseProfile.SelectedValue as string != originalBase || editorProject.Profiles.Base != originalBase ||
+                JsonSerializer.Serialize(editorProject.Profiles.Bindings, ProjectJson.Options) != originalBindings || editorDirty)
+                throw new InvalidOperationException("Profilimport verändert Auswahl, Bindung oder Änderungsstatus des offenen Projekts.");
+            checks.Add("Profilimport: neues Grundprofil sofort im offenen Editor verfügbar; bisherige Auswahl und Profilbindung unverändert.");
+
+            SetEditorDirty(true);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (!editorDirty) throw new InvalidOperationException("Profil-Refresh verwirft bestehenden Änderungsstatus.");
+
+            var variable = editorProject!.Values.Keys.First();
+            editorProject.Values.Remove(variable);
+            SetEditorDirty(false);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (!editorDirty || !editorProject.Values.ContainsKey(variable))
+                throw new InvalidOperationException("Tatsächliche Projektsynchronisierung nicht als Änderung erkannt.");
+            checks.Add("Profil-Refresh: unverändertes Projekt bleibt sauber; bestehende und synchronisierte Änderungen bleiben speicherpflichtig.");
+
+            var customer = new ProfileEditingService().CreateCustomer();
+            customer.Profile.Id = "SYNTHETIC-CUSTOMER-" + Guid.NewGuid().ToString("N");
+            customer.Variables.Add(new VariableDefinition
+            {
+                Id = "refreshCustomerText", Label = "Synthetic customer text", Scope = "project",
+                Type = "text", Length = 4, Default = "TEST"
+            });
+            customerPath = profileStore.SaveCustomer(customer);
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            var choice = EditorCustomerProfiles.Items.Cast<ProfileChoice>().Single(item => item.Id == customer.Profile.Id);
+            EditorCustomerProfiles.SelectedItems.Add(choice);
+            if (!editorProject.Profiles.Customers.Contains(customer.Profile.Id) ||
+                !editorValues.Any(field => field.Id == "refreshCustomerText"))
+                throw new InvalidOperationException("Zusatzprofilauswahl übernimmt ihre Projektfelder nicht.");
+            var editedField = editorValues.First(field => field.Id != "refreshCustomerText");
+            var editedId = editedField.Id;
+            editedField.Value = "0043";
+            editorValues.Single(field => field.Id == "refreshCustomerText").Value = "EDIT";
+            ReloadProfiles_Click(this, new RoutedEventArgs());
+            if (!EditorCustomerProfiles.SelectedItems.Cast<ProfileChoice>().Any(item => item.Id == customer.Profile.Id) ||
+                editorValues.Single(field => field.Id == editedId).Value != "0043" ||
+                editorValues.Single(field => field.Id == "refreshCustomerText").Value != "EDIT" || !editorDirty)
+                throw new InvalidOperationException("Profil-Refresh verliert Zusatzprofilauswahl oder ungespeicherte Projektwerte.");
+            EditorCustomerProfiles.SelectedItems.Remove(EditorCustomerProfiles.SelectedItems.Cast<ProfileChoice>().Single(item => item.Id == customer.Profile.Id));
+            if (editorProject.Profiles.Customers.Contains(customer.Profile.Id) ||
+                editorValues.Any(field => field.Id == "refreshCustomerText") ||
+                editorValues.Single(field => field.Id == editedId).Value != "0043")
+                throw new InvalidOperationException("Zusatzprofil-Abwahl entfernt falsche Projektwerte.");
+            checks.Add("Zusatzprofile: Import, Auswahl, ungespeicherte Werte nach Refresh und gezielte Abwahl über Editor-Steuerelemente geprüft.");
+        }
+        finally
+        {
+            if (importedPath is not null && File.Exists(importedPath)) File.Delete(importedPath);
+            if (customerPath is not null && File.Exists(customerPath)) File.Delete(customerPath);
+            SetEditorDirty(false);
+        }
+    }
+
+    private void VerifyMissingVaultGuidance(List<string> checks)
+    {
+        try
+        {
+            var project = ProjectJson.WithoutAllSecrets(ProjectDraftFactory.Create(LoadEditorLibrary(), "Synthetic missing vault"));
+            var path = Path.Combine(projectsDirectory, "missing-vault-" + Guid.NewGuid().ToString("N") + ".project.json");
+            LoadEditor(project, path);
+            if (EditorWorkflowValues.Text != "✓ Pflichtfelder" || EditorWorkflowKeys.Text != "! Vault fehlt" ||
+                !EditorNextStep.Text.Contains("fehlt der Vault", StringComparison.Ordinal) || EditorBuildButton.IsEnabled)
+                throw new InvalidOperationException("Fehlender Vault wird nicht getrennt von Pflichtfeldern angezeigt oder Neubau ist freigegeben.");
+            EditorProjectName.Text = "";
+            if (EditorWorkflowValues.Text != "! Pflichtfelder" ||
+                !EditorNextStep.Text.Contains("Projektname fehlt", StringComparison.Ordinal) || EditorBuildButton.IsEnabled)
+                throw new InvalidOperationException("Echter Pflichtfeldfehler wird durch Vault-Hinweis verdeckt.");
+            checks.Add("Fehlender Vault: eigene Schlüsselanzeige und konkrete Anleitung; echte Pflichtfeldfehler bleiben sichtbar, Neubau bleibt gesperrt.");
+        }
+        finally { SetEditorDirty(false); }
+    }
+
     private void VerifyAutomationContract(List<string> checks)
     {
         var count = VerifyAutomationContract(this);
         checks.Add($"Automation-Vertrag: {count} interaktive Elemente vollständig und eindeutig adressierbar");
+    }
+
+    private static void VerifyDynamicCardDialogs(List<string> checks)
+    {
+        foreach (var dialog in new Window[] { new ApplicationInspectionDialog(["A1B2C3"]), new TransponderFormatDialog() })
+        {
+            try
+            {
+                VerifyAutomationContract(dialog);
+                var elements = DescendantsAndSelf(dialog).OfType<FrameworkElement>().ToArray();
+                var password = elements.OfType<PasswordBox>().Single();
+                password.Password = "";
+                var action = elements.OfType<Button>().Single(button => (string)button.Content != "Abbrechen");
+                action.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                if (dialog is ApplicationInspectionDialog inspection && inspection.Request is not null ||
+                    dialog is TransponderFormatDialog format && format.Request is not null)
+                    throw new InvalidOperationException("Ungültige Dialogeingabe erzeugt eine Kartenanforderung.");
+                if (!elements.OfType<TextBlock>().Any(text => text.Text.Contains("Hex-Zeichen", StringComparison.Ordinal)))
+                    throw new InvalidOperationException("Dynamische Dialogaktion erreicht die Eingabeprüfung nicht.");
+                if (dialog.Content is not ScrollViewer scroll || scroll.VerticalScrollBarVisibility != ScrollBarVisibility.Auto)
+                    throw new InvalidOperationException("Dynamischer Kartendialog besitzt keinen vertikalen Scrollzugang.");
+                // Deliberately short viewport models the space remaining under display scaling.
+                scroll.Measure(new Size(540, 180));
+                scroll.Arrange(new Rect(0, 0, 540, 180));
+                scroll.UpdateLayout();
+                if (scroll.ScrollableHeight <= 0)
+                    throw new InvalidOperationException("Dialoginhalt ist im kleinen Fenster nicht scrollbar.");
+                scroll.ScrollToEnd();
+                scroll.UpdateLayout();
+                var bottom = action.TranslatePoint(new Point(0, action.ActualHeight), scroll).Y;
+                if (bottom > scroll.ActualHeight + 1 || bottom <= 0)
+                    throw new InvalidOperationException("Dialogaktion ist nach Scrollen nicht im sichtbaren Bereich.");
+                VerifyCancelClick(dialog);
+                if (dialog is ApplicationInspectionDialog cancelledInspection && cancelledInspection.Request is not null ||
+                    dialog is TransponderFormatDialog cancelledFormat && cancelledFormat.Request is not null)
+                    throw new InvalidOperationException("Abbrechen erzeugt eine Kartenanforderung.");
+            }
+            finally { dialog.Close(); }
+        }
+        checks.Add("Dynamische Kartendialoge: Automation-IDs, tatsächliche Click-Validierung ohne Kartenanforderung und scrollbare Aktionsleiste bei geringer Höhe geprüft.");
     }
 
     private void VerifyNavigationContract(List<string> checks)
@@ -148,7 +321,7 @@ public partial class MainWindow
             var expertSurfaces = new FrameworkElement[]
             {
                 NavProfilesButton, ProjectAdvancedActions, EditorTransportSettings, EditorAdvancedActions,
-                StationOpenRFiDGearButton,
+                StationOpenRFiDGearButton, StationDetailedPreflight, StationAdvancedCardActions,
                 StationTechnicalDetails, HelpExpertTools, SettingsCapabilityDetails, EditorBuildSettings,
                 EditorAuditVaultButton, ProjectOpenFolderButton, StationProjectPath, StationProjectFolderButton
             };
@@ -166,12 +339,12 @@ public partial class MainWindow
             ApplyOperatingMode();
             if (expertSurfaces.Any(element => element.Visibility != Visibility.Visible))
                 throw new InvalidOperationException("Der Expertenmodus stellt nicht alle Fachfunktionen bereit.");
-            if (StationDetailedPreflight.Visibility != Visibility.Collapsed || StationAdvancedCardActions.Visibility != Visibility.Collapsed)
-                throw new InvalidOperationException("Die in die Teststation verlagerten Fachaktionen überladen erneut die Kodierstation.");
+            if (StationDetailedPreflight.Visibility != Visibility.Visible || StationAdvancedCardActions.Visibility != Visibility.Visible)
+                throw new InvalidOperationException("Die Expertenansicht stellt die vorhandenen Prüf- und Wartungsaktionen nicht bereit.");
             if (OperatingModeText.Text != "Erweiterte Ansicht" ||
                 ExpertModeToggle.ToolTip?.ToString()?.Contains("Standardansicht", StringComparison.Ordinal) != true)
                 throw new InvalidOperationException("Der kompakte Modusschalter kennzeichnet den Expertenmodus nicht eindeutig.");
-            checks.Add("Bedienmodus: Normalansicht reduziert auf den geführten Ablauf; Expertenansicht ergänzt Fachdetails, Kartenprüfung und Wartung bleiben in der Teststation");
+            checks.Add("Bedienmodus: Normalansicht reduziert auf den geführten Ablauf; Expertenansicht ergänzt Fachdetails, bestehende Prüf- und Wartungsaktionen bleiben als Expertenbereiche verfügbar");
         }
         finally
         {
@@ -271,6 +444,67 @@ public partial class MainWindow
         try
         {
             var library = LoadProfileLibrary();
+            var previousReport = lastTestReportPath;
+            try
+            {
+                lastTestReportPath = Path.Combine(fixture, "application-inventory.result.txt");
+                if (LatestInventoryPdfPath() is not null) throw new InvalidOperationException("Fehlendes PDF wird angeboten.");
+                File.WriteAllText(Path.ChangeExtension(lastTestReportPath, ".pdf"), "synthetic path fixture");
+                if (LatestInventoryPdfPath() != Path.ChangeExtension(lastTestReportPath, ".pdf")) throw new InvalidOperationException("Inventur-PDF nicht erreichbar.");
+                lastTestReportPath = Path.Combine(fixture, "recognition.result.txt");
+                if (LatestInventoryPdfPath() is not null) throw new InvalidOperationException("Veraltetes Inventur-PDF wird für einen anderen Bericht angeboten.");
+                checks.Add("PDF-Istreport: passender Inventurpfad erreichbar; fehlende und veraltete Berichte gesperrt.");
+                var valuesDialog = new InventoryComparisonValuesDialog("Synthetic", "A1B2C3",
+                    [new VariableDefinition { Id = "serial", Scope = "card", Default = "007", Label = "Seriennummer" }]);
+                if (valuesDialog.Values.GetValueOrDefault("serial") != "007") throw new InvalidOperationException("Vergleichsformular verliert explizite Profilvorbelegung.");
+                valuesDialog.Close();
+                var reportOptions = new ComparisonReportOptionsDialog();
+                var imagePath = Path.Combine(fixture, "synthetic-card.png");
+                var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(System.Windows.Media.Imaging.BitmapSource.Create(2, 1, 96, 96,
+                    System.Windows.Media.PixelFormats.Rgb24, null, new byte[] { 255, 0, 0, 0, 0, 255 }, 6)));
+                using (var imageStream = File.Create(imagePath)) png.Save(imageStream);
+                var picture = ComparisonReportOptionsDialog.LoadPicture(imagePath, "Synthetic");
+                File.Delete(imagePath);
+                if (picture.Width != 2 || picture.Height != 1 || !picture.Rgb.SequenceEqual(new byte[] { 255, 0, 0, 0, 0, 255 }))
+                    throw new InvalidOperationException("Kartenbild verliert Farbe, Seitenverhältnis oder Freigabe der Quelldatei.");
+                var jpegPixels = new byte[32 * 16 * 3];
+                for (var i = 0; i < 32 * 16; i++)
+                {
+                    jpegPixels[i * 3] = (byte)(i % 32 * 8);
+                    jpegPixels[i * 3 + 1] = (byte)(i / 32 * 16);
+                }
+                var jpegSource = System.Windows.Media.Imaging.BitmapSource.Create(32, 16, 96, 96,
+                    System.Windows.Media.PixelFormats.Rgb24, null, jpegPixels, 32 * 3);
+                RFiDGear.Builder.RfPrj.CardReportImage? normalJpeg = null;
+                for (ushort orientation = 0; orientation <= 8; orientation++)
+                {
+                    var metadata = new System.Windows.Media.Imaging.BitmapMetadata("jpg");
+                    if (orientation > 0) metadata.SetQuery("/app1/ifd/{ushort=274}", orientation);
+                    var jpeg = new System.Windows.Media.Imaging.JpegBitmapEncoder { QualityLevel = 95 };
+                    jpeg.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(jpegSource, null, metadata, null));
+                    var jpegPath = Path.Combine(fixture, "synthetic-oriented.jpg");
+                    using (var imageStream = File.Create(jpegPath)) jpeg.Save(imageStream);
+                    var oriented = ComparisonReportOptionsDialog.LoadPicture(jpegPath, "Synthetic");
+                    File.Delete(jpegPath);
+                    normalJpeg ??= oriented;
+                    var expected = RFiDGear.Builder.RfPrj.CardReportImageOrientation.Apply(normalJpeg, orientation);
+                    if (oriented.Width != expected.Width || oriented.Height != expected.Height || !oriented.Rgb.SequenceEqual(expected.Rgb))
+                        throw new InvalidOperationException($"JPEG-EXIF-Ausrichtung {orientation} wurde nicht korrekt übernommen.");
+                }
+                checks.Add("Kartenbilder: PNG-Farben und JPEG-Import ohne/mit allen acht EXIF-Ausrichtungen geprüft.");
+                if (reportOptions.Documentation is not null) throw new InvalidOperationException("Optionale Dokumentation ist unerwartet vorausgewählt.");
+                if (reportOptions.Detail != RFiDGear.Builder.RfPrj.CardReportDetail.Full) throw new InvalidOperationException("Vollbericht-Standard fehlt.");
+                ((StackPanel)reportOptions.Content).Children.OfType<RadioButton>().Last().IsChecked = true;
+                if (reportOptions.Detail != RFiDGear.Builder.RfPrj.CardReportDetail.Compact) throw new InvalidOperationException("Kompaktbericht nicht auswählbar.");
+                ((StackPanel)reportOptions.Content).Children.OfType<CheckBox>().Single().IsChecked = true;
+                if (reportOptions.Documentation is null || reportOptions.Documentation.HasContent) throw new InvalidOperationException("Leere Dokumentationsauswahl erzeugt unerwartete Inhalte.");
+                ((StackPanel)reportOptions.Content).Children.OfType<CheckBox>().Single().IsChecked = false;
+                if (reportOptions.Documentation is not null) throw new InvalidOperationException("Abgewählte Dokumentation bleibt aktiv.");
+                reportOptions.Close();
+                checks.Add("Inhaltsvergleich: Kartenwerteformular mit expliziter Profilvorbelegung initialisiert.");
+            }
+            finally { lastTestReportPath = previousReport; }
             var shells = TaskShellLibrary.Load(Path.Combine(AppContext.BaseDirectory, "assets", "task-shells"));
             BuildFixtureProject("UI-Bearbeitbar", Path.Combine(libraryRoot, "UI-Bearbeitbar.project.json"), libraryRoot, library, shells);
             BuildFixtureProject("UI-Artefakt", Path.Combine(externalSources, "UI-Artefakt.project.json"), libraryRoot, library, shells);
@@ -298,6 +532,29 @@ public partial class MainWindow
             VerifyOperatorUiContract(checks);
             VerifyOperationStartGate(checks);
             VerifySeriesUiFlows(checks);
+            RunAnalysis(ProjectJson.Load(editable.SourcePath), editable.SourcePath, Path.Combine(fixture, "analysis"));
+            var analyzed = lastAnalysisFiles!.Report;
+            if (AnalysisApplicationsGrid.Items.Count != analyzed.Applications.Count || analyzed.Applications.Count == 0)
+                throw new InvalidOperationException("Anwendungs- und Schlüsselkontext fehlen in der Expertenanalyse.");
+            foreach (var pair in new[] { (AnalysisMasteringGrid, analyzed.MasteringTasks), (AnalysisCodingGrid, analyzed.CodingTasks) })
+            {
+                var displayed = pair.Item1.Items.Cast<AnalysisTaskRow>().ToArray();
+                if (displayed.Length != pair.Item2.Count || displayed.Where((row, index) =>
+                    row.Settings != pair.Item2[index].Settings || row.FileContract != pair.Item2[index].FileContract ||
+                    row.Position != pair.Item2[index].Position).Any())
+                    throw new InvalidOperationException("Taskdetails verlieren Einstellungen, Reihenfolge oder Dateiverträge.");
+            }
+            checks.Add("Expertenanalyse: vollständiger Anwendungskontext und unveränderte Einstellungen/Dateiverträge aller geplanten Tasks verfügbar.");
+            var analyzedProject = ProjectJson.Load(editable.SourcePath);
+            var expectedFiles = library.Compose(analyzedProject.Profiles.Base, analyzedProject.Profiles.Customers).Applications
+                .SelectMany(app => app.Files.Select(file => (Aid: ProfileValidator.NormalizeAid(app.Id), File: file))).ToArray();
+            var displayedFiles = AnalysisFilesGrid.Items.Cast<AnalysisFileRow>().ToArray();
+            if (displayedFiles.Length != expectedFiles.Length || expectedFiles.Any(expected =>
+                !displayedFiles.Any(row => row.Aid == expected.Aid && row.File.StartsWith($"{expected.File.Id:D2} · ") &&
+                    row.Details == FileExpertDescription.FromFile(expected.File))))
+                throw new InvalidOperationException("Dateirechte oder Datenrezepte fehlen in der Expertenansicht.");
+            checks.Add("Expertenanalyse: Dateirechte, Erstellungseinstellungen und vollständige Datenrezepte stimmen mit den synthetischen Profilen überein.");
+            CaptureWorkspaceReview();
             UpdateLayout();
             InitializeAutomationContract();
             VerifyAutomationContract(this);
@@ -325,8 +582,10 @@ public partial class MainWindow
             var legacyReport = RunSelectedPreflight();
             if (legacyReport.Status != "OK" || !IsLegacyCompatibilityReport(legacyReport))
                 throw new InvalidOperationException("Kompatibler Altbuild wird durch das additive Erkennungsmodul vollständig gesperrt.");
+            var runtimeCanAutorun = File.Exists(settings.RFiDGear.ExecutablePath) &&
+                rfidgearCapabilities?.Has(RFiDGearCapabilityId.AutorunOnce) == true;
             if (!LoadStation(legacy) || StationRecognitionButton.IsEnabled || StationRecognitionButton.Visibility != Visibility.Collapsed ||
-                !StationPreflightTransportButton.IsEnabled || !StationLegacyTransportButton.IsEnabled ||
+                StationPreflightTransportButton.IsEnabled != runtimeCanAutorun || StationLegacyTransportButton.IsEnabled != runtimeCanAutorun ||
                 StationLegacyTransportButton.Visibility != Visibility.Visible || !StationPrepareButton.IsEnabled)
                 throw new InvalidOperationException("Kodierstation gibt beim Altbuild nicht exakt die vorhandenen sicheren Funktionen frei.");
             DisplayProjectPreflight(legacyReport);
@@ -341,6 +600,7 @@ public partial class MainWindow
             ProjectJson.Save(collisionPath, ProjectJson.WithoutProductiveSecrets(collisionProject));
             var collisionBefore = File.ReadAllBytes(collisionPath);
             LoadEditor(ProjectDraftFactory.Create(library, collisionName), "");
+            VerifyPiccFlagBindings(checks);
             var collisionRejected = false;
             try { SaveEditorProject(saveAs: false); }
             catch (InvalidOperationException exception) when (exception.Message.Contains("niemals still überschrieben", StringComparison.Ordinal)) { collisionRejected = true; }

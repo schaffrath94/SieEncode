@@ -1,0 +1,4136 @@
+{
+  "baseline": "41617c7ae104954b6ef7e9ac846002d62acb7832",
+  "scope": "XAML action/input surfaces, conventional C# UI handlers, dynamic event wiring, CLI commands and app startup switches; structural evidence only",
+  "controls": [
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Window",
+      "name": "",
+      "label": "",
+      "events": {
+        "Loaded": "Window_Loaded",
+        "Closing": "Window_Closing"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Button",
+      "name": "NavHomeButton",
+      "label": "Übersicht",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Home",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Button",
+      "name": "NavProjectsButton",
+      "label": "Projekte",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Projects",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Button",
+      "name": "NavStationButton",
+      "label": "Kodierstation",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Station",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Button",
+      "name": "NavTestStationButton",
+      "label": "Teststation",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "TestStation",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Button",
+      "name": "NavProfilesButton",
+      "label": "Profile verwalten",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Profiles",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Button",
+      "name": "NavHelpButton",
+      "label": "Hilfe",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Help",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Button",
+      "name": "NavSettingsButton",
+      "label": "Einstellungen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Settings",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Button",
+      "name": "BackButton",
+      "label": "← Zurück",
+      "events": {
+        "Click": "Back_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "ToggleButton",
+      "name": "ExpertModeToggle",
+      "label": "",
+      "events": {
+        "Checked": "ExpertMode_Changed",
+        "Unchecked": "ExpertMode_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "MainWindow.xaml",
+      "control": "Button",
+      "name": "TutorialButton",
+      "label": "Hilfe & Tour",
+      "events": {
+        "Click": "Tutorial_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHome",
+      "control": "Button",
+      "name": "",
+      "label": "Neues Projekt",
+      "events": {
+        "Click": "NewProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHome",
+      "control": "Button",
+      "name": "",
+      "label": "Projekt auswählen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Projects",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHome",
+      "control": "Button",
+      "name": "HomeAnalyzeCardButton",
+      "label": "Teststation öffnen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "TestStation",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHome",
+      "control": "Button",
+      "name": "HomeVaultButton",
+      "label": "Projekt und Vault prüfen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Editor",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHome",
+      "control": "Button",
+      "name": "",
+      "label": "Einstellungen und Integration",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Settings",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHome",
+      "control": "Button",
+      "name": "",
+      "label": "Kodierstation öffnen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Station",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestAnalyzeCardButton",
+      "label": "Transponder analysieren",
+      "events": {
+        "Click": "AnalyzeCardWithoutProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestDeepAnalyzeButton",
+      "label": "Application genauer untersuchen",
+      "events": {
+        "Click": "DeepAnalyzeApplication_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestOpenRecognitionResultButton",
+      "label": "Letzten Bericht öffnen",
+      "events": {
+        "Click": "OpenLatestTestReport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "TreeView",
+      "name": "TestAnalysisTree",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "",
+      "label": "Projekt wählen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Projects",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestProjectRecognitionButton",
+      "label": "Struktur mit Projekt vergleichen",
+      "events": {
+        "Click": "TestProjectRecognition_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestProjectTransportButton",
+      "label": "Projektfiles mit Ausgangskeys lesen",
+      "events": {
+        "Click": "TestProjectTransport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestProjectProductiveButton",
+      "label": "Projektfiles mit Produktivkeys lesen",
+      "events": {
+        "Click": "TestProjectProductive_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestProjectAcceptanceButton",
+      "label": "Application-Einstellungen prüfen",
+      "events": {
+        "Click": "TestProjectAcceptance_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestHardwarePlanButton",
+      "label": "Hardware-Abnahmeplan",
+      "events": {
+        "Click": "PrepareHardwareAcceptance_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "",
+      "label": "RFiDGear für Lesereinstellungen öffnen",
+      "events": {
+        "Click": "OpenRFiDGearSettings_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestRefreshOperationButton",
+      "label": "Laufstatus aktualisieren",
+      "events": {
+        "Click": "RefreshOperation_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestCloseRFiDGearButton",
+      "label": "RFiDGear-Prozess abschließen",
+      "events": {
+        "Click": "CloseRFiDGear_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Expander",
+      "name": "TestMaintenanceActions",
+      "label": "Wartung · verändert den Transponder",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageTestStation",
+      "control": "Button",
+      "name": "TestFormatCardButton",
+      "label": "Transponder formatieren …",
+      "events": {
+        "Click": "FormatCardWithoutProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "TextBox",
+      "name": "ProjectSearchText",
+      "label": "",
+      "events": {
+        "TextChanged": "ProjectSearch_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "",
+      "label": "Aktualisieren",
+      "events": {
+        "Click": "RefreshProjects_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "DataGrid",
+      "name": "ProjectsGrid",
+      "label": "",
+      "events": {
+        "SelectionChanged": "ProjectsGrid_SelectionChanged",
+        "MouseDoubleClick": "ProjectsGrid_MouseDoubleClick"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "",
+      "label": "Neues Projekt",
+      "events": {
+        "Click": "NewProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "ProjectEditButton",
+      "label": "Bearbeiten",
+      "events": {
+        "Click": "EditSelectedProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "ProjectValidationButton",
+      "label": "Projekt prüfen",
+      "events": {
+        "Click": "Preflight_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "ProjectOpenStationButton",
+      "label": "Projekt wählen",
+      "events": {
+        "Click": "LoadStation_Click"
+      },
+      "tag": "",
+      "automationId": "Page.Projects.OpenStationButton"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "",
+      "label": "In Teststation prüfen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "TestStation",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "ProjectOpenFolderButton",
+      "label": "Ordner öffnen",
+      "events": {
+        "Click": "OpenProjectFolder_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "DeleteProjectButton",
+      "label": "Projekt löschen …",
+      "events": {
+        "Click": "DeleteProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Expander",
+      "name": "ProjectAdvancedActions",
+      "label": "Weitere Projektaktionen · Experten",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "",
+      "label": "Details",
+      "events": {
+        "Click": "ProjectDetails_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "ImportLegacyButton",
+      "label": "Alte JSON-Konfiguration importieren",
+      "events": {
+        "Click": "ImportLegacyProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "",
+      "label": "Analyse / Dry-Run",
+      "events": {
+        "Click": "AnalyzeSelectedProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "QuickStartCodingButton",
+      "label": "Kodierstation und RFiDGear öffnen",
+      "events": {
+        "Click": "QuickStartCoding_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "DataGrid",
+      "name": "ProjectPreflightIssuesGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "ProjectPreflightRepairButton",
+      "label": "Projekt bearbeiten und neu bauen",
+      "events": {
+        "Click": "RepairProjectFromPreflight_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProjects",
+      "control": "Button",
+      "name": "",
+      "label": "Prüfung schließen",
+      "events": {
+        "Click": "CloseProjectPreflight_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "TextBox",
+      "name": "EditorProjectName",
+      "label": "",
+      "events": {
+        "TextChanged": "EditorControl_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "ComboBox",
+      "name": "EditorCardMode",
+      "label": "",
+      "events": {
+        "SelectionChanged": "EditorCardMode_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Expander",
+      "name": "EditorBuildSettings",
+      "label": "Technische Build-Einstellungen · Experten",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "TextBox",
+      "name": "EditorOutputDirectory",
+      "label": "",
+      "events": {
+        "TextChanged": "EditorControl_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "CheckBox",
+      "name": "EditorBuildMastering",
+      "label": "Mastering",
+      "events": {
+        "Checked": "EditorControl_Changed",
+        "Unchecked": "EditorControl_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "CheckBox",
+      "name": "EditorBuildCoding",
+      "label": "Kodierung",
+      "events": {
+        "Checked": "EditorControl_Changed",
+        "Unchecked": "EditorControl_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "ComboBox",
+      "name": "EditorBaseProfile",
+      "label": "",
+      "events": {
+        "SelectionChanged": "EditorProfileSelection_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "ListBox",
+      "name": "EditorCustomerProfiles",
+      "label": "",
+      "events": {
+        "SelectionChanged": "EditorProfileSelection_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorBindProfilesButton",
+      "label": "Aktuelle Profilstände verbindlich übernehmen",
+      "events": {
+        "Click": "BindCurrentProfiles_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "ItemsControl",
+      "name": "EditorProjectValues",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Expander",
+      "name": "EditorTransportSettings",
+      "label": "Grundkeys bearbeiten · Experteneinstellung",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "ComboBox",
+      "name": "EditorTransportPiccType",
+      "label": "",
+      "events": {
+        "SelectionChanged": "EditorInitialKeyControl_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "TextBox",
+      "name": "EditorTransportPiccKey",
+      "label": "",
+      "events": {
+        "TextChanged": "EditorInitialKeyControl_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "ItemsControl",
+      "name": "EditorTransportKeys",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "ComboBox",
+      "name": "EditorInitialKeySet",
+      "label": "",
+      "events": {
+        "SelectionChanged": "EditorInitialKeySet_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorAddInitialKeySetButton",
+      "label": "Aktuellen Satz hinzufügen",
+      "events": {
+        "Click": "AddInitialKeySet_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorDeleteInitialKeySetButton",
+      "label": "Satz löschen",
+      "events": {
+        "Click": "DeleteInitialKeySet_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorGenerateKeysButton",
+      "label": "Neue Schlüssel erzeugen",
+      "events": {
+        "Click": "GenerateProductiveKeys_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorUnlockVaultButton",
+      "label": "Vault entsperren",
+      "events": {
+        "Click": "UnlockVault_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorSaveVaultButton",
+      "label": "Einzelbenutzer-Vault speichern",
+      "events": {
+        "Click": "SaveVault_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorManageVaultAccessButton",
+      "label": "Mehrbenutzerzugriff einrichten",
+      "events": {
+        "Click": "ManageVaultAccess_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorAuditVaultButton",
+      "label": "Vault technisch prüfen",
+      "events": {
+        "Click": "AuditVault_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Expander",
+      "name": "EditorProductiveKeyDetails",
+      "label": "Schlüsselwerte anzeigen oder manuell prüfen",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "ComboBox",
+      "name": "EditorProductivePiccType",
+      "label": "",
+      "events": {
+        "SelectionChanged": "EditorProductiveControl_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "TextBox",
+      "name": "EditorProductivePiccKey",
+      "label": "",
+      "events": {
+        "TextChanged": "EditorProductiveControl_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "TextBox",
+      "name": "EditorPiccKeySettings",
+      "label": "",
+      "events": {
+        "TextChanged": "EditorProductiveControl_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "ItemsControl",
+      "name": "EditorProductiveKeys",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorSaveButton",
+      "label": "Zwischenspeichern",
+      "events": {
+        "Click": "SaveProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorBuildButton",
+      "label": "Projekt speichern, prüfen und bauen",
+      "events": {
+        "Click": "BuildProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "",
+      "label": "Projekt schließen",
+      "events": {
+        "Click": "CloseProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Expander",
+      "name": "EditorAdvancedActions",
+      "label": "Weitere Editoraktionen · Experten",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "",
+      "label": "Neues Projekt",
+      "events": {
+        "Click": "NewProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "",
+      "label": "Speichern unter",
+      "events": {
+        "Click": "SaveProjectAs_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageEditor",
+      "control": "Button",
+      "name": "EditorAnalyzeButton",
+      "label": "Sicherer Dry-Run",
+      "events": {
+        "Click": "AnalyzeEditorProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "",
+      "label": "Projekt wählen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Projects",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "",
+      "label": "Teststation öffnen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "TestStation",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationPreflightButton",
+      "label": "Projekt prüfen",
+      "events": {
+        "Click": "Preflight_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationProjectFolderButton",
+      "label": "Projektordner öffnen",
+      "events": {
+        "Click": "OpenProjectFolder_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationRecognitionButton",
+      "label": "Transponder erkennen",
+      "events": {
+        "Click": "CardRecognition_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationReadProjectContentButton",
+      "label": "Projektinhalt auslesen",
+      "events": {
+        "Click": "ReadProjectCardContent_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationLegacyTransportButton",
+      "label": "Altprojekt · Kartenstand prüfen",
+      "events": {
+        "Click": "CardPreflightTransport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationOpenRecognitionResultButton",
+      "label": "Erkennungsbericht öffnen",
+      "events": {
+        "Click": "OpenCardRecognitionResult_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Expander",
+      "name": "StationDetailedPreflight",
+      "label": "Vertiefte Projektprüfung · Experten",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationPreflightTransportButton",
+      "label": "Mit Transportdaten prüfen",
+      "events": {
+        "Click": "CardPreflightTransport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationPreflightProductiveButton",
+      "label": "Mit Produktivdaten prüfen",
+      "events": {
+        "Click": "CardPreflightProductive_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationOpenPreflightResultButton",
+      "label": "Prüfbericht öffnen",
+      "events": {
+        "Click": "OpenCardPreflightResult_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationMasteringAutoButton",
+      "label": "Transponder vorbereiten",
+      "events": {
+        "Click": "MasteringAuto_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Expander",
+      "name": "StationAdvancedCardActions",
+      "label": "Erweiterte Kartenaktionen · manuell, Abnahme und Recovery",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationMasteringManualButton",
+      "label": "Vorbereitung manuell öffnen",
+      "events": {
+        "Click": "MasteringManual_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationApplicationAcceptanceButton",
+      "label": "Anwendungen prüfen",
+      "events": {
+        "Click": "ApplicationAcceptance_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "HardwareAcceptancePlanButton",
+      "label": "Hardware-Abnahmeplan erzeugen",
+      "events": {
+        "Click": "PrepareHardwareAcceptance_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationRecoveryTransportButton",
+      "label": "Recovery · Transport-PICC",
+      "events": {
+        "Click": "RecoveryTransport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationRecoveryProductiveButton",
+      "label": "Recovery · Produktiv-PICC",
+      "events": {
+        "Click": "RecoveryProductive_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationExtensionRollbackButton",
+      "label": "Erweiterung gezielt zurücknehmen",
+      "events": {
+        "Click": "ExtensionRollback_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationRefreshOperationButton",
+      "label": "Laufstatus aus Log aktualisieren",
+      "events": {
+        "Click": "RefreshOperation_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationCloseRFiDGearButton",
+      "label": "RFiDGear-Prozess abschließen",
+      "events": {
+        "Click": "CloseRFiDGear_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Expander",
+      "name": "StationSeriesStep",
+      "label": "3 · Serienmodus (optional)",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "ComboBox",
+      "name": "StationMode",
+      "label": "",
+      "events": {
+        "SelectionChanged": "StationMode_SelectionChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "ComboBox",
+      "name": "StationSeriesField",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "TextBox",
+      "name": "StationSequenceValue",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "TextBox",
+      "name": "StationSequenceStep",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationLoadListButton",
+      "label": "TXT / CSV laden",
+      "events": {
+        "Click": "LoadStationList_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "ItemsControl",
+      "name": "StationFieldsControl",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationPrepareButton",
+      "label": "1 · Daten prüfen und bereitstellen (Enter)",
+      "events": {
+        "Click": "PrepareSession_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationStartAutoModeButton",
+      "label": "2 · Kodierung starten",
+      "events": {
+        "Click": "StartAutoMode_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationCheckReadbacksButton",
+      "label": "3 · Ergebnis jetzt prüfen (optional · F8)",
+      "events": {
+        "Click": "CheckReadbacks_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationOpenRFiDGearButton",
+      "label": "Manuell in RFiDGear öffnen",
+      "events": {
+        "Click": "OpenRFiDGear_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Expander",
+      "name": "StationCompletionStep",
+      "label": "5 · Abschluss und Sitzungsverlauf",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationMarkFailedButton",
+      "label": "Lauf als Fehler markieren (F9)",
+      "events": {
+        "Click": "MarkStationFailed_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationRetryButton",
+      "label": "Fehlernummer erneut versuchen",
+      "events": {
+        "Click": "RetryStation_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationSkipButton",
+      "label": "Fehlernummer überspringen",
+      "events": {
+        "Click": "SkipStation_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationExportButton",
+      "label": "Zusammenfassung / Sitzung schließen",
+      "events": {
+        "Click": "ExportStation_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "Button",
+      "name": "StationDiagnosticButton",
+      "label": "Diagnosepaket speichern",
+      "events": {
+        "Click": "ExportDiagnostic_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "DataGrid",
+      "name": "StationHistoryGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageStation",
+      "control": "DataGrid",
+      "name": "StationTaskOutcomesGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "ProfileNewBaseButton",
+      "label": "Neues Grundprofil",
+      "events": {
+        "Click": "NewBaseProfile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "ProfileImportBaseButton",
+      "label": "Aus JSON importieren",
+      "events": {
+        "Click": "ImportBaseProfile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "ProfileImportBaseRfPrjButton",
+      "label": "Aus rfPrj ableiten",
+      "events": {
+        "Click": "ImportBaseFromRfPrj_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "",
+      "label": "Grundprofilordner öffnen",
+      "events": {
+        "Click": "OpenBaseProfileFolder_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "ProfileNewButton",
+      "label": "Neues Zusatzprofil",
+      "events": {
+        "Click": "NewProfile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "ProfileImportButton",
+      "label": "Bestehendes rfPrj importieren",
+      "events": {
+        "Click": "ImportRfPrjProfile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "ProfileEditButton",
+      "label": "Ausgewähltes Profil bearbeiten",
+      "events": {
+        "Click": "EditProfile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "ProfileDuplicateButton",
+      "label": "Zusatzprofil duplizieren",
+      "events": {
+        "Click": "DuplicateProfile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "ProfileExportButton",
+      "label": "Kodiervorschrift exportieren",
+      "events": {
+        "Click": "ExportProfile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "ProfileHistoryButton",
+      "label": "Historie / Wiederherstellen",
+      "events": {
+        "Click": "ProfileHistory_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "",
+      "label": "Profile neu laden",
+      "events": {
+        "Click": "ReloadProfiles_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "",
+      "label": "Zusatzprofilordner öffnen",
+      "events": {
+        "Click": "OpenProfileFolder_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "Button",
+      "name": "",
+      "label": "Historienordner öffnen",
+      "events": {
+        "Click": "OpenProfileHistoryFolder_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageProfiles",
+      "control": "DataGrid",
+      "name": "ProfilesGrid",
+      "label": "",
+      "events": {
+        "SelectionChanged": "ProfilesGrid_SelectionChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "Button",
+      "name": "AnalysisEditorButton",
+      "label": "Aktuelles Editorprojekt analysieren",
+      "events": {
+        "Click": "AnalyzeEditorProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "Button",
+      "name": "AnalysisSelectedButton",
+      "label": "Ausgewähltes Projekt analysieren",
+      "events": {
+        "Click": "AnalyzeSelectedProject_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "Button",
+      "name": "",
+      "label": "Projektdatei wählen",
+      "events": {
+        "Click": "AnalyzeFile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "DataGrid",
+      "name": "AnalysisFilesGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "DataGrid",
+      "name": "AnalysisMasteringGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "DataGrid",
+      "name": "AnalysisCodingGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "DataGrid",
+      "name": "AnalysisIssuesGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "Button",
+      "name": "AnalysisExportPdfButton",
+      "label": "PDF-Kartenreport speichern",
+      "events": {
+        "Click": "ExportAnalysisPdf_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "Button",
+      "name": "AnalysisOpenReportButton",
+      "label": "Textbericht öffnen",
+      "events": {
+        "Click": "OpenAnalysisReport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAnalysis",
+      "control": "Button",
+      "name": "AnalysisOpenFolderButton",
+      "label": "Berichtsordner öffnen",
+      "events": {
+        "Click": "OpenAnalysisFolder_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "ComboBox",
+      "name": "DiffLeftProject",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "ComboBox",
+      "name": "DiffRightProject",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "Button",
+      "name": "",
+      "label": "Projekte vergleichen",
+      "events": {
+        "Click": "CompareProjects_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "Button",
+      "name": "",
+      "label": "Editor links / ausgewähltes Projekt rechts",
+      "events": {
+        "Click": "CompareEditorToSelected_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "ComboBox",
+      "name": "DiffLeftProfile",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "ComboBox",
+      "name": "DiffRightProfile",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "Button",
+      "name": "",
+      "label": "Profile vergleichen",
+      "events": {
+        "Click": "CompareProfiles_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "DataGrid",
+      "name": "DiffGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "Button",
+      "name": "DiffOpenReportButton",
+      "label": "Textbericht öffnen",
+      "events": {
+        "Click": "OpenDiffReport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageDiff",
+      "control": "Button",
+      "name": "DiffOpenFolderButton",
+      "label": "Berichtsordner öffnen",
+      "events": {
+        "Click": "OpenDiffFolder_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAcceptance",
+      "control": "Button",
+      "name": "",
+      "label": "Projekt auswählen",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Projects",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAcceptance",
+      "control": "Button",
+      "name": "",
+      "label": "Projekt prüfen",
+      "events": {
+        "Click": "Preflight_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAcceptance",
+      "control": "Button",
+      "name": "AcceptanceRunButton",
+      "label": "Prüfbericht erzeugen",
+      "events": {
+        "Click": "RunAcceptance_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAcceptance",
+      "control": "DataGrid",
+      "name": "AcceptanceGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAcceptance",
+      "control": "Button",
+      "name": "AcceptanceOpenReportButton",
+      "label": "Textbericht öffnen",
+      "events": {
+        "Click": "OpenAcceptanceReport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageAcceptance",
+      "control": "Button",
+      "name": "AcceptanceOpenFolderButton",
+      "label": "Berichtsordner öffnen",
+      "events": {
+        "Click": "OpenAcceptanceFolder_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Projekteditor",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Editor",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Projektanalyse",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Analysis",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Projekt-/Profilvergleich",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Diff",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Prüfung & Abnahme",
+      "events": {
+        "Click": "Navigate_Click"
+      },
+      "tag": "Acceptance",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Schnellstart",
+      "events": {
+        "Click": "OpenHelpDocument_Click"
+      },
+      "tag": "README.md",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Funktionsstand",
+      "events": {
+        "Click": "OpenHelpDocument_Click"
+      },
+      "tag": "PARITY.md",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Grundprofile",
+      "events": {
+        "Click": "OpenHelpDocument_Click"
+      },
+      "tag": "docs/GRUNDPROFILE.md",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Migration",
+      "events": {
+        "Click": "OpenHelpDocument_Click"
+      },
+      "tag": "MIGRATION.md",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Betrieb",
+      "events": {
+        "Click": "OpenHelpDocument_Click"
+      },
+      "tag": "RUNTIME.md",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Hardware-Testvertrag",
+      "events": {
+        "Click": "OpenHelpDocument_Click"
+      },
+      "tag": "docs/HARDWARE-ABNAHME.md",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "HelpHardwareAcceptanceButton",
+      "label": "Projektplan erzeugen",
+      "events": {
+        "Click": "PrepareHardwareAcceptance_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Projektbibliothek öffnen",
+      "events": {
+        "Click": "OpenHelpProjects_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Einstellungsordner öffnen",
+      "events": {
+        "Click": "OpenHelpSettings_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "RFiDGear-Logs öffnen",
+      "events": {
+        "Click": "OpenHelpLogs_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Programmfunktionen automatisch prüfen",
+      "events": {
+        "Click": "RunFunctionAudit_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "FunctionAuditOpenButton",
+      "label": "Funktionsbericht öffnen",
+      "events": {
+        "Click": "OpenFunctionAudit_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "DataGrid",
+      "name": "EnvironmentChecksGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "",
+      "label": "Umgebung jetzt prüfen",
+      "events": {
+        "Click": "RunEnvironmentCheck_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "EnvironmentOpenReportButton",
+      "label": "Textbericht öffnen",
+      "events": {
+        "Click": "OpenEnvironmentReport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageHelp",
+      "control": "Button",
+      "name": "EnvironmentOpenFolderButton",
+      "label": "Berichtsordner öffnen",
+      "events": {
+        "Click": "OpenEnvironmentFolder_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "TextBox",
+      "name": "ProjectsDirectoryText",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "",
+      "label": "Ordner wählen",
+      "events": {
+        "Click": "BrowseProjects_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "TextBox",
+      "name": "ProfilesDirectoryText",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "",
+      "label": "Ordner wählen",
+      "events": {
+        "Click": "BrowseProfiles_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "TextBox",
+      "name": "VaultBackupDirectoryText",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "",
+      "label": "Ändern",
+      "events": {
+        "Click": "BrowseVaultBackup_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "InitializeTeamVaultButton",
+      "label": "Vault-Ersteinrichtung starten",
+      "events": {
+        "Click": "InitializeTeamVault_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "ManageTeamVaultButton",
+      "label": "Teamzugriff verwalten",
+      "events": {
+        "Click": "ManageTeamVault_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "TextBox",
+      "name": "RFiDGearExecutableText",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "",
+      "label": "Datei wählen",
+      "events": {
+        "Click": "BrowseRFiDGear_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "UseBundledRuntimeButton",
+      "label": "Gebündelte SieEncode Runtime verwenden",
+      "events": {
+        "Click": "UseBundledRuntime_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Expander",
+      "name": "SettingsCapabilityDetails",
+      "label": "Technische Fähigkeitsmatrix · Experten",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "DataGrid",
+      "name": "RFiDGearCapabilitiesGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "OpenRFiDGearSettingsButton",
+      "label": "Reader-Einstellungen in RFiDGear öffnen",
+      "events": {
+        "Click": "OpenRFiDGearSettings_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "",
+      "label": "Einstellungen speichern",
+      "events": {
+        "Click": "SaveSettings_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml",
+      "container": "PageSettings",
+      "control": "Button",
+      "name": "",
+      "label": "Projektbibliothek neu laden",
+      "events": {
+        "Click": "RefreshProjects_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Window",
+      "name": "",
+      "label": "",
+      "events": {
+        "Closing": "Window_Closing"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "ProfileId",
+      "label": "",
+      "events": {
+        "TextChanged": "Dirty_TextChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "ProfileCode",
+      "label": "",
+      "events": {
+        "TextChanged": "Dirty_TextChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "ProfileVersion",
+      "label": "",
+      "events": {
+        "TextChanged": "Dirty_TextChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "ProfileName",
+      "label": "",
+      "events": {
+        "TextChanged": "Dirty_TextChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "ProfileDescription",
+      "label": "",
+      "events": {
+        "TextChanged": "Dirty_TextChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Prüfen",
+      "events": {
+        "Click": "Validate_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Speichern",
+      "events": {
+        "Click": "Save_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Schließen",
+      "events": {
+        "Click": "Close_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Neu",
+      "events": {
+        "Click": "NewVariable_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Löschen",
+      "events": {
+        "Click": "DeleteVariable_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "DataGrid",
+      "name": "VariablesGrid",
+      "label": "",
+      "events": {
+        "SelectionChanged": "VariableSelectionChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "VariableId",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "VariableLabel",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "ComboBox",
+      "name": "VariableScope",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "ComboBox",
+      "name": "VariableType",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "VariableLength",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "VariableAllowed",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "VariableMin",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "VariableMax",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "VariableDefault",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Variable übernehmen",
+      "events": {
+        "Click": "ApplyVariable_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Application neu",
+      "events": {
+        "Click": "NewApplication_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Application löschen",
+      "events": {
+        "Click": "DeleteApplication_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "DataGrid",
+      "name": "ApplicationsGrid",
+      "label": "",
+      "events": {
+        "SelectionChanged": "ApplicationSelectionChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "ApplicationId",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "ApplicationName",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "ComboBox",
+      "name": "ApplicationKeyType",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "ApplicationKeyCount",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "ComboBox",
+      "name": "ApplicationChangeMode",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Application übernehmen",
+      "events": {
+        "Click": "ApplyApplication_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Datei neu",
+      "events": {
+        "Click": "NewFile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Datei löschen",
+      "events": {
+        "Click": "DeleteFile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "DataGrid",
+      "name": "FilesGrid",
+      "label": "",
+      "events": {
+        "SelectionChanged": "FileSelectionChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "FileId",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "FileNameText",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "ComboBox",
+      "name": "FileType",
+      "label": "",
+      "events": {
+        "SelectionChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "FileSize",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "ComboBox",
+      "name": "FileCommunication",
+      "label": "",
+      "events": {
+        "SelectionChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "FileRead",
+      "label": "",
+      "events": {
+        "TextChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "FileWrite",
+      "label": "",
+      "events": {
+        "TextChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "FileReadWrite",
+      "label": "",
+      "events": {
+        "TextChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "FileChange",
+      "label": "",
+      "events": {
+        "TextChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "CheckBox",
+      "name": "FileHasCreation",
+      "label": "Abweichende initiale FileSettings für Mastering verwenden (erzeugt ChangeFileSettings)",
+      "events": {
+        "Checked": "FileHasCreationChanged",
+        "Unchecked": "FileHasCreationChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Finale Einstellungen als Ausgangspunkt übernehmen",
+      "events": {
+        "Click": "CopyFinalToCreation_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "ComboBox",
+      "name": "CreationCommunication",
+      "label": "",
+      "events": {
+        "SelectionChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "CreationRead",
+      "label": "",
+      "events": {
+        "TextChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "CreationWrite",
+      "label": "",
+      "events": {
+        "TextChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "CreationReadWrite",
+      "label": "",
+      "events": {
+        "TextChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "CreationChange",
+      "label": "",
+      "events": {
+        "TextChanged": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "CheckBox",
+      "name": "FileZeroFill",
+      "label": "Beim Mastering mit Nullen initialisieren",
+      "events": {
+        "Checked": "FileSettingsPreviewChanged",
+        "Unchecked": "FileSettingsPreviewChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "FileCodingOutput",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Datei übernehmen",
+      "events": {
+        "Click": "ApplyFile_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Baustein neu",
+      "events": {
+        "Click": "NewRecipe_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Löschen",
+      "events": {
+        "Click": "DeleteRecipe_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Nach oben",
+      "events": {
+        "Click": "RecipeUp_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Nach unten",
+      "events": {
+        "Click": "RecipeDown_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "DataGrid",
+      "name": "RecipeGrid",
+      "label": "",
+      "events": {
+        "SelectionChanged": "RecipeSelectionChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "RecipeBytePreview",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "ComboBox",
+      "name": "RecipeOperation",
+      "label": "",
+      "events": {
+        "SelectionChanged": "RecipeOperationChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "ComboBox",
+      "name": "RecipeSource",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "RecipeValue",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "RecipeWidth",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "RecipePadLeft",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "TextBox",
+      "name": "RecipePadRight",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml",
+      "container": "ProfileEditorWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Baustein übernehmen",
+      "events": {
+        "Click": "ApplyRecipe_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml",
+      "container": "ProfileHistoryWindow.xaml",
+      "control": "DataGrid",
+      "name": "HistoryGrid",
+      "label": "",
+      "events": {
+        "SelectionChanged": "HistoryGrid_SelectionChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml",
+      "container": "ProfileHistoryWindow.xaml",
+      "control": "DataGrid",
+      "name": "DiffGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml",
+      "container": "ProfileHistoryWindow.xaml",
+      "control": "TextBox",
+      "name": "NewVersion",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml",
+      "container": "ProfileHistoryWindow.xaml",
+      "control": "Button",
+      "name": "RestoreButton",
+      "label": "Als neue Version wiederherstellen",
+      "events": {
+        "Click": "Restore_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml",
+      "container": "ProfileHistoryWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Schließen",
+      "events": {
+        "Click": "Close_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "DataGrid",
+      "name": "ApplicationsGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "DataGrid",
+      "name": "IssuesGrid",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "TextBox",
+      "name": "ProposalId",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "TextBox",
+      "name": "ProposalCode",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "TextBox",
+      "name": "ProposalVersion",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "TextBox",
+      "name": "ProposalName",
+      "label": "",
+      "events": {},
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Importbericht öffnen",
+      "events": {
+        "Click": "OpenReport_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "CheckBox",
+      "name": "ReviewAcknowledgement",
+      "label": "Befunde gelesen; fehlende Kodierrezepte werden im Profil-Editor bewusst geprüft",
+      "events": {
+        "Checked": "ReviewAcknowledgement_Changed",
+        "Unchecked": "ReviewAcknowledgement_Changed"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "Button",
+      "name": "CreateProposalButton",
+      "label": "Auswahl im Profil-Editor prüfen",
+      "events": {
+        "Click": "CreateProposal_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml",
+      "container": "RfPrjImportWindow.xaml",
+      "control": "Button",
+      "name": "",
+      "label": "Abbrechen",
+      "events": {
+        "Click": "Close_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TutorialWindow.xaml",
+      "container": "TutorialWindow.xaml",
+      "control": "ListBox",
+      "name": "StepsList",
+      "label": "",
+      "events": {
+        "SelectionChanged": "StepsList_SelectionChanged"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TutorialWindow.xaml",
+      "container": "TutorialWindow.xaml",
+      "control": "Button",
+      "name": "OpenAreaButton",
+      "label": "Diesen Bereich öffnen",
+      "events": {
+        "Click": "OpenArea_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TutorialWindow.xaml",
+      "container": "TutorialWindow.xaml",
+      "control": "Button",
+      "name": "PreviousButton",
+      "label": "Zurück",
+      "events": {
+        "Click": "Previous_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TutorialWindow.xaml",
+      "container": "TutorialWindow.xaml",
+      "control": "Button",
+      "name": "NextButton",
+      "label": "Weiter",
+      "events": {
+        "Click": "Next_Click"
+      },
+      "tag": "",
+      "automationId": ""
+    }
+  ],
+  "dynamicEventBindings": [
+    {
+      "file": "src/RFiDGear.Builder.App/ApplicationInspectionDialog.cs",
+      "line": 45,
+      "binding": "var cancel = new Button { Content = \"Abbrechen\", MinWidth = 100, Margin = new Thickness(4) }; cancel.Click += (_, _) => DialogResult = false;"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ApplicationInspectionDialog.cs",
+      "line": 46,
+      "binding": "var start = new Button { Content = \"Nur-Lese-Analyse starten\", MinWidth = 190, Margin = new Thickness(4), FontWeight = FontWeights.SemiBold }; start.Click += (_, _) => Confirm();"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 2044,
+      "binding": "checkBox.Checked += EditorProductiveControl_Changed;"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 2045,
+      "binding": "checkBox.Unchecked += EditorProductiveControl_Changed;"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 1120,
+      "binding": "ok.Click += (_, _) =>"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TeamVaultWindow.cs",
+      "line": 30,
+      "binding": "identityList.SelectionChanged += (_, _) => UpdateStatus();"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TeamVaultWindow.cs",
+      "line": 31,
+      "binding": "recipientList.SelectionChanged += (_, _) => UpdateStatus();"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TeamVaultWindow.cs",
+      "line": 88,
+      "binding": "var button = new Button { Content = text }; button.Click += click;"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TransponderFormatDialog.cs",
+      "line": 40,
+      "binding": "cancel.Click += (_, _) => DialogResult = false;"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TransponderFormatDialog.cs",
+      "line": 42,
+      "binding": "confirm.Click += (_, _) => Confirm();"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/VaultAccessWindow.cs",
+      "line": 79,
+      "binding": "private static Button Button(string text, RoutedEventHandler click) { var button = new Button { Content = text }; button.Click += click; return button; }"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/VaultAccessWindow.cs",
+      "line": 156,
+      "binding": "ok.Click += (_, _) => { if (!string.IsNullOrWhiteSpace(input.Text)) dialog.DialogResult = true; };"
+    }
+  ],
+  "uiHandlers": [
+    {
+      "file": "src/RFiDGear.Builder.App/AcceptancePage.cs",
+      "line": 25,
+      "method": "RunAcceptance_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/AcceptancePage.cs",
+      "line": 59,
+      "method": "OpenAcceptanceReport_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/AcceptancePage.cs",
+      "line": 69,
+      "method": "OpenAcceptanceFolder_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/AnalysisPage.cs",
+      "line": 15,
+      "method": "AnalyzeSelectedProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/AnalysisPage.cs",
+      "line": 34,
+      "method": "AnalyzeEditorProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/AnalysisPage.cs",
+      "line": 50,
+      "method": "AnalyzeFile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/AnalysisPage.cs",
+      "line": 105,
+      "method": "OpenAnalysisReport_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/AnalysisPage.cs",
+      "line": 115,
+      "method": "OpenAnalysisFolder_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/AnalysisPage.cs",
+      "line": 125,
+      "method": "ExportAnalysisPdf_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/CodingQuickStartPage.cs",
+      "line": 11,
+      "method": "QuickStartCoding_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/DiffPage.cs",
+      "line": 30,
+      "method": "CompareProjects_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/DiffPage.cs",
+      "line": 42,
+      "method": "CompareProfiles_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/DiffPage.cs",
+      "line": 55,
+      "method": "CompareEditorToSelected_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/DiffPage.cs",
+      "line": 97,
+      "method": "OpenDiffReport_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/DiffPage.cs",
+      "line": 107,
+      "method": "OpenDiffFolder_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HardwareAcceptancePage.cs",
+      "line": 10,
+      "method": "PrepareHardwareAcceptance_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "line": 12,
+      "method": "RunEnvironmentCheck_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "line": 42,
+      "method": "OpenHelpDocument_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "line": 52,
+      "method": "OpenHelpProjects_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "line": 53,
+      "method": "OpenHelpSettings_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "line": 54,
+      "method": "OpenHelpLogs_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "line": 55,
+      "method": "OpenEnvironmentReport_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "line": 56,
+      "method": "OpenEnvironmentFolder_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "line": 58,
+      "method": "RunFunctionAudit_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/HelpPage.cs",
+      "line": 85,
+      "method": "OpenFunctionAudit_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 206,
+      "method": "Navigate_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 220,
+      "method": "ExpertMode_Changed"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 374,
+      "method": "Back_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 380,
+      "method": "RefreshProjects_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 386,
+      "method": "ProjectSearch_Changed"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 415,
+      "method": "ProjectsGrid_SelectionChanged"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 492,
+      "method": "ProjectsGrid_MouseDoubleClick"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 498,
+      "method": "ProjectDetails_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 511,
+      "method": "LoadStation_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 720,
+      "method": "MasteringManual_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 721,
+      "method": "MasteringAuto_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 722,
+      "method": "CardPreflightTransport_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 723,
+      "method": "CardRecognition_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 724,
+      "method": "ReadProjectCardContent_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 738,
+      "method": "AnalyzeCardWithoutProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 740,
+      "method": "TestProjectRecognition_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 746,
+      "method": "TestProjectTransport_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 752,
+      "method": "TestProjectProductive_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 758,
+      "method": "TestProjectAcceptance_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 773,
+      "method": "DeepAnalyzeApplication_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 824,
+      "method": "FormatCardWithoutProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 873,
+      "method": "CardPreflightProductive_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 874,
+      "method": "ApplicationAcceptance_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 875,
+      "method": "RecoveryTransport_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 876,
+      "method": "RecoveryProductive_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 877,
+      "method": "ExtensionRollback_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1032,
+      "method": "RefreshOperation_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1038,
+      "method": "CloseRFiDGear_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1273,
+      "method": "OpenCardPreflightResult_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1283,
+      "method": "OpenCardRecognitionResult_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1294,
+      "method": "OpenLatestTestReport_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1335,
+      "method": "StationMode_SelectionChanged"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1346,
+      "method": "LoadStationList_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1406,
+      "method": "PrepareSession_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1468,
+      "method": "Preflight_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1573,
+      "method": "RepairProjectFromPreflight_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1579,
+      "method": "CloseProjectPreflight_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1582,
+      "method": "OpenRFiDGear_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1585,
+      "method": "StartAutoMode_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1637,
+      "method": "CheckReadbacks_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1759,
+      "method": "MarkStationFailed_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1770,
+      "method": "RetryStation_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1785,
+      "method": "SkipStation_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1851,
+      "method": "ExportStation_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1881,
+      "method": "ExportDiagnostic_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1902,
+      "method": "OpenProjectFolder_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1915,
+      "method": "BrowseProjects_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1921,
+      "method": "BrowseProfiles_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1928,
+      "method": "BrowseVaultBackup_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1935,
+      "method": "InitializeTeamVault_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 1937,
+      "method": "ManageTeamVault_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 2006,
+      "method": "BrowseRFiDGear_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 2013,
+      "method": "UseBundledRuntime_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 2026,
+      "method": "OpenRFiDGearSettings_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/MainWindow.xaml.cs",
+      "line": 2066,
+      "method": "SaveSettings_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 127,
+      "method": "NewVariable_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 135,
+      "method": "ApplyVariable_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 155,
+      "method": "DeleteVariable_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 180,
+      "method": "NewApplication_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 189,
+      "method": "ApplyApplication_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 206,
+      "method": "DeleteApplication_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 233,
+      "method": "CopyFinalToCreation_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 280,
+      "method": "NewFile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 289,
+      "method": "ApplyFile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 308,
+      "method": "DeleteFile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 322,
+      "method": "NewRecipe_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 329,
+      "method": "ApplyRecipe_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 345,
+      "method": "DeleteRecipe_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 353,
+      "method": "RecipeUp_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 354,
+      "method": "RecipeDown_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 387,
+      "method": "Validate_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 399,
+      "method": "Save_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileEditorWindow.xaml.cs",
+      "line": 423,
+      "method": "Close_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml.cs",
+      "line": 42,
+      "method": "HistoryGrid_SelectionChanged"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml.cs",
+      "line": 61,
+      "method": "Restore_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileHistoryWindow.xaml.cs",
+      "line": 81,
+      "method": "Close_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 14,
+      "method": "ProfilesGrid_SelectionChanged"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 23,
+      "method": "NewProfile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 26,
+      "method": "NewBaseProfile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 29,
+      "method": "ImportBaseProfile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 60,
+      "method": "ImportRfPrjProfile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 87,
+      "method": "ImportBaseFromRfPrj_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 124,
+      "method": "EditProfile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 135,
+      "method": "DuplicateProfile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 149,
+      "method": "ExportProfile_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 186,
+      "method": "ProfileHistory_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 203,
+      "method": "ReloadProfiles_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 221,
+      "method": "OpenProfileFolder_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 231,
+      "method": "OpenBaseProfileFolder_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProfileManagement.cs",
+      "line": 241,
+      "method": "OpenProfileHistoryFolder_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectDeletionPage.cs",
+      "line": 9,
+      "method": "DeleteProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 44,
+      "method": "EditSelectedProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 56,
+      "method": "ImportLegacyProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 102,
+      "method": "NewProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 234,
+      "method": "EditorCardMode_Changed"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 258,
+      "method": "EditorProfileSelection_Changed"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 279,
+      "method": "BindCurrentProfiles_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 328,
+      "method": "EditorControl_Changed"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 338,
+      "method": "EditorInitialKeyControl_Changed"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 365,
+      "method": "EditorInitialKeySet_Changed"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 388,
+      "method": "AddInitialKeySet_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 417,
+      "method": "DeleteInitialKeySet_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 444,
+      "method": "EditorProductiveControl_Changed"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 599,
+      "method": "SaveProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 605,
+      "method": "SaveProjectAs_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 664,
+      "method": "GenerateProductiveKeys_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 698,
+      "method": "UnlockVault_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 801,
+      "method": "SaveVault_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 847,
+      "method": "ManageVaultAccess_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 876,
+      "method": "AuditVault_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 908,
+      "method": "BuildProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/ProjectEditor.cs",
+      "line": 955,
+      "method": "CloseProject_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml.cs",
+      "line": 49,
+      "method": "ReviewAcknowledgement_Changed"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml.cs",
+      "line": 52,
+      "method": "CreateProposal_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml.cs",
+      "line": 69,
+      "method": "OpenReport_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/RfPrjImportWindow.xaml.cs",
+      "line": 75,
+      "method": "Close_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TutorialPage.cs",
+      "line": 7,
+      "method": "Tutorial_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TutorialWindow.xaml.cs",
+      "line": 34,
+      "method": "StepsList_SelectionChanged"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TutorialWindow.xaml.cs",
+      "line": 35,
+      "method": "Previous_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TutorialWindow.xaml.cs",
+      "line": 36,
+      "method": "Next_Click"
+    },
+    {
+      "file": "src/RFiDGear.Builder.App/TutorialWindow.xaml.cs",
+      "line": 37,
+      "method": "OpenArea_Click"
+    }
+  ],
+  "cliCommands": [
+    "validate-project",
+    "sanitize-project",
+    "generate-key",
+    "inspect-rfprj",
+    "migrate-acceptance-project",
+    "build-support-projects",
+    "build-main-projects",
+    "build-contract-artifacts",
+    "preflight-output",
+    "preflight-operational",
+    "preflight-artifacts",
+    "export-task-map",
+    "export-coding-specification",
+    "export-card-report-pdf",
+    "inspect-rfidgear-version",
+    "inspect-rfidgear-capabilities",
+    "snapshot-rfidgear-log",
+    "diagnose-rfidgear-log",
+    "compare-rfprj",
+    "acceptance-report",
+    "card-preflight-evaluate",
+    "test-compatibility-matrix",
+    "build-payloads",
+    "vault-protect",
+    "vault-unprotect",
+    "audit-project-vault"
+  ],
+  "startupSwitches": [
+    "--hardware-smoke-test",
+    "--productive",
+    "--self-test",
+    "--station",
+    "--teststation-hardware-acceptance",
+    "--ui-smoke-test"
+  ]
+}

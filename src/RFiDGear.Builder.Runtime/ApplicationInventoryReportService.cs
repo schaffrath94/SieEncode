@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using RFiDGear.Builder.RfPrj;
 
 namespace RFiDGear.Builder.Runtime;
 
@@ -34,8 +35,10 @@ public sealed class ApplicationInventoryReportService
         {
             foreach (var file in files.EnumerateArray())
             {
+                var evidence = FileInventoryEvidence.FromRuntime(file);
                 builder.AppendLine($"File {Value(file, "fileId", "?")} · {Value(file, "fileType", "Typ unbekannt")} · {Value(file, "declaredSize", "Größe unbekannt")} Byte")
                     .AppendLine($"  Kommunikation: {Value(file, "communicationMode", "unbekannt")} · Metadaten: {Value(file, "metadataResult", "unbekannt")} · Inhalt: {Value(file, "contentResult", "nicht versucht")}");
+                builder.AppendLine("  Lesenachweis: " + evidence.Description);
                 if (file.TryGetProperty("access", out var access)) builder.AppendLine($"  Rechte: Lesen Key {Value(access, "read", "?")} · Schreiben Key {Value(access, "write", "?")} · Lesen/Schreiben Key {Value(access, "readWrite", "?")} · Ändern Key {Value(access, "change", "?")}");
                 if (file.TryGetProperty("hex", out var hex) && hex.ValueKind == JsonValueKind.String)
                 {
@@ -50,6 +53,9 @@ public sealed class ApplicationInventoryReportService
         var textPath = Path.Combine(reportDirectory, "application-inventory.result.txt");
         var jsonPath = Path.Combine(reportDirectory, "application-inventory.result.json");
         File.WriteAllText(textPath, builder.ToString()); File.Copy(source, jsonPath, true);
+        var pdfPath = Path.Combine(reportDirectory, "application-inventory.result.pdf");
+        new CardReportPdfService().Save(new InventoryCardReportFactory().Create(top, source), pdfPath);
+        File.AppendAllText(textPath, Environment.NewLine + "PDF-Istreport: " + pdfPath + Environment.NewLine);
         return new(textPath, jsonPath, count is int known
             ? $"AID {aid}: {known} File(s), {readable} Inhalt(e) lesbar; Authentisierung {auth}."
             : $"AID {aid}: File-Inventur nicht vollständig möglich; Authentisierung {auth}. Nicht als leer bewerten.");

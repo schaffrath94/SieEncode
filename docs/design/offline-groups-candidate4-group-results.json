@@ -1,0 +1,272 @@
+{
+  "Status": "PASS",
+  "RecordedOn": "2026-11-07",
+  "Candidate": "1.3.0-offline-groups.4",
+  "ProductHashes": {
+    "SieEncode.dll": "85B3BDB2D4261E3740EA8DA1AB7FA979F52121004400B1232BCE2207DA3C9B33",
+    "RFiDGear.Builder.Core.dll": "7FDDD4F9D453CD3CE7222738C023D7160C8F1E344CDE43A6E4CFF98249D1EDC5"
+  },
+  "PhaseCount": 22,
+  "WindowsProfiles": [
+    "testerA",
+    "testerB"
+  ],
+  "TemporaryCredentialsRemoved": true,
+  "HarnessRuntime": "8.0.30 reused existing self-contained test host",
+  "InstalledApplicationRuntime": "8.0.32",
+  "HarnessSourceSHA256": "9C59290737BF1E968FDF9C069C8BF7B98C8D2EED41B33BEE059C3E260FF3C5F6",
+  "HarnessDllSHA256": "A1B23CC9F115CA91CDFC7471BA2449E25A2E296A243FC7C57D3F1845694ED399",
+  "LauncherSHA256": "F1B8C03BCE3ED41FF3817050FC23755834379CD018A16E00DFC5780E93F6A93D",
+  "LogSHA256": "39CC688A189DAE3BA7293C90EBFC1AEE9CF6477460808F79F0AF384C65F67954",
+  "Limits": [
+    "Installed product API integration; no native dialog acceptance",
+    "Fresh synthetic library and projects; historical fixtures unchanged",
+    "Two Windows users on one VM, not two machines",
+    "Recovery reopened in separate processes; no new reboot test",
+    "No hardware actions or release completion"
+  ],
+  "Results": [
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "delegate-approve-revoke",
+      "Checks": [
+        "A authorized proposal; other group and recovery unchanged; replay rejected without mutation; authority revoked"
+      ],
+      "At": "2026-11-07T02:11:47.443728+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "delegate-grant",
+      "Checks": [
+        "A restored actual administration store and granted B authority only for Lokal"
+      ],
+      "At": "2026-11-07T02:11:44.7877041+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "identity",
+      "Checks": [
+        "Product Windows identity created in CurrentUser store; public invitation exported"
+      ],
+      "At": "2026-11-07T02:11:20.3589366+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "project-create",
+      "Checks": [
+        "Full project published and reopened; new ID; source preserved; complete key payload preserved; public PICC key blank"
+      ],
+      "At": "2026-11-07T02:11:35.0473219+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "project-regrant",
+      "Checks": [
+        "B regranted at revision 3; complete project vault reconciled for access"
+      ],
+      "At": "2026-11-07T02:11:37.5361627+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "project-reopen",
+      "Checks": [
+        "A reopened B copy in new process; complete payload equal; forged project ID rejected"
+      ],
+      "At": "2026-11-07T02:11:40.3082482+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "recovery-install",
+      "Checks": [
+        "Actual product InstallRecovery persisted private key in Windows CurrentUser store"
+      ],
+      "At": "2026-11-07T02:11:32.2631191+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "recovery-reopen",
+      "Checks": [
+        "Separate process reopened persisted recovery key, decrypted explicitly; normal member access denied"
+      ],
+      "At": "2026-11-07T02:11:33.4827007+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "rotate",
+      "Checks": [
+        "Product reconciliation removed B, rotated vault, preserved identical encrypted backup; owner still decrypts"
+      ],
+      "At": "2026-11-07T02:11:29.2838836+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "setup",
+      "Checks": [
+        "Persistent owner identity reopened; both group vaults created and decrypted; separate recovery backup created"
+      ],
+      "At": "2026-11-07T02:11:26.3089481+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "successor-accept",
+      "Checks": [
+        "A accepted successor update; old root update rejected; existing member and separate recovery access retained"
+      ],
+      "At": "2026-11-07T02:11:55.7841236+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "successor-authorize",
+      "Checks": [
+        "Wrong successor fingerprint denied; A authorized public transition without silently switching trust"
+      ],
+      "At": "2026-11-07T02:11:52.2513253+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "access",
+      "Checks": [
+        "B allowed Lokal, denied Lokal2, created and reopened own group vault; private offline copy cached"
+      ],
+      "At": "2026-11-07T02:11:27.8618955+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "delegate-invite",
+      "Checks": [
+        "B created separate persisted DPAPI signing identity and public delegation invitation"
+      ],
+      "At": "2026-11-07T02:11:41.8590727+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "delegate-propose",
+      "Checks": [
+        "B signing identity survived new process; out-of-scope Lokal2 denied, Lokal proposal signed"
+      ],
+      "At": "2026-11-07T02:11:46.0362772+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "delegate-revoked",
+      "Checks": [
+        "Revoked B signing rejected with existing identity preserved; successor prepared with private backup and public request"
+      ],
+      "At": "2026-11-07T02:11:51.0602636+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "identity",
+      "Checks": [
+        "Product Windows identity created in CurrentUser store; public invitation exported"
+      ],
+      "At": "2026-11-07T02:11:22.0593606+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "project-copy",
+      "Checks": [
+        "Reauthorized B opened and copied full project; distinct ID; complete key payload and original files preserved"
+      ],
+      "At": "2026-11-07T02:11:39.1358564+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "project-denied",
+      "Checks": [
+        "Removed member cannot open or copy complete project; no unauthorized output directory"
+      ],
+      "At": "2026-11-07T02:11:36.2285229+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "revoked",
+      "Checks": [
+        "New process reads old local copy with old cached trust; new policy denies current vault; rollback denied"
+      ],
+      "At": "2026-11-07T02:11:30.5230581+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "successor-activate",
+      "Checks": [
+        "B imported authorized transition and activated DPAPI-protected successor administrator"
+      ],
+      "At": "2026-11-07T02:11:53.3561416+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "successor-sign",
+      "Checks": [
+        "New process reopened successor signing key, published update, retained normal project access"
+      ],
+      "At": "2026-11-07T02:11:54.5421597+01:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    }
+  ]
+}

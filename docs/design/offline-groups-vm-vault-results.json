@@ -1,0 +1,111 @@
+{
+  "Status": "PASS",
+  "RetrievedOn": "2026-10-26",
+  "Candidate": "1.3.0-offline-groups.1",
+  "Vm": "SieEncode-Testlab-LTSC",
+  "ProductHashes": {
+    "SieEncode.dll": "81F79933C67CC007B63A0A8C14F4E7AB939FBA0EDF369C4BADE07D807EBB0F38",
+    "RFiDGear.Builder.Core.dll": "53B6870875DA9F1BBEAF9C8021D020413205F02D836B8A741267F424DF352B3F"
+  },
+  "HarnessRuntime": "8.0.30",
+  "InstalledApplicationRuntime": "8.0.32",
+  "HarnessSourceSHA256": "5D70A9EB2DB9CD2422B4B1C8427D26730A8F7446C39DFFAB8076E26063BA7ABC",
+  "LauncherSHA256": "1EF8B677048763692F6F90B037097FF237057ABCBABAE2EC741E681F0F6DCEC8",
+  "Limits": [
+    "Product API integration, not native UI acceptance",
+    "Synthetic trust fingerprint supplied by harness",
+    "Local shared directory on one VM; not SMB or cloud sync",
+    "Local cached vault read in a new process; shared directory not made unavailable",
+    "No delegation, administrator succession, full project copy, hardware or post-OS-reboot recovery test"
+  ],
+  "Results": [
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "identity",
+      "Checks": [
+        "Product Windows identity created in CurrentUser store; public invitation exported"
+      ],
+      "At": "2026-10-24T23:06:01.0363888+02:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "recovery-install",
+      "Checks": [
+        "Actual product InstallRecovery persisted private key in Windows CurrentUser store"
+      ],
+      "At": "2026-10-24T23:06:17.8979216+02:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "recovery-reopen",
+      "Checks": [
+        "Separate process reopened persisted recovery key, decrypted explicitly; normal member access denied"
+      ],
+      "At": "2026-10-24T23:06:19.04117+02:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "rotate",
+      "Checks": [
+        "Product reconciliation removed B, rotated vault, preserved identical encrypted backup; owner still decrypts"
+      ],
+      "At": "2026-10-24T23:06:14.4861291+02:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testera",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1001",
+      "Phase": "setup",
+      "Checks": [
+        "Persistent owner identity reopened; both group vaults created and decrypted; separate recovery backup created"
+      ],
+      "At": "2026-10-24T23:06:11.4287828+02:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "access",
+      "Checks": [
+        "B allowed Lokal, denied Lokal2, created and reopened own group vault; private offline copy cached"
+      ],
+      "At": "2026-10-24T23:06:12.9316666+02:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "identity",
+      "Checks": [
+        "Product Windows identity created in CurrentUser store; public invitation exported"
+      ],
+      "At": "2026-10-24T23:06:04.1355969+02:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    },
+    {
+      "Status": "PASS",
+      "User": "testerb",
+      "Sid": "S-1-5-21-1594934276-99461846-2217650239-1002",
+      "Phase": "revoked",
+      "Checks": [
+        "New process reads old local copy with old cached trust; new policy denies current vault; rollback denied"
+      ],
+      "At": "2026-10-24T23:06:15.7453189+02:00",
+      "Scope": "Product API integration with installed binaries; no native dialog acceptance; synthetic trust fingerprint supplied by harness"
+    }
+  ]
+}

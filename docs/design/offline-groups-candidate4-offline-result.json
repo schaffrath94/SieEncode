@@ -1,0 +1,32 @@
+{
+  "Date": "2026-11-07",
+  "Candidate": "1.3.0-offline-groups.4",
+  "ProductHashes": {
+    "SieEncode.dll": "85B3BDB2D4261E3740EA8DA1AB7FA979F52121004400B1232BCE2207DA3C9B33",
+    "RFiDGear.Builder.Core.dll": "7FDDD4F9D453CD3CE7222738C023D7160C8F1E344CDE43A6E4CFF98249D1EDC5"
+  },
+  "VirtualNetwork": "Adapter 1 NAT cable disconnected before and after; adapters 2-8 disabled",
+  "NetworkConfigurationChanged": false,
+  "TemporaryCredentialsRemoved": true,
+  "SourceSHA256": "CF5D6837D8C44C2ABB9FC604114457FD5B29E7B74F2308C32CE3FBFCB33485B8",
+  "LogSHA256": "F3164DE7E462E7D55E2C1050141D64B3CBE11561E97D2F38058E88C1C3E27865",
+  "Result": {
+    "Status": "PASS",
+    "Phase": "offline",
+    "ProcessId": 5760,
+    "NormalAccess": true,
+    "RecoveryAccess": true,
+    "ActiveNonLoopbackInterfaces": 0,
+    "DistinctProjectId": true,
+    "SameGroupBinding": true,
+    "CompleteKeyPayloadPreserved": true,
+    "SourceFilesUnchanged": true,
+    "Scope": "Installed product API, separate process; not native dialog or application restart acceptance"
+  },
+  "Limits": [
+    "Local project/vault/profile/trust already present",
+    "No unreachable SMB path or cloud sync conflict tested",
+    "No hardware or desktop interaction",
+    "Initial launcher array error corrected before product test ran"
+  ]
+}

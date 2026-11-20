@@ -18,10 +18,10 @@ public sealed record ProjectCatalogEntry(
     int VaultVersion = 0,
     bool HasCoding = false)
 {
-    public bool SecureOnDemand => !ArtifactOnly && VaultVersion >= KeyVaultService.CertificateVersion;
+    public bool SecureOnDemand => !ArtifactOnly && VaultVersion >= KeyVaultService.CurrentVersion;
     public bool CanOpenStation => HasCoding && (SecureOnDemand || HasOperationalBuild);
     public string Kind => ArtifactOnly ? "Nur gebaut" : SecureOnDemand ? "Sicher bereitstellbar" : !HasOperationalBuild ? "Neu bauen" : HasRecognition ? "Einsatzbereit" : "Altbuild nutzbar";
-    public string KeyState => ArtifactOnly ? "Schlüssel im Build" : SecureOnDemand ? "Persönlich freigegebener Vault" : HasVault ? "Neubau mit Vault" : "Neubau gesperrt";
+    public string KeyState => ArtifactOnly ? "Schlüssel im Build" : VaultVersion == KeyVaultService.CurrentVersion ? "Vault mit Passphrase" : SecureOnDemand ? "Persönlich freigegebener Vault" : HasVault ? "Neubau mit Vault" : "Neubau gesperrt";
 }
 
 public sealed class ProjectCatalog
@@ -53,7 +53,8 @@ public sealed class ProjectCatalog
                 editableDirectories.Add(sourceDirectory.TrimEnd(Path.DirectorySeparatorChar));
                 var builtDirectory = ProjectPaths.ResolveBuiltProject(project, root);
                 editableDirectories.Add(builtDirectory.TrimEnd(Path.DirectorySeparatorChar));
-                var vaultVersion = GetVaultVersion(path);
+                // A bound group project must never fall back to an old plaintext build when its vault is missing or damaged.
+                var vaultVersion = project.Project.GroupVault is not null ? ProjectGroupVault.ProtectionLevel : GetVaultVersion(path);
                 entries.Add(new ProjectCatalogEntry(
                     project.Project.Name,
                     string.Join(" + ", project.Project.Build),
@@ -116,10 +117,11 @@ public sealed class ProjectCatalog
         if (!File.Exists(path)) return 0;
         try
         {
+            if (ProjectGroupVault.IsGroupVaultFile(path)) return ProjectGroupVault.ProtectionLevel;
             var vault = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options);
             return vault is not null && KeyVaultService.IsStructurallyValid(vault) ? vault.Version : 0;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException) { return 0; }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or InvalidDataException or InvalidOperationException) { return 0; }
     }
 
     private static bool HasCoreOperationalBuild(ProjectDefinition project, string directory)

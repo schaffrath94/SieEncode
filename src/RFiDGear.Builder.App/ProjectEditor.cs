@@ -30,6 +30,7 @@ public partial class MainWindow
     private int editorVaultVersion;
     private ProjectKeyVaultPayload? editorVaultPayload;
     private bool suppressEditorChanges;
+    private Func<IReadOnlyList<WindowsVaultIdentity>> loadEditorVaultIdentities = WindowsVaultIdentityService.List;
 
     private void InitializeProjectEditor()
     {
@@ -123,7 +124,7 @@ public partial class MainWindow
         if (string.IsNullOrWhiteSpace(projectPath)) return 0;
         var vaultPath = ProjectKeyVault.GetPath(projectPath);
         if (!File.Exists(vaultPath)) return 0;
-        try { return JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(vaultPath), ProjectJson.Options)?.Version ?? 0; }
+        try { return ProjectGroupVault.IsGroupVaultFile(vaultPath) ? ProjectGroupVault.ProtectionLevel : JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(vaultPath), ProjectJson.Options)?.Version ?? 0; }
         catch { return 0; }
     }
 
@@ -139,15 +140,11 @@ public partial class MainWindow
             editorVaultRevision = string.IsNullOrWhiteSpace(editorSourcePath) ? FileRevision.Missing : ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(editorSourcePath));
             editorKeysPersisted = false;
             editorVaultVerified = false;
+            editorGroupRecovery = false;
             editorVaultVersion = ReadVaultVersion(editorSourcePath);
             editorVaultPayload = string.IsNullOrWhiteSpace(editorSourcePath) ? ProjectKeyVault.FromProject(editorProject) : null;
 
-            var bases = library.Profiles.Where(profile => profile.Profile.Kind == "base")
-                .Select(profile => new ProfileChoice(profile.Profile.Id, $"{profile.Profile.Name} · {profile.Profile.Version} ({profile.Profile.Id})")).ToArray();
-            var customers = library.Profiles.Where(profile => profile.Profile.Kind == "customer")
-                .OrderBy(profile => profile.Profile.Name).Select(profile => new ProfileChoice(profile.Profile.Id, $"{profile.Profile.Name} · {profile.Profile.Version} ({profile.Profile.Id})")).ToArray();
-            EditorBaseProfile.ItemsSource = bases;
-            EditorCustomerProfiles.ItemsSource = customers;
+            RefreshEditorProfileChoices(library);
 
             EditorProjectName.Text = editorProject.Project.Name;
             EditorCardMode.ItemsSource = new[]
@@ -159,10 +156,6 @@ public partial class MainWindow
             EditorOutputDirectory.Text = editorProject.Project.OutputDirectory;
             EditorBuildMastering.IsChecked = editorProject.Project.Build.Contains("Mastering", StringComparer.OrdinalIgnoreCase);
             EditorBuildCoding.IsChecked = editorProject.Project.Build.Contains("Coding", StringComparer.OrdinalIgnoreCase);
-            EditorBaseProfile.SelectedValue = editorProject.Profiles.Base;
-            EditorCustomerProfiles.SelectedItems.Clear();
-            foreach (var choice in customers.Where(choice => editorProject.Profiles.Customers.Contains(choice.Id, StringComparer.Ordinal)))
-                EditorCustomerProfiles.SelectedItems.Add(choice);
             SetComboValue(EditorTransportPiccType, editorProject.Transport.PiccKey.Type);
             EditorTransportPiccKey.Text = editorProject.Transport.PiccKey.Value;
             SetComboValue(EditorProductivePiccType, editorProject.Productive.PiccKey.Type);
@@ -189,6 +182,21 @@ public partial class MainWindow
             SetEditorDirty(false);
         }
         finally { suppressEditorChanges = false; }
+    }
+
+    private void RefreshEditorProfileChoices(ProfileLibrary library)
+    {
+        if (editorProject is null) return;
+        var bases = library.Profiles.Where(profile => profile.Profile.Kind == "base")
+            .Select(profile => new ProfileChoice(profile.Profile.Id, $"{profile.Profile.Name} · {profile.Profile.Version} ({profile.Profile.Id})")).ToArray();
+        var customers = library.Profiles.Where(profile => profile.Profile.Kind == "customer")
+            .OrderBy(profile => profile.Profile.Name).Select(profile => new ProfileChoice(profile.Profile.Id, $"{profile.Profile.Name} · {profile.Profile.Version} ({profile.Profile.Id})")).ToArray();
+        EditorBaseProfile.ItemsSource = bases;
+        EditorBaseProfile.SelectedValue = editorProject.Profiles.Base;
+        EditorCustomerProfiles.ItemsSource = customers;
+        EditorCustomerProfiles.SelectedItems.Clear();
+        foreach (var choice in customers.Where(choice => editorProject.Profiles.Customers.Contains(choice.Id, StringComparer.Ordinal)))
+            EditorCustomerProfiles.SelectedItems.Add(choice);
     }
 
     private void PopulateDynamicEditorFields()
@@ -525,43 +533,54 @@ public partial class MainWindow
             EditorSaveVaultButton.IsEnabled = false;
             EditorManageVaultAccessButton.IsEnabled = false;
             EditorAuditVaultButton.IsEnabled = false;
+            EditorGroupRecoveryButton.IsEnabled = false;
+            EditorGroupRecoveryButton.Visibility = Visibility.Collapsed;
             return;
         }
 
         var profilesOk = ProfileBindingService.Evaluate(editorProject, editorLibrary).All(status => status.IsMatch);
         var definitionIssues = ProjectContractValidator.Validate(editorProject, editorLibrary, requireProductiveSecrets: false);
         var valuesOk = definitionIssues.Count == 0;
+        var fieldIssues = definitionIssues.Where(issue =>
+            !issue.Code.StartsWith("TRANSPORT_", StringComparison.Ordinal) &&
+            !issue.Code.StartsWith("PRODUCTIVE_", StringComparison.Ordinal)).ToArray();
         var keyIssues = ProjectContractValidator.Validate(editorProject, editorLibrary, requireProductiveSecrets: true)
             .Where(issue => issue.Code.StartsWith("PRODUCTIVE", StringComparison.Ordinal)).ToArray();
         var keysLoaded = keyIssues.Length == 0;
         var backupRequired = editorProject.Project.Build.Contains("Mastering", StringComparer.OrdinalIgnoreCase);
         var backupReady = !backupRequired || IsIndependentVaultBackupConfigured();
-        var keysSafe = keysLoaded && editorKeysPersisted && editorVaultVerified && editorVaultVersion >= KeyVaultService.CurrentVersion && backupReady;
+        var keysSafe = keysLoaded && editorKeysPersisted && editorVaultVerified && editorVaultVersion >= KeyVaultService.CurrentVersion && backupReady && !editorGroupRecovery;
         var saved = !string.IsNullOrWhiteSpace(editorSourcePath) && !editorDirty;
         var vaultExists = !string.IsNullOrWhiteSpace(editorSourcePath) && File.Exists(ProjectKeyVault.GetPath(editorSourcePath));
         var existingDefinition = !string.IsNullOrWhiteSpace(editorSourcePath);
 
         EditorGenerateKeysButton.IsEnabled = true;
         EditorUnlockVaultButton.IsEnabled = vaultExists;
+        EditorGroupRecoveryButton.Visibility = IsEditorGroupVault ? Visibility.Visible : Visibility.Collapsed;
+        EditorGroupRecoveryButton.IsEnabled = vaultExists && IsEditorGroupVault;
         EditorSaveVaultButton.IsEnabled = keysLoaded && existingDefinition;
         EditorSaveVaultButton.Content = editorVaultVersion >= KeyVaultService.CertificateVersion
             ? "Vault-Änderungen sicher speichern"
             : "Einzelbenutzer-Vault speichern";
         EditorManageVaultAccessButton.IsEnabled = keysLoaded && existingDefinition;
         EditorAuditVaultButton.IsEnabled = vaultExists;
+        EditorAuditVaultButton.Content = IsEditorGroupVault ? editorGroupRecovery ? "Recovery-Zugang prüfen" : "Gruppen-Vault prüfen" : "Vault / Recovery prüfen";
+        EditorManageVaultAccessButton.Content = IsEditorGroupVault ? "Gruppenempfänger abgleichen" : "Mehrbenutzerzugriff";
 
         EditorWorkflowProfile.Text = profilesOk ? "✓ Profile" : "! Profile prüfen";
-        EditorWorkflowValues.Text = valuesOk ? "✓ Pflichtfelder" : "! Pflichtfelder";
+        EditorWorkflowValues.Text = fieldIssues.Length == 0 ? "✓ Pflichtfelder" : "! Pflichtfelder";
         EditorWorkflowKeys.Text = keysSafe
             ? editorVaultVersion >= KeyVaultService.CertificateVersion ? "✓ Vault geprüft + gesichert" : "✓ Vault v2 geprüft + gesichert"
-            : keysLoaded && editorVaultVersion == 1 ? "! Vault v1 aktualisieren" : keysLoaded ? "! Vault speichern" : vaultExists ? "! Vault entsperren" : "! Schlüssel erzeugen";
+            : keysLoaded && editorVaultVersion == 1 ? "! Vault v1 aktualisieren" : keysLoaded ? "! Vault speichern" : vaultExists ? "! Vault entsperren" : existingDefinition ? "! Vault fehlt" : "! Schlüssel erzeugen";
         EditorWorkflowSaved.Text = saved ? "✓ Gespeichert" : "! Noch nicht gespeichert";
         EditorNextStep.Text = !profilesOk ? "Nächster Schritt: geänderte Profilstände prüfen und bewusst übernehmen."
-            : !valuesOk ? "Nächster Schritt: " + string.Join(" ", definitionIssues.Take(3).Select(issue => issue.Message))
+            : fieldIssues.Length > 0 ? "Nächster Schritt: " + string.Join(" ", fieldIssues.Take(3).Select(issue => issue.Message))
             : !keysLoaded && vaultExists ? "Nächster Schritt: vorhandenen Schlüsselspeicher für diese Sitzung entsperren."
             : !keysLoaded && existingDefinition ? "Nächster Schritt: Zu dieser bestehenden Definition fehlt der Vault. Vorhandene Build-Schlüssel sind nicht wiederherstellbar; neue Schlüssel nur für eine bewusst neue Schlüsselidentität erzeugen."
             : !keysLoaded ? "Nächster Schritt: Produktivschlüssel erzeugen, Projekt speichern und anschließend den Vault verschlüsselt sichern."
+            : !valuesOk ? "Nächster Schritt: Grundschlüssel prüfen. " + string.Join(" ", definitionIssues.Take(3).Select(issue => issue.Message))
             : editorVaultVersion == 1 ? "Nächster Schritt: alten Vault mit einer neuen starken Passphrase als Vault v2 speichern. Vorher bleibt der Neubau gesperrt."
+            : editorGroupRecovery ? "Recovery-Sitzung: Änderungen bei Bedarf speichern. Vor einem Build über ‚Vault entsperren‘ mit normalem Gruppenzugang öffnen."
             : !editorVaultVerified ? "Nächster Schritt: Vault speichern oder entsperren; SieEncode muss ihn erfolgreich wieder öffnen."
             : backupRequired && !backupReady ? "Nächster Schritt: Unter Einstellungen einen vom Projektordner unabhängigen Vault-Sicherungsort wählen. Mastering bleibt bis dahin gesperrt."
             : !editorKeysPersisted ? "Nächster Schritt: Mehrbenutzerzugriff einrichten und Recovery-Passphrase in KeePass ablegen."
@@ -610,6 +629,7 @@ public partial class MainWindow
 
     private bool SaveEditorProject(bool saveAs)
     {
+        if (saveAs && IsEditorGroupVault) return SaveEditorGroupCopy();
         if (editorProject is null || editorLibrary is null) throw new InvalidOperationException("Kein Projekt im Editor geöffnet.");
         CaptureEditorControls();
         ProjectDraftFactory.Synchronize(editorProject, editorLibrary);
@@ -651,7 +671,7 @@ public partial class MainWindow
         editorVaultRevision = ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(editorSourcePath));
         EditorSourcePath.Text = editorSourcePath;
         SetEditorDirty(false);
-        EditorValidation.Text = "Gespeichert und validiert. Transport- und Produktivschlüssel wurden ausschließlich im Vault abgelegt.";
+        EditorValidation.Text = "Projektdefinition gespeichert und validiert. Sie enthält keine Schlüsselwerte. Änderungen an Schlüsseln müssen separat im Vault gespeichert werden.";
         RefreshProjects();
         var entry = projects.FirstOrDefault(item => string.Equals(item.SourcePath, editorSourcePath, StringComparison.OrdinalIgnoreCase));
         if (entry is not null) { SelectProject(entry); ProjectsGrid.SelectedItem = entry; }
@@ -706,9 +726,14 @@ public partial class MainWindow
             var document = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options) ?? throw new InvalidDataException("Key-Vault ist leer.");
             ProjectKeyVaultPayload payload;
             var windowsIdentity = false;
-            if (document.Version == KeyVaultService.CertificateVersion)
+            if (IsEditorGroupVault)
             {
-                var identities = WindowsVaultIdentityService.List();
+                payload = LoadEditorGroupKeys(requestGroupRecovery);
+                windowsIdentity = true;
+            }
+            else if (document.Version == KeyVaultService.CertificateVersion)
+            {
+                var identities = loadEditorVaultIdentities();
                 try
                 {
                     payload = ProjectKeyVault.LoadWithCertificates(path, identities.Select(identity => identity.Certificate));
@@ -734,8 +759,9 @@ public partial class MainWindow
             VerifyLoadedVaultPayload(payload);
             editorKeysPersisted = true;
             editorVaultVerified = true;
-            editorVaultVersion = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options)?.Version ?? 0;
+            editorVaultVersion = ReadVaultVersion(editorSourcePath);
             suppressEditorChanges = true;
+            editorGroupRecovery = IsEditorGroupVault && requestGroupRecovery;
             try
             {
                 SetComboValue(EditorTransportPiccType, editorProject.Transport.PiccKey.Type);
@@ -748,7 +774,7 @@ public partial class MainWindow
                 RefreshInitialKeySets();
             }
             finally { suppressEditorChanges = false; }
-            EditorVaultStatus.Text = editorVaultVersion == KeyVaultService.CertificateVersion
+            EditorVaultStatus.Text = IsEditorGroupVault ? (editorGroupRecovery ? "Recovery-Sitzung für Gruppen-Vault: " : "Gruppen-Vault mit normalem Zugang entsperrt: ") + path : editorVaultVersion == KeyVaultService.CertificateVersion
                 ? (windowsIdentity ? "Mehrbenutzer-Vault automatisch mit der persönlichen Windows-Identität entsperrt: " : "Mehrbenutzer-Vault über Recovery-Zugang entsperrt: ") + path
                 : editorVaultVersion >= KeyVaultService.CurrentVersion
                 ? "Vault v2 für diese Sitzung entsperrt: " + path
@@ -809,11 +835,25 @@ public partial class MainWindow
                 .Where(issue => issue.Code.StartsWith("PRODUCTIVE", StringComparison.Ordinal) || issue.Code.StartsWith("PROJECT_", StringComparison.Ordinal)).ToArray();
             if (issues.Length > 0) throw new InvalidDataException("Produktivdaten sind nicht vollständig:\n" + string.Join("\n", issues.Select(issue => $"{issue.Code}: {issue.Message}")));
             var path = ProjectKeyVault.GetPath(editorSourcePath);
-            if (editorVaultVersion >= KeyVaultService.CertificateVersion)
+            if (IsEditorGroupVault)
             {
-                var identities = WindowsVaultIdentityService.List();
+                SaveEditorGroupKeys();
+            }
+            else if (editorVaultVersion >= KeyVaultService.CertificateVersion)
+            {
+                var identities = loadEditorVaultIdentities();
                 try
                 {
+                    var existing = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options)
+                        ?? throw new InvalidDataException("Key-Vault ist leer.");
+                    var hasRecipientIdentity = identities.Any(identity => identity.Certificate.HasPrivateKey && existing.Recipients.Any(recipient =>
+                        string.Equals(recipient.Id, CertificateVaultService.Fingerprint(identity.Certificate), StringComparison.OrdinalIgnoreCase)));
+                    if (!hasRecipientIdentity)
+                    {
+                        // Recovery sessions can save through explicit reauthorization of the existing recipients.
+                        ManageVaultAccess_Click(sender, e);
+                        return;
+                    }
                     editorVaultRevision = ProjectKeyVault.UpdateForExistingRecipients(path, CreateVaultPayload(), identities.Select(identity => identity.Certificate), editorVaultRevision);
                     VerifyLoadedVaultPayload(ProjectKeyVault.LoadWithCertificates(path, identities.Select(identity => identity.Certificate)));
                 }
@@ -829,7 +869,8 @@ public partial class MainWindow
             editorKeysPersisted = true;
             editorVaultVerified = true;
             if (editorVaultVersion >= KeyVaultService.CertificateVersion)
-                EditorVaultStatus.Text = "Mehrbenutzer-Vault mit der persönlichen Windows-Identität aktualisiert; Empfänger und Recovery-Zugang blieben unverändert: " + path;
+                EditorVaultStatus.Text = IsEditorGroupVault && editorGroupRecovery ? "Gruppen-Vault über separaten Recovery-Zugang aktualisiert: " + path
+                    : "Mehrbenutzer-Vault mit der persönlichen Windows-Identität aktualisiert; Empfänger und Recovery-Zugang blieben unverändert: " + path;
             else
             {
                 editorVaultVersion = KeyVaultService.CurrentVersion;
@@ -848,6 +889,7 @@ public partial class MainWindow
     {
         try
         {
+            if (IsEditorGroupVault) { ReconcileEditorGroupVault(); return; }
             if (editorProject is null || editorLibrary is null || string.IsNullOrWhiteSpace(editorSourcePath)) throw new InvalidOperationException("Projekt bitte zuerst speichern und Schlüssel laden.");
             CaptureEditorControls();
             var issues = ProjectContractValidator.Validate(editorProject, editorLibrary, requireProductiveSecrets: true)
@@ -857,7 +899,7 @@ public partial class MainWindow
             KeyVaultDocument? existing = null;
             if (File.Exists(path)) existing = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options);
             var teamRecipients = new TeamVaultRecipientStore(projectsDirectory).Load().Recipients;
-            var dialog = new VaultAccessWindow(this, existing, teamRecipients);
+            var dialog = new VaultAccessWindow(this, existing, teamRecipients, loadEditorVaultIdentities);
             if (dialog.ShowDialog() != true) return;
             var recipients = dialog.TakeRecipients();
             try { editorVaultRevision = ProjectKeyVault.SaveForRecipients(path, CreateVaultPayload(), dialog.RecoveryPassphrase, recipients, editorVaultRevision); }
@@ -877,6 +919,7 @@ public partial class MainWindow
     {
         try
         {
+            if (IsEditorGroupVault) { AuditEditorGroupVault(); return; }
             if (editorProject is null || editorLibrary is null || string.IsNullOrWhiteSpace(editorSourcePath))
                 throw new InvalidOperationException("Gespeichertes Projekt bitte zuerst im Editor öffnen.");
             var path = ProjectKeyVault.GetPath(editorSourcePath);
@@ -915,6 +958,7 @@ public partial class MainWindow
                 if (!SaveEditorProject(saveAs: false)) return;
             CaptureEditorControls();
             if (!editorVaultVerified) throw new InvalidOperationException("Build gesperrt: Der aktuelle Vault wurde in dieser Sitzung noch nicht erfolgreich wieder geöffnet.");
+            if (IsEditorGroupVault) VerifyEditorGroupBuildAccess();
             if (editorProject.Project.Build.Contains("Mastering", StringComparer.OrdinalIgnoreCase) && !IsIndependentVaultBackupConfigured())
                 throw new InvalidOperationException("Mastering-Build gesperrt: Unter Einstellungen muss ein vom Projektordner unabhängiger Vault-Sicherungsort gewählt werden.");
             var recoveryBackup = CreateVerifiedVaultBackupIfConfigured();
@@ -1100,6 +1144,12 @@ internal static class PasswordPrompt
 {
     public static string? Show(Window owner, string title, string prompt, bool confirm = false)
     {
+        var (dialog, password) = Create(owner, title, prompt, confirm);
+        return dialog.ShowDialog() == true ? password.Password : null;
+    }
+
+    internal static (Window Dialog, PasswordBox Password) Create(Window owner, string title, string prompt, bool confirm)
+    {
         var password = new PasswordBox { MinWidth = 390, Margin = new Thickness(0, 4, 0, 8) };
         var confirmation = new PasswordBox { MinWidth = 390, Margin = new Thickness(0, 4, 0, 8), Visibility = confirm ? Visibility.Visible : Visibility.Collapsed };
         var ok = new Button { Content = "OK", IsDefault = true, MinWidth = 90, Margin = new Thickness(4) };
@@ -1115,19 +1165,24 @@ internal static class PasswordPrompt
             panel.Children.Add(confirmation);
         }
         panel.Children.Add(new TextBlock { Text = confirm ? $"Mindestens {KeyVaultService.MinimumNewPassphraseLength} Zeichen. Empfohlen: zufällig in KeePass erzeugen. Die Passphrase wird nicht gespeichert und kann nicht wiederhergestellt werden." : "Die Passphrase wird nicht gespeichert und kann nicht wiederhergestellt werden.", Foreground = System.Windows.Media.Brushes.DimGray, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 8) });
+        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = System.Windows.Media.Brushes.Firebrick };
+        panel.Children.Add(error);
         panel.Children.Add(buttons);
-        var dialog = new Window { Owner = owner, Title = title, Content = panel, SizeToContent = SizeToContent.WidthAndHeight, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.NoResize };
+        var dialog = new Window { Owner = owner, Title = title, Width = 480, MaxHeight = 600, Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, SizeToContent = SizeToContent.Height, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.CanResizeWithGrip };
+        cancel.Click += (_, _) => dialog.DialogResult = false;
         ok.Click += (_, _) =>
         {
-            if (string.IsNullOrWhiteSpace(password.Password)) { MessageBox.Show(dialog, "Bitte eine Passphrase eingeben.", title, MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-            if (confirm && password.Password != confirmation.Password) { MessageBox.Show(dialog, "Die Passphrasen stimmen nicht überein.", title, MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+            error.Text = "";
+            if (string.IsNullOrWhiteSpace(password.Password)) { error.Text = "Bitte eine Passphrase eingeben."; return; }
+            if (confirm && password.Password != confirmation.Password) { error.Text = "Die Passphrasen stimmen nicht überein."; return; }
             if (confirm)
             {
                 try { KeyVaultService.ValidateNewPassphrase(password.Password); }
-                catch (ArgumentException exception) { MessageBox.Show(dialog, exception.Message, title, MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+                catch (ArgumentException exception) { error.Text = exception.Message; return; }
             }
             dialog.DialogResult = true;
         };
-        return dialog.ShowDialog() == true ? password.Password : null;
+        MainWindow.InitializeAutomationContract(dialog, "PasswordPrompt");
+        return (dialog, password);
     }
 }

@@ -60,6 +60,42 @@ internal static class WindowsVaultIdentityService
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
+    internal static void InstallRecovery(X509Certificate2 identity)
+    {
+        if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("Recovery-Identitäten benötigen Windows.");
+        if (!identity.HasPrivateKey) throw new CryptographicException("Privater Recovery-Schlüssel fehlt.");
+        using var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+        store.Open(OpenFlags.ReadWrite);
+        var existing = store.Certificates.Find(X509FindType.FindByThumbprint, identity.Thumbprint, false);
+        try
+        {
+            if (existing.Count != 0) throw new InvalidOperationException("Dieses Zertifikat ist bereits vorhanden. Vorhandene Identitäten werden nicht ersetzt.");
+        }
+        finally { foreach (var certificate in existing) certificate.Dispose(); }
+        var password = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var pfx = identity.Export(X509ContentType.Pfx, password);
+        try
+        {
+#pragma warning disable SYSLIB0057
+            using var persisted = new X509Certificate2(pfx, password, X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet);
+#pragma warning restore SYSLIB0057
+            persisted.FriendlyName = FriendlyPrefix + "Separate Recovery · " + CertificateVaultService.Fingerprint(identity)[..12];
+            store.Add(persisted);
+            using var publicKey = identity.GetRSAPublicKey()!;
+            var challenge = RandomNumberGenerator.GetBytes(32);
+            var stored = store.Certificates.Find(X509FindType.FindByThumbprint, identity.Thumbprint, false);
+            try
+            {
+                using var privateKey = stored.Cast<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey)?.GetRSAPrivateKey()
+                    ?? throw new CryptographicException("Gespeicherter privater Recovery-Schlüssel fehlt.");
+                if (!privateKey.Decrypt(publicKey.Encrypt(challenge, RSAEncryptionPadding.OaepSHA256), RSAEncryptionPadding.OaepSHA256).SequenceEqual(challenge))
+                    throw new CryptographicException("Gespeicherter Recovery-Schlüssel konnte nicht geprüft werden.");
+            }
+            finally { foreach (var certificate in stored) certificate.Dispose(); }
+        }
+        finally { CryptographicOperations.ZeroMemory(pfx); }
+    }
+
     public static (X509Certificate2 Certificate, string DisplayName) ImportInvitation(string path)
     {
         var invitation = JsonSerializer.Deserialize<VaultRecipientInvitation>(File.ReadAllText(path), ProjectJson.Options)

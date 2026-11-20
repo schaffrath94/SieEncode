@@ -1,0 +1,106 @@
+[
+  {
+    "file": "01-arbeitsplatz.png",
+    "sha256": "436EE691CA9383BE080CDE154AA41B11BF50F08BC3CFA1ADBC66FD002D5B34FC"
+  },
+  {
+    "file": "02-gruppenbereich.png",
+    "sha256": "0DC60D9A3A62C89DC242CBD7ABCFF9358F874403CE21F25F7A515188993C20C4"
+  },
+  {
+    "file": "03-registrierung.png",
+    "sha256": "7C4D0C2BCC0EF7D678602FCC107C7ED1D05C9A8D416DC390BF7780B7ED8CF3BA"
+  },
+  {
+    "file": "04-registriert.png",
+    "sha256": "380CA5CF4E1B4AE07364C5471BCE62684A4A9FD3F21078A281D56EF0F6FD72CD"
+  },
+  {
+    "file": "05-stand-nach-neustart.png",
+    "sha256": "E4A265511F0BC79E68134807EDE90F5FFC4985A81F56D00BF90865B7B3C6EDFE"
+  },
+  {
+    "file": "06-verwaltung-signiert.png",
+    "sha256": "A26BF4BE52DF7966D01D4960E462ED67AB548348047DA8E994417307607A0306"
+  },
+  {
+    "file": "07-verwaltung-exportiert.png",
+    "sha256": "97B58C392F8DEBB625B352680136AE5D8F912E5893DCA99189BFE107E672D68D"
+  },
+  {
+    "file": "08-aktualisierung-vorschau.png",
+    "sha256": "C9FA49BE88146940C15BF5CDA01758F31FD1BE6E9E6C92FB328E6D557CA582B6"
+  },
+  {
+    "file": "09-aktualisierung-uebernommen.png",
+    "sha256": "84BB4518770778C1FA4C5AC16A087E2D5731B9543AEE247072CA13257CE4B33C"
+  },
+  {
+    "file": "10-aktualisierung-nach-neustart.png",
+    "sha256": "73EE771942BCE3BC72FCCAFD04EEB9E8532E4E39CF07CA4DDAB6DBDDA91382F1"
+  },
+  {
+    "file": "11-alter-stand-abgewiesen.png",
+    "sha256": "246318F9D7663646A45872937D4AB8203E7B7A826937C93CCC2620DFD9D2D303"
+  },
+  {
+    "file": "12-keine-verwaltungsrechte.png",
+    "sha256": "2746371EEF1255A02B24F5CF7674D944270B5AA57C14D8E030099CEEF890B60F"
+  },
+  {
+    "file": "13-verwaltung-privat-gesichert.png",
+    "sha256": "3DF1601090C099E4DCA562DDB9F7C851DCFB25B5917FBF2E421A24E102296326"
+  },
+  {
+    "file": "14-neue-verwaltung-wiedergeladen.png",
+    "sha256": "99E8DB44F2C88303F7C983E02794853EA8687E7CD0E3BCFB78BF52F38DDE7D0C"
+  },
+  {
+    "file": "15-verwaltung-privat-wiederhergestellt.png",
+    "sha256": "862B187823C7DD07EC2B8E9DC0DFF4CACFD998A8D5110DF484F260B7BAA355E0"
+  },
+  {
+    "file": "16-wiederhergestellte-verwaltung-signiert.png",
+    "sha256": "872CF58966D73E778F535795FEEE2A5928404F9D7E59BB5C24BFD9EE418F9368"
+  },
+  {
+    "file": "17-wiederherstellung-nach-neustart.png",
+    "sha256": "15FE01AD7DCEA115D32A444136E4C290CF292D46D15A71A26AF2E7A3DE0B45FA"
+  },
+  {
+    "file": "18-person-geraet-gruppen-signiert.png",
+    "sha256": "F0922EB32D2609FEF2E5145BD1B305A0C10C021C5DB112BDAC7273E4C4AAF43F"
+  },
+  {
+    "file": "19-recovery-privat-gesichert.png",
+    "sha256": "7AA5E2C72DD08EA03D6AD2BD6DA8808D83524DD6C0FB16F950C17D07F53DCE1D"
+  },
+  {
+    "file": "20-recovery-zentral-freigegeben.png",
+    "sha256": "BB1F7B00F6D95B3BDB7C9360698BECF94AEB5E03F01F45F3BBD504C12EF9A589"
+  },
+  {
+    "file": "21-recovery-wiederhergestellt.png",
+    "sha256": "002598818507A391BC974B5D475C2AF7C56A14EBBAA785B2B856A8ABB98C9CD9"
+  },
+  {
+    "file": "22-gruppenprojekt-recovery.png",
+    "sha256": "91D7DEB54B55AC199E2E98E7D3B27832E0E7963C0A38AC5059AC6783DDCE5E93"
+  },
+  {
+    "file": "23-gruppenprojekt-normal.png",
+    "sha256": "87320701427FA9CDC8ED0EE55E591F7C900C91D461808664EADB2D5FC785BDD8"
+  },
+  {
+    "file": "24-gruppenprojekt-kopie.png",
+    "sha256": "56B549E73C1F61EAC61B8622D8135610CF117D454676400D8705AD57B8F7FE87"
+  },
+  {
+    "file": "25-kopie-recovery.png",
+    "sha256": "3C724AB976835111331578FECA066F683078872FB84597D81275B87415B51FB2"
+  },
+  {
+    "file": "26-kopie-recovery-rotation.png",
+    "sha256": "157B5A586A45E84424A707AA3D0083E14AE4D60E7ADCEDEF34AA43A6C433662A"
+  }
+]

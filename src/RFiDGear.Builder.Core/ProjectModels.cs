@@ -13,11 +13,17 @@ public sealed class ProjectDefinition
 
 public sealed class ProjectSection
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Guid? Id { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ProjectGroupVaultBinding? GroupVault { get; set; }
     public string Name { get; set; } = "";
     public string OutputDirectory { get; set; } = "";
     public List<string> Build { get; set; } = [];
     public string CardMode { get; set; } = CardOperationMode.FullCard;
 }
+
+public sealed record ProjectGroupVaultBinding(Guid LibraryId, string GroupId);
 
 public sealed class ProfileSelection
 {

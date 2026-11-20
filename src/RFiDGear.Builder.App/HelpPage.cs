@@ -22,7 +22,7 @@ public partial class MainWindow
                 Path.Combine(AppContext.BaseDirectory, "assets", "profiles"),
                 Path.Combine(AppContext.BaseDirectory, "assets", "task-shells"),
                 Path.Combine(root, "START_SieEncode.cmd"),
-                [Path.Combine(root, "README.md"), Path.Combine(root, "PARITY.md"), Path.Combine(root, "MIGRATION.md"), Path.Combine(root, "RUNTIME.md"), Path.Combine(root, "docs", "GRUNDPROFILE.md"), Path.Combine(root, "docs", "HARDWARE-ABNAHME.md")]);
+                [Path.Combine(root, "README.md"), Path.Combine(root, "PARITY.md"), Path.Combine(root, "MIGRATION.md"), Path.Combine(root, "RUNTIME.md"), Path.Combine(root, "docs", "GRUNDPROFILE.md"), Path.Combine(root, "docs", "HARDWARE-ABNAHME.md"), Path.Combine(root, "docs", "OFFLINE-GRUPPEN-SCHNELLSTART.md")]);
             var reportDirectory = Path.Combine(Path.GetDirectoryName(settingsStore.SettingsPath)!, "reports", "environment");
             lastEnvironmentCheck = new EnvironmentCheckService().CreateReport(request, reportDirectory);
             EnvironmentChecksGrid.ItemsSource = lastEnvironmentCheck.Report.Checks;
@@ -44,7 +44,10 @@ public partial class MainWindow
         try
         {
             var name = (sender as Button)?.Tag as string ?? throw new InvalidOperationException("Dokument wurde nicht angegeben.");
-            OpenExisting(Path.Combine(FindDistributionRoot(), name), false);
+            var path = Path.Combine(FindDistributionRoot(), name);
+            if (string.Equals(Path.GetExtension(path), ".md", StringComparison.OrdinalIgnoreCase))
+                new HelpDocumentWindow(this, path).ShowDialog();
+            else OpenExisting(path, false);
         }
         catch (Exception exception) { ShowError(exception); }
     }

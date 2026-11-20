@@ -21,6 +21,7 @@ internal sealed class VaultRecipientChoice : IDisposable
 
 internal sealed class VaultAccessWindow : Window
 {
+    private readonly Func<IReadOnlyList<WindowsVaultIdentity>> loadIdentities;
     private readonly ObservableCollection<VaultRecipientChoice> recipients = [];
     private readonly ObservableCollection<WindowsVaultIdentity> identities = [];
     private readonly ListBox recipientList = new() { MinHeight = 150, DisplayMemberPath = nameof(VaultRecipientChoice.Label) };
@@ -29,16 +30,18 @@ internal sealed class VaultAccessWindow : Window
     private readonly PasswordBox confirmation = new() { MinWidth = 360 };
     private IReadOnlyList<(X509Certificate2 Certificate, string DisplayName)> acceptedRecipients = [];
 
-    public VaultAccessWindow(Window owner, KeyVaultDocument? existing = null, IEnumerable<VaultRecipientInvitation>? teamRecipients = null)
+    public VaultAccessWindow(Window owner, KeyVaultDocument? existing = null, IEnumerable<VaultRecipientInvitation>? teamRecipients = null, Func<IReadOnlyList<WindowsVaultIdentity>>? identityProvider = null)
     {
-        Owner = owner; Title = "Vault-Zugriff für mehrere Benutzer"; Width = 680; SizeToContent = SizeToContent.Height;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner; ResizeMode = ResizeMode.NoResize;
+        loadIdentities = identityProvider ?? WindowsVaultIdentityService.List;
+        Owner = owner; Title = "Vault-Zugriff für mehrere Benutzer"; Width = 680; MaxHeight = 760; SizeToContent = SizeToContent.Height;
+        WindowStartupLocation = WindowStartupLocation.CenterOwner; ResizeMode = ResizeMode.CanResizeWithGrip;
         recipientList.ItemsSource = recipients; identityList.ItemsSource = identities;
         ReloadIdentities();
         if (existing is { Version: KeyVaultService.CertificateVersion })
             foreach (var row in existing.Recipients.Where(row => !string.IsNullOrWhiteSpace(row.Certificate)))
                 AddRecipient(new X509Certificate2(Convert.FromBase64String(row.Certificate)), row.DisplayName);
-        if (teamRecipients is not null)
+        // Team defaults seed a new certificate vault; they must not re-add removed recipients.
+        if (teamRecipients is not null && existing is not { Version: KeyVaultService.CertificateVersion })
             foreach (var invitation in teamRecipients)
             {
                 var imported = CertificateVaultService.ImportInvitation(invitation);
@@ -47,9 +50,12 @@ internal sealed class VaultAccessWindow : Window
 
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(new TextBlock { Text = "Mehrbenutzerzugriff", FontSize = 22, FontWeight = FontWeights.SemiBold });
-        root.Children.Add(new TextBlock { Text = "Die zentrale Teamliste ist bereits übernommen. Jeder freigegebene Benutzer öffnet den Vault mit seiner persönlichen Windows-Identität. Öffentliche Einladungsdateien enthalten keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 16), Foreground = System.Windows.Media.Brushes.DimGray });
+        root.Children.Add(new TextBlock { Text = existing is { Version: KeyVaultService.CertificateVersion }
+            ? "Die Empfänger dieses Vaults sind übernommen. Weitere Benutzer können Sie ausdrücklich hinzufügen oder importieren. Änderungen der zentralen Teamliste ändern diesen Vault nicht automatisch."
+            : "Die zentrale Teamliste ist bereits übernommen. Jeder freigegebene Benutzer öffnet den Vault mit seiner persönlichen Windows-Identität. Öffentliche Einladungsdateien enthalten keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 16), Foreground = System.Windows.Media.Brushes.DimGray });
         root.Children.Add(new TextBlock { Text = "Eigene Windows-Identität", FontWeight = FontWeights.SemiBold });
         root.Children.Add(identityList);
+        root.Children.Add(new TextBlock { Text = "Vorhandene Identität auswählen und bei Bedarf zur Empfängerliste hinzufügen. Für Updates oder weitere Projekte keinen neuen Zugang anlegen. Diese Freigabe gilt nur für den aktuellen Vault.", TextWrapping = TextWrapping.Wrap, Foreground = System.Windows.Media.Brushes.DimGray, Margin = new Thickness(0, 5, 0, 5) });
         var identityButtons = new WrapPanel();
         identityButtons.Children.Add(Button("Neue Identität", (_, _) => CreateIdentity()));
         identityButtons.Children.Add(Button("Zur Empfängerliste hinzufügen", (_, _) => AddSelectedIdentity()));
@@ -69,18 +75,26 @@ internal sealed class VaultAccessWindow : Window
         var footer = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right };
         footer.Children.Add(Button("Abbrechen", (_, _) => { DialogResult = false; }));
         var save = Button("Vault sicher freigeben", (_, _) => Accept()); save.Style = (Style)FindResource("PrimaryButton"); save.IsDefault = true; footer.Children.Add(save);
-        root.Children.Add(footer); Content = root;
+        root.Children.Add(footer);
+        Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        MainWindow.InitializeAutomationContract(this, "VaultAccess");
     }
 
     public string RecoveryPassphrase => recovery.Password;
     public IReadOnlyList<(X509Certificate2 Certificate, string DisplayName)> TakeRecipients()
         => acceptedRecipients;
 
-    private static Button Button(string text, RoutedEventHandler click) { var button = new Button { Content = text }; button.Click += click; return button; }
-    private void ReloadIdentities()
+    private static Button Button(string text, RoutedEventHandler click) { var button = new Button { Content = text, IsCancel = text == "Abbrechen" }; button.Click += click; return button; }
+    internal void ReloadIdentities()
     {
-        foreach (var row in identities) row.Certificate.Dispose(); identities.Clear();
-        foreach (var row in WindowsVaultIdentityService.List()) identities.Add(row);
+        // Drop the selected certificate before releasing its native handle.
+        identityList.SelectedItem = null;
+        identityList.ItemsSource = null;
+        var previous = identities.ToArray();
+        identities.Clear();
+        foreach (var row in previous) row.Certificate.Dispose();
+        foreach (var row in loadIdentities()) identities.Add(row);
+        identityList.ItemsSource = identities;
         identityList.SelectedIndex = identities.Count > 0 ? 0 : -1;
     }
     private void CreateIdentity()
@@ -148,12 +162,26 @@ internal static class TextEntryPrompt
 {
     public static string? Show(Window owner, string title, string prompt, string initial)
     {
+        var (dialog, input) = Create(owner, title, prompt, initial);
+        return dialog.ShowDialog() == true ? input.Text.Trim() : null;
+    }
+
+    internal static (Window Dialog, TextBox Input) Create(Window owner, string title, string prompt, string initial)
+    {
         var input = new TextBox { Text = initial, MinWidth = 380 };
         var ok = new Button { Content = "OK", IsDefault = true }; var cancel = new Button { Content = "Abbrechen", IsCancel = true };
         var buttons = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right }; buttons.Children.Add(cancel); buttons.Children.Add(ok);
-        var panel = new StackPanel { Margin = new Thickness(18) }; panel.Children.Add(new TextBlock { Text = prompt, TextWrapping = TextWrapping.Wrap }); panel.Children.Add(input); panel.Children.Add(buttons);
-        var dialog = new Window { Owner = owner, Title = title, Content = panel, SizeToContent = SizeToContent.WidthAndHeight, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.NoResize };
-        ok.Click += (_, _) => { if (!string.IsNullOrWhiteSpace(input.Text)) dialog.DialogResult = true; };
-        return dialog.ShowDialog() == true ? input.Text.Trim() : null;
+        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = System.Windows.Media.Brushes.Firebrick };
+        var panel = new StackPanel { Margin = new Thickness(18) }; panel.Children.Add(new TextBlock { Text = prompt, TextWrapping = TextWrapping.Wrap }); panel.Children.Add(input); panel.Children.Add(error); panel.Children.Add(buttons);
+        var dialog = new Window { Owner = owner, Title = title, Width = 480, MaxHeight = 600, Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, SizeToContent = SizeToContent.Height, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.CanResizeWithGrip };
+        ok.Click += (_, _) =>
+        {
+            error.Text = "";
+            if (string.IsNullOrWhiteSpace(input.Text)) { error.Text = "Bitte einen Namen eingeben."; input.Focus(); return; }
+            dialog.DialogResult = true;
+        };
+        cancel.Click += (_, _) => dialog.DialogResult = false;
+        MainWindow.InitializeAutomationContract(dialog, "TextEntryPrompt");
+        return (dialog, input);
     }
 }

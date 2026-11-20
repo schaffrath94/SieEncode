@@ -1,0 +1,32 @@
+{
+  "packageVersion": "1.3.0-offline-groups.6",
+  "studioCommit": "d850fc9749ff7d815da6b392cb7f2b4050b54f00",
+  "verifiedDate": "2026-11-19",
+  "msiProductVersion": "1.3.0",
+  "signed": false,
+  "verifiedMsiFiles": 1104,
+  "msiSha256": "07E824AEA64B94A5AC2330390E3689319213D0670737C827684AB5B8005F1FB6",
+  "studioDllSha256": "40303957EA14A773EEC1C4CD9631E8BF67F14F01A425EC7E7651ECC6AC56E12A",
+  "runtimeDllSha256": "453EC36354ED7647B0846E855C259EA655FE6CDA27FC2874D7F38AA4251B9F69",
+  "selfTest": "passed",
+  "uiSmokeTest": "passed",
+  "actualInstallationPerformed": true,
+  "upgradeFromCandidate5": "passed",
+  "installationEnvironment": "SieEncode-Testlab-LTSC",
+  "msiExitCode": 0,
+  "installedStudioProductVersion": "1.3.0-offline-groups.6+d850fc9749ff7d815da6b392cb7f2b4050b54f00",
+  "installedStudioAndRuntimeDllHashesMatch": true,
+  "groupTrustInventoryIdenticalAfterUpgrade": {
+    "testerA": 4,
+    "testerB": 10
+  },
+  "installedSelfTestUnderTesterA": "passed",
+  "installedStudioOverviewVisibleUnderLabadmin": true,
+  "colleagueKit": "SieEncode_Kollegentest_1.3.0-offline-groups.6.zip",
+  "colleagueKitSha256": "3C5E8A1F637340B481D1F1B4CD090C4E411C3CD48889502C1018D5FA390AFE36",
+  "installedErrorScrollVisualCheck": "pending",
+  "installerWarnings": [
+    "ICE40 REINSTALLMODE",
+    "ICE61 AllowSameVersionUpgrades"
+  ]
+}

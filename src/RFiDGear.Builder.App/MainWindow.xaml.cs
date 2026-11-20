@@ -34,11 +34,11 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<ProjectCatalogEntry> projects = [];
     private readonly ObservableCollection<CodingFieldInput> stationFields = [];
     private readonly ObservableCollection<CodingSeriesHistoryRow> stationHistory = [];
-    private readonly Stack<string> navigationHistory = new();
+    private readonly WorkspaceNavigation navigation = new();
     private readonly Dictionary<string, FrameworkElement> pages;
     private BuilderSettings settings = new();
     private string projectsDirectory = "";
-    private string currentPage = "Home";
+    private string currentPage => navigation.CurrentPage;
     private ProjectCatalogEntry? selectedProject;
     private CodingSessionDefinition? sessionDefinition;
     private PreparedCodingSession? preparedSession;
@@ -73,7 +73,13 @@ public partial class MainWindow : Window
     private readonly CheckBox editorPiccConfigurationChange = new() { Content = "Konfiguration ändern" };
 
     public MainWindow(string startupPage = "Home")
+        : this(startupPage, new BuilderSettingsStore(null, Path.Combine(AppContext.BaseDirectory, "builder.settings.json")))
     {
+    }
+
+    internal MainWindow(string startupPage, BuilderSettingsStore startupSettingsStore, string? groupTrustDirectory = null)
+    {
+        localGroupTrustDirectory = Path.GetFullPath(groupTrustDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SieEncode", "GroupTrust"));
         this.startupPage = startupPage;
         InitializeComponent();
         InitializePiccSettingsFlags();
@@ -83,7 +89,7 @@ public partial class MainWindow : Window
         AppVersionText.Text = string.Equals(startupPage, "Station", StringComparison.OrdinalIgnoreCase)
             ? $"Station · {Version}"
             : $"Studio · {Version}";
-        settingsStore = new BuilderSettingsStore(null, Path.Combine(AppContext.BaseDirectory, "builder.settings.json"));
+        settingsStore = startupSettingsStore;
         profileStore = CreateProfileStore(new BuilderSettings());
         pages = new Dictionary<string, FrameworkElement>(StringComparer.Ordinal)
         {
@@ -99,6 +105,7 @@ public partial class MainWindow : Window
         operationTimer.Tick += OperationTimer_Tick;
         InitializeProjectEditor();
         InitializeDiffPage();
+        RefreshWorkspaceNavigation();
     }
 
     public void RunSelfTest()
@@ -206,11 +213,6 @@ public partial class MainWindow : Window
     private void Navigate_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: string page }) return;
-        if (!settings.ExpertMode && IsExpertPage(page))
-        {
-            SetStatus("Diese Verwaltungs- oder Diagnosefunktion ist im Expertenmodus verfügbar.");
-            return;
-        }
         Navigate(page);
     }
 
@@ -245,8 +247,8 @@ public partial class MainWindow : Window
         StationProjectFolderButton.Visibility = visibility;
         EditorTransportSettings.Visibility = visibility;
         EditorAdvancedActions.Visibility = visibility;
-        StationDetailedPreflight.Visibility = Visibility.Collapsed;
-        StationAdvancedCardActions.Visibility = Visibility.Collapsed;
+        StationDetailedPreflight.Visibility = visibility;
+        StationAdvancedCardActions.Visibility = visibility;
         StationOpenRFiDGearButton.Visibility = visibility;
         StationTechnicalDetails.Visibility = visibility;
         HelpExpertTools.Visibility = visibility;
@@ -261,11 +263,7 @@ public partial class MainWindow : Window
         if (selectedProject is not null) UpdateProjectSelectionInfo(selectedProject);
         if (editorProject is not null) RefreshProfileBindingStatus();
         else RefreshEditorWorkflow();
-        if (!settings.ExpertMode && IsExpertPage(currentPage))
-        {
-            navigationHistory.Clear();
-            Navigate("Help", addHistory: false);
-        }
+        RefreshWorkspaceNavigation();
     }
 
     internal static string NormalizeVisibleFieldLabel(string id, string label)
@@ -277,22 +275,18 @@ public partial class MainWindow : Window
     private void Navigate(string page, bool addHistory = true)
     {
         if (!pages.ContainsKey(page)) return;
-        if (addHistory && currentPage != page) navigationHistory.Push(currentPage);
+        navigation.Navigate(page, addHistory);
         foreach (var item in pages) item.Value.Visibility = item.Key == page ? Visibility.Visible : Visibility.Collapsed;
-        currentPage = page;
         var title = page switch
         {
-            "Home" => "Übersicht", "Projects" => "Projekte", "Station" => "Kodierstation", "TestStation" => "Teststation",
+            "Home" => "Übersicht", "Projects" => "Projektbibliothek", "Station" => "Karten kodieren", "TestStation" => "Karten untersuchen",
             "Editor" => "Projekt bearbeiten", "Profiles" => "Profile", "Analysis" => "Analyse / Dry-Run", "Diff" => "Projekt-/Profilvergleich",
             "Acceptance" => "Prüfung & Abnahme", "Settings" => "Einstellungen", "Help" => "Werkzeuge & Hilfe", _ => page
         };
-        PageTitle.Text = title;
-        Breadcrumb.Text = "SieEncode / " + title;
-        BackButton.IsEnabled = navigationHistory.Count > 0;
-        var navButtons = new[] { NavHomeButton, NavProjectsButton, NavStationButton, NavTestStationButton, NavProfilesButton, NavHelpButton, NavSettingsButton };
-        foreach (var button in navButtons)
-            button.Style = (Style)FindResource(string.Equals(button.Tag as string, page, StringComparison.Ordinal)
-                ? "NavButtonActive" : "NavButton");
+        PageTitle.Text = WorkspaceTitle(WorkspaceNavigation.WorkspaceFor(page));
+        Breadcrumb.Text = "SieEncode / " + PageTitle.Text + (PageTitle.Text == title ? "" : " / " + title);
+        BackButton.IsEnabled = navigation.CanGoBack;
+        RefreshWorkspaceNavigation();
     }
 
     private void PopulateTestAnalysisTree(CardRecognitionReport report)
@@ -348,6 +342,11 @@ public partial class MainWindow : Window
                 if (file.TryGetProperty("access", out var access))
                     fileItem.Items.Add(new TreeViewItem { Header = $"Rechte: R {JsonValue(access, "read", "?")} · W {JsonValue(access, "write", "?")} · RW {JsonValue(access, "readWrite", "?")} · Ändern {JsonValue(access, "change", "?")}" });
                 fileItem.Items.Add(new TreeViewItem { Header = $"Metadaten: {JsonValue(file, "metadataResult", "unbekannt")} · Inhalt: {JsonValue(file, "contentResult", "nicht angefordert")}" });
+                fileItem.Items.Add(new TreeViewItem { Header = new TextBlock
+                {
+                    Text = "Lesenachweis: " + FileInventoryEvidence.FromRuntime(file).Description,
+                    TextWrapping = TextWrapping.Wrap, MaxWidth = 750
+                } });
                 if (file.TryGetProperty("hex", out var hex) && hex.ValueKind == JsonValueKind.String)
                 {
                     fileItem.Items.Add(new TreeViewItem { Header = "HEX: " + hex.GetString() });
@@ -373,8 +372,7 @@ public partial class MainWindow : Window
 
     private void Back_Click(object sender, RoutedEventArgs e)
     {
-        if (navigationHistory.Count == 0) return;
-        Navigate(navigationHistory.Pop(), addHistory: false);
+        if (navigation.GoBack()) Navigate(currentPage, addHistory: false);
     }
 
     private void RefreshProjects_Click(object sender, RoutedEventArgs e)
@@ -621,7 +619,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private ProjectCatalogEntry MaterializeSecureStationEntry(ProjectCatalogEntry entry)
+    private ProjectCatalogEntry MaterializeSecureStationEntry(ProjectCatalogEntry entry, Func<string?>? requestPassphrase = null)
     {
         projectSecretServer?.Dispose();
         projectSecretServer = null;
@@ -629,12 +627,27 @@ public partial class MainWindow : Window
         secureOperationalSession = null;
         if (!entry.SecureOnDemand) return entry;
         var source = ProjectJson.Load(entry.SourcePath);
-        var identities = WindowsVaultIdentityService.List();
+        var passphraseVault = entry.VaultVersion == KeyVaultService.CurrentVersion &&
+            source.Project.GroupVault is null && !ProjectGroupVault.IsGroupVaultFile(ProjectKeyVault.GetPath(entry.SourcePath));
+        var identities = passphraseVault ? [] : loadEditorVaultIdentities();
         try
         {
-            if (identities.Count == 0)
-                throw new CryptographicException("Auf diesem Windows-Benutzer ist keine persönliche SieEncode-Identität vorhanden. Bitte das Projekt bearbeiten und unter ‚Mehrbenutzerzugriff‘ zuerst eine Identität anlegen oder freigeben lassen.");
-            var payload = ProjectKeyVault.LoadWithCertificates(ProjectKeyVault.GetPath(entry.SourcePath), identities.Select(identity => identity.Certificate));
+            ProjectKeyVaultPayload payload;
+            if (passphraseVault)
+            {
+                var passphrase = requestPassphrase is not null ? requestPassphrase() : PasswordPrompt.Show(this,
+                    "Vault für Kodierstation entsperren", "Passphrase des Projekt-Vaults eingeben. Die Schlüssel werden nur für die geschützte lokale Sitzung bereitgestellt.");
+                if (passphrase is null) throw new OperationCanceledException("Entsperren der Kodierstation abgebrochen. Es wurde keine Kartenaktion gestartet.");
+                payload = ProjectKeyVault.Load(ProjectKeyVault.GetPath(entry.SourcePath), passphrase);
+            }
+            else
+            {
+                if (identities.Count == 0)
+                    throw new CryptographicException("Auf diesem Windows-Benutzer ist keine persönliche SieEncode-Identität vorhanden. Bitte das Projekt bearbeiten und unter ‚Mehrbenutzerzugriff‘ zuerst eine Identität anlegen oder freigeben lassen.");
+                payload = source.Project.GroupVault is not null || ProjectGroupVault.IsGroupVaultFile(ProjectKeyVault.GetPath(entry.SourcePath))
+                    ? ProjectGroupVault.Load(entry.SourcePath, source, GroupTrust(source), identities.Select(identity => identity.Certificate))
+                    : ProjectKeyVault.LoadWithCertificates(ProjectKeyVault.GetPath(entry.SourcePath), identities.Select(identity => identity.Certificate));
+            }
             var hydrated = ProjectKeyVault.Apply(ProjectJson.WithoutProductiveSecrets(source), payload);
             var shells = TaskShellLibrary.Load(Path.Combine(AppContext.BaseDirectory, "assets", "task-shells"));
             secureOperationalSession = new SecureOperationalSessionService().Materialize(
@@ -694,7 +707,9 @@ public partial class MainWindow : Window
         TestDeepAnalyzeButton.IsEnabled = operationAvailable && autorun &&
             rfidgearCapabilities?.Has(RFiDGearCapabilityId.ApplicationFileInventory) == true &&
             lastCardRecognitionReport?.Report is { State: "RECOGNIZED", ApplicationIds.Count: > 0 };
-        TestOpenRecognitionResultButton.IsEnabled = lastCardRecognitionReport is not null;
+        TestOpenRecognitionResultButton.IsEnabled = File.Exists(lastTestReportPath);
+        TestOpenInventoryPdfButton.IsEnabled = LatestInventoryPdfPath() is not null;
+        TestExportInventoryComparisonButton.IsEnabled = TestOpenInventoryPdfButton.IsEnabled;
         TestProjectRecognitionButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && Has(RFiDGearOperationKind.CardRecognitionReadOnly);
         TestProjectTransportButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && Has(RFiDGearOperationKind.CardPreflightTransport);
         TestProjectProductiveButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && productiveExpectationAvailable && Has(RFiDGearOperationKind.CardPreflightProductive);
@@ -1196,6 +1211,8 @@ public partial class MainWindow : Window
                     lastCardRecognitionReport = new CardRecognitionService().Create(reportRoot,
                         operationSession.Operation, evaluation);
                     lastTestReportPath = lastCardRecognitionReport.TextPath;
+                    TestOpenInventoryPdfButton.IsEnabled = false;
+                    TestExportInventoryComparisonButton.IsEnabled = false;
                     StationOpenRecognitionResultButton.IsEnabled = true;
                     var report = lastCardRecognitionReport.Report;
                     StationState.Text = "TRANSPONDER · " + report.Structure;
@@ -1217,6 +1234,8 @@ public partial class MainWindow : Window
                     var report = new ApplicationInventoryReportService().Create(reportRoot,
                         Path.Combine(reportRoot, "application-inventory.runtime.json"));
                     lastTestReportPath = report.TextPath;
+                    TestOpenInventoryPdfButton.IsEnabled = LatestInventoryPdfPath() is not null;
+                    TestExportInventoryComparisonButton.IsEnabled = TestOpenInventoryPdfButton.IsEnabled;
                     TestAnalysisInfo.Text = report.Summary;
                     AppendApplicationInventoryTree(report.JsonPath);
                     TestOpenRecognitionResultButton.IsEnabled = true;
@@ -1298,6 +1317,24 @@ public partial class MainWindow : Window
             if (string.IsNullOrWhiteSpace(lastTestReportPath) || !File.Exists(lastTestReportPath))
                 throw new FileNotFoundException("In dieser Sitzung liegt noch kein Teststationsbericht vor.");
             Process.Start(new ProcessStartInfo(lastTestReportPath) { UseShellExecute = true });
+        }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
+    private string? LatestInventoryPdfPath()
+    {
+        if (string.IsNullOrWhiteSpace(lastTestReportPath) ||
+            !string.Equals(Path.GetFileName(lastTestReportPath), "application-inventory.result.txt", StringComparison.OrdinalIgnoreCase)) return null;
+        var path = Path.ChangeExtension(lastTestReportPath, ".pdf");
+        return File.Exists(path) ? path : null;
+    }
+
+    private void OpenInventoryPdf_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var path = LatestInventoryPdfPath() ?? throw new FileNotFoundException("Zum letzten Analyseergebnis liegt kein PDF-Istreport vor.");
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
         }
         catch (Exception exception) { ShowError(exception); }
     }
@@ -1965,29 +2002,29 @@ public partial class MainWindow : Window
                 var ownRegistered = team.Any(recipient => localFingerprints.Contains(recipient.Fingerprint));
                 if (identities.Count == 0)
                 {
-                    VaultSetupStatusTitle.Text = "Nicht eingerichtet";
+                    VaultSetupStatusTitle.Text = "Persönliche Identität fehlt";
                     VaultSetupStatusText.Text = "Auf diesem Windows-Benutzerkonto fehlt die persönliche Vault-Identität. Starten Sie die Ersteinrichtung; ein Projekt muss dafür nicht geöffnet sein.";
                     VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.MistyRose;
                     VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.IndianRed;
                 }
                 else if (!ownRegistered)
                 {
-                    VaultSetupStatusTitle.Text = "Eigene Identität noch nicht im Team";
-                    VaultSetupStatusText.Text = $"{identities.Count} lokale Identität(en), {team.Count} Teammitglied(er). Fügen Sie die eigene Identität zur gemeinsamen Teamliste hinzu.";
+                    VaultSetupStatusTitle.Text = "Bisherige Teamliste: eigener Zugang nicht enthalten";
+                    VaultSetupStatusText.Text = $"{identities.Count} lokale Identität(en), {team.Count} Teammitglied(er). Nur für bisherige Team-Vaults die eigene Identität zur Teamliste hinzufügen. Diese Anzeige bewertet keine Gruppenrechte.";
                     VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.LemonChiffon;
                     VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.DarkGoldenrod;
                 }
                 else if (team.Count < 2)
                 {
-                    VaultSetupStatusTitle.Text = "Einzelzugriff eingerichtet";
-                    VaultSetupStatusText.Text = "Die eigene Identität ist registriert. Für Mehrbenutzerbetrieb mindestens eine öffentliche Einladung eines weiteren Teammitglieds importieren.";
+                    VaultSetupStatusTitle.Text = "Bisherige Teamliste: Einzelzugriff eingerichtet";
+                    VaultSetupStatusText.Text = "Die eigene Identität ist in der bisherigen Teamliste enthalten. Für weitere Empfänger bisheriger Team-Vaults deren öffentliche Einladungen importieren. Gruppenrechte werden separat verwaltet.";
                     VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.LemonChiffon;
                     VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.DarkGoldenrod;
                 }
                 else
                 {
-                    VaultSetupStatusTitle.Text = "Mehrbenutzer-Vault eingerichtet";
-                    VaultSetupStatusText.Text = $"Dieser Arbeitsplatz ist registriert; {team.Count} Teammitglieder werden automatisch für neue Projekt-Vaults freigegeben.";
+                    VaultSetupStatusTitle.Text = "Bisherige Teamliste: Vorlage eingerichtet";
+                    VaultSetupStatusText.Text = $"Eigener Zugang enthalten; {team.Count} Empfänger für neue bisherige Team-Vaults. Bestehende Vaults separat freigeben. Gruppenrechte werden separat verwaltet. Zugriff auf dem zweiten Rechner noch praktisch prüfen.";
                     VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.Honeydew;
                     VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.SeaGreen;
                 }
@@ -1996,7 +2033,7 @@ public partial class MainWindow : Window
         }
         catch (Exception exception)
         {
-            VaultSetupStatusTitle.Text = "Vault-Status nicht lesbar";
+            VaultSetupStatusTitle.Text = "Identitäts-/Teamlistenstatus nicht lesbar";
             VaultSetupStatusText.Text = exception.Message;
             VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.MistyRose;
             VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.Firebrick;
@@ -2031,6 +2068,16 @@ public partial class MainWindow : Window
             if (!File.Exists(executable)) throw new FileNotFoundException("Bitte zuerst eine vorhandene RFiDGear-Runtime auswählen.", executable);
             Process.Start(new ProcessStartInfo(executable) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(executable)! });
             SetStatus("RFiDGear ohne Projekt geöffnet. Reader auswählen, Einstellung speichern und RFiDGear danach schließen.");
+        }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
+    private void RefreshReaderSetup_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            UpdateRFiDGearVersion(RFiDGearExecutableText.Text.Trim());
+            SetStatus("Gespeicherte Leserkonfiguration neu gelesen. Keine Leser- oder Kartenverbindung geprüft.");
         }
         catch (Exception exception) { ShowError(exception); }
     }
@@ -2138,8 +2185,8 @@ public partial class MainWindow : Window
             capability.State switch { RFiDGearCapabilityState.Available => "Verfügbar", RFiDGearCapabilityState.Unavailable => "Nicht vorhanden", _ => "Unbekannt" },
             capability.Evidence)).ToArray();
         RFiDGearReaderText.Text = reader.IsConfigured
-            ? $"Reader: {reader.Provider}" + (string.IsNullOrWhiteSpace(reader.Port) ? "" : $" · Port {reader.Port}")
-            : "Reader: nicht konfiguriert · bitte zuerst in RFiDGear auswählen";
+            ? $"Gespeicherte Leserkonfiguration: {reader.Provider}" + (string.IsNullOrWhiteSpace(reader.Port) ? "" : $" · Port {reader.Port}") + " · Verbindung und Karte noch nicht geprüft"
+            : "Leserkonfiguration fehlt oder ist nicht lesbar: " + (reader.Error ?? "Bitte in RFiDGear auswählen und speichern.");
         var availableCount = rfidgearCapabilities.Capabilities.Count(capability => capability.State == RFiDGearCapabilityState.Available);
         HomeRFiDGearState.Text = $"{version.Version?.ToString() ?? "Version unbekannt"} · {availableCount}/{rfidgearCapabilities.Capabilities.Count}";
         StationOpenRFiDGearButton.IsEnabled = preparedSession is not null && rfidgearCapabilities.Has(RFiDGearCapabilityId.CustomProjectFile);

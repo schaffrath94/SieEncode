@@ -1,0 +1,11 @@
+{
+  "Date": "2026-11-05",
+  "Change": "Select created group project for header and downstream actions",
+  "CI": "72/72; CLI and App builds successful",
+  "UISmokeStatus": "OK",
+  "UISmokeChecks": 60,
+  "UISmokeReportSHA256": "59A59DF6C5CC0B59C7FBCF209ECC7D5F08935FF17CC81F44DE2F6F627F5EA56D",
+  "BuiltStudioSHA256": "93CF3C8EE3911EA539C76C26F26A46C71D656CAB8EE37AA9F423D9C0C7454E12",
+  "Scope": "Source build with default 1.1.0-rc15 project version; not the installed MSI candidate",
+  "InstalledCandidateContainsFix": false
+}

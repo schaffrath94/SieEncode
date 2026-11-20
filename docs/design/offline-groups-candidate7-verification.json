@@ -1,0 +1,43 @@
+{
+  "packageVersion": "1.3.0-offline-groups.7",
+  "studioCommit": "b27c1d9032acb0324083e90dfdca7026102a6d09",
+  "msiProductVersion": "1.3.0",
+  "signed": false,
+  "msiSha256": "495C05898122B8D2750CBFE89B94B86DBA3EED1EDAD155806F1E5FE0CB47AEC5",
+  "studioDllSha256": "8A6AF2D55618F18E984110DFB908040A65FA67DFE0F1888532B27F830FB371E9",
+  "runtimeDllSha256": "453EC36354ED7647B0846E855C259EA655FE6CDA27FC2874D7F38AA4251B9F69",
+  "verifiedMsiFiles": 1105,
+  "extractedUiSmokeTestExitCode": 0,
+  "installerWarnings": [
+    "ICE40 REINSTALLMODE",
+    "ICE61 AllowSameVersionUpgrades"
+  ],
+  "upgradeFromCandidate6": {
+    "environment": "SieEncode-Testlab-LTSC",
+    "observedBefore": "1.3.0-offline-groups.6+d850fc9749ff7d815da6b392cb7f2b4050b54f00",
+    "verifiedGuestMsiSha256": true,
+    "beforeGroupTrustFileCount": {
+      "testerA": 4,
+      "testerB": 10
+    },
+    "status": "passed",
+    "verifiedDate": "2026-11-20",
+    "observedAfter": "1.3.0-offline-groups.7+b27c1d9032acb0324083e90dfdca7026102a6d09",
+    "installedStudioAndRuntimeDllHashesMatch": true,
+    "unchangedGroupTrustFiles": {
+      "testerB": 10,
+      "testerA": 4
+    },
+    "installedSelfTest": {
+      "exitCode": 0,
+      "account": "testerA"
+    }
+  },
+  "installedErrorFooterVisualCheck": {
+    "status": "passed",
+    "date": "2026-11-20",
+    "source": "operator observation in test VM",
+    "fullyVisibleImmediately": true,
+    "fullyVisibleWhileScrolling": true
+  }
+}

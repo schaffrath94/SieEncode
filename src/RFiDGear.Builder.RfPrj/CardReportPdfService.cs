@@ -5,11 +5,25 @@ using RFiDGear.Builder.Core;
 namespace RFiDGear.Builder.RfPrj;
 
 public sealed record CardReportField(string Name, string Value);
+public enum ReportComparisonState { Equal, Different, NotComparable }
+public enum CardReportDetail { Full, Compact }
+public sealed record CardReportImage(string Caption, int Width, int Height, byte[] Rgb);
+public sealed record CardReportDocumentation(DateOnly? Date = null, string Place = "", string Notes = "", bool Signature = false)
+{
+    public IReadOnlyList<CardReportImage> Images { get; init; } = [];
+    public bool HasContent => Date is not null || !string.IsNullOrWhiteSpace(Place) || !string.IsNullOrWhiteSpace(Notes) || Signature || Images.Count > 0;
+}
+public sealed record CardReportSettingComparison(string Name, string Expected, string Observed, ReportComparisonState State);
 public sealed record CardReportFile(
-    int Id, string Name, string Type, int Size, string Communication, string Access,
-    string CreationSettings, string Initialization, string DataDefinition, string HexDump, string AsciiDump);
+    int Id, string Name, string Type, int? Size, string Communication, string Access,
+    string CreationSettings, string Initialization, string DataDefinition, string HexDump, string AsciiDump)
+{
+    public string? ExpectedHexDump { get; init; }
+    public string? Comparison { get; init; }
+    public IReadOnlyList<CardReportSettingComparison> SettingsComparison { get; init; } = [];
+}
 public sealed record CardReportApplication(
-    string Aid, string Name, string KeyType, int KeyCount, string TransportKeySettings,
+    string Aid, string Name, string KeyType, int? KeyCount, string TransportKeySettings,
     string ProductiveKeySettings, string ChangeKeyMode, string KeyVersions, IReadOnlyList<CardReportFile> Files);
 
 /// <summary>
@@ -33,6 +47,7 @@ public sealed class CardReportFactory
         var general = new List<CardReportField>
         {
             new("Berichtsart", "Projektdefinition / Soll"),
+            new("Quelle", source),
             new("Kartentyp", "MIFARE DESFire (aus Projektkontext)"),
             new("UID", "nicht verfügbar (Sollreport)"),
             new("Raw UID", "nicht verfuegbar"),
@@ -64,8 +79,8 @@ public sealed class CardReportFactory
                 file.Id, file.Name, file.Type, file.Size, file.Communication, file.Access,
                 file.CreationSettings ?? "identisch zum Endzustand", file.Initialization,
                 string.IsNullOrWhiteSpace(file.CodingOutput) ? "keine Kodierausgabe" : file.CodingOutput,
-                payloads.TryGetValue((application.Aid, file.Id), out var bytes) ? HexDump(bytes) : "nicht verfuegbar - variable Kartendaten fehlen",
-                payloads.TryGetValue((application.Aid, file.Id), out bytes) ? AsciiDump(bytes) : "nicht verfuegbar - variable Kartendaten fehlen")).ToArray())).ToArray();
+                payloads.TryGetValue((application.Aid, file.Id), out var bytes) ? HexDump(bytes) : "nicht verfuegbar - Rezept oder erforderliche Projekt-/Kartenwerte prüfen",
+                payloads.TryGetValue((application.Aid, file.Id), out bytes) ? AsciiDump(bytes) : "nicht verfuegbar - Rezept oder erforderliche Projekt-/Kartenwerte prüfen")).ToArray())).ToArray();
         return new CardReport("1.0", "project-plan", "SieEncode Kartenreport", project.Project.Name,
             ParseGeneratedAt(analysis.GeneratedAt), source, general, fields, applications, analysis.Issues);
     }
@@ -81,14 +96,19 @@ public sealed class CardReportFactory
         try
         {
             var composition = library.Compose(project.Profiles.Base, project.Profiles.Customers);
-            var values = composition.Variables.ToDictionary(variable => variable.Id,
-                variable => project.Values.GetValueOrDefault(variable.Id, variable.Default ?? ""), StringComparer.Ordinal);
             foreach (var application in composition.Applications)
             {
                 var aid = ProfileValidator.NormalizeAid(application.Id);
                 foreach (var file in application.Files.Where(file => file.Coding is not null))
                 {
-                    try { result[(aid, file.Id)] = PayloadEngine.Build(file, values, aid); }
+                    try
+                    {
+                        var sources = file.Coding!.Recipe.Where(step => step.Source is not null).Select(step => step.Source!).ToHashSet(StringComparer.Ordinal);
+                        var scoped = new ComposedProfiles(composition.Profiles,
+                            [new ApplicationDefinition { Id = application.Id, Files = [file] }],
+                            composition.Variables.Where(variable => sources.Contains(variable.Id)).ToArray());
+                        result[(aid, file.Id)] = PayloadEngine.BuildAll(scoped, project.Values, new Dictionary<string, string>()).Single().Bytes;
+                    }
                     catch (InvalidDataException) { /* Kartendaten werden erst in der Kodierstation erhoben. */ }
                 }
             }
@@ -98,9 +118,9 @@ public sealed class CardReportFactory
     }
 
     private static string HexDump(byte[] bytes)
-        => string.Join(" ", bytes.Take(256).Select(value => value.ToString("X2", CultureInfo.InvariantCulture))) + (bytes.Length > 256 ? " ..." : "");
+        => string.Join(" ", bytes.Select(value => value.ToString("X2", CultureInfo.InvariantCulture)));
     private static string AsciiDump(byte[] bytes)
-        => new string(bytes.Take(256).Select(value => value is >= 32 and <= 126 ? (char)value : '.').ToArray()) + (bytes.Length > 256 ? "..." : "");
+        => new string(bytes.Select(value => value is >= 32 and <= 126 ? (char)value : '.').ToArray());
 
     private static DateTimeOffset ParseGeneratedAt(string value)
         => DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var parsed)
@@ -115,29 +135,39 @@ public sealed class CardReportPdfService
     private const double Margin = 76;
     private const double RightMargin = 34;
 
-    public void Save(CardReport report, string outputPath)
+    public void Save(CardReport report, string outputPath, CardReportDetail detail = CardReportDetail.Full, CardReportDocumentation? documentation = null)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+        if (documentation is not null)
+        {
+            if (documentation.Images.Count > 2) throw new InvalidDataException("Höchstens zwei Kartenbilder pro Bericht.");
+            foreach (var picture in documentation.Images)
+                if (picture.Width is < 1 or > 1280 || picture.Height is < 1 or > 1280 || picture.Rgb is null || picture.Rgb.Length != picture.Width * picture.Height * 3)
+                    throw new InvalidDataException("Kartenbild enthält ungültige RGB-Daten oder Abmessungen.");
+        }
         var fullPath = Path.GetFullPath(outputPath);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-        var document = new LayoutDocument(report);
+        var document = new LayoutDocument(report, detail, documentation);
         File.WriteAllBytes(fullPath, BuildPdf(document.Pages));
     }
 
     private sealed class LayoutDocument
     {
         private readonly CardReport report;
+        private readonly CardReportDetail detail;
         private readonly List<PageCanvas> pages = [];
         private PageCanvas current = null!;
         private double y;
 
-        public LayoutDocument(CardReport report)
+        public LayoutDocument(CardReport report, CardReportDetail detail, CardReportDocumentation? documentation)
         {
             this.report = report;
+            this.detail = detail;
             NewPage();
             AddTitle(report.Title);
             AddLine($"{report.Kind} | Schema {report.SchemaVersion}", 9, false, "muted");
+            if (detail == CardReportDetail.Compact) AddLine("Kompaktbericht: Rohdaten ausgelassen; Bewertungen und Befunde bleiben enthalten.", 9, false, "muted");
             AddSpace(8);
             AddSection("Allgemeine Karten- und Projektinformationen");
             AddFields(report.General);
@@ -154,53 +184,88 @@ public sealed class CardReportPdfService
             {
                 AddSection($"Analysebefunde ({report.Findings.Count})");
                 foreach (var finding in report.Findings)
-                    AddLine($"[{finding.Severity}] {finding.Area}: {finding.Message}", 9, finding.Severity == "ERROR");
+                    AddLine($"[{finding.Severity}] {finding.Area}: {finding.Message}", detail == CardReportDetail.Compact ? 8 : 9, finding.Severity == "ERROR", finding.Severity == "ERROR" ? "error" : "black");
             }
+            if (documentation?.HasContent == true) AddDocumentation(documentation);
             FinishFooters();
+        }
+
+        private void AddDocumentation(CardReportDocumentation documentation)
+        {
+            AddSection("Ergänzende Dokumentation");
+            if (documentation.Date is { } date) AddLine($"Dokumentationsdatum: {date:dd.MM.yyyy}", 9);
+            if (!string.IsNullOrWhiteSpace(documentation.Place))
+                foreach (var line in Wrap("Ort: " + documentation.Place, 45)) AddLine(line, 9);
+            if (!string.IsNullOrWhiteSpace(documentation.Notes))
+            {
+                AddLine("Notizen:", 9, true);
+                foreach (var line in Wrap(documentation.Notes, 45)) AddLine(line, 9);
+            }
+            foreach (var picture in documentation.Images)
+            {
+                var scale = Math.Min((PageWidth - Margin - RightMargin) / picture.Width, 210.0 / picture.Height);
+                var width = picture.Width * scale;
+                var height = picture.Height * scale;
+                Ensure(height + 55);
+                AddLine(picture.Caption, 9, true);
+                current.Image(picture, Margin, y - height, width, height);
+                y -= height + 15;
+            }
+            if (documentation.Signature)
+            {
+                Ensure(95);
+                AddSpace(30);
+                current.Rule(y, 0.32, 0.42, 0.44);
+                y -= 15;
+                AddLine("Name / Unterschrift", 9);
+                AddLine("Dokumentation - keine digitale Signatur oder technische Freigabe.", 8, false, "muted");
+            }
         }
 
         public IReadOnlyList<PageCanvas> Pages => pages;
 
         private void AddApplication(CardReportApplication app)
         {
-            Ensure(260);
-            AddBand($"AID {app.Aid} | {app.Name}");
-            var settingsTop = y + 3;
-            current.Box(Margin, y - 48, PageWidth - Margin - RightMargin, 52, 0.82, 0.84, 0.85);
-            current.Text(Margin + 7, y - 10, "Application Settings", 8.5, true, "muted");
-            current.Text(Margin + 7, y - 24, $"Kryptografie: {app.KeyType}    Key-Slots: {app.KeyCount}", 8.5, true, "black");
-            current.Text(Margin + 242, y - 24, $"AMK Soll: {app.ProductiveKeySettings}    Transport: {app.TransportKeySettings}", 8.5, true, "black");
-            current.Text(Margin + 7, y - 38, $"Key-Versionen: {Clip(app.KeyVersions, 43)}", 8, false, "muted");
-            current.Text(Margin + 242, y - 38, $"Keywechsel: {Clip(app.ChangeKeyMode, 29)}", 8, false, "muted");
-            y = settingsTop - 58;
+            if (report.Kind is "application-inventory" or "application-content-comparison" or "application-comparison")
+            {
+                AddObservedApplication(app);
+                return;
+            }
+            Ensure(90);
+            AddBand($"AID {app.Aid}");
+            AddLine(app.Name, 11, true);
+            AddLine($"Kryptografie: {app.KeyType} | Key-Slots: {app.KeyCount}", 9);
+            AddLine($"KeySettings Soll: {app.ProductiveKeySettings} | Transport: {app.TransportKeySettings}", 9);
+            AddLine($"Key-Versionen: {app.KeyVersions}", 9);
+            AddLine($"Keywechsel: {app.ChangeKeyMode}", 9);
             foreach (var file in app.Files)
             {
-                var hexLines = Wrap("HEX: " + file.HexDump, 104).ToArray();
-                var asciiLines = Wrap("ASCII: " + file.AsciiDump, 104).ToArray();
-                var dumpHeight = Math.Max(35, 10 + ((hexLines.Length + asciiLines.Length + 1) * 10));
-                Ensure(92 + dumpHeight);
-                AddBand($"File ID {file.Id:D2} | {file.Name}", compact: true);
-                var propertiesTop = y + 3;
-                var half = (PageWidth - Margin - RightMargin - 8) / 2;
-                current.Box(Margin, y - 53, half, 57, 0.82, 0.84, 0.85);
-                current.Box(Margin + half + 8, y - 53, half, 57, 0.82, 0.84, 0.85);
-                current.Text(Margin + 7, y - 12, $"Typ: {file.Type}", 8.5, true, "black");
-                current.Text(Margin + 7, y - 27, $"Groesse: {file.Size} Byte", 8.5, true, "black");
-                current.Text(Margin + 7, y - 42, $"Initialisierung: {Clip(file.Initialization, 34)}", 8, false, "muted");
-                current.Text(Margin + half + 15, y - 12, $"Access Rights: {file.Access}", 8.5, true, "black");
-                current.Text(Margin + half + 15, y - 27, $"Comm. Mode: {file.Communication}", 8.5, true, "black");
-                current.Text(Margin + half + 15, y - 42, $"Erstellung: {Clip(file.CreationSettings, 31)}", 8, false, "muted");
-                y = propertiesTop - 62;
-                current.Box(Margin, y - dumpHeight + 4, PageWidth - Margin - RightMargin, dumpHeight, 0.82, 0.84, 0.85);
-                current.Text(Margin + 6, y - 8, $"Daten / Rezept: {Clip(file.DataDefinition, 74)}", 8.3, true, "black");
-                var dumpY = y - 21;
-                foreach (var line in hexLines.Concat(asciiLines)) { current.Text(Margin + 6, dumpY, line, 7.4, false, "mono"); dumpY -= 10; }
-                y -= dumpHeight + 3;
+                Ensure(85);
+                AddBand($"AID {app.Aid} | File ID {file.Id:D2}", compact: true);
+                AddLine(file.Name, 10, true);
+                AddLine($"Typ: {file.Type} | Größe: {file.Size} Byte", 9);
+                AddLine($"Kommunikation: {file.Communication} | Rechte: {file.Access}", 9);
+                AddLine($"Erstellung: {file.CreationSettings}", 9);
+                AddLine($"Initialisierung: {file.Initialization}", 9);
+                AddLine($"Daten / Rezept: {file.DataDefinition}", 9);
+                if (detail == CardReportDetail.Full)
+                {
+                    AddLine("HEX (Sollbytes):", 9, true);
+                    foreach (var line in Wrap(file.HexDump, 48)) AddLine(line, 8);
+                    AddLine("ASCII (Sollbytes):", 9, true);
+                    foreach (var line in Wrap(file.AsciiDump, 48)) AddLine(line, 8);
+                }
+                AddSpace(8);
             }
         }
 
         private void AddFields(IEnumerable<CardReportField> fields)
         {
+            if (report.Kind == "project-plan")
+            {
+                foreach (var field in fields) AddLine(field.Name + ": " + field.Value, 9);
+                return;
+            }
             var rows = fields.ToArray();
             for (var index = 0; index < rows.Length; index += 2)
             {
@@ -209,6 +274,47 @@ public sealed class CardReportPdfService
                 AddFieldCell(rows[index], Margin, y, half);
                 if (index + 1 < rows.Length) AddFieldCell(rows[index + 1], Margin + half + 8, y, half);
                 y -= 31;
+            }
+        }
+
+        private void AddObservedApplication(CardReportApplication app)
+        {
+            Ensure(90);
+            AddBand($"AID {app.Aid}");
+            AddLine($"Schlüsseltyp: {app.KeyType} | Key-Slots: {app.KeyCount?.ToString() ?? "unbekannt"}", 9);
+            AddLine($"Gelesene KeySettings: {app.ProductiveKeySettings}", 9);
+            AddLine($"Key-Versionen: {app.KeyVersions}", 9);
+            if (app.Files.Count == 0) AddLine("Keine Dateidetails vorhanden. Vollständigkeit siehe Inventurbefund.", 9);
+            foreach (var file in app.Files)
+            {
+                Ensure(95);
+                AddBand($"AID {app.Aid} | File {file.Id:D2}", compact: true);
+                AddLine($"Typ: {file.Type} | Größe: {file.Size?.ToString() ?? "unbekannt"} Byte", 9);
+                AddLine($"Kommunikation: {file.Communication} | Rechte: {file.Access}", 9);
+                AddLine(file.DataDefinition, 9, true);
+                foreach (var setting in file.SettingsComparison)
+                {
+                    var verdict = setting.State switch { ReportComparisonState.Equal => "Gleich", ReportComparisonState.Different => "Abweichung", _ => "Nicht vergleichbar" };
+                    AddLine($"{setting.Name}: Soll {setting.Expected} | Ist {setting.Observed} | {verdict}", 9,
+                        setting.State == ReportComparisonState.Different, setting.State == ReportComparisonState.Different ? "error" : "black");
+                }
+                if (file.Comparison is not null)
+                    AddLine(file.Comparison, 9, true, file.Comparison.StartsWith("Abweichung", StringComparison.Ordinal) ? "error" : "teal");
+                if (detail == CardReportDetail.Compact)
+                {
+                    AddSpace(8);
+                    continue;
+                }
+                if (report.Kind is "application-content-comparison" or "application-comparison")
+                {
+                    AddLine("Soll-HEX (aus Projekt und Eingaben):", 9, true);
+                    foreach (var line in Wrap(file.ExpectedHexDump ?? "nicht erzeugbar oder kein Sollfile", 60)) AddLine(line, 8);
+                }
+                AddLine("HEX (gelesene Bytes):", 9, true);
+                foreach (var line in Wrap(file.HexDump, 60)) AddLine(line, 8);
+                AddLine("ASCII (gelesene Bytes):", 9, true);
+                foreach (var line in Wrap(file.AsciiDump, 60)) AddLine(line, 8);
+                AddSpace(8);
             }
         }
 
@@ -246,7 +352,7 @@ public sealed class CardReportPdfService
         private void AddLine(string value, double size, bool bold = false, string color = "black", double indent = 0)
         {
             var maxWidth = PageWidth - Margin - RightMargin - indent;
-            foreach (var line in Wrap(value, Math.Max(18, (int)(maxWidth / (size * 0.52)))))
+            foreach (var line in Wrap(value, Math.Max(18, (int)(maxWidth / (size * (report.Kind == "project-plan" ? 1.0 : 0.52))))))
             {
                 Ensure(size + 5);
                 current.Text(Margin + indent, y, line, size, bold, color);
@@ -265,7 +371,7 @@ public sealed class CardReportPdfService
             y = PageHeight - 46;
             if (pages.Count > 1)
             {
-                current.Text(Margin, y, $"SieEncode Kartenreport | {report.Project}", 8.5, true, "teal");
+                current.Text(Margin, y, (report.Kind == "project-plan" ? "SieEncode Sollreport | Fortsetzung" : $"SieEncode Kartenreport | {report.Project}"), 8.5, true, "teal");
                 current.Rule(y - 7, 0.65, 0.75, 0.76);
                 y -= 24;
             }
@@ -286,9 +392,16 @@ public sealed class CardReportPdfService
     {
         private readonly StringBuilder content = new();
         public string Content => content.ToString();
+        public void Image(CardReportImage picture, double x, double bottom, double width, double height)
+        {
+            content.AppendLine($"q {F(width)} 0 0 {F(height)} {F(x)} {F(bottom)} cm");
+            content.AppendLine($"BI /W {picture.Width} /H {picture.Height} /CS /RGB /BPC 8 /F /AHx ID");
+            content.AppendLine(Convert.ToHexString(picture.Rgb) + ">");
+            content.AppendLine("EI Q");
+        }
         public void Text(double x, double y, string value, double size, bool bold, string color)
         {
-            var rgb = color switch { "teal" => "0.08 0.38 0.41", "muted" => "0.32 0.42 0.44", _ => "0 0 0" };
+            var rgb = color switch { "error" => "0.70 0.10 0.10", "teal" => "0.08 0.38 0.41", "muted" => "0.32 0.42 0.44", _ => "0 0 0" };
             content.AppendLine($"BT {rgb} rg /{(bold ? "F2" : "F1")} {F(size)} Tf 1 0 0 1 {F(x)} {F(y)} Tm ({PdfString(value)}) Tj ET");
         }
         public void Rule(double y, double r, double g, double b)
@@ -340,12 +453,12 @@ public sealed class CardReportPdfService
 
     private static IEnumerable<string> Wrap(string value, int max)
     {
-        var text = Normalize(value);
+        var text = value;
         if (text.Length == 0) return [""];
         var result = new List<string>();
         foreach (var paragraph in text.Replace("\r", "").Split('\n'))
         {
-            var remaining = paragraph.Trim();
+            var remaining = Normalize(paragraph).Trim();
             while (remaining.Length > max)
             {
                 var cut = remaining.LastIndexOf(' ', max);

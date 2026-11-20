@@ -1,0 +1,647 @@
+# Offline-Vaults mit zentral verwalteten Gruppen
+
+Status: Entwicklung auf codex/offline-vault-groups, nicht Teil von 1.2.1.
+Keine produktiven Vaults laut Benutzer. Testdateien und Identitaeten bleiben erhalten.
+
+Auftragsabgleich 2026-10-22: Der in der Implementierungsfolge vorgesehene
+[Wechsel des zentralen Verwaltungsschluessels](OFFLINE-GROUP-ADMINISTRATOR-CHANGE.md)
+besitzt einen Erzeugungs-/Verifikationskern, getrennte Vorbereitung mit privater
+Sicherung und oeffentlicher Anfrage, Autorisierung durch die alte Verwaltung,
+persistenten Trust-Import und separate lokale Aktivierung samt Dialoganbindung.
+Die Aktivierung archiviert eine passende vorhandene Vorgaengerverwaltung
+geschuetzt und ist nach einem Schreibfehler wiederaufnehmbar. Private
+Wiederherstellung verwendet dagegen denselben Schluessel und ersetzt diesen
+Wechsel nicht. Native Gesamtabnahme und echte Zweitbenutzerpruefung sind damit
+nicht belegt; Detailnachweise und Grenzen stehen im verlinkten Wechselkonzept.
+
+Bedienablauf: [Offline-Gruppen einrichten](../OFFLINE-GRUPPEN-SCHNELLSTART.md).
+Einstellungen trennen normale Registrierung, Hauptverwaltung und delegierte
+Verwaltung. Die bisherige Teamlistenanzeige bewertet keine Gruppenrechte.
+Persoenliche Einladungen bleiben fuer beide Vaultarten nutzbar; Gruppenprojekte
+benoetigen keine Recovery-Passphrase je Projekt. Oeffentlicher Export zeigt
+Bibliotheks-ID und Verwaltungsfingerabdruck fuer den unabhaengigen Abgleich.
+Die korrigierten Gruppeneinstellungen sind nativ sichtbar geprueft. Der dabei
+beobachtete Windows-Dateizuordnungsdialog fuer .md ist durch eine interne lokale
+schreibgeschuetzte Textansicht ersetzt. Oeffnen, Scrollen bis zum Ende und
+Schliessen der Anleitung nativ geprueft (2026-09-28); Markdownzeichen bleiben
+sichtbar. Das ist keine Abnahme aller Verwaltungs-/Recovery-Bedienwege.
+
+## Nachweis der gewuenschten Zugriffsmatrix
+
+Jeder normale Geraeteeintrag benoetigt einen eigenstaendigen RSA-Schluessel.
+Ein anderes Zertifikat mit demselben Schluessel ist keine unabhaengige Identitaet:
+der Besitzer des privaten Schluessels koennte ihn mit dem oeffentlichen Zertifikat
+des anderen Eintrags verbinden. Deshalb wird doppelte Schluesselnutzung bereits
+beim Signieren, beim Pruefen importierter Richtlinien und bei der Empfaengerauflösung
+abgewiesen, auch innerhalb derselben Person und bei deaktivierten Eintraegen.
+Die Pruefung veraendert keine vorhandenen Dateien. Ein alter Entwicklungsstand
+mit mehrfach verwendeten Schluesseln ist damit unzulaessig; keine automatische
+Umschreibung oder Ruecksetzung des lokalen Vertrauensstands erfolgt.
+
+`OfflineGroupMatrixWorkflowTests` prueft die konkrete Acht-Personen-/Drei-Gruppen-
+Zuordnung mit acht unabhaengigen RSA-Schluesseln, separater Recovery und neun
+getrennten Vertrauensdateien. Oeffentliche Pakete durchlaufen Serialisierung,
+Registrierung, Neuladen und Aktualisierung. Alle 24 normalen Zugriffskombinationen
+werden durch Entschluesselung bzw. deren Ablehnung geprueft, nicht nur als Listen.
+Getrennter Recoveryzugang wird fuer alle drei Vaults geprueft.
+
+Der Wechsel Person 3 zu Person 1 ausschliesslich in Lokal 2 prueft den zeitlichen
+Ablauf Richtlinienimport, noch fehlenden Zugang zum alten Vault, Vorschau und
+Empfaengerabgleich durch das weiterhin berechtigte Mitglied Person 4. Neue
+Schluesselgeneration, erhaltenes verschluesseltes Backup, neue/entzogene Zugriffe
+und unveraenderte andere Gruppen werden geprueft. Der bewusst alte lokale Stand
+kann die alte Kopie weiterhin oeffnen, aber keinen neueren Vault. Nach Aktualisierung
+wird der Entzug erkannt; Rueckspruenge werden in allen Speichern abgewiesen.
+
+Diese CI-Pruefung verwendet synthetischen authentisierten Speicherschutz in
+einem Prozess, keine echten getrennten Windows-Benutzer und keine Hardware.
+
+## Einrichtung auf dem Hauptverwaltungsplatz
+
+Die bestaetigte Aktion fuer eine neue Verwaltung erzeugt den privaten
+Signierschluessel und registriert dessen eigenen oeffentlichen Stand lokal.
+Hier stammt der Vertrauensanker direkt aus dem gerade selbst erzeugten lokalen
+Signierspeicher, nicht aus einer fremden Datei. Neue Gruppenmitglieder oder
+Entschluesselungsrechte entstehen dadurch nicht. Ein eigener normaler Zugang
+benoetigt weiterhin eine Person mit Geraeteeinladung und Gruppenmitgliedschaft.
+Die Oberflaeche nennt die Schritte Schluesselsicherung, Personen/Gruppen,
+separate Recovery-Einrichtung und Verteilung des oeffentlichen Standes.
+
+Beim Speichern und Neuladen einer lokal privat verwalteten Bibliothek werden
+eigene signierte Aenderungen in die vorhandene lokale Registrierung uebernommen.
+Die vorhandene Pruefung von angeheftetem Verwaltungsschluessel, Signatur und
+monotonem Versionsstand gilt unveraendert; ein anderer Vertrauensanker wird nie
+ersetzt. Unveraenderte Staende werden nicht neu geschrieben. Fehlt bei einer
+aelteren Verwaltung die Registrierung, erfordert ihre Einrichtung eine eigene
+bestaetigte Aktion. Ein gewoehnliches Laden registriert sie nicht still neu.
+
+Private Verwaltung und lokale Registrierung sind getrennte Dateien. Falls die
+lokale Uebernahme nach erfolgreichem Signieren fehlschlaegt, ist die signierte
+Aenderung bereits gespeichert; die Meldung nennt diesen Teilzustand. Erneutes
+Laden uebernimmt den Stand nach erfolgreicher Pruefung. Bei fehlgeschlagener
+Erstregistrierung bleibt der erzeugte private Schluessel erhalten; Dialog erneut
+oeffnen und die vorhandene Verwaltung registrieren statt eine neue zu erzeugen.
+Andere Benutzer muessen den exportierten oeffentlichen Stand weiterhin importieren;
+die eigene lokale Uebernahme ist keine verteilte Synchronisierung. Fremde
+Registrierungen benoetigen nach wie vor unabhaengige Fingerabdruckbestaetigung.
+
+## Gruppenprojekt erstellen und Altvault als neue Kopie migrieren
+
+Der Editor bietet einen eigenen Assistenten fuer registrierte Bibliothek,
+Gruppe und eindeutigen neuen Projektnamen. Die zentrale Richtlinie liefert
+Empfaenger und separate Recovery-Zugaenge; der Ersteller benoetigt normalen
+Gruppenzugang. Der Assistent erstellt eine neue Kopie mit frischer authentisierter
+Projekt-ID. Projektschluessel bleiben erhalten, Gruppenzuordnung wird explizit
+gesetzt; die schluesselfreie Definition wird neben dem geprueften Gruppen-Vault
+gespeichert. Ausgabeordner der Kopie ist der neue Projektordner im Projektstamm.
+Vorhandene Zielordner werden niemals wiederverwendet/ueberschrieben.
+Auch bereits katalogisierte Projektnamen (ohne Beachtung der Grossschreibung)
+und kanonisch gleiche Ausgabeziele sperren die Anlage, selbst wenn noch kein
+Build-Ordner existiert. Das schuetzt flach gespeicherte Definitionen und alte
+Pfadlayouts. Die Pruefung erfolgt unter der Zielnamen-Sperre; sie ist keine
+globale Transaktion mit nicht kooperierenden externen Schreibern.
+
+Bei einem vorhandenen alten Vault wird ausschliesslich dessen gespeicherter
+Stand authentisiert entschluesselt (persoenliches Zertifikat oder eingegebene
+Passphrase, einschliesslich des bisherigen Recoverywegs). Originaldefinition
+und Originalvault bleiben unveraendert. Erwartete Dateifingerabdruecke werden
+geprueft, beide Originaldateien waehrend des Vorgangs unter Windows lesegesperrt
+gehalten. Offene Editor-/Schluesseländerungen sind vorher zu speichern/verwerfen.
+Die Migration ist keine Entfernung des alten Zugriffs und kopiert keine Builds.
+Synthetische Regression deckt V1-/V2-Passphrasen sowie V3-Zertifikatszugang und
+V3-Recovery-Passphrase ab. Alter Entschluesselungszugang und neuer normaler
+Gruppenzugang werden unabhaengig benoetigt. Verglichen wird der gesamte
+normalisierte Payload einschliesslich ausgewaehltem und zusaetzlichem
+Transportschluesselsatz, PICC- und Anwendungsschluesseln, auch beim separaten
+Recovery-Lesen der neuen Kopie. Originaldateihashes bleiben unveraendert.
+Bestehende Gruppenprojekte werden hier nicht still umgeordnet; ihr eigener
+Speichern-unter-Weg erstellt eine vollstaendige Kopie wie unten beschrieben.
+
+### Vollstaendige Gruppenprojektkopie
+
+Speichern unter verlangt einen eindeutigen neuen Projekt-/Ordnernamen. Der Core
+prueft Originaldefinition und Vault anhand der geladenen Dateifingerabdruecke,
+haelt beide lesegesperrt und entschluesselt den originalen Vault unter der
+aktuellen normalen Gruppenberechtigung erneut. Recovery-Zugaenge sind hier
+ausgeschlossen. Ohne geladene Schluessel werden die authentisierten Originalkeys
+uebernommen; sonst koennen offene Editor-/Schluesseländerungen in die Kopie
+einfliessen. Entwurf-ID und Bibliotheks-/Gruppenbindung muessen exakt zur Quelle
+passen. Die Kopie erhaelt eine neue ID, einen neuen Vault-Inhaltsschluessel und
+die aktuellen zentralen Empfaenger derselben Gruppe. Zielname und Ausgabeordner
+richten sich nach der neuen Kopie. Originaldateien werden nicht veraendert.
+Der vorher vorlaeufig gesperrte Definitionskopierweg ist damit ersetzt.
+
+Die Veroeffentlichung ist bewusst mehrstufig: ein separater Arbeitsordner enthaelt
+zunaechst nur verschluesselte Vaultdaten und eine schluesselfreie definition.pending.
+Nach Entschluesselungspruefung und Richtlinienvergleich wird der Ordner ohne
+Zusammenfuehren an den Zielort verschoben. Erst die abschliessende Umbenennung
+der pending-Datei zur Projekt-JSON macht das Projekt im Katalog sichtbar.
+Ein Fehler/Absturz davor kann Arbeitsdateien oder einen belegten Zielordner
+zuruecklassen, aber keine gelistete unvollstaendige Definition. Es wird nichts
+pauschal geloescht; fuer einen neuen Versuch einen neuen Namen verwenden.
+Dies ist keine verteilte Transaktion mit Cloud-Synchronisation/Richtliniendatei;
+spaetere Entzuege werden beim regulaeren Entsperren erneut geprueft.
+
+## Separate Recovery-Identitaet einrichten
+
+Ohne lokal registrierte Bibliothek zeigt der Dialog den Weg zur Erstregistrierung
+bzw. neuen Hauptverwaltung und sperrt Erzeugung/Wiederherstellung bis zur Auswahl.
+Eine Auswahl wird vor dem Speicherdialog durch Laden des lokalen Trust geprueft.
+Auch fruehe Fehler leeren die eingegebenen Sicherungspassphrasen.
+
+In Einstellungen eine registrierte Bibliothek auswaehlen, Namen und zweimal eine
+neue Sicherungspassphrase eingeben und getrennte Verwahrung bestaetigen. Der
+Assistent erzeugt einen separaten RSA-3072-Schluessel mit oeffentlichem Zertifikat
+und eine bibliotheksgebundene verschluesselte private Sicherung. Er prueft
+Signatur und RSA-OAEP-Entschluesselung nach Wiederherstellung sowie die gespeicherte
+Datei. Es werden keine vorhandenen Dateien ersetzt und beim Erzeugen keine
+privaten Schluessel in Windows installiert.
+
+Danach nur die oeffentliche Einladung exportieren und zur Hauptverwaltung geben;
+Bibliothek und Fingerabdruck unabhaengig bestaetigen. Das Schliessen vor dem
+Einladungsexport erfordert eine Bestaetigung. Die Hauptverwaltung erteilt die
+bibliotheksweite Recovery-Freigabe; erst der importierte neue Gruppenstand
+erlaubt die gefuehrte lokale Wiederherstellung. Diese verlangt die passende
+private Sicherung und Passphrase und prueft Zweck/Bibliothek/Fingerabdruck und
+aktiven lokalen Freigabestand erneut. Fuer vorhandene Vaults bleibt der
+bestaetigte Empfaengerabgleich zur Aufnahme neuer Recovery-Zugaenge erforderlich.
+
+Die explizite lokale Wiederherstellung ist fuer einen vertrauenswuerdigen
+Recovery-Arbeitsplatz vorgesehen. Windows-Persistenz im aktuellen Benutzer ohne
+Exportable-Flag, kein Ersetzen vorhandener Zertifikate, abschliessende echte
+Entschluesselungspruefung aus dem Store. Bei einem Persistenzfehler wird nichts
+pauschal geloescht; die private Sicherung bleibt erhalten. Offline-Entzug kann
+alte Sicherungen/Vaultkopien und unbekannte neuere Richtlinien nicht rueckrufen.
+
+Synthetische Gesamtablaufpruefung nutzt einen injizierten ephemeren Installer;
+sie belegt keine echte Windows-Zertifikatsinstallation oder zweite Umgebung.
+Native Dateidialoge, visuelle Abnahme und der echte Installer bleiben gesondert
+zu pruefen. Die Implementierung dieses Ablaufs ist kein neuer Release.
+
+## Private Sicherungsdialoge fuer Verwaltungsschluessel
+
+Hauptverwaltung und Gruppenverwaltungsplatz bieten getrennte Aktionen zum
+privaten Sichern und Wiederherstellen. Beim Sichern verlangt der Dialog eine
+wiederholte Passphrase sowie bestaetigte getrennte Verwahrung. Bereits bestehende
+Dateien werden nicht ersetzt; die geschriebenen Bytes werden zurueckgelesen.
+Beim Wiederherstellen werden nur registrierte Bibliotheken bzw. aktive Vollmachten
+angeboten. Die Core-Pruefungen bestimmen die tatsaechliche Berechtigung erneut.
+Auf einem neuen Windows-Benutzer muss zuerst die oeffentliche Registrierung mit
+unabhaengigem Fingerabdruck bestaetigt werden. Private Sicherungen nicht als
+Einladungen versenden, ausserhalb gemeinsamer Projektordner verwahren.
+Passwortfelder werden nach Bedienversuchen und beim Schliessen geleert.
+
+Synthetische Dialogmethodentests pruefen reale Datei-/DPAPI-Ablaeufe ohne
+Zertifikatsspeichereingriff. Native Dateiauswahl/visuelle Abnahme bleiben offen.
+Die separate Recovery-Identitaetserzeugung/-Wiederherstellung ist oben beschrieben.
+
+## Portable private Sicherungen im Core
+
+GroupPrivateKeyBackups kapselt PKCS8-Schluessel und bei Recovery das oeffentliche
+Zertifikat in einem strikt versionierten, begrenzten und authentisiert
+verschluesselten Format. Bestehendes AES-256-GCM/PBKDF2-SHA256-Verfahren mit
+600000 Iterationen; neue Passphrasen unterliegen den bestehenden Staerkepruefungen.
+Bibliothek, Zweck und gegebenenfalls Personen-ID liegen im verschluesselten Inhalt.
+Import verlangt einen extern bestimmten Fingerabdruck. Der Export entschluesselt
+seine Sicherung und prueft eine private RSA-PSS-Operation vor Rueckgabe.
+Private Bytepuffer werden geloescht; fuer verwaltete JSON-Strings ist keine
+vollstaendige Speicherloeschung zugesichert.
+
+Hauptverwalter-Restore benoetigt eine zuvor bestaetigte lokale Registrierung
+und uebernimmt deren aktuellen Richtlinienstand statt eines Standes aus dem Backup.
+Gruppenverwalter-Restore verlangt aktive Person und passende aktive Vollmacht.
+Beide schreiben nur neue lokal geschuetzte Dateien, niemals ueber vorhandene.
+Vor dem Schreiben wird der registrierte Stand erneut geprueft; dies ist keine
+globale Transaktion ueber Vertrauens- und Schluesseldatei und keine Aussage ueber
+noch nicht empfangene Offline-Aenderungen. Eine alte private Sicherung kann nicht
+rueckgerufen werden. Private Backups gehoeren nicht in den gemeinsamen Projektordner.
+
+Synthetische CI prueft echte Signatur-/Entschluesselungsoperationen, Rollen- und
+Kontextverwechslung, Manipulation, Entzug und konkurrierende Richtlinienaktualisierung.
+Native Abnahme der Wiederherstellungsdialoge und echte Windows-Persistenzpruefung
+bleiben offen.
+
+## Zentrale Freigabe der Recovery-Identitaeten
+
+Die Hauptverwaltung zeigt Recovery-Zugaenge mit Name, Aktivstatus und Fingerabdruck.
+Oeffentliche Empfaengereinladungen werden erst nach manuell eingegebenem,
+unabhaengigem Fingerabdruck als bibliotheksweite Recovery-Zugaenge aufgenommen.
+GrantRecovery verifiziert das oeffentliche Zertifikat, sperrt doppelte Eintraege
+und schreibt ueber den vorhandenen signierten/konfliktgeprueften Verwaltungsweg.
+Die Richtlinienpruefung erzwingt getrennte Schluessel gegen normale Geraete,
+Delegaten und Hauptverwaltung. Gruppenverwalter besitzen keine Recovery-Schreibrechte.
+
+Entziehen/Reaktivieren benoetigt eine ausdrueckliche Bestaetigung und erzeugt eine
+neue signierte Revision. Ohne aktiven Recovery-Zugang sind neue Gruppen-Vaults
+und Rotation gesperrt. Verteilen des neuen Standes und Abgleich vorhandener Vaults
+bleiben erforderlich; alte Kopien bleiben zugaenglich. Die Oberflaeche weist auf
+separate private Sicherung/Wiederherstellungspruefung hin. Deren gefuehrte Erzeugung
+ist oben beschrieben; eine Einladung ist kein Schluesselbackup.
+
+## Separater Recovery-Bedienweg im Editor
+
+Gruppenprojekte zeigen eine eigene Taste zum Oeffnen mit Recovery-Schluessel.
+Es gibt keinen stillen Wechsel bei fehlendem normalen Zugang. Die erfolgreiche
+Entsperrung kennzeichnet die Sitzung als Recovery, verwendet diesen Zugang fuer
+Schluesselspeichern/Empfaengerabgleich/Pruefung und sperrt operative Builds.
+Die Kodierstation bleibt ausschliesslich beim normalen Gruppenzugang. Erst ein
+erfolgreiches ausdrueckliches normales Entsperren beendet den Recovery-Modus;
+Projektneuladen verwirft den Sitzungszustand.
+
+Der App-Test verwendet getrennte synthetische Identitaeten und echte Button-Events:
+Recovery-Identitaet kann nicht normal oeffnen, Recovery-Speichern erhaelt beide
+Zugangswege, Audit nennt den richtigen Zugangsweg, Build bleibt gesperrt und
+normales Entsperren beendet den Sondermodus. Kein Zertifikatsspeichereingriff.
+Erzeugung/Import/Freigabe dieser separaten Identitaeten und deren portable
+private Sicherung sind noch gefuehrt zu integrieren.
+
+## Editor und sichere Stationsbereitstellung
+
+Vorhandene gebundene Gruppenprojekte sind jetzt im Editor ueber die persoenliche
+Identitaet entsperrbar und mit typisierter Projekt-/Gruppenpruefung speicherbar.
+Die Freigabetaste bietet fuer diese Projekte den bestaetigten Empfaengerabgleich.
+Normale Integritaetspruefung ist getrennt von einem noch einzubindenden separaten
+Recovery-Bedienweg beschriftet. Die Sicherungsanweisung benennt Gruppenregistrierung
+und private Geraete-/Recovery-Schluessel als Voraussetzungen.
+
+Der Katalog leitet Gruppenprojekte in den sicheren Stationspfad. Die interne
+Schutzstufe 4 dient nur dieser UI-/Katalogklassifizierung; das Gruppen-Dateiformat
+bleibt Version 1. Beschaedigte/fehlende Vaults gebundener Projekte duerfen nicht
+auf alte unverschluesselte Builds zurueckfallen. Stationsbereitstellung prueft
+die registrierte Richtlinie und Vaultbindung erneut und materialisiert lokal.
+Ein Build aus entsperrter Editorsitzung prueft den Zugang nochmals; nach bekanntem
+Entzug wird die Sitzungsverifikation verworfen und der Build gesperrt.
+
+App-Smoke: tatsaechliche Entsperr-/Speicher-Buttons, lokale Stationsbereitstellung
+ohne Readeraufruf, Entzug und gesperrter Altbuild-Fallback. Gefuehrte Erstellung,
+Altvault-Migration und separater Recoveryweg sind in den neueren Abschnitten
+beschrieben. Native Dialogabnahme und echte Mehrbenutzer-/Rechnerabnahme bleiben offen.
+
+## Projektidentitaet und typisierte Schluesselspeicherung (Core)
+
+Neue Projektentwuerfe erhalten eine stabile GUID. Alte Projektdateien ohne ID
+bleiben beim Laden/Speichern unveraendert; erst Bind erzeugt bei ausdruecklicher
+Gruppenzuordnung eine ID auf einer Projektkopie. Project.GroupVault enthaelt die
+registrierte Bibliothek und Gruppen-ID. Wiederholtes Binden derselben Gruppe
+erhaelt die ID, eine andere Gruppe erfordert einen noch separaten kontrollierten
+Umzuordnungsablauf. Projektmetadaten alleine sind keine Freigabe: beim Entsperren
+muessen sie exakt zum authentisierten Vault-Header passen.
+
+ProjectGroupVault bindet die vorhandenen ProjectKeyVaultPayload-Daten ueber einen
+strikten versionierten Nutzdatenumschlag an das Gruppenformat. Erstellen prueft
+vor dem Schreiben, dass der konkrete normale oder Recovery-Zugang den neuen Vault
+wieder oeffnen kann. Die Datei nutzt den bisherigen abgeleiteten Vaultpfad, aber
+Create ersetzt niemals eine vorhandene Datei oder migriert einen Altvault still.
+Laden prueft Bindung, Zugang und Nutzdatentyp. Aktualisieren authentisiert den
+alten Vault, prueft den erwarteten Dateistand und sichert verschluesselt vor der
+Neuschreibung. Geaenderte Empfaenger sperren normales Schluesselspeichern, bis
+zuvor der separate kontrollierte Abgleich erfolgt ist.
+
+Schluesselfreie Projektkopien und ProjectKeyVault.Apply erhalten ID/Zuordnung.
+Die Core-API schreibt den Vault und die Projektdatei bewusst nicht als angeblich
+atomare Zweidateitransaktion. Die neue Gruppenprojekt-Erstellung/Altvault-Migration
+veroeffentlicht eine gepruefte Kopie ueber den oben beschriebenen Arbeitsordner.
+Die Vollstaendigkeitspruefung erfolgt auf dem entschluesselten Stand, da eine
+gesperrte Definition bewusst keine Transport-/Produktivschluessel enthaelt.
+"Speichern unter" kopiert Gruppenprojekte vollstaendig mit neuer ID und
+authentisierter Quelle. Einzel-/bisherige Mehrbenutzerprojekte behalten ihren
+Speichern-unter-Weg. Noch keine neue Release-Freigabe.
+
+## Kontrollierter Empfaengerabgleich (Core)
+
+GroupVaultReconciliation.Preview authentisiert den vorhandenen Vault mit einem
+aktuell freigegebenen normalen oder ausdruecklichen Recovery-Zugang. Sie zeigt
+hinzukommende/entfernte Rollen und Fingerabdruecke gegen den registrierten Stand,
+ohne Dateien zu schreiben. Ein neuer Empfaenger ohne bisherigen Zugang kann den
+alten Vault nicht selbst umschluesseln. Der Plan bindet exakte Quelldatei und
+Richtliniencheckpoint; frei vom Aufrufer gelieferte Empfaengerlisten gibt es nicht.
+
+Apply prueft Quelldatei und Richtlinienstand erneut, entschluesselt authentisiert,
+verschluesselt mit frischem Inhaltsschluessel und erhaelt vor dem Austausch eine
+gepruefte bytegleiche verschluesselte Sicherung in GroupVaultBackups. Vorhandene
+abweichende Sicherungen werden nicht ersetzt. Der neue Vault wird ueber den
+bestehenden Dateischreiber mit Anwendungslock/Tempdatei gespeichert; der Schreiber
+prueft nun auch nach dem Tempdateischreiben erneut auf Fremdaenderungen.
+
+Dies ist keine verteilte Transaktion mit Richtliniencache und Cloud-Synchronisation:
+der neue Vault dokumentiert den konkret angewendeten Richtlinienstand. Spaetere
+Updates erfordern erneuten Abgleich. Nicht kooperierende Fremdschreiber unmittelbar
+zwischen letzter Pruefung und Rename sind durch den lokalen Anwendungslock nicht
+global ausgeschlossen. Alte Sicherungen bleiben mit alten Schluesseln zugaenglich.
+Bedienvorschau und bestaetigter Abgleich sind inzwischen im Projekteditor
+integriert; die entsprechenden UI-Integrationsnachweise stehen weiter oben.
+
+Gezielte Konfliktpruefungen in GroupVaultTests.VerifyReconciliation behandeln
+Recovery-Entzug waehrend der Entschluesselung, beschaedigte bereits vorhandene
+Sicherung und fremde Vaultaenderung waehrend der Entschluesselung. Der Abgleich
+muss abbrechen und Quelle bzw. fremde Fassung sowie vorhandene Sicherung erhalten.
+Nach ausdruecklicher neuer Recovery-Freigabe mit hoeherer Revision und reparierter
+synthetischer Sicherung wird der erfolgreiche Abgleich weiterhin geprueft.
+Diese Tests verwenden synthetische Dateien in einem Prozess, keine verteilte
+Cloud-Synchronisation oder zweite Windows-Umgebung.
+
+## Gruppen-Vault-Kern und separate Recovery
+
+Getrenntes Format SieEncode-Group-Vault (Version 1), inzwischen ueber
+ProjectGroupVault an Projektdateien und Editor angebunden. Bestehende v2/v3-Vaults und deren Funktionen bleiben
+unveraendert. AES-256-GCM authentisiert Projekt-ID, Bibliothek, Gruppen-ID,
+Richtlinien-Checkpoint, zufaellige Schluesselgeneration und saemtliche Rollen/
+Fingerabdruecke/RSA-OAEP-SHA256-Schluesselhuellen gemeinsam mit dem Nutzinhalt.
+Ein Austausch von Metadaten, Huellen oder Nutzdaten schlaegt bei der Pruefung fehl.
+
+Neue Vaults erhalten ausschliesslich die aktiven gueltigen Geraete der expliziten
+Gruppe plus zentral signierte separate Recovery-Geraete. RecoveryDevices sind
+Bestandteil der Hauptverwaltungsrichtlinie, nicht delegiert aenderbar. Recovery
+erfordert andere Schluessel als normale Geraete und Delegaten; auch der
+Hauptverwaltungsschluessel darf weder Delegaten- noch Entschluesselungsschluessel
+sein. Mindestens ein aktiver Recovery-Zugang ist fuer neue Gruppen-Vaults Pflicht.
+Keine pro Projekt einzugebende Recovery-Passphrase in diesem neuen Format.
+
+Entschluesseln verlangt einen verifizierten lokalen Richtlinienstand und die
+vom Aufrufer erwartete stabile Projekt-/Gruppenidentitaet. Normale und Recovery-
+Zugaenge sind explizit getrennt. Neuere Vault-Richtlinienstaende erfordern zuerst
+ein lokales Update. Nach bekanntem Entzug gibt der normale Client keinen Zugriff
+mehr frei. Separate aktive Recovery kann auch nach Entfernung der alten Gruppe
+retten. Abgelaufene Zertifikate bleiben zum Lesen alter Daten verwendbar; fuer
+neue Verschluesselung muessen aktive Zertifikate zeitlich gueltig sein.
+
+Jeder Protect-Aufruf erzeugt einen frischen zufaelligen Inhaltsschluessel. Der
+Test weist frische Schluessel bei geaenderter Mitgliedschaft nach. Ein alter Vault
+mit alter Richtlinie bleibt mit seinem alten privaten Schluessel entschluesselbar.
+Die AEAD-Bindung ist kein unabhaengiger Herkunftsnachweis gegen berechtigte
+Schluesselbesitzer; diese koennen Klartext/Schluessel weitergeben. Der Aufrufer muss
+die Projektidentitaet korrekt verwalten und echte Vertrauensregistrierung nutzen.
+
+Noch offen: stabile Projekt-ID/Zuordnungsmodell, Editor-/Stationsintegration,
+Recovery-Einrichtung und -Sicherung, kontrollierter atomarer Empfaengerabgleich
+und Rotation realer Projektdateien. Die Core-Tests sind ausschliesslich synthetisch.
+
+## Arbeitsplatz fuer Gruppenverwalter
+
+Einstellungen enthaelt einen getrennten Gruppenverwaltungsplatz. Er laedt eine
+registrierte Bibliothek und die eigene Person, erzeugt den separaten lokalen
+Signierschluessel erst auf ausdrueckliche Aktion und exportiert die oeffentliche
+Verwaltungseinladung samt unabhaengig weiterzugebendem Fingerabdruck. Die Auswahl
+einer Person allein verleiht keinerlei Rechte; die Hauptverwaltung muss deren
+konkreten Schluessel bestaetigen und eine Vollmacht erteilen.
+
+Nach Import des freigegebenen Richtlinienstandes sind ausschliesslich die Gruppen
+der aktiven, zum lokalen Schluessel passenden Vollmacht sichtbar/bearbeitbar.
+Namen und Personenzuordnungen werden als Entwurf gepflegt. Personen, Geraete und
+Vollmachten koennen hier nicht veraendert werden. Der Export signiert nur geaenderte
+Gruppen, prueft den aktuellen registrierten Stand erneut und uebertraegt keine
+privaten Schluessel. Ungespeicherte/nicht exportierte Entwuerfe erfordern beim
+Wechsel oder Schliessen eine Verwerfbestaetigung.
+
+Die Hauptverwaltung uebernimmt die Aenderungsdatei nach gepruefter Vorschau und
+verteilt den neuen signierten Gesamtstand. Export alleine aktualisiert keine
+Registrierung und keinen Vault. Entzug wird beim Signieren wirksam, sobald der
+neuere registrierte Stand lokal vorliegt. Der synthetische App-Test deckt diesen
+Ablauf einschliesslich Mitgliederauswahl ueber ein ListBox-Ereignis und Ablehnung
+eines alten Entwurfs ab. Native Dateidialoge, visuelle Abnahme und echter zweiter
+Windows-Benutzer bleiben offen.
+
+## Aktualisierung registrierter Richtlinien
+
+Einstellungen bietet jetzt die Aktualisierung einer vorhandenen Registrierung.
+Der Update-Dialog friert die Eingabedatei ein und prueft sie gegen den bereits
+lokal bestaetigten Verwaltungsschluessel, die Bibliothek und den Versionsstand.
+Ein Schluessel aus der Aktualisierungsdatei ersetzt niemals die Vertrauenswurzel.
+Vorschau zeigt vorher/nachher mit Gruppen, Personen, Geraete-Aktivstatus und
+Fingerabdruecken sowie Vollmachten. Ohne ausdrueckliche Bestaetigung keine Aenderung.
+Die Uebernahme prueft erneut den beim Anzeigen gelesenen exakten Stand und schreibt
+atomar mit Dateikonflikterkennung. Gleiche bereits registrierte Version benoetigt
+keinen erneuten Import. Aktualisierung ist keine Neuregistrierung und veraendert
+keine Vault-Dateien. Ein global aktueller Stand ist offline nicht beweisbar.
+
+## Vollmachtvergabe und oeffentlicher Dateiaustausch
+
+GroupDelegationTransport transportiert versionierte oeffentliche Einladungen und
+signierte Aenderungen getrennt. Grenzen fuer Datei-/Nutzdatengroesse und JSON-Tiefe,
+unbekannte/doppelte Felder sowie reine kanonische SPKI-Schluessel werden geprueft.
+Das Einlesen prueft Struktur; Berechtigung entsteht erst aus bestaetigter Vergabe
+beziehungsweise Signatur-/Umfangspruefung gegen den gespeicherten Verwaltungsstand.
+
+Die Hauptverwaltungsoberflaeche bietet Freigabe fuer ausgewaehlte Gruppen mit
+manuell eingegebenem unabhaengigem Fingerabdruck, eine Vollmachtenliste und Entzug.
+Einladungen ersetzen keine vorhandene Vollmacht. Offene Tabellenentwuerfe sperren
+diese Aktionen. Eingehende Aenderungen werden vor Bestaetigung geprueft und als
+Gruppenname sowie hinzugefuegte/entfernte Personen mit stabilen IDs dargestellt.
+Die abschliessende Speicherung prueft weiterhin den exakten Ausgangsstand.
+
+Der Delegaten-Arbeitsplatz zum Erstellen/Exportieren der Einladung und Bearbeiten
+seiner Gruppen sowie das Aktualisieren registrierter Richtlinien fehlen noch.
+Die nativen Datei-/Bestaetigungsdialoge sind noch visuell und interaktiv abzunehmen.
+
+## Lokaler Delegatenschluessel
+
+OfflineGroupDelegateStore erzeugt einen eigenen RSA-3072-Schluessel und schreibt
+ihn ausschliesslich ueber einen verpflichtenden authentisierten lokalen Protector.
+WindowsGroupDelegateProtection nutzt DPAPI CurrentUser mit separatem Zweck sowie
+Bibliotheks- und Personenbindung. Der oeffentliche Export enthaelt nur Bibliothek,
+Personen-ID und SPKI; er ist noch keine Vollmacht. Erneutes Create ersetzt nichts.
+
+SignChange laedt den registrierten Vertrauensspeicher neu, vergleicht den genauen
+Entwurfsstand, prueft Personen-/Schluesselzuordnung der Vollmacht und validiert die
+exakten signierten Aenderungsbytes gegen Aktivstatus und Gruppenumfang. Vor der
+Rueckgabe wird ein zwischenzeitlicher lokaler Richtlinienwechsel abgefangen.
+Die empfangende Verwaltung muss weiterhin ihren eigenen aktuellen Stand pruefen;
+ein offline zurueckgehaltener Widerruf wird dadurch nicht global erkennbar.
+Private Bytepuffer werden nach Nutzung geloescht, keine Zertifikatsstore-Eintraege.
+
+Core-Tests decken Neustart, falsche Person/Bibliothek/Protector, beschaedigte Datei,
+ueberholten Entwurf, fremden Schluessel, falschen Gruppenbereich und Entzug ab.
+Der App-Smoke prueft reale Windows-DPAPI-Zwecktrennung in einem Tempordner, nicht
+den Betrieb unter einem zweiten Windows-Benutzer. Noch fehlen Dialog und sichere
+Einladungs-/Vollmacht-/Aenderungsdateien fuer den gemeinsamen Offline-Bedienablauf.
+
+## Aktueller Delegationsbaustein
+
+Die signierte v2-Richtlinie bindet Vollmacht-ID, Person, separaten oeffentlichen
+RSA-Signierschluessel, erlaubte Gruppen-IDs und Aktivstatus. Gruppenverwalter
+koennen ausschliesslich Namen und Mitgliedschaften vorhandener zugewiesener
+Gruppen aendern. Personen, Geraete, Vollmachten, neue Gruppen und Recovery sind
+kein Bestandteil dieses Aenderungsformats. Verwaltungsschluessel duerfen keine
+Entschluesselungsschluessel aus dem Personenverzeichnis wiederverwenden.
+
+Jede delegierte Aenderung ist RSA-PSS-signiert und an Bibliothek, Vollmacht und
+den exakten vorherigen Richtlinien-Checkpoint (Revision plus SHA256) gebunden.
+Der aktuelle vertrauenswuerdige Stand bestimmt die Berechtigung; eine mitgelieferte
+Behauptung oder ein alter Rollenstand wird nicht verwendet. Deaktivierte Personen
+und Vollmachten sind abgewiesen, ebenso fremde Gruppen, Wiedereinspielungen und
+uneindeutige JSON-Felder. Ein abgelehnter Import veraendert den lokalen Stand nicht.
+
+OfflineGroupAdministrationStore kann eine verifizierte Aenderung atomar in eine
+neue hauptsignierte Richtlinie uebernehmen. Konkurrierender Entzug gewinnt gegen
+einen alten Schreibversuch. Dieses Core-Verfahren ist noch nicht der fertige
+delegierte Bedienablauf: lokale geschuetzte Delegatenschluessel, gefuehrte Vergabe,
+Transport ueber die gemeinsame Ablage und Rollenanzeige fehlen weiterhin.
+Aktuell muss die Hauptverwaltung einen delegierten Aenderungsdatensatz einlesen;
+unabhaengige Offline-Veroeffentlichung durch Gruppenverwalter ist damit noch
+nicht implementiert. Keine Wirkung auf vorhandene Vaults oder alte Kopien.
+
+## Ziel und Vertrauensgrenzen
+
+Personen koennen in mehreren Gruppen sein (Lokal, Lokal 2, Lokal 3) und mehrere
+Geraeteidentitaeten besitzen. Projekte werden explizit einer Gruppe zugeordnet.
+Administratoren verwalten Personen und Gruppen; delegierte Verantwortliche nur
+ihre zugewiesenen Gruppen. Normale Nutzer entschluesseln offline.
+
+Die gemeinsame Dateiablage transportiert Daten, ist aber keine Vertrauenswurzel.
+Ein Administrator-Schluessel wird bei der Erstregistrierung ueber einen separat
+bestaetigten Fingerabdruck gebunden. Schluessel aus einer geladenen Richtlinie
+werden niemals automatisch vertrauenswuerdig. Verwaltungs- und Entschluesselungs-
+schluessel bleiben getrennt. Keine gemeinsame private Identitaet je Gruppe.
+
+Signierte Richtlinien binden Bibliotheks-ID, Version, Gruppen und Identitaets-
+Fingerabdruecke. Projekt-ID, Gruppenzuordnung und Vaultinhalt brauchen zusaetzlich
+authentisierte Bindungen. Eine reine Gruppenliste erzwingt noch keine Vaultrechte.
+Mitgliederaenderungen erfordern kontrolliertes Neuverpacken bzw. bei Entzug neue
+Inhaltsschluessel. Fuer einen administrativen Abgleich benoetigt der Ausfuehrende
+auch den entsprechenden Entschluesselungs-/Recoveryzugang; Signierrecht allein
+gewaehrt keinen Zugriff auf Schluessel.
+
+Offline sind vorhandene entschluesselbare Kopien nicht rueckrufbar. Berechtigte
+Nutzer koennen gelesene Schluessel weitergeben. Ein manipuliertes Programm oder
+ein lokaler Administrator liegt ausserhalb der Durchsetzung durch die normale UI.
+Ein lokaler Hoechststand erkennt bekannte Rueckspruenge, aber keinen global
+neuesten Stand, keine eingefrorene Ablage und kein Zuruecksetzen des ganzen PCs.
+Diese Grenzen werden angezeigt statt als sofortige Sperrung ausgegeben.
+
+## Implementierungsfolge
+
+1. Signierte, streng validierte Gruppenrichtlinie mit expliziter Vertrauenswurzel,
+   Bibliotheksbindung, Mindestversion und Konflikterkennung gleicher Version.
+2. Sichere Erstregistrierung und persistenter lokaler Vertrauens-/Versionsstand;
+   Administratorwechsel und signierte, gruppenbegrenzte Delegationen.
+3. Personen-/Geraeteverzeichnis, Gruppenverwaltung und nachvollziehbare Aenderungen.
+4. Authentisierte Projektzuordnung, neue Vault-Anbindung und kontrollierter
+   Empfaengerabgleich. Separater zertifikatsbasierter Recoveryzugang.
+5. Integration in Arbeitsplatz-Einrichtung, Offline-Status und Abnahmematrix.
+
+## Erster implementierter Baustein
+
+OfflineGroupPolicyService signiert die exakten JSON-Nutzbytes mittels RSA-PSS/
+SHA-256 (RSA mindestens 3072 Bit). Der Empfaenger liefert den extern bestaetigten
+oeffentlichen Verwaltungsschluessel; keine Schluesselannahme aus der Nachricht.
+Unbekannte Felder, doppelte JSON-Felder, doppelte Gruppen/Mitglieder, falsche
+Bibliothek, bekannte alte Version und abweichender Inhalt derselben Version
+werden abgewiesen. Eingabegroesse ist begrenzt. Gruppen duerfen sich ueberlappen.
+
+Dieser erste Baustein allein umfasst keine App-Anbindung, Delegation oder Persistenz.
+Bestehende Vaults werden nicht geaendert.
+Der Baustein ist keine fertige Zugriffskontrolle und kein neues Vaultformat.
+
+## Lokaler Vertrauensspeicher (zweiter Baustein)
+
+OfflineGroupTrustStore verlangt bei der Registrierung den unabhaengig bestaetigten
+SHA-256-Fingerabdruck des RSA-SPKI-Verwaltungsschluessels. Erstregistrierung kann
+eine bestehende Datei nicht ersetzen. Updates verwenden ausschliesslich die
+bereits registrierte Vertrauenswurzel und den lokal gespeicherten Hoechststand.
+Die letzte signierte Richtlinie bleibt offline verfuegbar und wird bei jedem
+Laden erneut geprueft. Speichern ist atomar mit Konflikterkennung anhand des
+tatsaechlich gelesenen Dateisnapshots. Lesefehler fuehren nicht zur Neuregistrierung.
+
+Die verpflichtende Schnittstelle ILocalGroupTrustProtection hat keinen Klartext-
+Fallback. Tests nutzen einen rein synthetischen authentisierten Protector.
+WindowsGroupTrustProtection in der App-Schicht nutzt nun DPAPI CurrentUser mit
+bibliotheksspezifischer Anwendungsbindung. Der UI-Smoke prueft einen echten
+Windows-Roundtrip, erneutes Laden, falsche Bibliotheksbindung und manipulierte
+Datei in einem isolierten Testordner. Es werden keine Windows-Zertifikate erzeugt.
+Dies ist keine Zweitbenutzer-/Zweitrechnerabnahme. AppData-Pfad und gefuehrte
+Erstregistrierung sind noch anzubinden; noch keine produktive Vault-Anbindung.
+Ein komplettes Zuruecksetzen/Loeschen des lokalen Zustands durch dessen Besitzer
+oder einen Administrator bleibt ausserhalb der Ruecksprungerkennung.
+
+## Gefuehrte Erstregistrierung
+
+Einstellungen enthalten einen ausdruecklich als Entwicklung gekennzeichneten
+Einstieg. GroupEnrollmentPackages prueft Format/Groesse, doppelte/unbekannte Felder,
+SPKI-Schluessel, Richtliniensignatur und Bibliotheksbindung. Das belegt nur
+Konsistenz, noch kein Vertrauen. GroupEnrollmentWindow verlangt den unabhaengig
+erhaltenen Fingerabdruck und Bestaetigung der Bibliotheks-ID. Der Kandidat wird
+beim Oeffnen als private Kopie eingefroren. Ohne Bestaetigung/falscher Fingerabdruck
+kein Schreibzugriff; bestehende Registrierung wird nicht ersetzt.
+
+Normaler Speicherort: LocalApplicationData/SieEncode/GroupTrust/<LibraryId>.trust.bin.
+Der isolierte Startup-/UI-Testmodus injiziert einen getrennten Testpfad. Die neue
+UI-Regressionspruefung registriert ausschliesslich synthetische Daten in Temp.
+Native Dateiauswahl/visuelle Abnahme noch offen. Erstellung einer neuen Verwaltung,
+Delegation, Gruppen-/Personenverwaltung und Projekt-Vault-Anbindung folgen noch.
+
+## Lokaler Verwaltungsschluessel
+
+OfflineGroupAdministrationStore erzeugt einen separaten RSA-3072-Signierschluessel
+und eine anfangs leere signierte Richtlinie. Privater PKCS8-Schluessel und Stand
+werden zusammen authentisiert lokal gespeichert. Windows verwendet einen anderen
+DPAPI-Zweck als fuer den lesenden Vertrauenscache. Der oeffentliche Export enthaelt
+nur SPKI und signierte Richtlinie und ist direkt als Registrierung transportierbar.
+Gruppenaktualisierung verlangt den gelesenen Richtlinien-Checkpoint und eine
+unveraenderte Datei; die neue Revision wird automatisch erhoeht. Bestehende
+Verwaltung kann nicht durch Create ersetzt werden. Kein globaler Rueckrollschutz
+gegen einen Besitzer, der die komplette lokale Datei zuruecksetzt.
+
+Synthetischer Windows-Test: anlegen, ueberlappende Gruppen signieren, erneut laden,
+oeffentlichen Export verifizieren, falschen DPAPI-Zweck/veralteten Checkpoint und
+erneutes Create ablehnen, unveraenderte Datei nach Ablehnung pruefen.
+Noch kein Verwaltungsdialog, keine Delegation und keine Sicherung/Wiederherstellung
+des Verwaltungsschluessels. Testschluessel werden nur im isolierten Temp angelegt.
+
+## Verwaltungsdialog (Entwicklungsstand)
+
+GroupAdministrationWindow ist in Einstellungen erreichbar. Lokale Verwaltungen
+werden aus dem isolierbaren Administrations-Unterordner gewaehlt; Anlegen erzeugt
+eine neue Bibliotheks-ID. Gruppen haben stabile IDs und bearbeitbare Namen.
+Oeffentliche Empfaengereinladungen werden erst nach Fingerabdruckbestaetigung
+einer Gruppe hinzugefuegt. Dieselbe Identitaet darf in mehreren Gruppen stehen.
+Signiertes Speichern verwendet den beim Laden gemerkten Checkpoint. Export bietet
+nur den gespeicherten oeffentlichen Stand an, nicht ungespeicherte Entwuerfe.
+Schliessen/Wechsel mit offenen Aenderungen verlangt eine Verwerfbestaetigung.
+
+Synthetischer UI-Test: Erstellen, Gruppe per Button, Mitglieder, signiertes
+Speichern/Neuladen, externer Versionsfortschritt und Ablehnung des alten Entwurfs.
+Native Datei-/Bestaetigungsdialoge und visuelle Abnahme stehen noch aus. Die
+Personen-/Geraetezuordnung ist noch nicht vorhanden; aktuell Fingerabdruecke.
+Keine gruppenbasierte Vault-Anbindung, Delegation oder Admin-Recovery behauptet.
+
+## Personen und Geraete (Richtlinienversion 2)
+
+Signierte Richtlinien v2 enthalten Personen mit stabiler ID, Anzeigename und
+aktivem/inaktivem Zustand sowie deren oeffentliche Geraetezertifikate. Gruppen
+referenzieren Personen-IDs. Eine Person kann mehrere Geraete und Mitgliedschaften
+haben. Jedes Zertifikat darf genau einer Person gehoeren; Fingerabdruck und
+oeffentliches RSA-Zertifikat muessen zusammenpassen. PKCS12-/Private-Key-Archive
+werden bereits vor Zertifikatsimport abgewiesen. Nur eindeutiges DER akzeptiert.
+
+ResolveRecipients loest eine explizite Gruppe in aktive Geraete auf. Unbekannte
+Gruppen/Personen und Gruppen ohne aktive Empfaenger werden nicht still ersetzt.
+Aktive Zertifikate muessen zum uebergebenen Zeitpunkt gueltig sein. Das Lesen
+historischer signierter Richtlinien bleibt auch nach Zertifikatsablauf moeglich.
+Der Aufrufer muss zuerst die Signatur/Vertrauenswurzel pruefen; Aufloesen allein
+ist keine Berechtigungspruefung und noch keine Vault-Anbindung.
+
+UpdateDirectory schreibt Personen und Gruppen gemeinsam als signierte v2-Revision.
+Bestehende v1-Teststaende bleiben lesbar; keine automatische Umdeutung von
+Zertifikats-Fingerabdruecken zu Personen-IDs. Personenpflege in der UI folgt noch.
+Core-Test deckt die gewuenschte Acht-Personen-/Drei-Gruppen-Matrix ab, inklusive
+zweitem Geraet einer Person, Deaktivierung, doppelten Zuordnungen, falschen
+Fingerabdruecken, unbekannten Mitgliedern und Zeitgueltigkeit.
+
+## Personenpflege im Verwaltungsdialog
+
+Personen und Geraete haben eigene Tabellen mit bearbeitbaren Namen und Aktivstatus.
+Geraete werden einer ausgewaehlten Person ueber eine bestaetigte oeffentliche
+Einladung zugeordnet; doppelte Geraetezuordnung wird abgewiesen. Gruppen zeigen
+Personennamen und erlauben Mehrfachmitgliedschaften. Speichern signiert Personen,
+Geraete und Gruppen gemeinsam als v2. Tabellenbearbeitung wird vorher explizit
+abgeschlossen; Export verweigert offene Entwuerfe.
+
+Leere neue Verwaltungen verwenden das Personenmodell. Alte v1-Testgruppen werden
+nicht still umgedeutet: Umstellung erst nach bestaetigter vollstaendiger Zuordnung
+aller bisherigen Geraete zu Personen; Fehler laesst den Entwurf unveraendert.
+Der gemeinsame Einladungsimport weist jetzt ebenfalls Private-Key-Archive vor
+dem Zertifikatsimport ab und gibt Zertifikate bei Validierungsfehlern frei.
+
+Synthetische UI-Abnahme: Person mit zwei Geraeten, doppelte Zuordnung abgewiesen,
+signiertes v2-Verzeichnis nach Neuladen aufloesbar, veralteter Entwurf abgewiesen.
+Native Import-/Umstellungsdialoge und visuelle Pruefung weiterhin offen.
