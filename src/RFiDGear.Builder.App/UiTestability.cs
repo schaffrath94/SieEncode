@@ -321,7 +321,7 @@ public partial class MainWindow
             var expertSurfaces = new FrameworkElement[]
             {
                 NavProfilesButton, ProjectAdvancedActions, EditorTransportSettings, EditorAdvancedActions,
-                StationOpenRFiDGearButton, StationDetailedPreflight, StationAdvancedCardActions,
+                StationOpenRFiDGearButton, StationDetailedPreflight, StationAdvancedCardActions, TestMaintenanceActions,
                 StationTechnicalDetails, HelpExpertTools, SettingsCapabilityDetails, EditorBuildSettings,
                 EditorAuditVaultButton, ProjectOpenFolderButton, StationProjectPath, StationProjectFolderButton
             };
