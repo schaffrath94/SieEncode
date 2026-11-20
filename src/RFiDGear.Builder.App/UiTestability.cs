@@ -93,7 +93,7 @@ public partial class MainWindow
             ExpertModeToggle.IsChecked = expert;
             UpdateLayout();
             if (!TestAnalyzeCardButton.IsVisible || !TestAnalysisTree.IsVisible ||
-                additional.Any(control => control.IsVisible != expert))
+                additional.Any(control => control.IsVisible != expert) || TestMaintenanceActions.IsVisible != expert)
                 throw new InvalidOperationException($"Teststationsansicht fehlerhaft (Expertenmodus {expert}).");
         }
         var section = DescendantsAndSelf(PageTestStation).OfType<Expander>()
