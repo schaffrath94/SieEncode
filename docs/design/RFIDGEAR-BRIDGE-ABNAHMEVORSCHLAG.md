@@ -89,17 +89,19 @@ Das Kodierprojekt erhält zu Beginn einen `Check UID`-Task mit Sollwert `$EXPECT
 
 **AutoMode darf derzeit nicht produktiv schreiben:** Eine beim Start gesetzte UID-Variable wird nach Abnehmen/Wiederauflegen derselben Karte erneut akzeptiert. Auf #232 ist deshalb Variante **(b) – Freigabe beim Auflegen** angefragt: Reader-Ereignis → Studio-Entscheidung → einmalige, präsenzgebundene Genehmigung mit Timeout, Abbruch/Clientverlust fail closed, keine Wiederverwendung beim Wiederauflegen. Bis zur Implementierung strikt Einzelläufe.
 
-### P0 – Tresorfreigabe pro Lauf (vom Upstream zugesagt, noch nicht implementiert)
+### P0 – Tresorfreigabe pro Lauf (historischer Stand vor PR #398)
 
 Geplant sind `resolveKey.requestId`, `source`, `projectRevision` und ein optionaler `registerKeyProvider`-Schalter, der nur Bridge-Client-eigene Läufe akzeptiert. Studio muss diese Felder plus `instanceId`, UID, AID, Slot, Verwendung und Credential-Referenz gegen die eigene **explizite, kurzfristige** Auftragsfreigabe prüfen. Nicht passend → `notAuthorized`; keine Geheimwerte in Logs/Events oder Report. Die Abwehr gilt nicht gegenüber einem böswilligen Programm im selben Windows-Konto. **Kein produktiver Vault-Adapter**, solange das Host-Gate und die negativen Integrationstests fehlen.
 
-### P1 – Strukturierte Check-File-Settings-Ergebnisse (noch nicht implementiert)
+### P1 – Strukturierte Check-File-Settings-Ergebnisse (historischer Stand vor PR #399)
 
 Angefragt: optionales `verificationDetails` mit Schema-Version; AID, FileNo, erwarteter/tatsächlicher Typ; Dateigröße (Regel exact/atLeast/atMost, Soll/Ist, gewählt ja/nein); Communication Mode (Soll/Ist, gewählt, Einzelerfolg); vier Access-Nibbles Read, Write, ReadWrite, Change (je Soll/Ist/gewählt/Einzelerfolg). Keine Karten-Payloadbytes oder Schlüssel; freie Texte nie als maschinenlesbaren Abnahmebeweis behandeln. Bis zur Umsetzung kein „kompletter Soll-Ist-Bericht“ aus einer reinen `TaskOutcomeDto` ableiten.
 
-### Unverzichtbare Testmatrix vor Umstellung
+### Historische Testmatrix vor den Upstream-Merges #398/#399
 
-| Test | Erwarteter Host-/Studio-Nachweis | Status 20.11.2026 |
+Diese Tabelle ist die unveränderte fachliche Ausgangslage der ersten Runde am 20.11.; insbesondere die damaligen Zeilen zu Schlüsselfreigabe und `verificationDetails` wurden später durch #398 und #399 überholt. **Für den aktuellen Implementierungsstand gilt die Aktualisierung „20.11.2026, Abend“ weiter unten.**
+
+| Test | Erwarteter Host-/Studio-Nachweis | Historischer Status vor #398/#399 |
 | --- | --- | --- |
 | Gleicher Pfad/Taskanzahl, aber Taskinhalt geändert | `projectMismatch`, `neverStarted`, 0 Schreiboperationen | Upstream-Softwaretests #396 berichtet; kein Studio-/Hardwaretest |
 | Dateipayload nach Freigabe geändert | Studio blockiert bei Hashabweichung vor Start | Bestehende Studio-Prüflogik; kombinierter Bridge-Test offen |
@@ -147,3 +149,15 @@ Die Projekt-Revision soll im Ergebnis eines automatischen Runs erscheinen. Dies 
 2. **Einzellauf als einzige Schreibstrategie** bis zur Einmalfreigabe nach Kartenauflage; `Check UID` muss alle Schreib-Tasks tatsächlich kontrollieren.
 3. **Schlüsselgates / Prüfung der Strukturwerte mit negativen Tests:** Verweigerung fremder Laufursprünge, fehlender ID/Revision und falscher AID/Referenz; Ergebnis `notRead`/fehlende Details dürfen nicht zu einem grünen Abnahmebericht führen.
 4. **Erst nach Windows-Installation und freigegebenem Karten-/Reader-Test:** funktionale Parität und möglicher Runtime-Wechsel. Echte Karten-HIL nicht durch PR-Testzahlen oder GitHub-Pages-Erfolg ersetzen.
+
+---
+
+## Entwicklungsnachtrag: Read-only Capability-Prüfung (20.11.2026)
+
+Auf dem Studio-Entwicklungszweig `codex/offline-vault-groups` wurden die bereits vorhandenen, ausdrücklich **nur lesenden** Prüfroutinen unter `tools/Test-OfficialRFiDGearBridgeReadiness.ps1` getrennt in Host-/Dateiprüfung und reinen Textparser (`tools/BridgeReadinessStatusParser.ps1`). Sie benötigen einen ausdrücklich angegebenen, bereits installierten offiziellen RFiDGear. Ohne optionales `-LiveStatus` wird keine Pipe angesprochen; selbst mit `-LiveStatus` wird ausschließlich der offizielle SampleClient-Befehl `status` aufgerufen. Kein Reader-Scan, keine Kartenoperation, kein Vault-Provider.
+
+Der Parser beobachtet zusätzlich zu den bisherigen Capabilities jetzt `keys.context`, `execution.verificationDetails` und `execution.journal`. `requiredCapabilitiesObserved` ist nur bei erfolgreichem Status-Befehl und vollständigem Mindestumfang wahr; `readOnlyPreflightObserved` verlangt außerdem erfolgreiche Host-Initialisierung und eine antwortende Oberfläche. Fehlende Funktionen werden als `missingCapabilities` berichtet. Beides sind **Beobachtungen**, keine Bestätigung der Implementierung, der Kartenberechtigung oder einer Produktionsfreigabe. `productiveWritingApproved` und `productiveBridgeApproved` bleiben stets `false`.
+
+Ein gesondertes, synthetisches Prüfskript `tools/Test-BridgeReadinessStatusParser.ps1` enthält neun Szenarien: vollständiges Angebot, älteren Host mit fehlenden Zusagen, fehlgeschlagenen Statusaufruf, unvollständigen Start, nicht antwortende UI, fehlende Statusfelder, fehlende Capability-Liste, verdächtige Ausgabe/Teilmatches und doppelte Tokens. Es erfordert weder Installation noch Windows-Reader noch Karten; seine **Ausführung wurde hier mangels PowerShell in der Entwicklungsumgebung noch nicht nachgewiesen**. Kein automatischer Test- oder HIL-Erfolg wird behauptet.
+
+Die in diesem Dokument ausgewiesenen offiziellen Upstream-Funktionen sind weiterhin nicht automatisch in der gepinnten RC15-Runtime enthalten. Die maschinenlesbare Capability-Aussage ersetzt weder die Prüfung von `Check UID` und dem tatsächlichen `ownRunsOnly`-Handschlag noch einen durchgängig getesteten Studio-Adapter oder einen unabhängigen lesenden Karten-Abnahmelauf.
