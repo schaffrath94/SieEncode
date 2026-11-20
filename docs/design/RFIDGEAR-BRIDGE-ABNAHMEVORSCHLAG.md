@@ -112,3 +112,38 @@ Angefragt: optionales `verificationDetails` mit Schema-Version; AID, FileNo, erw
 | Wechsel zu offizieller Engine | Exakte Binäridentität, installierter Host, Reader-/DESFire-HIL, Projekt-/Vault-/Abnahme-Parität | Nicht erfolgt |
 
 **Keine Tests von uns in dieser Aktualisierung ausgeführt.** Der Stand ist eine nachprüfbare Auswertung von Upstream-Code, PR-Beschreibungen, Bridge-Vertrag und bereits dokumentierten historischen Softwaretests. Nicht mit einem getesteten, installierten SIE-Encode-Bridge-Adapter oder einer Hardwarefreigabe verwechseln.
+
+---
+
+## Aktualisierung 20.11.2026, Abend – #398/#399 gemergt, #400/#401 offen
+
+Quelle: [RFiDGear #398](https://github.com/c3rebro/RFiDGear/pull/398), [#399](https://github.com/c3rebro/RFiDGear/pull/399), [#400](https://github.com/c3rebro/RFiDGear/pull/400), [#401](https://github.com/c3rebro/RFiDGear/pull/401). Verglichen mit dem zuvor dokumentierten Stand `1cb5b985` liegen #398 und #399 in `master` (`0c29710`), aber nicht in der veröffentlichten v2.1.0. Keine SIE-Encode-Hardwaretests in dieser Dokumentationsänderung.
+
+### P0 – Schlüsselkontext umgesetzt (#398, upstream master)
+
+- Neue Capability **`keys.context`**: Bei `resolveKey` sind `requestId`, `source` und `projectRevision` optional verfügbar. Fehlende `source` ist `other` und **nicht** implizit `bridge`; fehlende ID/Revision nie als freigegeben interpretieren.
+- `registerKeyProvider(ownRunsOnly=true)` schränkt den Provider im Host auf Bridge-Läufe desselben verbundenen Clients ein; für andere Laufursprünge gibt RFiDGear `notAuthorized` zurück, ohne den Client aufzurufen. **Antwort `ownRunsOnly=true` verifizieren**; Host ohne Capability sperren. Ein reconnecteter Client besitzt nicht rückwirkend die Läufe der vorigen Verbindung.
+- Studio prüft zusätzlich, *welcher* eigene Lauf, Auftrag, Projekt, UID, AID, Slot und Verwendungszweck autorisiert wurde. `ownRunsOnly` ersetzt **nicht** unsere auftragsbezogene Freigabe, noch schützt es vor anderer Software desselben Windows-Benutzers.
+- Upstream berichtet 6.803 bestandene Softwaretests, darunter echter Pipe-Test gegen simulierten Host. Die Hardwarefälle 38–42 wurden noch nicht ausgeführt.
+
+### P1 – Vergleichsergebnisse umgesetzt (#399, upstream master)
+
+- Capability **`execution.verificationDetails`**: Ein `TaskOutcomeDto` kann optionale `verificationDetails` mit `schemaVersion: 1`, `kind: desfire.fileSettings`, `overallMatch`, `compareMode` (`all`/`any`), `applicationId`, `fileNumber`, `errorCode` und geordnete `checks` enthalten.
+- Ein Check enthält `name`, `compared`, `result` (`match`, `mismatch`, `notRead`, `notCompared`), ggf. `rule` (`exact`, `atLeast`, `atMost`), `expected` und `actual`. Die festen Checknamen sind `fileType`, `size`, `communicationMode`, `accessRead`, `accessWrite`, `accessReadWrite`, `accessChange`.
+- Nicht gewählte oder nicht lesbare Felder dürfen **nicht** als erfolgreiche Vergleiche behandelt werden. Bei einem Fehler vor der eigentlichen Gegenüberstellung fehlt `verificationDetails` vollständig. Nur `Check File Settings` liefert sie bislang. Keine Schlüssel, keine rohen Kartennutzdaten.
+- Upstream dokumentiert Software-/Pipe- und Mapper-Tests, aber die Hardwarefälle 43–46 sind noch offen. Studio muss die Daten für den **separaten lesenden Abnahmelauf** zuordnen und darf sie nicht mit dem Erfolg des vorherigen Schreibdurchlaufs verwechseln.
+
+### F – Referenzablauf für *einen* Schreibauftrag (#400, **PR offen**)
+
+Der vorgeschlagene SampleClient `RunApprovedCardAsync` führt das Prinzip vor: nur Reader-Status `ready`, genau eine primäre Karte, externe Auftragsfreigabe, anschließend Einzellauf mit `$EXPECTEDUID` und `expectProjectRevision`. Der Ergebnis-UID-Abgleich ist nötig, aber **nicht hinreichend für unabhängige physische Readback-Freigabe**; der separate lesende Lauf bleibt erforderlich. Die offene PR enthält nur Beispielcode/Guide/Checkliste, keinen produktiven Studio-Adapter. Nicht als gemergtes Host-Feature dokumentieren.
+
+### C1 – AutoMode-Resultat enthält Ausgangsrevision (#401, **PR offen**)
+
+Die Projekt-Revision soll im Ergebnis eines automatischen Runs erscheinen. Dies ist **keine** einmalige Kartenfreigabe: PR #401 ändert die Schreibautomatik nicht, die per-Präsenz-Genehmigung ist für später geplant. Daher bleiben automatische **Schreib**-Läufe für SIE Encode gesperrt.
+
+### Prioritäten für die nächste Entwicklungsrunde
+
+1. **A/B read-only/synthetischer Adapter:** capabilities `project.revision`, `keys.context`, `execution.verificationDetails` nur auf tatsächlicher Hostversion prüfen; v2.1.0 hat die neuen drei Capabilities noch nicht.
+2. **Einzellauf als einzige Schreibstrategie** bis zur Einmalfreigabe nach Kartenauflage; `Check UID` muss alle Schreib-Tasks tatsächlich kontrollieren.
+3. **Schlüsselgates / Prüfung der Strukturwerte mit negativen Tests:** Verweigerung fremder Laufursprünge, fehlender ID/Revision und falscher AID/Referenz; Ergebnis `notRead`/fehlende Details dürfen nicht zu einem grünen Abnahmebericht führen.
+4. **Erst nach Windows-Installation und freigegebenem Karten-/Reader-Test:** funktionale Parität und möglicher Runtime-Wechsel. Echte Karten-HIL nicht durch PR-Testzahlen oder GitHub-Pages-Erfolg ersetzen.
