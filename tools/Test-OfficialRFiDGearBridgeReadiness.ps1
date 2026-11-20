@@ -45,43 +45,7 @@ function Get-FileEvidence {
     }
 }
 
-function Test-SafeCommandOutput {
-    param([string[]] $Lines, [int] $ExitCode)
-    $found = New-Object 'System.Collections.Generic.List[string]'
-    $startCompleted = $null
-    $uiResponsive = $null
-    foreach ($line in $Lines) {
-        # Parse only the documented status output. Never save its unfiltered lines:
-        # a future sample client may include a project path or sensitive values.
-        $text = [string] $line
-        if ($text -match '^offers:\s*(.*)$') {
-            foreach ($entry in ($Matches[1] -split '\s*,\s*')) {
-                $cap = $entry.Trim()
-                if ($cap -match '^[a-zA-Z0-9._-]{1,80}$' -and -not $found.Contains($cap)) {
-                    [void] $found.Add($cap)
-                }
-            }
-        }
-        elseif ($text -match '^start-up complete:\s*(True|False)(?:,|$)') {
-            $startCompleted = ($Matches[1] -eq 'True')
-        }
-        elseif ($text -match '^main window:\s*(answers|DOES NOT ANSWER)') {
-            $uiResponsive = ($Matches[1] -eq 'answers')
-        }
-    }
-
-    return [ordered]@{
-        statusCommandSucceeded = ($ExitCode -eq 0)
-        startupComplete = $startCompleted
-        uiResponsive = $uiResponsive
-        capabilities = @($found.ToArray())
-        executionRunOffered = $found.Contains('execution.run')
-        projectRevisionOffered = $found.Contains('project.revision')
-        keyProviderOffered = $found.Contains('keys.provider')
-        # No productive readiness claim is possible from "status" alone.
-        productiveWritingApproved = $false
-    }
-}
+. (Join-Path $PSScriptRoot 'BridgeReadinessStatusParser.ps1')
 
 $root = [IO.Path]::GetFullPath($RFiDGearDirectory)
 $exe = Join-Path $root 'RFiDGear.exe'
@@ -107,7 +71,7 @@ if ($LiveStatus) {
     # "status" is read-only; never call run, auto, keys, scanReader or loadProject.
     $output = @(& $sample status 2>&1 | ForEach-Object { [string] $_ })
     $exitCode = $LASTEXITCODE
-    $live = Test-SafeCommandOutput -Lines $output -ExitCode $exitCode
+    $live = Get-BridgeReadinessFromStatus -Lines $output -ExitCode $exitCode
 }
 
 $signatureStatus = (Get-AuthenticodeSignature -FilePath $exe -ErrorAction Stop).Status.ToString()
@@ -121,7 +85,8 @@ $report = [ordered]@{
     liveStatus = $live
     caveats = @(
         'A file version or digest does not prove that a bridge capability works.'
-        'The official v2.1.0 release does not contain upstream master PR #396 project.revision or #397 Check UID with variable.'
+        'Published v2.1.0 does not contain the later master-only PRs #396 through #399. Always inspect actual capabilities instead of inferring them from a version label.'
+        'Capability observations do not verify the Check UID task gate, ownRunsOnly enforcement or a verified card readback.'
         'A project revision is valid only within its RFiDGear process; external payloads need separate SHA-256 checks.'
         'Vault authorization, card approval, real reader behavior and hardware writing are NOT tested by this script.'
         'Unknown start or run result means inspect and read back the card; never blindly repeat a write.'
