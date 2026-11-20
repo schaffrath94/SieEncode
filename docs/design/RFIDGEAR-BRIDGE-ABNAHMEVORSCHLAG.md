@@ -58,3 +58,57 @@ Der öffentliche Release v2.0.10.0 verweist laut GitHub-API auf 1045f70ac64d0a04
 Vier AutoModeControllerTests im vorhandenen Release-Testbuild f58785f mit lokalem Updater-Patch bestanden (4/4). Eine beim Start bereits aufliegende Karte löst einen Lauf aus. Bei unveränderter Karte über fünf Abfragen bleibt es bei einem Lauf. Nach erkanntem Entfernen und erneutem Auflegen derselben Karte erfolgt ein zweiter Lauf mit neuer RunId. Eine andere UID löst auch ohne dazwischen beobachteten Leerzustand einen Lauf aus. Alle vier Fälle verwenden simulierte Präsenzereignisse.
 
 Für die Stationsintegration folgt daraus: Vor Aktivierung der Automatik muss der beabsichtigte Auftrag feststehen, auch wenn die Karte bereits aufliegt. Der Wechsel vom Schreibauftrag zum reinen Lesetest samt Zählung real ausgelöster Schreibbefehle bleibt gesondert zu prüfen.
+
+---
+
+## Aktualisierung 20.11.2026 – Upstream #396/#397 und Antwort auf #232
+
+**Herkunft:** Upstream `c3rebro/RFiDGear` `master` bei `1cb5b9854283`; Stellungnahme des Entwicklers in
+https://github.com/c3rebro/RFiDGear/issues/232#issuecomment-7032412757. Unsere Antworten in
+https://github.com/c3rebro/RFiDGear/issues/232#issuecomment-7042751419.
+
+**Releasegrenze:** Der offizielle Installer `v2.1.0` vom 19.11.2026 enthält die grundlegende JSON-RPC-Bridge, **aber nicht** die erst danach gemergten Schutzfunktionen `project.revision` (#396) und `Check UID` mit Laufvariable (#397). In `master` ist die Versionsnummer bereits 2.1.1.0, jedoch am 20.11. nicht als Release veröffentlicht. Nie `version >= 2.1.0` als Beweis dieser Fähigkeiten akzeptieren; `hello.capabilities`, laufende `instanceId`, Original-DLLs und tatsächliche Testnachweise prüfen.
+
+### P0 – Eindeutiger Projektstand (#396, upstream implementiert)
+
+- `loadProject` und `getStatus.project` liefern die opake `revision` bei Capability `project.revision`; `startRun.expectProjectRevision` bindet den Start an genau den freigegebenen geladenen Inhalt. Ergebnis: `projectRevision`, die Revision beim Laufstart.
+- Ein falscher/fehlender oder nicht prüfbarer Erwartungswert muss als `projectMismatch` + `neverStarted=true` **vor Kartenzugriff** abgewiesen werden. Unbekannter Capability-Status sperrt unseren produktiven Adapter.
+- `revision` ist ein **prozessgebundener keyed hash**, kein persistent verwendbarer SHA und keine stabile Identität. Nach Änderung von `hello.instanceId`: neu laden, neu prüfen und neu freigeben.
+- Upstream erkennt die bei einem eigenen Bridge-Lauf in Task-Einstellungen entstandenen Änderungen als legitime Lineage; Änderungen durch UI, Extension oder AutoMode sind nicht automatisch freigegeben. Fail closed und Revision erneut prüfen.
+- **Nicht abgedeckt** sind externe Payloaddateien, die erst zum Lauf geladen werden. Die bestehende Studio-Logik für unveränderliche Auftrags-ID, Profil-/Taskplanfingerprint, Projekt-Workspace-Lease, Datei-SHA und unmittelbare Prüfung der Schreibbytes bleibt aktiv.
+
+### P0 – Einzelläufe mit Kartenfreigabe (#397, upstream implementiert)
+
+Das Kodierprojekt erhält zu Beginn einen `Check UID`-Task mit Sollwert `$EXPECTEDUID`. **Alle** schreibenden Tasks müssen ausdrücklich von dem erfolgreichen UID-Check abhängen. Studio erzeugt dieses Projekt und verifiziert die Abhängigkeiten im Preflight; der Host erzwingt nicht generell, dass beliebige Schreib-Tasks das Gate benutzen.
+
+1. `scanReader` zur Beobachtung; Studio prüft Auftrag, erwartete UID, Seriennummer, Profilbindung und Duplikate. UID ist keine kryptografische Echtheitsprüfung.
+2. Vor dem `startRun`: frische Projekt-Revision, Payload-Hashes und einen dauerhaft gespeicherten eindeutigen `requestId` verwenden.
+3. `startRun` mit `expectProjectPath`, `expectTaskCount`, `expectProjectRevision` und `variables: [{name: "$EXPECTEDUID", value: "<synthetische UID>"}]`. Die Taskengine liest die tatsächliche UID selbst; ein Wechsel zwischen Scan und Lauf führt zu `CardNotExpected`, und abhängige Schreib-Tasks werden übersprungen. Eine nicht gelieferte/leer gelieferte Variable ist ebenfalls ein Fehler.
+4. Unklarer Start oder Verbindungsabbruch: ausschließlich `getRunResult` mit **derselben** `requestId`; niemals eine neue ID zum erneuten Schreiben erfinden. `unknown`, `bridgeFault` oder fehlende Details erfordern unabhängige Lesekontrolle.
+5. **Schreibprojekt beenden → Karte entfernen → erneut auflegen → getrenntes ausschließlich lesendes Abnahmeprojekt**; keine automatische zweite Schreibausführung.
+
+**AutoMode darf derzeit nicht produktiv schreiben:** Eine beim Start gesetzte UID-Variable wird nach Abnehmen/Wiederauflegen derselben Karte erneut akzeptiert. Auf #232 ist deshalb Variante **(b) – Freigabe beim Auflegen** angefragt: Reader-Ereignis → Studio-Entscheidung → einmalige, präsenzgebundene Genehmigung mit Timeout, Abbruch/Clientverlust fail closed, keine Wiederverwendung beim Wiederauflegen. Bis zur Implementierung strikt Einzelläufe.
+
+### P0 – Tresorfreigabe pro Lauf (vom Upstream zugesagt, noch nicht implementiert)
+
+Geplant sind `resolveKey.requestId`, `source`, `projectRevision` und ein optionaler `registerKeyProvider`-Schalter, der nur Bridge-Client-eigene Läufe akzeptiert. Studio muss diese Felder plus `instanceId`, UID, AID, Slot, Verwendung und Credential-Referenz gegen die eigene **explizite, kurzfristige** Auftragsfreigabe prüfen. Nicht passend → `notAuthorized`; keine Geheimwerte in Logs/Events oder Report. Die Abwehr gilt nicht gegenüber einem böswilligen Programm im selben Windows-Konto. **Kein produktiver Vault-Adapter**, solange das Host-Gate und die negativen Integrationstests fehlen.
+
+### P1 – Strukturierte Check-File-Settings-Ergebnisse (noch nicht implementiert)
+
+Angefragt: optionales `verificationDetails` mit Schema-Version; AID, FileNo, erwarteter/tatsächlicher Typ; Dateigröße (Regel exact/atLeast/atMost, Soll/Ist, gewählt ja/nein); Communication Mode (Soll/Ist, gewählt, Einzelerfolg); vier Access-Nibbles Read, Write, ReadWrite, Change (je Soll/Ist/gewählt/Einzelerfolg). Keine Karten-Payloadbytes oder Schlüssel; freie Texte nie als maschinenlesbaren Abnahmebeweis behandeln. Bis zur Umsetzung kein „kompletter Soll-Ist-Bericht“ aus einer reinen `TaskOutcomeDto` ableiten.
+
+### Unverzichtbare Testmatrix vor Umstellung
+
+| Test | Erwarteter Host-/Studio-Nachweis | Status 20.11.2026 |
+| --- | --- | --- |
+| Gleicher Pfad/Taskanzahl, aber Taskinhalt geändert | `projectMismatch`, `neverStarted`, 0 Schreiboperationen | Upstream-Softwaretests #396 berichtet; kein Studio-/Hardwaretest |
+| Dateipayload nach Freigabe geändert | Studio blockiert bei Hashabweichung vor Start | Bestehende Studio-Prüflogik; kombinierter Bridge-Test offen |
+| Karte zwischen Scan und `startRun` getauscht | `CardNotExpected`, schreibende Abhängigkeiten übersprungen | Upstream-Softwaretests #397 berichtet; Hardwaretest offen |
+| UID beim Start leer/nicht gesetzt | `CardNotExpected`, keine Schreiboperationen | Upstream-Softwaretests #397 berichtet |
+| Karte entfernt und erneut aufgelegt | Keine zweite Schreibfreigabe; nur Readback | Vollständiger Produktionsablauf offen; AutoMode-Schreiben gesperrt |
+| Nicht autorisierte Anfrage aus UI/fremdem Lauf | `notAuthorized`, 0 Schlüsselbereitstellungen | Host-Gate noch nicht implementiert |
+| Verbindungsabbruch während Start/Schlüsselauflösung | Gleiche `requestId`, Abfrage statt Wiederholung; unklarer Kartenzustand wird kontrolliert | Einzelne frühere synthetische Tests; echter Ablauf offen |
+| `CheckFileSettings` Sollgröße 32/Istgröße 16 | Strukturierte Abweichung im korrelierten Task, kein Log-Parsing | `verificationDetails` noch nicht implementiert |
+| Wechsel zu offizieller Engine | Exakte Binäridentität, installierter Host, Reader-/DESFire-HIL, Projekt-/Vault-/Abnahme-Parität | Nicht erfolgt |
+
+**Keine Tests von uns in dieser Aktualisierung ausgeführt.** Der Stand ist eine nachprüfbare Auswertung von Upstream-Code, PR-Beschreibungen, Bridge-Vertrag und bereits dokumentierten historischen Softwaretests. Nicht mit einem getesteten, installierten SIE-Encode-Bridge-Adapter oder einer Hardwarefreigabe verwechseln.
