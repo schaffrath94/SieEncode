@@ -83,8 +83,11 @@ $report = [ordered]@{
     contract = $contractEvidence
     executableSignatureStatus = $signatureStatus
     liveStatus = $live
+    # The SampleClient connects to a running process, which may not be this folder's EXE.
+    liveStatusHostIdentityVerified = $false
     caveats = @(
         'A file version or digest does not prove that a bridge capability works.'
+        'The live SampleClient status is not cryptographically bound to the EXE in RFiDGearDirectory; process-to-file identity is NOT verified.'
         'Published v2.1.0 does not contain the later master-only PRs #396 through #399. Always inspect actual capabilities instead of inferring them from a version label.'
         'Capability observations do not verify the Check UID task gate, ownRunsOnly enforcement or a verified card readback.'
         'A project revision is valid only within its RFiDGear process; external payloads need separate SHA-256 checks.'
