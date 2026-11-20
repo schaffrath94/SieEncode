@@ -249,6 +249,9 @@ public partial class MainWindow : Window
         EditorAdvancedActions.Visibility = visibility;
         StationDetailedPreflight.Visibility = visibility;
         StationAdvancedCardActions.Visibility = visibility;
+        // Destructive maintenance is never a normal card-inspection action.
+        // Keep all existing confirmation and authorization checks unchanged.
+        TestMaintenanceActions.Visibility = visibility;
         StationOpenRFiDGearButton.Visibility = visibility;
         StationTechnicalDetails.Visibility = visibility;
         HelpExpertTools.Visibility = visibility;
