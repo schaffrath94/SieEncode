@@ -94,7 +94,7 @@ internal sealed class KeyLibraryManagementWindow : Window
         Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
 
         groupSelection.SelectionChanged += (_, _) => Execute(Refresh);
-        customerSelection.SelectionChanged += (_, _) => RefreshKeys();
+        customerSelection.SelectionChanged += (_, _) => Execute(RefreshKeys);
         keys.SelectionChanged += (_, _) => RefreshActions();
         create.Click += (_, _) => Execute(CreateEmpty);
         addCustomer.Click += (_, _) => Execute(AddCustomer);
@@ -158,7 +158,8 @@ internal sealed class KeyLibraryManagementWindow : Window
             .OrderBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase).ToArray();
         var prior = (customerSelection.SelectedItem as KeyLibraryCustomer)?.CustomerId;
         customerSelection.ItemsSource = customers;
-        customerSelection.SelectedItem = customers.FirstOrDefault(c => c.CustomerId == prior);
+        customerSelection.SelectedItem = customers.FirstOrDefault(c => c.CustomerId == prior) ??
+            (customers.Length == 1 ? customers[0] : null);
         status.Text = $"Lokaler Vault geöffnet · Revision {state.Catalog.Revision} · {state.Catalog.Keys.Length} Schlüsselversionen · keine zentrale Bestätigung. Geheime Werte werden nicht in der Übersicht ausgegeben.";
         RefreshKeys();
     }
