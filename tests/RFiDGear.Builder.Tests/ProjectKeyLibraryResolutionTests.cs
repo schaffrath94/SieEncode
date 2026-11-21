@@ -129,6 +129,27 @@ internal static class ProjectKeyLibraryResolutionTests
         var crossCustomer = catalog with { Keys = entries.Select((key, i) =>
             i == 1 ? key with { CustomerId = otherCustomer } : key).ToArray() };
         Reject<CryptographicException>(() => ProjectKeyLibraryResolution.Bind(project, profiles, crossCustomer, customer, links));
+
+        // Composite cards may use separate key domains for distinct customer AIDs.
+        // The override must be explicit for the individual slot; the default
+        // customer cannot be used to silently resolve that other customer's key.
+        var customerBSlot = 3;
+        var compositeCatalog = catalog with { Keys = entries.Select((key, i) =>
+            i == customerBSlot ? key with { CustomerId = otherCustomer } : key).ToArray() };
+        var compositeBindings = links.Select((link, i) =>
+            i == customerBSlot ? link with { CustomerId = otherCustomer } : link).ToArray();
+        var compositeProject = ProjectKeyLibraryResolution.Bind(
+            project, profiles, compositeCatalog, customer, compositeBindings);
+        var compositeVault = vault with { Catalog = compositeCatalog };
+        var compositeResolved = ProjectKeyLibraryResolution.ResolveForBuild(compositeProject, profiles, compositeVault);
+        if (compositeProject.Project.KeyLibrary?.Bindings[customerBSlot].CustomerId != otherCustomer ||
+            compositeResolved.Transport.ApplicationKeys["DF_KEY_3K3DES"] != secrets[customerBSlot].HexValue)
+            throw new Exception("Explicit per-application customer key ownership was lost.");
+        Reject<CryptographicException>(() => ProjectKeyLibraryResolution.Bind(project, profiles,
+            compositeCatalog, customer, links));
+        Reject<InvalidDataException>(() => ProjectKeyLibraryResolution.Bind(project, profiles, catalog,
+            customer, links.Select((link, i) => i == customerBSlot ? link with { CustomerId = Guid.Empty } : link)));
+
         var retired = catalog with { Keys = entries.Select((key, i) =>
             i == 1 ? key with { Status = KeyLibraryContracts.Retired } : key).ToArray() };
         Reject<InvalidOperationException>(() => ProjectKeyLibraryResolution.Bind(project, profiles, retired, customer, links));
