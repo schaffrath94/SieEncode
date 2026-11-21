@@ -9,8 +9,51 @@ namespace RFiDGear.Builder.App;
 
 public partial class MainWindow
 {
+    private static void VerifyRevocationImpactContract(List<string> checks)
+    {
+        // Synthetic policy only: no certificate-store access, GUI prompts,
+        // file writes or issuance of a signed authorization.
+        var prior = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 2, Guid.NewGuid(), 1,
+            [new OfflineVaultGroup("local", "Local", ["person-a"])])
+        {
+            People =
+            [
+                new OfflineVaultPerson("person-a", "Testperson", true,
+                    [new OfflineVaultDevice("Rechner", "SYNTHETIC-FP", "SYNTHETIC-CERT", true)])
+            ]
+        };
+        var group = new GroupAdministrationDraft { Id = "local", Name = "Local" };
+        group.Members.Add("person-a");
+        var person = new PersonAdministrationDraft { Id = "person-a", Name = "Testperson" };
+        var device = new DeviceAdministrationDraft
+        {
+            Name = "Rechner", Fingerprint = "SYNTHETIC-FP", Certificate = "SYNTHETIC-CERT", Enabled = true
+        };
+        person.Devices.Add(device);
+
+        bool Reduced() => GroupAdministrationWindow.ReducesSignedAccess(prior, [group], [person]);
+        if (Reduced()) throw new InvalidOperationException("Unveränderte Gruppenrichtlinie fälschlich als Entzug bewertet.");
+        group.Members.Clear();
+        if (!Reduced()) throw new InvalidOperationException("Entfernung aus einer Gruppe nicht als Entzug erkannt.");
+        group.Members.Add("person-a");
+        person.Enabled = false;
+        if (!Reduced()) throw new InvalidOperationException("Deaktivierung einer Person nicht als Entzug erkannt.");
+        person.Enabled = true;
+        device.Enabled = false;
+        if (!Reduced()) throw new InvalidOperationException("Deaktivierung eines Geräts nicht als Entzug erkannt.");
+        device.Enabled = true;
+        group.Members.Add("person-b");
+        if (Reduced()) throw new InvalidOperationException("Zusätzliche Mitgliedschaft fälschlich als Entzug bewertet.");
+        if (!GroupAdministrationWindow.ReducesSignedAccess(prior, [], [person]))
+            throw new InvalidOperationException("Löschen einer bisherigen Gruppe nicht als Entzug erkannt.");
+        if (!GroupAdministrationWindow.ReducesSignedAccess(prior, [group], []))
+            throw new InvalidOperationException("Löschen einer bisher aktiven Person nicht als Entzug erkannt.");
+        checks.Add("Entzugshinweis: synthetische Reduktionsmatrix für Gruppenentfernung, Personen-/Gerätedeaktivierung und Löschung; unveränderte oder nur ergänzte Mitgliedschaften lösen keinen falschen Entzug aus.");
+    }
+
     private void VerifyVaultDialogContract(List<string> checks)
     {
+        VerifyRevocationImpactContract(checks);
         VerifyPasswordPrompt(checks);
         VerifyTextEntryPrompt(checks);
         VerifyVaultAccessRoundTrip(checks);
