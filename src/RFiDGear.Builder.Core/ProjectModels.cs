@@ -4,6 +4,11 @@ namespace RFiDGear.Builder.Core;
 
 public sealed class ProjectDefinition
 {
+    // Ephemeral, non-serializable marker set only by an authorized library resolver.
+    // Never persist a decrypted build document as a project definition.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool TransientKeyLibraryResolution { get; set; }
+
     public ProjectSection Project { get; set; } = new();
     public ProfileSelection Profiles { get; set; } = new();
     public TransportConfiguration Transport { get; set; } = new();
