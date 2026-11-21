@@ -29,7 +29,9 @@ internal sealed class GroupProjectSetupWindow : Window
         Title = migration ? "Vorhandenen Vault als Gruppenprojekt kopieren" : "Neues Gruppenprojekt erstellen";
         Width = 760; SizeToContent = SizeToContent.Height; MaxHeight = 800; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var root = new StackPanel { Margin = new Thickness(20) };
-        root.Children.Add(Note("SieEncode erstellt eine eigene Projektkopie mit der Freigabe genau einer Offline-Gruppe. Bestehende Dateien und Vaults werden nicht stillschweigend überschrieben. Der aktuelle Gruppenstand und Ihr persönlicher Zugang müssen dafür gültig sein."));
+        root.Children.Add(Note(migration
+            ? "Dieser technische Kopierweg betrifft einen bereits gespeicherten Entwicklungsentwurf. Er ist für die normale Neuanlage von SieEncode 1.0 nicht erforderlich."
+            : "Neues Teamprojekt: eine signiert registrierte Bibliothek und genau eine Gruppe auswählen. Kartenschlüssel werden ausschließlich für dieses neue Projekt verschlüsselt gespeichert. Der eigene Gruppenzugang und ein separater Recovery-Zugang müssen freigegeben sein."));
         root.Children.Add(new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(240, 246, 247)),
@@ -117,10 +119,22 @@ internal sealed class GroupProjectSetupWindow : Window
         }
         else
         {
-            nextAction.Text = $"Gruppe: {group.Label}. Jetzt den neuen Projektnamen prüfen und die Erstellung ausdrücklich bestätigen. SieEncode prüft den vorhandenen Gruppenzugang und die Recovery-Freigabe beim Anlegen.";
+            var membership = selected.Policy.Groups.FirstOrDefault(g => g.Id == group.Id);
+            var hasMember = membership is { Members.Length: > 0 };
+            var hasRecovery = selected.Policy.RecoveryDevices.Any(device => device.Enabled);
+            nextAction.Text = !hasMember
+                ? "In dieser Gruppe ist noch keine freigegebene Person eingetragen. Die Hauptverwaltung muss zuerst Mitgliedschaft und berechtigtes Gerät signiert freigeben; danach Gruppenstand aktualisieren."
+                : !hasRecovery
+                    ? "Es fehlt ein separater aktiver Recovery-Zugang. Die Hauptverwaltung muss ihn getrennt einrichten, freigeben und den neuen signierten Gruppenstand verteilen."
+                    : $"Gruppe: {group.Label}. Jetzt den Projektnamen prüfen und die Erstellung ausdrücklich bestätigen. Der tatsächliche Zugriff mit dem privaten Windows-Schlüssel wird erst beim Erstellen geprüft.";
         }
         if (executeAction is not null)
-            executeAction.IsEnabled = selected is not null && groups.SelectedItem is GroupChoice;
+        {
+            var chosen = groups.SelectedItem as GroupChoice;
+            executeAction.IsEnabled = selected is not null && chosen is not null &&
+                selected.Policy.Groups.Any(g => g.Id == chosen.Id && g.Members.Length > 0) &&
+                selected.Policy.RecoveryDevices.Any(d => d.Enabled);
+        }
     }
 
     internal GroupProjectCreationResult CreateSelected(string projectName, string? phrase, bool confirmation)
