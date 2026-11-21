@@ -105,7 +105,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         // Only the single pre-existing administration is loaded; never create a new key implicitly.
         if (libraries.Items.Count == 1 && libraries.Items[0] is Guid onlyLibrary)
         {
-            try { LoadAdministration(onlyLibrary); }
+            try { LoadAdministration(onlyLibrary, synchronizeOwnRegistration: false); }
             catch (Exception exception) { ShowError(exception); }
         }
         MainWindow.InitializeAutomationContract(this, "GroupAdministration");
@@ -121,12 +121,15 @@ internal sealed partial class GroupAdministrationWindow : Window
         return id;
     }
 
-    internal void LoadAdministration(Guid id)
+    internal void LoadAdministration(Guid id, bool synchronizeOwnRegistration = true)
     {
         var candidate = Store(id);
         var package = candidate.ExportPublic();
         var verified = GroupEnrollmentPackages.Validate(package);
-        var registrationStatus = SynchronizeOwnRegistration(package);
+        // Merely opening this window must never silently replace the local trust registration.
+        var registrationStatus = synchronizeOwnRegistration
+            ? SynchronizeOwnRegistration(package)
+            : "Lokale Registrierung beim automatischen Öffnen nicht verändert; Änderungen erst ausdrücklich signiert speichern.";
         LoadPeople(verified.Policy);
         groups.Clear();
         foreach (var group in verified.Policy.Groups)
