@@ -1,6 +1,6 @@
 # SieEncode 1.0 – bestehende Vault-/Projekttechnik zur vollständigen Schlüsselbibliothek erweitern
 
-**Umsetzungsplan vom 21.11.2026. Kein Rewrite, keine alte veröffentlichte SieEncode-Version, keine Kunden-Altprojektmigration.** Die zentrale Bibliothek, Synchronisation und Klartextverwaltung sind noch **nicht implementiert**. Der erste unabhängige Metadatenvertrag `KeyLibraryContracts.cs` und synthetische Tests liegen auf dem Entwicklungszweig, noch **nicht ausgeführt**.
+**Umsetzungsplan vom 21.11.2026. Kein Rewrite. Erster Produktrelease 1.0 – keine veröffentlichte Altversion, keine Kunden-Altprojektmigration oder Zwischenrelease-Kompatibilität.** Alle Verwaltungsaktionen erfolgen ausschließlich in **SieEncode Studio**. Die Zentrale ist ein **headless** Daten-, Rechte- und Synchronisationsdienst **ohne eigene UI**. Die zentrale Bibliothek, Synchronisation und Klartextverwaltung sind noch **nicht implementiert**. Der erste unabhängige Metadatenvertrag `KeyLibraryContracts.cs` und synthetische Tests liegen auf dem Entwicklungszweig, noch **nicht ausgeführt**.
 
 ## Technischer Befund aus aktuellen Quellen
 
@@ -19,7 +19,7 @@
 **Eine führende Schlüsselbibliothek, viele Referenzen.** Ein Geheimwert ist fachlich ein versioniertes `KeyId + Version` in genau einem zentral verwalteten Schlüsselsatz. Mehrere Projekte dürfen dieselbe Referenz benutzen; ein Kartenprojekt besitzt nicht mehr seine eigene unabhängige Kopie desselben produktiven Schlüssels.
 
 ```text
-Zentrale Hauptbibliothek (ein autoritativer, versionierter Gesamtbestand)
+Zentraler SieEncode-Hintergrunddienst (autoritativ, OHNE eigene Oberfläche)
     │  bei Gelegenheit signiert und verschlüsselt abgleichen
     ▼
 Vollständiger lokaler Offline-Bestand (geschützte Geheimwerte + Metadaten)
@@ -62,22 +62,22 @@ Vollständiger lokaler Offline-Bestand (geschützte Geheimwerte + Metadaten)
 ### Phase 3 – Projektreferenz und eindeutiger Resolver
 
 - Projektdefinition bekommt *optional* geprüfte, **geheimwertfreie** Slot-`KeyId + Version`-Bindungen.
-- Bestehende Projekte/Drafts funktionieren bis zur **ausdrücklich bestätigten** Umstellung unverändert. Das ist intern ein Entwicklungspfad, **keine behauptete Migration früherer Produktversionen**.
+- Da noch **kein SieEncode-Release existiert**, dürfen wir das interne Projekt-/Vault-Schema für 1.0 konsolidieren. Während der laufenden Entwicklung können vorhandene Test-Drafts weiterhin geöffnet werden, soweit nützlich, aber **keine** zusätzliche veröffentlichte Altformat-Schnittstelle oder kundenbezogene Migration aufbauen. Die Umstellung erfolgt an einer einzigen geprüften Stelle; kein dauerhaftes Nebeneinander zweier unabhängiger Geheimwertspeicher.
 - Für kataloggebundene Projekte **keinen** kompletten Projekt-Vault mit identischen Geheimwerten dauerhaft parallel pflegen. Fachlich führt nur die Bibliothek. In einem streng kontrollierten temporären Build-Schritt werden genau die gebundenen Werte aufgelöst und in den **vorhandenen** `ProjectKeyVaultPayload` projiziert. Dann `ProjectKeyVault.Apply` und die vorhandene Kodier-/Bauprüfung aufrufen.
 - **Fail closed**: unbekannte KeyId, falsche Version, falscher Kunde/Keytyp, unberechtigter Benutzer, abgelöster/kompromittierter Schlüssel, inkonsistenter Bibliotheksstand oder nicht auflösbarer Slot **stoppt den Vorgang**. Kein automatischer Rückfall auf ältere feste Rohwerte.
 - Die bestehende Bereitstellung der Rohwerte für RFiDGear ist für den beabsichtigten Offline-Kodiermodus weiterhin erforderlich. Temporäre Artefakte sind möglichst kurzlebig; **kein Versprechen rückwirkend widerrufbarer Klartextschlüssel**.
 
-### Phase 4 – eine verständliche Schlüsselverwaltungsansicht
+### Phase 4 – eine verständliche Schlüssel- UND Gruppenverwaltungsansicht in SieEncode
 
-- Hauptnavigation mit **einem** klaren Arbeitsbereich „Schlüsselverwaltung“, nicht einem eigenen Knopf je Unterfunktion.
+- Hauptnavigation mit **einem** klaren Arbeitsbereich „Schlüsselverwaltung“ und vorhandener sinnvoll integrierter Gruppen-/Zugriffsverwaltung, nicht einem eigenen Knopf je Unterfunktion. **Alle** Kunden-/Schlüssel-/Rollen-/Gruppen-/Recovery-Aktionen finden in SieEncode statt. **Kein Verwaltungsportal am Server**.
 - Kunden → Schlüsselsätze → Schlüsselversionen; Werte standardmäßig verdeckt.
 - Berechtigte bewusste Aktionen: Schlüssel importieren, anlegen, anzeigen, kopieren, SIPORT-Ausgabe, Version kontrolliert wechseln. Exportformat und Integration mit SIPORT erst nach tatsächlichem Format-/Verwendungstest zusagen.
 - Bestehende Projekteditoren können aus der Bibliothek wählen; keine zweite manuell gepflegte Schlüsselbezeichnungsliste.
 
-### Phase 5 – zentraler Gesamt-Abgleich ohne Online-Zwang
+### Phase 5 – zentraler headless Gesamt-Abgleich ohne Online-Zwang
 
 - Jede autorisierte Vollzugriffs-Station synchronisiert **alle Kunden und alle Schlüssel** automatisch, einschließlich historischer Versionen. Keine Kunden-Mitnahmeliste. Effiziente signierte Deltas sind zulässig, müssen aber den vollständigen konsistenten Bestand nachweisbar herstellen; offline signierte/verschlüsselte Transportpakete ebenfalls.
-- Zentraler Revisionsstand und pro-Schlüssel-Version trennen. Offline-Bearbeitungen als Vorschläge/Ereignisse, nicht ohne Konflikterkennung gegenseitig überschreiben. Signaturen, Rollback-/Replay-Schutz, unvollständige Delta-Reparatur, Atomic Commit und Revision-/Integritätsprüfung.
+- Zentraler Revisionsstand und pro-Schlüssel-Version trennen. **SieEncode Studio erzeugt** die authentisierten Änderungsbefehle aus seinen bestehenden Verwaltungsdialogen; der **headless Zentraldienst** prüft Berechtigung, Ausgangsrevision, Signatur, Schema und Konflikte und speichert atomar. Offline-Bearbeitungen sind lokal als **noch nicht zentral bestätigte Entwürfe** erkennbar, bis der Dienst sie annimmt. Keine stillschweigende Konfliktüberschreibung; Konfliktentscheidung wieder **im SieEncode Studio**, niemals in einer Server-UI. Signaturen, Rollback-/Replay-Schutz, unvollständige Delta-Reparatur, Atomic Commit und Revision-/Integritätsprüfung.
 - Zentraler Widerruf sperrt **neue zentrale Freigaben** nach bekanntem Abgleich, **nicht** alte Kopien oder früher gelesene Schlüssel. Bei realem kompromittierten Schlüssel ist ein ausdrücklich geplanter Karten-/Leser-/SIPORT-Schlüsselwechsel notwendig.
 
 ### Phase 6 – Abnahme ohne unnötige Zwischentests
@@ -88,8 +88,8 @@ Vollständiger lokaler Offline-Bestand (geschützte Geheimwerte + Metadaten)
 
 ## Nicht tun
 
-- Keine zweite parallele Bedienoberfläche, Datenbank oder Verschlüsselungsimplementation.
-- Keine Speichermigration einer nicht existierenden veröffentlichten SieEncode-Version.
+- Keine zweite parallele Bedienoberfläche, keinen extra Server-Admin-Client, keine zweite fachlich unabhängig bearbeitete Datenbank oder Verschlüsselungsimplementation. Eine **zentrale Speicherreplik und ein lokaler Offline-Cache** sind gewollt, aber keine zwei voneinander unabhängigen Benutzeroberflächen/Wahrheiten.
+- Keine Altformat-Speichermigration oder Kompatibilitätstests für eine nicht existierende veröffentlichte SieEncode-Version. Interne Entwicklungsdatenmodelle dürfen vor 1.0 gezielt konsolidiert werden; Kryptosicherheit, Recovery und korrekte Tests bleiben trotzdem erforderlich.
 - Keine Umstellung der bestehenden Runtime, bevor die Schlüsselauflösung bis zur temporären Payload synthetisch nachweisbar ist.
 - Keine automatische Schlüsselrotation oder Diversifikation.
 - Keine dauerhafte Internetverbindung, SAM-Pflicht oder Projekt-/Kunden-Auswahl zum Mitnehmen.
