@@ -82,8 +82,14 @@ internal sealed class GroupDelegateWindow : Window
         exportChangeButton.IsEnabled = false;
         root.Children.Add(exportChangeButton);
         root.Children.Add(Note("Exportierte Änderungen an die Hauptverwaltung weitergeben. Sie gelten erst nach deren Übernahme und Verteilung des neuen signierten Standes. Lokale Offline-Kopien können einen inzwischen erfolgten Entzug noch nicht kennen."));
-        root.Children.Add(error); root.Children.Add(Action("Schließen", Close));
-        Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        root.Children.Add(Action("Schließen", Close));
+        // Keep actionable errors visible even if the user is scrolled up in a long group editor.
+        var layout = new DockPanel();
+        error.Margin = new Thickness(20, 8, 20, 8);
+        DockPanel.SetDock(error, Dock.Bottom);
+        layout.Children.Add(error);
+        layout.Children.Add(new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
+        Content = layout;
         Closing += (_, e) => { if (!ConfirmDiscard()) e.Cancel = true; };
         // Safe, read-only convenience: one local library is unambiguous.
         if (libraries.Items.Count == 1 && libraries.Items[0] is Guid onlyLibrary)
