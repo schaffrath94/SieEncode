@@ -504,6 +504,10 @@ public partial class MainWindow
             !populatedState.Complete || !populatedState.Title.Contains("ANWENDUNGEN ERKANNT · 1", StringComparison.Ordinal) ||
             DescribeCardInspection(inconsistent).Complete || DescribeCardInspection(unsafeReport).Complete)
             throw new InvalidOperationException("Kartenübersicht verwechselt bestätigte Inventur mit unbekanntem Zustand.");
+        if (CanInspectApplicationFiles(unconfirmed) || CanInspectApplicationFiles(confirmedEmpty) ||
+            !CanInspectApplicationFiles(populated) || CanInspectApplicationFiles(inconsistent) ||
+            CanInspectApplicationFiles(unsafeReport))
+            throw new InvalidOperationException("Vertiefte Application-Untersuchung wird ohne bestätigten, widerspruchsfreien Lesebefund angeboten.");
 
         try
         {
@@ -524,7 +528,7 @@ public partial class MainWindow
             TestAnalysisTree.Items.Clear();
             TestAnalysisTree.Items.Add(new TreeViewItem { Header = "Noch kein Transponder analysiert", IsExpanded = true });
         }
-        if (TestInspectionDetails.IsExpanded || TestAdditionalAnalysis.IsExpanded)
+        if (TestInspectionDetails.IsExpanded || (!settings.ExpertMode && TestAdditionalAnalysis.IsExpanded))
             throw new InvalidOperationException("Kartendetails/Berichte sind im Standard-Startzustand nicht eingeklappt.");
         checks.Add("Kartenuntersuchung: nur vollständige read-only Inventur darf 0 Applications als leer anzeigen; unbekannt und widersprüchlich fail-closed, Expertennachweise bleiben aufklappbar. Synthetische UI-Prüfung vorgemerkt.");
     }
