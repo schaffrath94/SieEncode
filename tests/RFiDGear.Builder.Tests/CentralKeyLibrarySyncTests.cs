@@ -174,6 +174,72 @@ internal static class CentralKeyLibrarySyncTests
                 throw new Exception("Authorized offline receiver could not recover entire latest encrypted history.");
             if (persisted.ReadHead() != written2)
                 throw new Exception("Rejected competing writes changed the central head.");
+            VerifyStudioSigningBridge();
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    private static void VerifyStudioSigningBridge()
+    {
+        var directory = Path.Combine(Path.GetTempPath(),
+            "SieEncode-signing-bridge-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var id = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        using var memberKey = RSA.Create(3072);
+        using var recoveryKey = RSA.Create(3072);
+        X509Certificate2 MakeCert(string subject, RSA key) =>
+            new CertificateRequest("CN=" + subject, key,
+                HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+                .CreateSelfSigned(now.AddDays(-1), now.AddDays(2));
+        using var member = MakeCert("Bridge member", memberKey);
+        using var recovery = MakeCert("Bridge recovery", recoveryKey);
+        OfflineVaultDevice Device(X509Certificate2 cert) => new(cert.Subject,
+            CertificateVaultService.Fingerprint(cert),
+            Convert.ToBase64String(cert.RawData), true);
+
+        try
+        {
+            var administration = new OfflineGroupAdministrationStore(
+                Path.Combine(directory, "admin.bin"), id,
+                new OfflineGroupTrustTests.TestProtection());
+            var initial = administration.Create();
+            var configured = administration.UpdateDirectory(
+                [new OfflineVaultPerson("member", "Bridge Member", true,
+                    [Device(member)])],
+                [new OfflineVaultGroup("keys", "Bridge Keys", ["member"])],
+                GroupEnrollmentPackages.Validate(initial).Checkpoint);
+            var ready = administration.UpdateRecoveryDevices(
+                [Device(recovery)], GroupEnrollmentPackages.Validate(configured).Checkpoint);
+            var trust = new OfflineGroupTrustStore(Path.Combine(directory, "trust.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            trust.Enroll(ready.AdministratorPublicKey,
+                OfflineGroupTrustStore.AdministratorFingerprint(ready.AdministratorPublicKey),
+                ready.Policy);
+
+            var localVault = Path.Combine(directory, "local-library.json");
+            var payload = new KeyLibraryVaultPayload(new KeyLibrarySnapshot(id, 1, []), []);
+            var localAuthorization = administration.SignKeyLibraryMutation(trust,
+                "create", "keys", FileRevision.Missing, payload);
+            KeyLibraryVaultStore.Create(localVault, payload, trust, "keys",
+                [member], now, localAuthorization);
+            var center = new CentralKeyLibraryStore(
+                Path.Combine(directory, "central.json"), id);
+            var confirmed = OfflineGroupTrustStore.AdministratorFingerprint(
+                ready.AdministratorPublicKey);
+            var first = center.Register(ready, confirmed);
+            Reject<CryptographicException>(() => KeyLibrarySyncClient.PrepareUpload(
+                localVault, trust, administration, "keys", first, [recovery]));
+            var upload = KeyLibrarySyncClient.PrepareUpload(
+                localVault, trust, administration, "keys", first, [member]);
+            var approved = center.Accept(upload);
+            if (approved.CentralRevision != 1 ||
+                KeyLibrarySyncTransport.Verify(upload, ready).LibraryId != id)
+                throw new Exception("Existing Studio administrator did not authorize an exact encrypted central upload.");
+            Reject<ConcurrentFileChangeException>(() => center.Accept(upload));
         }
         finally
         {
