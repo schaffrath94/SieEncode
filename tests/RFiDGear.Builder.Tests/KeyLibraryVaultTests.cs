@@ -169,6 +169,28 @@ internal static class KeyLibraryVaultTests
             if (!File.ReadAllBytes(path).SequenceEqual(beforeFailures))
                 throw new Exception("Verworfene Schlüsseländerung hat den Original-Vault verändert.");
 
+            var approved = AuthorizationFor("update", "keys", saved, revision2);
+            Reject<ArgumentNullException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
+                "keys", [alice], saved, now, null!));
+            var damagedSignature = approved.Signature.ToArray();
+            damagedSignature[0] ^= 0x80;
+            Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
+                "keys", [alice], saved, now, approved with { Signature = damagedSignature }));
+            Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
+                "keys", [alice], saved, now, AuthorizationFor("update", "other", saved, revision2)));
+            Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
+                "keys", [alice], saved, now, AuthorizationFor("update", "keys",
+                    new FileRevision(true, new string('A', 64)), revision2)));
+            var wrongContent = revision2 with { Catalog = revision2.Catalog with
+                { Keys = [revision2.Catalog.Keys[0] with { Name = "Wrong label" },
+                    revision2.Catalog.Keys[1], revision2.Catalog.Keys[2]] } };
+            Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
+                "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, wrongContent)));
+            Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
+                "keys", [alice], saved, now, AuthorizationFor("create", "keys", FileRevision.Missing, revision2)));
+            if (!beforeFailures.SequenceEqual(File.ReadAllBytes(path)))
+                throw new Exception("Denied signing attempts must not modify the encrypted library.");
+
             Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path, revision2, trust, "keys", [bob], saved, now, AuthorizationFor("update", "keys", saved, revision2)));
             var saved2 = KeyLibraryVaultStore.Update(path, revision2, trust, "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, revision2));
             if (saved2 == saved || KeyLibraryVaultStore.Load(path, trust, "keys", [alice]).Catalog.Revision != 2 ||
