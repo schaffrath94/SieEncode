@@ -36,10 +36,13 @@ internal sealed class TeamVaultWindow : Window
         identityList.SelectionChanged += (_, _) => UpdateStatus();
         recipientList.SelectionChanged += (_, _) => UpdateStatus();
         ReloadIdentities();
-        foreach (var invitation in store.Load().Recipients)
+        if (!identityOnly)
         {
-            var imported = CertificateVaultService.ImportInvitation(invitation);
-            AddRecipient(imported.Certificate, imported.DisplayName);
+            foreach (var invitation in store.Load().Recipients)
+            {
+                var imported = CertificateVaultService.ImportInvitation(invitation);
+                AddRecipient(imported.Certificate, imported.DisplayName);
+            }
         }
 
         var root = new StackPanel { Margin = new Thickness(22) };
@@ -212,7 +215,9 @@ internal sealed class TeamVaultWindow : Window
                 ? "Ausgewählter Zugang ist in dieser Teamliste enthalten (Änderungen noch speichern)."
                 : "Ausgewählter Zugang fehlt in dieser Teamliste. Bei Bedarf unten zum Team hinzufügen.");
         var own = recipients.Any(row => identities.Any(identity => string.Equals(identity.Fingerprint, row.Fingerprint, StringComparison.OrdinalIgnoreCase)));
-        setupStatus.Text = identityOnly ? "Persönlicher Zugang bereit; die Gruppenrechte werden von der Hauptverwaltung separat vergeben."
+        setupStatus.Text = identityOnly ? (identities.Count == 0
+                ? "Noch kein persönlicher Zugang vorhanden. Nur bei Bedarf einmalig anlegen."
+                : "Persönlicher Zugang vorhanden; die Gruppenrechte vergibt die Hauptverwaltung.")
             : identities.Count == 0 ? "Offen: eigene Windows-Identität anlegen."
             : !own ? $"Offen: eigene Identität zur Teamliste hinzufügen. Aktuell {recipients.Count} Empfänger."
             : recipients.Count < 2 ? "Teamliste mit einem eigenen Zugang vorbereitet. Jetzt speichern; weitere Kollegen sind optional."
