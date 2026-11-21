@@ -160,8 +160,10 @@ public static class ProjectKeyLibraryResolution
                 !used.Add(binding.Slot) || binding.Key is null ||
                 !index.TryGetValue(binding.Key, out var entry))
                 throw new InvalidDataException("Unbekannter, mehrfacher oder fehlender Bibliotheks-Schlüsselplatz.");
+            if (binding.CustomerId == Guid.Empty)
+                throw new InvalidDataException("Explizite Kundenkennung des Schlüsselplatzes darf nicht leer sein.");
             var slotCustomer = binding.CustomerId ?? customerId;
-            if (slotCustomer == Guid.Empty || entry.CustomerId != slotCustomer)
+            if (entry.CustomerId != slotCustomer)
                 throw new CryptographicException("Schlüsselplatz verweist auf einen anderen als den ausdrücklich zugeordneten Kunden.");
             if (!string.Equals(entry.KeyType, expectedType, StringComparison.Ordinal))
                 throw new InvalidDataException("Schlüsseltyp stimmt nicht mit dem kartenseitigen Schlüsselplatz überein.");
