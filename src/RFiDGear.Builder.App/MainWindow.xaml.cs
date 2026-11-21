@@ -2286,8 +2286,11 @@ public partial class MainWindow : Window
             : "Leserkonfiguration fehlt oder ist nicht lesbar: " + (reader.Error ?? "Bitte in RFiDGear auswählen und speichern.");
         var availableCount = rfidgearCapabilities.Capabilities.Count(capability => capability.State == RFiDGearCapabilityState.Available);
         HomeRFiDGearState.Text = $"{version.Version?.ToString() ?? "Version unbekannt"} · {availableCount}/{rfidgearCapabilities.Capabilities.Count}";
-        StationOpenRFiDGearButton.IsEnabled = preparedSession is not null && rfidgearCapabilities.Has(RFiDGearCapabilityId.CustomProjectFile);
-        StationStartAutoModeButton.IsEnabled = preparedSession is not null && rfidgearCapabilities.Has(RFiDGearCapabilityId.ContinuousAutoMode) && reader.IsConfigured;
+        // Refreshing reader settings must never re-enable a second start while
+        // a coding host is active or has not been safely closed.
+        var mayLaunch = preparedSession is not null && hostRun is null && codingLaunch is null;
+        StationOpenRFiDGearButton.IsEnabled = mayLaunch && rfidgearCapabilities.Has(RFiDGearCapabilityId.CustomProjectFile);
+        StationStartAutoModeButton.IsEnabled = mayLaunch && rfidgearCapabilities.Has(RFiDGearCapabilityId.ContinuousAutoMode) && reader.IsConfigured;
         RefreshOperationButtons();
         UpdatePilotOverview();
     }
