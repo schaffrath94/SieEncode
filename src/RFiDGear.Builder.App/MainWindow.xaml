@@ -264,7 +264,8 @@
                 <Border x:Name="EditorGroupProjectSetupPanel" Background="#F1F5F6" BorderBrush="#C7D6D8" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,7,0,8">
                   <StackPanel>
                     <TextBlock Text="Soll das Projekt von mehreren Kollegen genutzt werden?" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                    <TextBlock Text="Dann braucht es einen Gruppen-Vault. Die Hauptverwaltung legt vorher die Gruppe und den getrennten Recovery-Zugang fest. SieEncode überprüft diese Freigaben beim Erstellen. Für rein persönliche Projekte ist dieser Schritt nicht erforderlich." Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,3,0,6"/>
+                    <TextBlock Text="Dann braucht es einen Gruppen-Vault. Die Hauptverwaltung legt vorher die Gruppe und den getrennten Recovery-Zugang fest. SieEncode überprüft diese Freigaben beim Erstellen. Für rein persönliche Projekte ist dieser Schritt nicht erforderlich." Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,3,0,4"/>
+                    <TextBlock x:Name="EditorGroupProjectSetupHint" Text="Erst Profil, Pflichtfelder und Kartenschlüssel vorbereiten." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,5"/>
                     <Button x:Name="EditorCreateGroupProjectButton" Content="Gruppen-Vault für dieses Projekt einrichten" Click="CreateGroupProject_Click" HorizontalAlignment="Left"/>
                   </StackPanel>
                 </Border>
