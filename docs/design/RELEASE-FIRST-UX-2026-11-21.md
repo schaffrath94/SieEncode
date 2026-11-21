@@ -96,7 +96,7 @@ Für ein wirkliches erstes Release müssen folgende Nachweise an genau einem Rel
 
 **Keine automatische Verwaltungsvollmacht, keine automatische Schlüsselgenerierung, keine Kartenaktion und keine Freigabe durch UI-Änderungen.** Die getrennte Windows- und Geräteabnahme, samt unabhängigem Fingerabdruckabgleich und Grenzen des Offline-Entzugs, bleibt verpflichtend.
 
-**Nächste Umsetzung:** Quellstand unter Windows bauen, WPF-Smoketest inklusive neuer UX-Gates ausführen, dann Testkandidat mit Prüfsummen und Installations-/Upgrade-Prüfung erstellen. Erst mit genau diesem Kandidaten kann der Anwender die verkürzte UI-Testfolge wirklich bedienen und die sichtbaren Ergebnisse melden. Kein älterer Kandidat wird stillschweigend als neuer Stand ausgegeben.
+**Abnahme erst am gebündelten Meilenstein:** Vorher weitere zusammenhängende UX-/Vault-/Projektarbeiten umsetzen und Testfälle im Quellcode ergänzen. Danach unter Windows gemeinsam bauen, die gesamte WPF-UI-Runde und Sicherheitsregressionen ausführen und erst für diese gesammelte Version einen Testkandidaten samt Prüfsummen, Installations-/Upgrade- und Datenerhaltungsnachweisen erstellen. Kein älterer Kandidat wird stillschweigend als neuer Stand ausgegeben.
 
 ## UX-02 – Projektbibliothek und Editor: laufendes Implementierungspaket
 
@@ -162,3 +162,9 @@ Die Änderungen sind auf `codex/offline-vault-groups` gespeichert. **Kein Einzel
 **Fachliche Grenzen bleiben:** Es gibt keine automatischen Gruppenfreigaben, kein nachträgliches Fernsperren alter Offline-Vaultkopien, keine automatische Zertifikatserstellung beim Öffnen, keine Umgehung der Recovery-Anforderungen und keine Änderung der tatsächlichen Signatur-/Trust-/Vault-Kryptographie. Jeder produktive Schreib- und Gerätezugriff benötigt weiterhin eigene Nachweise und explizite Freigabe.
 
 **Sammeltest später:** Ersteinrichtung mit null/einer/mehreren Identitäten; exportierte Einladung; zentral signierte Gruppenfreigabe mit zwei getrennten Windows-Benutzern; erneuter Import, Ablehnung unberechtigter Gruppen; Projekt-Vault-Empfängerliste und Recovery, Widerruf und alte Offline-Kopie; WPF-Layout, Fehlerführung, MSI-Upgrade und Datenerhalt. Keine Zwischenkandidaten nur für diese UI-Schritte erzeugen.
+
+### Ergänzung zum Vault-UX-Paket: Einstieg und Statik
+
+- Auf der Startseite verwendet **dieselbe vorhandene Vault-Aktion** bei noch nicht ausgewähltem Projekt den Weg zu `Einstellungen → Mein persönlicher Vault-Zugang`; sobald ein Projekt ausgewählt ist, führt sie unverändert zum Projekteditor. Kein zusätzlicher Startbutton ist nötig.
+- Die Vorgabe `AGENTS.md` wurde auf denselben verbindlichen Rhythmus aktualisiert: mehrere zusammenhängende Quelländerungen, synthetische Prüfungen im Code vorbereiten, **ein gebündelter Windows-/Sicherheits-/MSI-Abnahmelauf** statt wiederholter Kleinsttests.
+- Die Quelltextkontrolle der acht zentralen geänderten C#-Dateien ergab ausgeglichene äußere Klammerstrukturen ohne offensichtliche lexikalische Brüche. Die WPF-XAML-Hierarchie wurde auf ausgeglichene Tags, eindeutige `x:Name`-Werte und vorhandene Status-/Aktions-Elemente kontrolliert. **Nicht mit einem Compilerlauf verwechseln; noch kein Windows-Build oder manueller Dialogtest durchgeführt.**
