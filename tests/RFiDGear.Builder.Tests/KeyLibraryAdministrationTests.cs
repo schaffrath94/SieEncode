@@ -22,6 +22,19 @@ internal static class KeyLibraryAdministrationTests
                 OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey),
                 package.Policy);
             var first = GroupEnrollmentPackages.Validate(package).Checkpoint;
+            var original = new KeyLibraryVaultPayload(new KeyLibrarySnapshot(libraryId, 1, []), []);
+            var signature = administration.SignKeyLibraryMutation(trust,
+                "create", "keys", FileRevision.Missing, original);
+            KeyLibraryMutationAuthorization.Verify(signature, trust, "create",
+                libraryId, "keys", FileRevision.Missing, original, first);
+            Reject<CryptographicException>(() => KeyLibraryMutationAuthorization.Verify(
+                signature, trust, "create", libraryId, "wrong-group",
+                FileRevision.Missing, original, first));
+            Reject<CryptographicException>(() => KeyLibraryMutationAuthorization.Verify(
+                signature, trust, "create", libraryId, "keys", FileRevision.Missing,
+                original with { Catalog = original.Catalog with { Revision = 2 } }, first));
+            if (System.Text.Json.JsonSerializer.Serialize(signature).Contains("HexValue", StringComparison.Ordinal))
+                throw new Exception("Administrative signature leaked secret-value schema.");
             if (administration.RequireLocalAuthority(trust) != first)
                 throw new Exception("Confirmed signing authority did not match local trust.");
 
@@ -30,9 +43,13 @@ internal static class KeyLibraryAdministrationTests
                 new OfflineGroupTrustTests.TestProtection());
             stranger.Create();
             Reject<CryptographicException>(() => stranger.RequireLocalAuthority(trust));
+            Reject<CryptographicException>(() => stranger.SignKeyLibraryMutation(trust,
+                "create", "keys", FileRevision.Missing, original));
 
             var changed = administration.UpdateGroups([], first);
             Reject<CryptographicException>(() => administration.RequireLocalAuthority(trust));
+            Reject<CryptographicException>(() => administration.SignKeyLibraryMutation(trust,
+                "create", "keys", FileRevision.Missing, original));
             trust.AcceptUpdate(changed.Policy);
             if (administration.RequireLocalAuthority(trust) !=
                 GroupEnrollmentPackages.Validate(changed).Checkpoint)
