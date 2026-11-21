@@ -475,19 +475,34 @@ public partial class MainWindow : Window
 
     private void UpdateProjectSelectionInfo(ProjectCatalogEntry entry)
     {
-        ProjectSelectionInfo.Text = settings.ExpertMode
-            ? $"{entry.Name} · {entry.Kind} · {entry.Build} · {entry.BaseProfile}" +
-              (entry.Customers == "–" ? " · ohne Zusatzprofil" : " + " + entry.Customers) +
-              $" · Projektordner: {entry.ProjectDirectory}"
-            : entry.ArtifactOnly
-                ? $"{entry.Name} · nur gebautes Projekt. Beim Bearbeiten wird ein neuer sicherer Entwurf erzeugt."
-                : !entry.HasOperationalBuild
-                    ? $"{entry.Name} · noch kein vollständiger Betriebsbuild. Zum Verwenden Projekt bearbeiten, Vault bereitstellen und bauen."
-                : !entry.HasVault
-                    ? $"{entry.Name} · vorhandener Build ist verwendbar. Ohne Vault ist nur Bearbeiten und Neubauen gesperrt." +
-                      (entry.HasRecognition ? "" : " Die neue Funktion „Transponder erkennen“ fehlt in diesem Altbuild.")
-                : $"{entry.Name} · bereit · Grundprofil {entry.BaseProfile}" +
-                  (entry.Customers == "–" ? " · keine Zusatzprofile" : " · Zusatzprofile: " + entry.Customers);
+        // Tell the operator what the next available action is, rather than making them
+        // infer it from the build, profile and vault columns. Do not claim readiness
+        // unless the same CanOpenStation gate enables the actual handoff button.
+        if (settings.ExpertMode)
+        {
+            ProjectSelectionInfo.Text =
+                $"{entry.Name} · {entry.Kind} · {entry.Build} · {entry.BaseProfile}" +
+                (entry.Customers == "–" ? " · ohne Zusatzprofil" : " + " + entry.Customers) +
+                $" · Projektordner: {entry.ProjectDirectory}" +
+                (entry.CanOpenStation ? " · Kodierstation verfügbar" : " · Kodierstation gesperrt");
+            return;
+        }
+
+        if (entry.CanOpenStation)
+        {
+            ProjectSelectionInfo.Text = $"{entry.Name} · für die Kodierstation verfügbar. Nächster Schritt: „Zur Kodierstation“. " +
+                (entry.HasVault
+                    ? "SieEncode prüft den Karten- und Schlüsselzustand vor einem Kodierlauf erneut."
+                    : "Der vorhandene Build ist verwendbar; ohne ursprünglichen Vault ist ein sicherer Neubau nicht möglich.") +
+                (entry.HasRecognition ? "" : " Dieser Altbuild unterstützt die neue Transponder-Erkennung noch nicht.");
+            return;
+        }
+
+        ProjectSelectionInfo.Text = entry.ArtifactOnly
+            ? $"{entry.Name} · nur gebautes Projekt. Nächster Schritt: „Projekt bearbeiten“ erzeugt einen neuen, zunächst schlüsselfreien Entwurf. Die vorhandenen Artefakte bleiben erhalten."
+            : !entry.HasOperationalBuild
+                ? $"{entry.Name} · noch nicht kodierbereit. Nächster Schritt: „Projekt bearbeiten“, fehlende Daten bzw. Vault klären und das Projekt sicher prüfen und bauen."
+                : $"{entry.Name} · Kodierstation derzeit gesperrt. Nächster Schritt: „Projekt prüfen“ für konkrete Hinweise. Vorhandene Schlüssel und Projekte nicht durch neue Schlüssel ersetzen.";
     }
 
     private void ProjectsGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
