@@ -56,8 +56,8 @@ internal static class CentralKeyLibrarySyncTests
                 before.GroupId != "")
                 throw new Exception("Headless store did not start at an empty authoritative revision.");
             Reject<ConcurrentFileChangeException>(() => center.Register(enrolled, root));
-            if (center.ReadEncryptedSnapshotForAuthorizedTransport() is not null)
-                throw new Exception("Empty central library offered an encrypted snapshot.");
+            Reject<FileNotFoundException>(() => center.ReadEncryptedSnapshot(
+                new SignedKeyLibraryDownload([], []), now));
 
             var encrypted = GroupVaultService.Write(
                 KeyLibraryVault.Protect(catalog, checkedPolicy, "keys", now));
@@ -118,9 +118,17 @@ internal static class CentralKeyLibrarySyncTests
             Reject<ConcurrentFileChangeException>(() => center.Accept(signed));
 
             var persisted = new CentralKeyLibraryStore(centralPath, library);
+            var memberRead = KeyLibraryDownloadAuthorization.Sign(written, member, now);
+            var memberDownload = persisted.ReadEncryptedSnapshot(memberRead, now);
             if (persisted.ReadHead() != written ||
-                !persisted.ReadEncryptedSnapshotForAuthorizedTransport()!.EncryptedVault.SequenceEqual(encrypted))
+                !memberDownload.EncryptedVault.SequenceEqual(encrypted))
                 throw new Exception("Headless central state lost authenticated revision across restart.");
+            Reject<CryptographicException>(() => persisted.ReadEncryptedSnapshot(
+                new SignedKeyLibraryDownload(memberRead.Claim, new byte[384]), now));
+            Reject<CryptographicException>(() => persisted.ReadEncryptedSnapshot(
+                memberRead, now.AddHours(1)));
+            Reject<CryptographicException>(() => persisted.ReadEncryptedSnapshot(
+                KeyLibraryDownloadAuthorization.Sign(written, recovery, now), now));
 
             var second = KeyLibraryEditing.AddCustomer(catalog, "Synthetic customer").Next;
             var encrypted2 = GroupVaultService.Write(
@@ -137,7 +145,9 @@ internal static class CentralKeyLibrarySyncTests
                 throw new Exception("Second central revision did not advance.");
             Reject<ConcurrentFileChangeException>(() => center.Accept(competing));
             Reject<ConcurrentFileChangeException>(() => persisted.Accept(next));
-            var actual = persisted.ReadEncryptedSnapshotForAuthorizedTransport()!;
+            Reject<CryptographicException>(() => persisted.ReadEncryptedSnapshot(memberRead, now));
+            var currentMemberRead = KeyLibraryDownloadAuthorization.Sign(written2, member, now);
+            var actual = persisted.ReadEncryptedSnapshot(currentMemberRead, now);
             var recovered = KeyLibraryVault.Unprotect(
                 GroupVaultService.Read(actual.EncryptedVault), checkedPolicy, "keys", [member]);
             if (recovered.Catalog.Customers.Single().Name != "Synthetic customer" ||
