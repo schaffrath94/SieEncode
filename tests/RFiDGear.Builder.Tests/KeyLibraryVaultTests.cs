@@ -178,10 +178,23 @@ internal static class KeyLibraryVaultTests
             Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision3, trust,
                 "keys", [alice], saved2, now)); // Retired versions cannot be silently resurrected.
 
+            var withCustomer = KeyLibraryEditing.AddCustomer(updatedLibrary, "Synthetic customer").Next;
+            var saved3 = KeyLibraryVaultStore.Update(path, withCustomer, trust, "keys", [alice], saved2, now);
+            if (KeyLibraryVaultStore.Load(path, trust, "keys", [alice]).Catalog.Customers.Length != 1)
+                throw new Exception("Kundenstammdaten wurden nicht im verschlüsselten Bestand persistiert.");
+            Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path,
+                withCustomer with { Catalog = withCustomer.Catalog with
+                    { Revision = withCustomer.Catalog.Revision + 1, Customers = [] } },
+                trust, "keys", [alice], saved3, now)); // Existing customer IDs may not disappear.
+            Reject<ConcurrentFileChangeException>(() => KeyLibraryVaultStore.Update(path,
+                withCustomer, trust, "keys", [alice], saved2, now));
+
             // Signed policy changes require an explicit recipient reconciliation.
             trust.AcceptUpdate(OfflineGroupPolicyService.Sign(policy with { Revision = 2 }, administrator));
-            Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path, revision3, trust,
-                "keys", [alice], saved2, now));
+            Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path,
+                withCustomer with { Catalog = withCustomer.Catalog with
+                    { Revision = withCustomer.Catalog.Revision + 1 } },
+                trust, "keys", [alice], saved3, now));
             if (KeyLibraryVaultStore.Load(path, trust, "keys", [alice]).Secrets.Length != 3)
                 throw new Exception("Existing authorized encrypted library unexpectedly became unreadable.");
         }
