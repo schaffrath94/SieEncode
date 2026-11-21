@@ -2011,7 +2011,15 @@ public partial class MainWindow : Window
         if (e.Key == Key.F8 && StationCheckReadbacksButton.IsEnabled) { e.Handled = true; CheckReadbacks_Click(sender, e); }
         else if (e.Key == Key.F9 && StationMarkFailedButton.IsEnabled) { e.Handled = true; MarkStationFailed_Click(sender, e); }
         else if (e.Key == Key.D && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && StationDiagnosticButton.IsEnabled) { e.Handled = true; ExportDiagnostic_Click(sender, e); }
-        else if (e.Key == Key.Enter && StationPrepareButton.IsEnabled && preparedSession is null) { e.Handled = true; PrepareSession_Click(sender, e); }
+        else if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None &&
+            StationPrepareButton.IsEnabled && preparedSession is null &&
+            Keyboard.FocusedElement is TextBox focusedField && StationFieldsControl.IsAncestorOf(focusedField))
+        {
+            // Enter is a convenience shortcut only while editing an actual card-data field.
+            // It must not hijack Enter on reader checks, project selection or other buttons.
+            e.Handled = true;
+            PrepareSession_Click(sender, e);
+        }
     }
 
     private void OpenProjectFolder_Click(object sender, RoutedEventArgs e)
