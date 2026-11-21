@@ -95,6 +95,33 @@ public static class KeyLibraryVault
 }
 
 /// <summary>
+/// Explicit exact-version resolver for the existing project's KeyReference type.
+/// The caller must already have legitimately unlocked the offline library Vault.
+/// No implicit "latest" behavior; no cross-customer reuse and no status bypass.
+/// </summary>
+public static class KeyLibraryKeyResolver
+{
+    public static KeyReference ResolveActive(KeyLibraryVaultPayload library, Guid customerId,
+        KeyLibraryAddress address, string requiredKeyType)
+    {
+        KeyLibraryVault.Validate(library);
+        if (customerId == Guid.Empty || address is null ||
+            string.IsNullOrWhiteSpace(requiredKeyType))
+            throw new InvalidDataException("Kunde, stabile Schlüsselversion und erwarteter Typ sind erforderlich.");
+
+        KeyLibraryContracts.ValidateForNewOperation(library.Catalog,
+            [new ProjectKeyLibraryBinding("resolved-key", address)]);
+        var metadata = KeyLibraryContracts.Validate(library.Catalog)[address];
+        if (metadata.CustomerId != customerId)
+            throw new CryptographicException("Schlüsselversion gehört zu einem anderen Kunden.");
+        if (!string.Equals(metadata.KeyType, requiredKeyType, StringComparison.Ordinal))
+            throw new InvalidDataException("Schlüsseltyp passt nicht zum vorgesehenen Kartenvorgang.");
+        var secret = library.Secrets.Single(item => item.Key == address);
+        return new KeyReference { Type = metadata.KeyType, Value = secret.HexValue };
+    }
+}
+
+/// <summary>
 /// Safe local encrypted snapshot storage. The central service and sync protocol
 /// will be attached later; this intentionally provides no untrusted key export.
 /// </summary>
