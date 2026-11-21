@@ -1116,8 +1116,11 @@ public partial class MainWindow : Window
             lastCardRecognitionReport = null;
             lastTestReportPath = null;
             TestOpenRecognitionResultButton.IsEnabled = false;
+            TestOpenRecognitionResultButton.Visibility = Visibility.Collapsed;
             TestOpenInventoryPdfButton.IsEnabled = false;
             TestExportInventoryComparisonButton.IsEnabled = false;
+            TestDeepAnalyzeButton.IsEnabled = false;
+            TestDeepAnalyzeButton.Visibility = Visibility.Collapsed;
             TestAnalysisTree.Items.Clear();
             TestAnalysisTree.Items.Add(new TreeViewItem { Header = "Analyse läuft · noch kein gültiger Kartenbefund" });
             SetTestInspectionPresentation("LESEVORGANG LÄUFT",
