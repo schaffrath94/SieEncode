@@ -183,6 +183,8 @@ public static class KeyLibraryVaultStore
                 !newValues.TryGetValue(address, out var value) ||
                 !oldValues.TryGetValue(address, out var oldValue))
                 throw new InvalidDataException("Bestehende Schlüsselversionen dürfen beim Abgleich nicht gelöscht werden.");
+            if (current.CustomerId != old.CustomerId || current.KeyType != old.KeyType)
+                throw new InvalidDataException("Kunde und Schlüsseltyp einer vorhandenen Schlüssel-ID dürfen nicht verändert werden.");
             if (!string.Equals(oldValue, value, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("Ein vorhandener Schlüsselwert darf nicht unter derselben Version überschrieben werden.");
             if (old.Status == KeyLibraryContracts.Compromised && current.Status != KeyLibraryContracts.Compromised ||
