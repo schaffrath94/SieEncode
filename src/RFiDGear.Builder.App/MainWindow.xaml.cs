@@ -692,7 +692,12 @@ public partial class MainWindow : Window
         var autorun = executable && rfidgearCapabilities?.Has(RFiDGearCapabilityId.AutorunOnce) == true;
         var editable = selectedProject is { ArtifactOnly: false };
         var running = operationStartInProgress || operationSession is { Operation.Autorun: true } && !operationFinalized;
-        var operationAvailable = !running && preparedSession is null;
+        var trackedProcessRunning = CurrentTrackedLaunch() is not null;
+        var operationAvailable = !running && !trackedProcessRunning &&
+            preparedSession is null && hostRun is null && codingLaunch is null;
+        // An unfinished or still-running host must never invite a fresh dataset.
+        StationPrepareButton.IsEnabled = sessionDefinition is not null && selectedProject is not null && operationAvailable;
+        StationMarkFailedButton.IsEnabled = preparedSession is not null && !trackedProcessRunning;
         var extension = IsSelectedExtensionProject();
         var productiveExpectationAvailable = selectedProject is not null &&
             File.Exists(Path.Combine(selectedProject.ProjectDirectory, "card_preflight", "expected-card.json"));
@@ -1469,6 +1474,7 @@ public partial class MainWindow : Window
             if (preparedSession is not null) throw new InvalidOperationException("Der vorbereitete Datensatz ist noch nicht abgeschlossen. Payloads dürfen bis zur Readback-Prüfung nicht ersetzt werden.");
             if (sessionDefinition is null) throw new InvalidOperationException("Kein Kodierprojekt geladen.");
             if (preparedSession is not null) throw new InvalidOperationException("Ein Datensatz ist bereits bereitgestellt. Zuerst F8 prüfen oder F9 als Fehler markieren.");
+            RequireNoRunningRFiDGear("Neue Kartendaten dürfen nicht vorbereitet werden, solange ein von SieEncode gestarteter Kartenprozess läuft.");
             ApplySeriesInput();
             var preflight = RunSelectedPreflight();
             if (preflight.Status != "OK") throw new InvalidOperationException("Sitzung wird nicht vorbereitet.\n\n" + DescribePreflightFailure(preflight));
@@ -1887,8 +1893,18 @@ public partial class MainWindow : Window
         try
         {
             if (preparedSession is null) throw new InvalidOperationException("Kein laufender Datensatz vorhanden.");
+            if (CurrentTrackedLaunch() is not null)
+                throw new InvalidOperationException("RFiDGear verarbeitet möglicherweise noch diese Karte. F9 darf den Datensatz nicht vorzeitig freigeben. Karte liegen lassen, den Laufstatus prüfen und erst nach beendetem Prozess ausdrücklich als Fehler abschließen.");
+            var completedLaunch = codingLaunch;
             var signal = new RFiDGearDiagnosticSignal(true, true, "Bediener", "sicher", "Vom Bediener als fehlgeschlagen markiert.", null, "Operator", "");
             CompleteSeriesRecord(new CodingRunEvaluation(CodingRunState.Failed, "Kodierlauf wurde vom Bediener als fehlgeschlagen markiert.", "RFiDGear-Lauf / unbekannt", signal, null));
+            // The host contract has been finalized as failed. If its process already exited,
+            // clear only the stale handle; do not terminate or reopen any process.
+            if (completedLaunch is not null)
+            {
+                ClearCompletedLaunch(completedLaunch);
+                RefreshOperationButtons();
+            }
         }
         catch (Exception exception) { ShowError(exception); }
     }
