@@ -203,6 +203,11 @@ public static class KeyLibraryVaultStore
         var currentEntries = KeyLibraryContracts.Validate(next.Catalog);
         var newValues = next.Secrets.ToDictionary(item => item.Key, item => item.HexValue);
         var oldValues = previous.Secrets.ToDictionary(item => item.Key, item => item.HexValue);
+        var customers = next.Catalog.Customers.ToDictionary(item => item.CustomerId);
+        foreach (var oldCustomer in previous.Catalog.Customers)
+            if (!customers.ContainsKey(oldCustomer.CustomerId))
+                throw new InvalidDataException("Bestehende Kunden-IDs dürfen nicht aus der Bibliothek gelöscht werden.");
+
         foreach (var old in previous.Catalog.Keys)
         {
             var address = new KeyLibraryAddress(old.KeyId, old.Version);
