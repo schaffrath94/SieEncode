@@ -64,8 +64,9 @@ Vollständiger lokaler Offline-Bestand (geschützte Geheimwerte + Metadaten)
 
 
 
-### Phase 3 – Projektreferenz und eindeutiger Resolver
+### Phase 3 – Projektreferenz und eindeutiger Resolver (erster Auflösungsbaustein vorhanden)
 
+- **Quellcode vorhanden, noch nicht getestet:** `KeyLibraryKeyResolver.ResolveActive` nimmt einen **bereits berechtigt entschlüsselten** Bibliotheksstand und gibt einen einzelnen Schlüssel **nur** bei korrektem Kunden, exakt vorhandener `KeyId + Version`, aktivem Status und erwartetem Kartenschlüsseltyp als **bestehendes** `KeyReference`-Objekt zurück. Damit benötigt der spätere Projekt-Build keine neue Runtime- oder RFiDGear-Schnittstelle. Negativtests auf falschen Kunden, alten Status, fehlende Version und Typfehler sind in `KeyLibraryVaultTests` vorbereitet. **Noch kein Aufruf aus dem Projekteditor, keine vollständige Slotbelegung und keine Kunden-/Profilbindung im Projektformat**.
 - Projektdefinition bekommt *optional* geprüfte, **geheimwertfreie** Slot-`KeyId + Version`-Bindungen.
 - Da noch **kein SieEncode-Release existiert**, dürfen wir das interne Projekt-/Vault-Schema für 1.0 konsolidieren. Während der laufenden Entwicklung können vorhandene Test-Drafts weiterhin geöffnet werden, soweit nützlich, aber **keine** zusätzliche veröffentlichte Altformat-Schnittstelle oder kundenbezogene Migration aufbauen. Die Umstellung erfolgt an einer einzigen geprüften Stelle; kein dauerhaftes Nebeneinander zweier unabhängiger Geheimwertspeicher.
 - Für kataloggebundene Projekte **keinen** kompletten Projekt-Vault mit identischen Geheimwerten dauerhaft parallel pflegen. Fachlich führt nur die Bibliothek. In einem streng kontrollierten temporären Build-Schritt werden genau die gebundenen Werte aufgelöst und in den **vorhandenen** `ProjectKeyVaultPayload` projiziert. Dann `ProjectKeyVault.Apply` und die vorhandene Kodier-/Bauprüfung aufrufen.
