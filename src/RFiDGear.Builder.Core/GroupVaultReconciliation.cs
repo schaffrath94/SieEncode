@@ -44,11 +44,12 @@ public static class GroupVaultReconciliation
     }
 
     public static GroupVaultReconciliationResult Apply(GroupVaultReconciliationPlan plan, OfflineGroupTrustStore trust,
-        IEnumerable<X509Certificate2> identities, DateTimeOffset now)
-        => ApplyPayload(plan, trust, identities, now, null);
+        IEnumerable<X509Certificate2> identities, DateTimeOffset now, string? privateBackupRoot = null)
+        => ApplyPayload(plan, trust, identities, now, null, privateBackupRoot);
 
     public static GroupVaultReconciliationResult ApplyPayload(GroupVaultReconciliationPlan plan, OfflineGroupTrustStore trust,
-        IEnumerable<X509Certificate2> identities, DateTimeOffset now, string? replacementPayloadJson)
+        IEnumerable<X509Certificate2> identities, DateTimeOffset now, string? replacementPayloadJson,
+        string? privateBackupRoot = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
         if (ConcurrentFileWriter.Capture(plan.Path) != plan.VaultRevision) throw new ConcurrentFileChangeException(plan.Path);
@@ -58,7 +59,12 @@ public static class GroupVaultReconciliation
         var payload = GroupVaultService.Unprotect(old, current, plan.ProjectId, plan.GroupId, identities, plan.Recovery);
         var next = GroupVaultService.Protect(replacementPayloadJson ?? payload, current, plan.ProjectId, plan.GroupId, now);
         var bytes = GroupVaultService.Write(next);
-        var backup = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(plan.Path)!, "GroupVaultBackups", plan.VaultRevision.Sha256 + ".group-vault.json");
+        // A previous Vault remains decryptable with its previous private recipients.
+        // Never create that historical snapshot in the shared project tree.
+        // Use the current Windows user's local profile by default. Administrators
+        // must independently protect/retain this recovery history; local storage is
+        // NOT a substitute for card-key rotation or a revocation guarantee.
+        var backup = ResolvePrivateBackupPath(plan, current.Policy.LibraryId, privateBackupRoot);
         var revision = ConcurrentFileWriter.Write(plan.Path, plan.VaultRevision, temporary =>
         {
             if (trust.LoadOffline().Checkpoint != plan.PolicyCheckpoint) throw new CryptographicException("Gruppenstand während der Rotation geändert. Bitte neu prüfen.");
@@ -70,8 +76,30 @@ public static class GroupVaultReconciliation
         return new(revision, next.Header.KeyGeneration, backup, current.Checkpoint);
     }
 
+    private static string ResolvePrivateBackupPath(GroupVaultReconciliationPlan plan, Guid libraryId, string? privateBackupRoot)
+    {
+        var userLocalDirectory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (string.IsNullOrWhiteSpace(privateBackupRoot) && string.IsNullOrWhiteSpace(userLocalDirectory))
+            throw new InvalidOperationException("Lokaler privater Sicherungsordner ist nicht ermittelbar. Vault-Abgleich gesperrt.");
+
+        var root = Path.GetFullPath(privateBackupRoot ??
+            Path.Combine(userLocalDirectory, "SieEncode-Private-Vault-History"));
+        var projectFolder = Path.GetFullPath(Path.GetDirectoryName(plan.Path)!);
+        var projectPrefix = projectFolder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        if (root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .Equals(projectFolder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase) ||
+            root.StartsWith(projectPrefix, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Historische Gruppen-Vaults dürfen niemals im gemeinsam genutzten Projektordner gespeichert werden. Geschützten lokalen Sicherungsort außerhalb des Projektordners verwenden.");
+
+        return Path.Combine(root, libraryId.ToString("N"), plan.ProjectId.ToString("N"),
+            plan.VaultRevision.Sha256 + ".group-vault.json");
+    }
+
     private static void PreserveBackup(string path, GroupVaultReconciliationPlan plan)
     {
+        // The destination is validated before writing to the shared project Vault.
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         if (File.Exists(path))
         {
             if (ConcurrentFileWriter.Capture(path) != plan.VaultRevision) throw new CryptographicException("Vorhandene verschlüsselte Vault-Sicherung hat einen abweichenden Inhalt.");
