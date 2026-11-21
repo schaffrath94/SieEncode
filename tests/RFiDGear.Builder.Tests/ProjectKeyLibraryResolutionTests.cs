@@ -76,6 +76,16 @@ internal static class ProjectKeyLibraryResolutionTests
             bound.Transport.ApplicationKeys.Values.Any(x => !string.IsNullOrEmpty(x)) ||
             bound.Productive.ApplicationKeys.Values.SelectMany(x => x).Any(x => !string.IsNullOrEmpty(x)))
             throw new Exception("Project library binding must preserve only key-free references.");
+        var synchronizedBound = ProjectDraftFactory.Synchronize(
+            JsonSerializer.Deserialize<ProjectDefinition>(JsonSerializer.Serialize(bound, ProjectJson.Options), ProjectJson.Options)!, profiles);
+        if (synchronizedBound.Transport.ApplicationKeys.Values.Any(value => !string.IsNullOrEmpty(value)))
+            throw new Exception("Synchronizing a catalog-bound project injected raw fallback transport keys.");
+        var unresolved = ProjectContractValidator.Validate(synchronizedBound, profiles, requireProductiveSecrets: true);
+        if (!unresolved.Any(issue => issue.Code == "KEY_LIBRARY_UNRESOLVED"))
+            throw new Exception("A catalog-bound project was accepted as an already resolved build input.");
+        if (ProjectContractValidator.Validate(synchronizedBound, profiles, requireProductiveSecrets: false)
+            .Any(issue => issue.Code.StartsWith("TRANSPORT_", StringComparison.Ordinal)))
+            throw new Exception("A key-free catalog-bound project was rejected as missing raw transport keys.");
         if (project.Project.KeyLibrary is not null || project.Transport.PiccKey.Value != new string('B', 32))
             throw new Exception("Binding unexpectedly changed the source project draft.");
 
@@ -104,6 +114,10 @@ internal static class ProjectKeyLibraryResolutionTests
             throw new Exception("Exact library references did not survive project JSON.");
 
         var hydrated = ProjectKeyLibraryResolution.ResolveForBuild(reloaded, profiles, vault);
+        if (!hydrated.TransientKeyLibraryResolution || hydrated.Project.KeyLibrary is not null)
+            throw new Exception("Resolved plaintext project was not marked transient.");
+        Reject<InvalidDataException>(() => ProjectJson.Save(projectFile, hydrated));
+        Reject<InvalidDataException>(() => ProjectJson.Save(projectFile, hydrated, FileRevision.Missing));
         if (hydrated.Transport.PiccKey.Value != secrets[0].HexValue ||
             hydrated.Productive.PiccKey.Value != secrets[1].HexValue ||
             hydrated.Productive.ApplicationKeys["A1B2C3"][1] !=
@@ -112,6 +126,9 @@ internal static class ProjectKeyLibraryResolutionTests
 
         var payload = ProjectKeyLibraryResolution.ResolveTransientPayload(reloaded, profiles, vault);
         var rebuilt = ProjectKeyVault.Apply(reloaded, payload);
+        if (!rebuilt.TransientKeyLibraryResolution || rebuilt.Project.KeyLibrary is not null)
+            throw new Exception("The existing Vault adapter produced an unmarked plaintext catalog project.");
+        Reject<InvalidDataException>(() => ProjectJson.Save(projectFile, rebuilt));
         if (rebuilt.Productive.PiccKey.Value != hydrated.Productive.PiccKey.Value ||
             rebuilt.Transport.ApplicationKeys["DF_KEY_3K3DES"] != hydrated.Transport.ApplicationKeys["DF_KEY_3K3DES"] ||
             rebuilt.Productive.ApplicationKeys["D4E5F6"][0] != hydrated.Productive.ApplicationKeys["D4E5F6"][0])
