@@ -131,6 +131,16 @@ internal static class ProjectKeyLibraryResolutionTests
             throw new Exception("The correct key version was not mapped to existing project fields.");
 
         var payload = ProjectKeyLibraryResolution.ResolveTransientPayload(reloaded, profiles, vault);
+        if (!payload.TemporaryLibraryPayload)
+            throw new Exception("The adapter lost its non-persistable library payload marker.");
+        var forbiddenVaultFile = Path.Combine(Path.GetTempPath(), "SieEncode-forbidden-vault-" + Guid.NewGuid().ToString("N"));
+        Reject<InvalidOperationException>(() => ProjectKeyVault.Save(forbiddenVaultFile, payload, "synthetic-strong-test-passphrase"));
+        Reject<InvalidOperationException>(() => ProjectKeyVault.Save(forbiddenVaultFile, payload,
+            "synthetic-strong-test-passphrase", FileRevision.Missing));
+        Reject<InvalidOperationException>(() => ProjectKeyVault.SaveForRecipients(forbiddenVaultFile, payload,
+            "synthetic-strong-test-passphrase", [], FileRevision.Missing));
+        if (File.Exists(forbiddenVaultFile))
+            throw new Exception("A transient catalog payload created a second persisted key store.");
         var rebuilt = ProjectKeyVault.Apply(reloaded, payload);
         if (!rebuilt.TransientKeyLibraryResolution || rebuilt.Project.KeyLibrary is not null)
             throw new Exception("The existing Vault adapter produced an unmarked plaintext catalog project.");
