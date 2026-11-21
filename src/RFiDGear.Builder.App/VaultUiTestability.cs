@@ -74,6 +74,33 @@ public partial class MainWindow
                     throw new InvalidOperationException("Mehrfachidentität verändert die alte Teamliste.");
             }
             finally { multiple.Close(); }
+            // The older per-project certificate Vault must follow the same
+            // unambiguous fingerprint selection rule; merely loading recipients
+            // cannot choose a private key for the operator.
+            var projectRecipients = new VaultAccessWindow(this,
+                teamRecipients: [invitation], identityProvider: DuplicateNames);
+            try
+            {
+                var elements = DescendantsAndSelf(projectRecipients).ToArray();
+                var identityChoice = elements.OfType<ComboBox>().Single();
+                var addOwn = elements.OfType<Button>().Single(button => Equals(button.Content, "Zur Empfängerliste hinzufügen"));
+                var exportOwn = elements.OfType<Button>().Single(button => Equals(button.Content, "Eigene Einladung exportieren"));
+                var createOwn = elements.OfType<Button>().Single(button => Equals(button.Content, "Neue Identität"));
+                if (identityChoice.SelectedItem is not null || addOwn.IsEnabled || exportOwn.IsEnabled || createOwn.IsEnabled)
+                    throw new InvalidOperationException("Projekt-Vault wählt einen von mehreren privaten Zertifikatsschlüsseln automatisch aus.");
+                identityChoice.SelectedIndex = 1;
+                var selectedFingerprint = ((WindowsVaultIdentity)identityChoice.SelectedItem).Fingerprint;
+                projectRecipients.ReloadIdentities();
+                if (identityChoice.SelectedItem is not WindowsVaultIdentity selectedAgain ||
+                    !string.Equals(selectedFingerprint, selectedAgain.Fingerprint, StringComparison.OrdinalIgnoreCase) ||
+                    !addOwn.IsEnabled || !exportOwn.IsEnabled || createOwn.IsEnabled)
+                    throw new InvalidOperationException("Projekt-Vault verliert bewusste Schlüsselwahl beim erneuten Laden.");
+                if (!File.ReadAllBytes(store.Path).SequenceEqual(original))
+                    throw new InvalidOperationException("Bloßes Öffnen des Projekt-Vaults hat die alte Teamliste verändert.");
+            }
+            finally { projectRecipients.Close(); }
+            checks.Add("Projekt-Vault: mehrere gleichnamige Identitäten bleiben ohne automatische Schlüsselauswahl; ausdrückliche Fingerabdruckwahl über Reload stabil, keine neue Identität und kein stilles Schreiben.");
+
             var absent = DescribePersonalVaultSetup(0);
             var existing = DescribePersonalVaultSetup(1);
             var ambiguous = DescribePersonalVaultSetup(2);
