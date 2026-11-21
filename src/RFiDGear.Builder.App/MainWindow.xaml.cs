@@ -1488,7 +1488,9 @@ public partial class MainWindow : Window
             StationOpenRFiDGearButton.IsEnabled = executableAvailable && keyChangeSafety.Allowed;
             var autoModeAvailable = executableAvailable && keyChangeSafety.Allowed && capabilities!.Has(RFiDGearCapabilityId.ContinuousAutoMode);
             StationStartAutoModeButton.IsEnabled = autoModeAvailable && reader.IsConfigured;
-            StationCheckReadbacksButton.IsEnabled = true;
+            // Preparing a payload is not a run. A readback check before launch can only
+            // produce a misleading waiting/failure signal and is not an operator step.
+            StationCheckReadbacksButton.IsEnabled = false;
             StationMarkFailedButton.IsEnabled = true;
             StationRetryButton.IsEnabled = false;
             StationState.Text = "SITZUNG BEREIT";
@@ -1672,6 +1674,9 @@ public partial class MainWindow : Window
             hostRun = pendingHostRun;
             codingTerminalPendingSince = null;
             _ = hostContractService.MarkRunning(hostRun, result);
+            // Once a real host run exists, F8 is available as an explicit refresh.
+            // Success still requires the terminal, correlated final readbacks.
+            StationCheckReadbacksButton.IsEnabled = true;
             operationTimer.Start();
             StationState.Text = autoMode ? "SERIENMODUS AKTIV" : "RFiDGear GEÖFFNET";
             StationStateDetail.Text = autoMode
