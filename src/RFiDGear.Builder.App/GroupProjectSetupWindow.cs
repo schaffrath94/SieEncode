@@ -26,7 +26,7 @@ internal sealed class GroupProjectSetupWindow : Window
         Func<Guid, string, GroupPolicyCheckpoint, string, string?, GroupProjectCreationResult> create)
     {
         Owner = owner; directory = localDirectory; this.create = create;
-        Title = migration ? "Vorhandenen Vault als Gruppenprojekt kopieren" : "Neues Gruppenprojekt erstellen";
+        Title = migration ? "Neues Gruppenprojekt aus gespeichertem Entwurf" : "Neues Gruppenprojekt erstellen";
         Width = 760; SizeToContent = SizeToContent.Height; MaxHeight = 800; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(Note(migration
@@ -48,13 +48,13 @@ internal sealed class GroupProjectSetupWindow : Window
         confirmed.Content = new TextBlock
         {
             Text = migration
-                ? "Eine neue Kopie mit eigener Projekt-ID und Gruppenfreigabe erstellen. Originalprojekt, alter Vault und vorhandene Sicherungen unverändert erhalten."
+                ? "Aus dem gespeicherten Entwicklungsentwurf eine unabhängige neue Projektkopie mit eigener ID und Gruppenfreigabe erstellen. Ursprungsentwurf und seine Sicherungen bleiben unverändert."
                 : "Das neue Gruppenprojekt mit eigener Projekt-ID und dem ausgewählten Gruppen-Vault ausdrücklich anlegen. Noch keine Karte kodieren.",
             TextWrapping = TextWrapping.Wrap
         };
         if (migration)
         {
-            root.Children.Add(Note("Passphrase des alten Vaults, falls benötigt. Bei persönlicher Zertifikatsfreigabe leer lassen. Verwendet wird der gespeicherte Originalstand; ungespeicherte Änderungen vorher speichern oder verwerfen."));
+            root.Children.Add(Note("Passphrase des gespeicherten persönlichen Projekt-Vaults, falls benötigt. Bei Windows-Zertifikatsfreigabe leer lassen. Der Entwurf muss zuvor vollständig gespeichert worden sein."));
             root.Children.Add(legacyPassphrase);
         }
         root.Children.Add(confirmed);
