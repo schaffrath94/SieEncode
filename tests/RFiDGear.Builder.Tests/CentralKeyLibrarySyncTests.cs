@@ -71,8 +71,10 @@ internal static class CentralKeyLibrarySyncTests
             if (KeyLibrarySyncTransport.Verify(signed, enrolled) != claim)
                 throw new Exception("Canonical encrypted transport signature does not round-trip.");
 
-            var changed = signed.EncryptedVault.ToArray();
-            changed[^1] ^= 0x01;
+            var tamperedDocument = GroupVaultService.Read(encrypted);
+            var tamperedPayload = tamperedDocument.Ciphertext.ToArray();
+            tamperedPayload[0] ^= 0x01;
+            var changed = GroupVaultService.Write(tamperedDocument with { Ciphertext = tamperedPayload });
             Reject<CryptographicException>(() =>
                 KeyLibrarySyncTransport.Verify(signed with { EncryptedVault = changed }, enrolled));
             var changedSignature = signed.Signature.ToArray();
