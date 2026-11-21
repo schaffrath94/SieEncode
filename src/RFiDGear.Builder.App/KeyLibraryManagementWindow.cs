@@ -207,7 +207,10 @@ internal sealed class KeyLibraryManagementWindow : Window
             "Einen leeren, verschlüsselten lokalen Schlüsselbestand anlegen? Dies ist noch keine zentral synchronisierte Bibliothek. Gruppenmitglieder und ein getrennter Recovery-Zugang müssen signiert freigegeben sein.",
             Title, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
         var empty = new KeyLibraryVaultPayload(new KeyLibrarySnapshot(libraryId, 1, []), []);
-        WithIdentities(ids => KeyLibraryVaultStore.Create(path, empty, trust, group.Id, ids, DateTimeOffset.UtcNow));
+        var authorization = administration.SignKeyLibraryMutation(trust, "create",
+            group.Id, FileRevision.Missing, empty);
+        WithIdentities(ids => KeyLibraryVaultStore.Create(path, empty, trust,
+            group.Id, ids, DateTimeOffset.UtcNow, authorization));
         Refresh();
     }
 
@@ -222,8 +225,10 @@ internal sealed class KeyLibraryManagementWindow : Window
         {
             var original = KeyLibraryVaultStore.Load(path, trust, group.Id, ids);
             var next = edit(original);
-            RequireAuthority();
-            KeyLibraryVaultStore.Update(path, next, trust, group.Id, ids, expected, DateTimeOffset.UtcNow);
+            var authorization = administration.SignKeyLibraryMutation(trust,
+                "update", group.Id, expected, next);
+            KeyLibraryVaultStore.Update(path, next, trust, group.Id, ids,
+                expected, DateTimeOffset.UtcNow, authorization);
             var verified = KeyLibraryVaultStore.Load(path, trust, group.Id, ids);
             if (verified.Catalog.Revision != next.Catalog.Revision)
                 throw new InvalidDataException("Gespeicherte Bibliotheksrevision stimmt nicht mit der Änderung überein.");
