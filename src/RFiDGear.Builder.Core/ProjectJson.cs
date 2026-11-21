@@ -15,14 +15,17 @@ public static class ProjectJson
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         using var stream = File.OpenRead(path);
-        return JsonSerializer.Deserialize<ProjectDefinition>(stream, Options)
+        var project = JsonSerializer.Deserialize<ProjectDefinition>(stream, Options)
             ?? throw new InvalidDataException($"Projektdefinition ist leer: {path}");
+        ProjectKeyLibraryResolution.EnsureSafeStoredProject(project);
+        return project;
     }
 
     public static void Save(string path, ProjectDefinition definition)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ArgumentNullException.ThrowIfNull(definition);
+        ProjectKeyLibraryResolution.EnsureSafeStoredProject(definition);
         var fullPath = Path.GetFullPath(path);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
         var temporaryPath = fullPath + ".tmp-" + Guid.NewGuid().ToString("N");
@@ -45,6 +48,7 @@ public static class ProjectJson
     public static FileRevision Save(string path, ProjectDefinition definition, FileRevision expected)
     {
         ArgumentNullException.ThrowIfNull(definition);
+        ProjectKeyLibraryResolution.EnsureSafeStoredProject(definition);
         return ConcurrentFileWriter.Write(path, expected, temporary =>
         {
             using var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None);
