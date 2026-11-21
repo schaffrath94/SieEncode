@@ -2241,54 +2241,76 @@ public partial class MainWindow : Window
         catch (Exception exception) { ShowError(exception); }
     }
 
+    // Display the *personal certificate* separately from legacy team templates and
+    // offline group permissions. Neither a local key nor a trust file grants access
+    // to a particular project. No team list is opened during this status check.
+    private static (string Title, string Detail) DescribePersonalVaultSetup(int count)
+        => count switch
+        {
+            0 => ("Persönlicher Zugang fehlt",
+                "Auf diesem Windows-Benutzer ist noch kein persönlicher SieEncode-Zugang eingerichtet. Diesen einmalig anlegen; es wird kein Team-Vault verändert."),
+            1 => ("Persönlicher Zugang vorhanden",
+                "Ein persönlicher Zugang wurde auf diesem Windows-Benutzer gefunden. Für weitere Projekte und Tests weiterverwenden. Gruppen- oder Projektberechtigungen sind dadurch noch nicht bestätigt."),
+            _ => ("Mehrere persönliche Zugänge vorhanden",
+                "Auf diesem Windows-Benutzer liegen mehrere Identitäten. Beim Öffnen bewusst die passende anhand des Fingerabdrucks auswählen. Keinen zusätzlichen Schlüssel nur zum Testen erzeugen. Die Zuordnung zu einem Projekt muss gesondert geprüft werden.")
+        };
+
     private void UpdateVaultSetupStatus()
     {
         try
         {
-            var directory = string.IsNullOrWhiteSpace(ProjectsDirectoryText.Text) ? projectsDirectory : Path.GetFullPath(ProjectsDirectoryText.Text.Trim());
-            var team = new TeamVaultRecipientStore(directory).Load().Recipients;
             var identities = WindowsVaultIdentityService.List();
             try
             {
-                var localFingerprints = identities.Select(identity => identity.Fingerprint).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                var ownRegistered = team.Any(recipient => localFingerprints.Contains(recipient.Fingerprint));
-                if (identities.Count == 0)
-                {
-                    VaultSetupStatusTitle.Text = "Persönliche Identität fehlt";
-                    VaultSetupStatusText.Text = "Auf diesem Windows-Benutzerkonto fehlt die persönliche Vault-Identität. Starten Sie die Ersteinrichtung; ein Projekt muss dafür nicht geöffnet sein.";
-                    VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.MistyRose;
-                    VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.IndianRed;
-                }
-                else if (!ownRegistered)
-                {
-                    VaultSetupStatusTitle.Text = "Bisherige Teamliste: eigener Zugang nicht enthalten";
-                    VaultSetupStatusText.Text = $"{identities.Count} lokale Identität(en), {team.Count} Teammitglied(er). Nur für bisherige Team-Vaults die eigene Identität zur Teamliste hinzufügen. Diese Anzeige bewertet keine Gruppenrechte.";
-                    VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.LemonChiffon;
-                    VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.DarkGoldenrod;
-                }
-                else if (team.Count < 2)
-                {
-                    VaultSetupStatusTitle.Text = "Bisherige Teamliste: Einzelzugriff eingerichtet";
-                    VaultSetupStatusText.Text = "Die eigene Identität ist in der bisherigen Teamliste enthalten. Für weitere Empfänger bisheriger Team-Vaults deren öffentliche Einladungen importieren. Gruppenrechte werden separat verwaltet.";
-                    VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.LemonChiffon;
-                    VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.DarkGoldenrod;
-                }
-                else
-                {
-                    VaultSetupStatusTitle.Text = "Bisherige Teamliste: Vorlage eingerichtet";
-                    VaultSetupStatusText.Text = $"Eigener Zugang enthalten; {team.Count} Empfänger für neue bisherige Team-Vaults. Bestehende Vaults separat freigeben. Gruppenrechte werden separat verwaltet. Zugriff auf dem zweiten Rechner noch praktisch prüfen.";
-                    VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.Honeydew;
-                    VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.SeaGreen;
-                }
+                var count = identities.Count;
+                var state = DescribePersonalVaultSetup(count);
+                VaultSetupStatusTitle.Text = state.Title;
+                VaultSetupStatusText.Text = state.Detail;
+                VaultSetupStatusBorder.Background = count == 0
+                    ? System.Windows.Media.Brushes.LemonChiffon
+                    : System.Windows.Media.Brushes.Honeydew;
+                VaultSetupStatusBorder.BorderBrush = count == 0
+                    ? System.Windows.Media.Brushes.DarkGoldenrod
+                    : System.Windows.Media.Brushes.SeaGreen;
+                InitializeTeamVaultButton.Content = count == 0
+                    ? "Persönlichen Zugang einrichten"
+                    : "Eigenen Zugang ansehen / Einladung exportieren";
             }
             finally { foreach (var identity in identities) identity.Certificate.Dispose(); }
         }
         catch (Exception exception)
         {
-            VaultSetupStatusTitle.Text = "Identitäts-/Teamlistenstatus nicht lesbar";
-            VaultSetupStatusText.Text = exception.Message;
+            VaultSetupStatusTitle.Text = "Persönliche Zugänge derzeit nicht prüfbar";
+            VaultSetupStatusText.Text = "Der Zertifikatsstatus konnte nicht gelesen werden: " + exception.Message +
+                " Keine neue Identität als Ersatz anlegen, bevor der vorhandene Schlüsselbestand geklärt ist.";
             VaultSetupStatusBorder.Background = System.Windows.Media.Brushes.MistyRose;
             VaultSetupStatusBorder.BorderBrush = System.Windows.Media.Brushes.Firebrick;
+        }
+
+        try
+        {
+            var groupCount = Directory.Exists(localGroupTrustDirectory)
+                ? Directory.EnumerateFiles(localGroupTrustDirectory, "*.trust.bin", SearchOption.TopDirectoryOnly)
+                    .Count(path => Guid.TryParseExact(Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path)), "N", out _))
+                : 0;
+            VaultGroupStatus.Text = groupCount == 0
+                ? "Noch kein öffentlicher Gruppenstand auf diesem Windows-Benutzer gefunden. Für Teamzugriff zuerst die signierte Registrierung der Hauptverwaltung übernehmen und den Fingerabdruck unabhängig prüfen."
+                : groupCount == 1
+                    ? "Eine Gruppenbibliothek lokal registriert. Neue Freigaben gelten erst nach ausdrücklich importiertem signierten Gruppenstand. Die lokale Registrierung allein bestätigt keinen Zugriff auf ein bestimmtes Projekt."
+                    : $"{groupCount} Gruppenbibliotheken lokal registriert. Den Gruppenstand der richtigen Bibliothek auswählen und signiert aktualisieren. Keine Gruppenrechte allein aus der Dateianzahl ableiten.";
+            // Mark only the next *import* action as primary, never auto-import or
+            // interpret local files as a verified permission.
+            VaultRegisterGroupButton.Style = (Style)FindResource(
+                groupCount == 0 ? "PrimaryButton" : typeof(Button));
+            VaultUpdateGroupButton.Style = (Style)FindResource(
+                groupCount > 0 ? "PrimaryButton" : typeof(Button));
+        }
+        catch (Exception exception)
+        {
+            VaultGroupStatus.Text = "Lokaler Gruppenstatus derzeit nicht lesbar: " + exception.Message +
+                ". Vor einer Freigabe die vertrauenswürdige Gruppenregistrierung prüfen.";
+            VaultRegisterGroupButton.Style = (Style)FindResource(typeof(Button));
+            VaultUpdateGroupButton.Style = (Style)FindResource(typeof(Button));
         }
     }
 
