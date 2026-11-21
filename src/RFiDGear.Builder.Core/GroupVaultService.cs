@@ -6,6 +6,8 @@ using System.Text.Json.Serialization;
 
 namespace RFiDGear.Builder.Core;
 
+public enum GroupVaultPurpose { Project, KeyLibrary }
+
 public sealed record GroupVaultRecipient(string Role, string Fingerprint, byte[] WrappedKey);
 public sealed record GroupVaultHeader(string Format, int Version, Guid LibraryId, Guid ProjectId, string GroupId,
     GroupPolicyCheckpoint Policy, Guid KeyGeneration, GroupVaultRecipient[] Recipients);
@@ -15,10 +17,19 @@ public sealed record GroupVaultDocument(GroupVaultHeader Header, byte[] Nonce, b
 public static class GroupVaultService
 {
     public const string Format = "SieEncode-Group-Vault";
+    public const string KeyLibraryFormat = "SieEncode-Group-Key-Library-Vault";
+
+    private static string FormatFor(GroupVaultPurpose purpose) => purpose switch
+    {
+        GroupVaultPurpose.Project => Format,
+        GroupVaultPurpose.KeyLibrary => KeyLibraryFormat,
+        _ => throw new ArgumentOutOfRangeException(nameof(purpose))
+    };
     public const int MaximumBytes = 16 * 1024 * 1024;
     private static readonly JsonSerializerOptions Options = new() { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 16 };
 
-    public static GroupVaultDocument Protect(string payloadJson, VerifiedGroupPolicy trusted, Guid projectId, string groupId, DateTimeOffset now)
+    public static GroupVaultDocument Protect(string payloadJson, VerifiedGroupPolicy trusted, Guid projectId, string groupId,
+        DateTimeOffset now, GroupVaultPurpose purpose = GroupVaultPurpose.Project)
     {
         if (projectId == Guid.Empty) throw new ArgumentException("Stabile Projekt-ID fehlt.");
         ArgumentException.ThrowIfNullOrWhiteSpace(payloadJson);
@@ -42,7 +53,7 @@ public static class GroupVaultService
             }
             var recipients = members.Select(d => Wrap("member", d.Fingerprint, d.Certificate))
                 .Concat(recovery.Select(d => Wrap("recovery", d.Fingerprint, d.Certificate))).ToArray();
-            var header = new GroupVaultHeader(Format, 1, policy.LibraryId, projectId, groupId, trusted.Checkpoint, Guid.NewGuid(), recipients);
+            var header = new GroupVaultHeader(FormatFor(purpose), 1, policy.LibraryId, projectId, groupId, trusted.Checkpoint, Guid.NewGuid(), recipients);
             var nonce = RandomNumberGenerator.GetBytes(12); var ciphertext = new byte[plain.Length]; var tag = new byte[16];
             using var aes = new AesGcm(key, 16);
             aes.Encrypt(nonce, plain, ciphertext, tag, JsonSerializer.SerializeToUtf8Bytes(header, Options));
@@ -53,12 +64,14 @@ public static class GroupVaultService
     }
 
     public static string Unprotect(GroupVaultDocument document, VerifiedGroupPolicy trusted, Guid projectId, string groupId,
-        IEnumerable<X509Certificate2> identities, bool recovery = false)
+        IEnumerable<X509Certificate2> identities, bool recovery = false,
+        GroupVaultPurpose purpose = GroupVaultPurpose.Project)
     {
         var vault = Read(Write(document));
         var policy = SnapshotPolicy(trusted);
         var header = vault.Header;
-        if (projectId == Guid.Empty || header.ProjectId != projectId || header.LibraryId != policy.LibraryId || header.GroupId != groupId ||
+        if (projectId == Guid.Empty || header.Format != FormatFor(purpose) || header.ProjectId != projectId ||
+            header.LibraryId != policy.LibraryId || header.GroupId != groupId ||
             header.Policy.Revision > policy.Revision || header.Policy.Revision == policy.Revision && header.Policy != trusted.Checkpoint)
             throw new CryptographicException("Vault passt nicht zu Projekt, Gruppe oder registriertem Richtlinienstand.");
         var group = policy.Groups.SingleOrDefault(g => g.Id == groupId);
@@ -117,7 +130,7 @@ public static class GroupVaultService
     private static void Validate(GroupVaultDocument document)
     {
         var h = document?.Header;
-        if (h is null || h.Format != Format || h.Version != 1 || h.LibraryId == Guid.Empty || h.ProjectId == Guid.Empty || h.KeyGeneration == Guid.Empty ||
+        if (h is null || h.Format is not (Format or KeyLibraryFormat) || h.Version != 1 || h.LibraryId == Guid.Empty || h.ProjectId == Guid.Empty || h.KeyGeneration == Guid.Empty ||
             h.GroupId is not { Length: > 0 and <= 128 } || !h.GroupId.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-') ||
             h.Policy is null || h.Policy.Revision < 1 || !Fingerprint(h.Policy.PayloadSha256) || h.Recipients is null || h.Recipients.Length is 0 or > 10000 ||
             document!.Nonce is not { Length: 12 } || document.Tag is not { Length: 16 } || document.Ciphertext is null || document.Ciphertext.Length is 0 or > MaximumBytes / 2)
