@@ -102,15 +102,15 @@
 
         <ScrollViewer x:Name="PageTestStation" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
           <StackPanel>
-            <TextBlock Text="Transponder und Reader unabhängig von einem Kodierprojekt untersuchen oder warten." FontSize="15" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,4,0,14"/>
-            <Border Style="{StaticResource InfoBanner}"><TextBlock Text="Analyse und Prüfungen sind grundsätzlich nur lesend. Schreibende Aktionen stehen getrennt im Bereich Wartung und verlangen eine eindeutige Bestätigung." TextWrapping="Wrap"/></Border>
+            <TextBlock Text="Transponder sicher untersuchen – auch ohne Projekt. Die erste Analyse verändert keine Kartendaten." FontSize="15" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+            <Border Style="{StaticResource InfoBanner}"><TextBlock Text="Untersuchung und Projektvergleich lesen nur. Formatieren ist eine getrennte Experten-Wartungsaktion, verändert den Transponder und verlangt eine ausdrückliche Bestätigung. Unbekannt oder unlesbar heißt nie leer." TextWrapping="Wrap"/></Border>
             <GroupBox Header="Transponder untersuchen · nur lesend">
               <StackPanel>
-                <TextBlock Text="Karte auf den Reader legen und „Transponder analysieren“ wählen. Das Ergebnis erscheint darunter." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                <TextBlock Text="Karte auflegen und „Transponder analysieren“ wählen. Erst nach einer vollständig erfolgreichen Inventur kann SieEncode eine Karte als leer einordnen." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,8"/>
                 <WrapPanel>
                   <Button x:Name="TestAnalyzeCardButton" Content="Transponder analysieren" Click="AnalyzeCardWithoutProject_Click" Style="{StaticResource PrimaryButton}"/>
                 </WrapPanel>
-                <Expander Header="Weitere Analyse und Berichte" Margin="4,6" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}">
+                <Expander x:Name="TestAdditionalAnalysis" Header="Weitere Analyse und Berichte" Margin="4,6" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}">
                   <WrapPanel>
                   <Button x:Name="TestDeepAnalyzeButton" Content="Application genauer untersuchen" Click="DeepAnalyzeApplication_Click" IsEnabled="False"/>
                   <Button x:Name="TestOpenRecognitionResultButton" Content="Letzten Bericht öffnen" Click="OpenLatestTestReport_Click" IsEnabled="False"/>
@@ -119,16 +119,28 @@
                   <Button x:Name="TestExportInventoryComparisonButton" Content="Dateien mit Sollprojekt vergleichen" Click="ExportInventoryComparison_Click" IsEnabled="False"/>
                 </WrapPanel>
                 </Expander>
-                <TextBlock x:Name="TestAnalysisInfo" Text="Noch keine projektlose Analyse in dieser Sitzung." Foreground="#526B70" TextWrapping="Wrap" Margin="4,5,4,0"/>
-                <Border Margin="4,12,4,0" BorderBrush="#C7D6D8" BorderThickness="1" CornerRadius="5" Background="White" MinHeight="210">
-                  <TreeView x:Name="TestAnalysisTree" Padding="8" BorderThickness="0">
-                    <TreeViewItem Header="Noch kein Transponder analysiert" IsExpanded="True"/>
-                  </TreeView>
+                <Border x:Name="TestInspectionResultBorder" Background="#F1F5F6" BorderBrush="#C7D6D8" BorderThickness="1" CornerRadius="5" Padding="12" Margin="4,10,4,4">
+                  <StackPanel>
+                    <TextBlock x:Name="TestInspectionState" Text="Noch keine Karte untersucht" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="TestInspectionSummary" Text="Die Untersuchung ist noch nicht gestartet." Margin="0,5,0,0" TextWrapping="Wrap"/>
+                    <TextBlock Text="Als Nächstes" FontWeight="SemiBold" Margin="0,9,0,1"/>
+                    <TextBlock x:Name="TestInspectionNextAction" Text="Transponder auflegen und die nur lesende Analyse starten." TextWrapping="Wrap"/>
+                  </StackPanel>
                 </Border>
-                <TextBlock Text="Ein Schlüssel wird nur für die gewählte Application und nur in dieser Sitzung verwendet. Nicht lesbar bedeutet niemals leer." Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="4,7,4,0" TextWrapping="Wrap"/>
+                <Expander x:Name="TestInspectionDetails" Header="Kartendetails und technischer Nachweis" IsExpanded="False" Margin="4,6,4,0">
+                  <StackPanel Margin="6,6,0,0">
+                    <TextBlock x:Name="TestAnalysisInfo" Text="Noch keine projektlose Analyse in dieser Sitzung." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <Border BorderBrush="#C7D6D8" BorderThickness="1" CornerRadius="5" Background="White" MinHeight="190">
+                      <TreeView x:Name="TestAnalysisTree" Padding="8" BorderThickness="0">
+                        <TreeViewItem Header="Noch kein Transponder analysiert" IsExpanded="True"/>
+                      </TreeView>
+                    </Border>
+                    <TextBlock Text="Nicht lesbar bedeutet niemals leer. Schlüssel werden nur für den ausgewählten Lesevorgang verwendet, nicht in der Projektdefinition gespeichert." Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,7,0,0" TextWrapping="Wrap"/>
+                  </StackPanel>
+                </Expander>
               </StackPanel>
             </GroupBox>
-            <Expander Margin="0,4" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}" Header="Ausgewähltes Projekt als Prüfvorlage · optional">
+            <Expander x:Name="TestProjectComparisonActions" Margin="0,4" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}" Header="Projektvergleich · optional">
               <StackPanel>
                 <TextBlock x:Name="TestProjectInfo" Text="Kein Projekt ausgewählt. Projektlose Analyse ist trotzdem möglich." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,8"/>
                 <WrapPanel>
@@ -141,7 +153,7 @@
                 </WrapPanel>
               </StackPanel>
             </Expander>
-            <Expander Margin="0,4" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}" Header="Reader und Laufdiagnose">
+            <Expander x:Name="TestReaderDiagnostics" Margin="0,4" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}" Header="Reader-Einstellungen und Laufdiagnose">
               <WrapPanel>
                 <Button Content="RFiDGear für Lesereinstellungen öffnen" Click="OpenRFiDGearSettings_Click"/>
                 <Button x:Name="TestRefreshOperationButton" Content="Laufstatus aktualisieren" Click="RefreshOperation_Click" IsEnabled="False"/>
