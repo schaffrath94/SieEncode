@@ -87,7 +87,7 @@ public static class KeyLibraryVault
             OfflineGroupPolicyService.RejectDuplicateProperties(parsed.RootElement);
         var envelope = JsonSerializer.Deserialize<Envelope>(json, Options);
         if (envelope is null || envelope.Format != Format || envelope.Version != Version || envelope.Library is null ||
-            envelope.Library.Catalog.LibraryId != trusted.Policy.LibraryId)
+            envelope.Library.Catalog is null || envelope.Library.Catalog.LibraryId != trusted.Policy.LibraryId)
             throw new CryptographicException("Falscher Schlüsselbibliotheks-Typ oder Bibliotheks-ID.");
         Validate(envelope.Library);
         return envelope.Library;
@@ -159,6 +159,7 @@ public static class KeyLibraryVaultStore
             previous.Catalog.Revision == long.MaxValue ||
             next.Catalog.Revision != previous.Catalog.Revision + 1)
             throw new InvalidDataException("Schlüsselbibliothek muss dieselbe ID und die direkt folgende Revision besitzen.");
+        ValidateImmutableHistory(previous, next);
 
         var document = KeyLibraryVault.Protect(next, current, groupId, now);
         _ = KeyLibraryVault.Unprotect(document, current, groupId, identitiesArray);
@@ -168,6 +169,26 @@ public static class KeyLibraryVaultStore
             if (trust.LoadOffline().Checkpoint != current.Checkpoint)
                 throw new CryptographicException("Gruppenstand während der Bibliotheksänderung gewechselt.");
         });
+    }
+
+    private static void ValidateImmutableHistory(KeyLibraryVaultPayload previous, KeyLibraryVaultPayload next)
+    {
+        var currentEntries = KeyLibraryContracts.Validate(next.Catalog);
+        var newValues = next.Secrets.ToDictionary(item => item.Key, item => item.HexValue);
+        var oldValues = previous.Secrets.ToDictionary(item => item.Key, item => item.HexValue);
+        foreach (var old in previous.Catalog.Keys)
+        {
+            var address = new KeyLibraryAddress(old.KeyId, old.Version);
+            if (!currentEntries.TryGetValue(address, out var current) ||
+                !newValues.TryGetValue(address, out var value) ||
+                !oldValues.TryGetValue(address, out var oldValue))
+                throw new InvalidDataException("Bestehende Schlüsselversionen dürfen beim Abgleich nicht gelöscht werden.");
+            if (!string.Equals(oldValue, value, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("Ein vorhandener Schlüsselwert darf nicht unter derselben Version überschrieben werden.");
+            if (old.Status == KeyLibraryContracts.Compromised && current.Status != KeyLibraryContracts.Compromised ||
+                old.Status == KeyLibraryContracts.Retired && current.Status == KeyLibraryContracts.Active)
+                throw new InvalidDataException("Eine abgelöste oder kompromittierte Schlüsselgeneration darf nicht still reaktiviert werden.");
+        }
     }
 
     private static GroupVaultDocument ReadDocument(string path)
