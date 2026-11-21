@@ -57,11 +57,24 @@ public partial class MainWindow
             if (plan.VaultRevision != editorVaultRevision) throw new ConcurrentFileChangeException(path);
             var details = "Hinzufügen:\n" + string.Join("\n", plan.Added.Select(a => a.Role + " · " + a.Fingerprint)) +
                 "\n\nEntfernen:\n" + string.Join("\n", plan.Removed.Select(a => a.Role + " · " + a.Fingerprint));
-            if (MessageBox.Show(this, details + "\n\nMit frischem Inhaltsschlüssel neu verschlüsseln? Alte Sicherungen bleiben zugänglich. Offene Schlüsseländerungen werden nicht übernommen.", "Gruppenempfänger abgleichen", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+            var memberRevocation = plan.Removed.Any(access => access.Role == "member");
+            var revocationWarning = memberRevocation
+                ? "\n\nSICHERHEIT: Dieser Vorgang entfernt alte Mitglieder NUR aus der aktuellen verschlüsselten Vault-Datei. Historische Offline-Kopien können mit alten privaten Schlüsseln weiterhin entschlüsselt werden. Die DESFire-Kartenschlüssel bleiben gleich. Für einen echten Entzug von bereits bekannten Kartenschlüsseln ist eine kontrollierte Schlüsselrotation auf den betroffenen Karten und Lesern/SAMs nötig."
+                : "";
+            if (MessageBox.Show(this,
+                    details + "\n\nDen aktuellen Projekt-Vault mit neuem zufälligem Inhaltsschlüssel und aktueller Empfängerliste verschlüsseln?" +
+                    revocationWarning +
+                    "\n\nEin historischer Stand wird getrennt im lokalen Benutzerprofil gesichert, nicht im gemeinsamen Projektordner. Dieser Sicherungsort muss geschützt und bei Bedarf separat verwahrt werden. Offene Schlüsseländerungen werden nicht übernommen.",
+                    memberRevocation ? "Gruppenzugang entfernen – kein rückwirkender Offline-Entzug" : "Gruppenempfänger abgleichen",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
             var result = GroupVaultReconciliation.Apply(plan, trust, certificates, DateTimeOffset.UtcNow);
             editorVaultRevision = result.Revision;
-            EditorVaultStatus.Text = "Gruppenempfänger abgeglichen. Verschlüsselte Altsicherung: " + result.EncryptedBackupPath;
-            SetStatus("Gruppen-Vault neu verschlüsselt. Offene Schlüsseländerungen separat speichern.");
+            EditorVaultStatus.Text = memberRevocation
+                ? "Aktueller Gruppen-Vault neu verschlüsselt. Frühere Offline-Kopien können weiter zugänglich sein; Kartenschlüssel nicht rotiert. Separat geschützte historische Sicherung: " + result.EncryptedBackupPath
+                : "Gruppenempfänger im aktuellen Vault neu verschlüsselt. Historische Sicherung im lokalen Profil: " + result.EncryptedBackupPath;
+            SetStatus(memberRevocation
+                ? "Vault-Empfänger aktualisiert – KEIN rückwirkender Offline- oder Kartenschlüsselentzug. Karten-/Leserschlüsselrotation gesondert beurteilen."
+                : "Aktueller Gruppen-Vault neu verschlüsselt; Kartenschlüssel unverändert.");
         }
         finally { foreach (var identity in identities) identity.Certificate.Dispose(); }
     }
