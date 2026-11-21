@@ -6,6 +6,9 @@ namespace RFiDGear.Builder.Core;
 
 public sealed class ProjectKeyVaultPayload
 {
+    // Runtime-only origin marker. Library material must never become a second project Vault.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool TemporaryLibraryPayload { get; set; }
     public string SelectedInitialKeySetId { get; set; } = "";
     public List<InitialKeySet> InitialKeySets { get; set; } = [];
     public KeyReference TransportPicc { get; set; } = new();
@@ -51,6 +54,7 @@ public static class ProjectKeyVault
         var id = string.IsNullOrWhiteSpace(project.Transport.KeySetId) ? "standard" : project.Transport.KeySetId;
         var payload = new ProjectKeyVaultPayload
         {
+            TemporaryLibraryPayload = project.TransientKeyLibraryResolution,
             SelectedInitialKeySetId = id,
             TransportPicc = new KeyReference { Type = project.Transport.PiccKey.Type, Value = project.Transport.PiccKey.Value },
             TransportApplicationKeys = project.Transport.ApplicationKeys.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase),
@@ -89,6 +93,7 @@ public static class ProjectKeyVault
         payload.ProductivePicc = Copy(project.Productive.PiccKey);
         payload.PiccKeySettings = project.Productive.PiccKeySettings;
         payload.ApplicationKeys = project.Productive.ApplicationKeys.ToDictionary(pair => pair.Key, pair => pair.Value.ToList(), StringComparer.OrdinalIgnoreCase);
+        payload.TemporaryLibraryPayload |= project.TransientKeyLibraryResolution;
         return payload;
     }
 
@@ -167,6 +172,8 @@ public static class ProjectKeyVault
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ArgumentNullException.ThrowIfNull(payload);
+        if (payload.TemporaryLibraryPayload)
+            throw new InvalidOperationException("Temporäre Bibliotheksschlüssel dürfen nicht in einem unabhängigen Projekt-Vault gespeichert werden.");
         var payloadJson = JsonSerializer.Serialize(payload, ProjectJson.Options);
         var vault = KeyVaultService.Protect(payloadJson, passphrase);
         AtomicSave(path, JsonSerializer.Serialize(vault, ProjectJson.Options));
@@ -175,6 +182,8 @@ public static class ProjectKeyVault
     public static FileRevision Save(string path, ProjectKeyVaultPayload payload, string passphrase, FileRevision expected)
     {
         ArgumentNullException.ThrowIfNull(payload);
+        if (payload.TemporaryLibraryPayload)
+            throw new InvalidOperationException("Temporäre Bibliotheksschlüssel dürfen nicht in einem unabhängigen Projekt-Vault gespeichert werden.");
         var payloadJson = JsonSerializer.Serialize(payload, ProjectJson.Options);
         var vault = KeyVaultService.Protect(payloadJson, passphrase);
         var content = JsonSerializer.Serialize(vault, ProjectJson.Options);
@@ -190,6 +199,8 @@ public static class ProjectKeyVault
         IEnumerable<(X509Certificate2 Certificate, string DisplayName)> recipients, FileRevision expected)
     {
         ArgumentNullException.ThrowIfNull(payload);
+        if (payload.TemporaryLibraryPayload)
+            throw new InvalidOperationException("Temporäre Bibliotheksschlüssel dürfen nicht in einem unabhängigen Projekt-Vault gespeichert werden.");
         var payloadJson = JsonSerializer.Serialize(payload, ProjectJson.Options);
         var vault = CertificateVaultService.Protect(payloadJson, recoveryPassphrase, recipients);
         var content = JsonSerializer.Serialize(vault, ProjectJson.Options);
@@ -208,6 +219,8 @@ public static class ProjectKeyVault
         if (ConcurrentFileWriter.Capture(path) != expected) throw new ConcurrentFileChangeException(path);
         var existing = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options)
             ?? throw new InvalidDataException("Key-Vault ist leer.");
+        if (payload.TemporaryLibraryPayload)
+            throw new InvalidOperationException("Temporäre Bibliotheksschlüssel dürfen nicht in einem unabhängigen Projekt-Vault gespeichert werden.");
         var payloadJson = JsonSerializer.Serialize(payload, ProjectJson.Options);
         var updated = CertificateVaultService.ReprotectWithCertificate(existing, payloadJson, certificates);
         var content = JsonSerializer.Serialize(updated, ProjectJson.Options);
