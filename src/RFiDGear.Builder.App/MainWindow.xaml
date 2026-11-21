@@ -109,10 +109,11 @@
                 <TextBlock Text="Karte auflegen und „Transponder analysieren“ wählen. Erst nach einer vollständig erfolgreichen Inventur kann SieEncode eine Karte als leer einordnen." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,8"/>
                 <WrapPanel>
                   <Button x:Name="TestAnalyzeCardButton" Content="Transponder analysieren" Click="AnalyzeCardWithoutProject_Click" Style="{StaticResource PrimaryButton}"/>
+                  <Button x:Name="TestDeepAnalyzeButton" Content="Application genauer lesen" Click="DeepAnalyzeApplication_Click" IsEnabled="False" Visibility="Collapsed" ToolTip="Nur nach vollständiger AID-Erkennung verfügbar. Fordert bei geschützten Applications den passenden Leseschlüssel an; schreibt nichts."/>
                 </WrapPanel>
-                <Expander x:Name="TestAdditionalAnalysis" Header="Weitere Analyse und Berichte" Margin="4,6" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}">
+                <Expander x:Name="TestAdditionalAnalysis" Header="Berichte und weitere Auswertungen" Margin="4,6" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}">
                   <WrapPanel>
-                  <Button x:Name="TestDeepAnalyzeButton" Content="Application genauer untersuchen" Click="DeepAnalyzeApplication_Click" IsEnabled="False"/>
+                  
                   <Button x:Name="TestOpenRecognitionResultButton" Content="Letzten Bericht öffnen" Click="OpenLatestTestReport_Click" IsEnabled="False"/>
                   <Button x:Name="TestOpenInventoryPdfButton" Content="PDF-Istreport öffnen" Click="OpenInventoryPdf_Click" IsEnabled="False"/>
                   <Button x:Name="TestExportInventoryPdfButton" Content="PDF-Istreport exportieren" Click="ExportInventoryPdf_Click" IsEnabled="{Binding IsEnabled, ElementName=TestOpenInventoryPdfButton}"/>
