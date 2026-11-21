@@ -588,6 +588,8 @@ public partial class MainWindow
             : !valuesOk ? "Nächster Schritt: Grundschlüssel prüfen. " + string.Join(" ", definitionIssues.Take(3).Select(issue => issue.Message))
             : editorVaultVersion == 1 ? "Nächster Schritt: alten Vault mit einer neuen starken Passphrase als Vault v2 speichern. Vorher bleibt der Neubau gesperrt."
             : editorGroupRecovery ? "Recovery-Sitzung: Änderungen bei Bedarf speichern. Vor einem Build über ‚Vault entsperren‘ mit normalem Gruppenzugang öffnen."
+            : IsEditorGroupVault && !editorKeysPersisted && keysLoaded
+                ? "Nächster Schritt: geänderte Gruppenschlüssel mit „Vault-Änderungen sicher speichern“ sichern und von SieEncode erneut prüfen lassen. Die Gruppenmitgliedschaft wird dadurch nicht geändert."
             : !editorVaultVerified ? "Nächster Schritt: Vault speichern oder entsperren; SieEncode muss ihn erfolgreich wieder öffnen."
             : backupRequired && !backupReady ? "Nächster Schritt: Unter Einstellungen einen vom Projektordner unabhängigen Vault-Sicherungsort wählen. Mastering bleibt bis dahin gesperrt."
             : !editorKeysPersisted ? "Nächster Schritt: Mehrbenutzerzugriff einrichten und Recovery-Passphrase in KeePass ablegen."
