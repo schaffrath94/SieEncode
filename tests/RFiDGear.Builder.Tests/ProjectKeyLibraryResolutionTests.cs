@@ -83,6 +83,21 @@ internal static class ProjectKeyLibraryResolutionTests
         if (encoded.Contains(new string('B', 32), StringComparison.Ordinal) ||
             !encoded.Contains(nameof(ProjectSection.KeyLibrary), StringComparison.Ordinal))
             throw new Exception("Serialized project contains a raw key or lost its library bindings.");
+        var projectFile = Path.Combine(Path.GetTempPath(), "SieEncode-key-bind-" + Guid.NewGuid().ToString("N") + ".json");
+        try
+        {
+            ProjectJson.Save(projectFile, bound);
+            var original = File.ReadAllBytes(projectFile);
+            var revision = ConcurrentFileWriter.Capture(projectFile);
+            Reject<InvalidDataException>(() => ProjectJson.Save(projectFile, CloneWithRawSecret()));
+            Reject<InvalidDataException>(() => ProjectJson.Save(projectFile, CloneWithRawSecret(), revision));
+            if (!File.ReadAllBytes(projectFile).SequenceEqual(original))
+                throw new Exception("A rejected project write damaged the existing key-free document.");
+            File.WriteAllText(projectFile, JsonSerializer.Serialize(CloneWithRawSecret(), ProjectJson.Options));
+            Reject<InvalidDataException>(() => ProjectJson.Load(projectFile));
+        }
+        finally { if (File.Exists(projectFile)) File.Delete(projectFile); }
+
         var reloaded = JsonSerializer.Deserialize<ProjectDefinition>(encoded, ProjectJson.Options)!;
         if (reloaded.Project.KeyLibrary?.Bindings.Length != 7 ||
             reloaded.Project.KeyLibrary.Bindings[0].Key.Version != 1)
