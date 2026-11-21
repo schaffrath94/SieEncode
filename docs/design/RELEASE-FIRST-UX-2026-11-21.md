@@ -73,7 +73,7 @@ Für ein wirkliches erstes Release müssen folgende Nachweise an genau einem Rel
 ## Umsetzung in kleinen, abnehmbaren Schritten
 
 - **UX-01 (aktiv):** Normal-/Expertenansicht sauber trennen; Wartungsfunktion nur für Experten; Klarheit der drei Arbeitsbereiche und Vermeidung doppelter Primäraktionen prüfen.
-- **UX-02:** Projektbibliothek und Editor nach dem tatsächlichen nächsten Schritt führen, ohne Handler/Autosaves/Legacy-Importe zu entfernen.
+- **UX-02 (in Umsetzung):** Projektbibliothek und Editor nach dem tatsächlichen nächsten Schritt führen, ohne Handler/Autosaves/Legacy-Importe zu entfernen. In der Bibliothek liegen Prüfen/Bearbeiten/Kodierstation im Hauptweg, Untersuchung/Ordner/Löschen hinter weiteren Aktionen. Der Editor zeigt Bereitschaft und nächsten Schritt vor dem Formular, klappt die Ausgangsschlüsselsatz-Verwaltung und Gruppenprojektübernahme ein und hebt jeweils höchstens eine sichere nächste Aktion hervor.
 - **UX-03 (aktiv):** Team-/Vault-Einstiege und positive Delegations-/Nachfolgedialoge verbessern und mit echten Rollen testen. Persönliche Identität ist inzwischen als eigenständiger Zweischritt-Dialog von der bisherigen Teamlistenpflege getrennt; Delegation und Hauptverwaltung wurden nach Aufgabe gegliedert, Status und Fehlermeldungen verbessert.
 - **UX-04:** Kodierstation und Untersuchung auf eine Hauptaktion pro Status verdichten, inklusive Ergebnisbericht und eindeutiger Freigabe.
 - **REL-01:** Bestehende Testnachweise mit UI-/MSI-/Hardware-Restpunkten zusammenführen, reale Lücken schließen und den ersten Releasekandidaten abnehmen.
@@ -97,3 +97,16 @@ Für ein wirkliches erstes Release müssen folgende Nachweise an genau einem Rel
 **Keine automatische Verwaltungsvollmacht, keine automatische Schlüsselgenerierung, keine Kartenaktion und keine Freigabe durch UI-Änderungen.** Die getrennte Windows- und Geräteabnahme, samt unabhängigem Fingerabdruckabgleich und Grenzen des Offline-Entzugs, bleibt verpflichtend.
 
 **Nächste Umsetzung:** Quellstand unter Windows bauen, WPF-Smoketest inklusive neuer UX-Gates ausführen, dann Testkandidat mit Prüfsummen und Installations-/Upgrade-Prüfung erstellen. Erst mit genau diesem Kandidaten kann der Anwender die verkürzte UI-Testfolge wirklich bedienen und die sichtbaren Ergebnisse melden. Kein älterer Kandidat wird stillschweigend als neuer Stand ausgegeben.
+
+## UX-02 – Projektbibliothek und Editor: laufendes Implementierungspaket
+
+Die Änderungen sind auf `codex/offline-vault-groups` gespeichert. **Kein Einzeltest, keine neue MSI und keine neue Releasefreigabe**; erst zusammenhängende Funktionen abschließen und später gesammelt prüfen.
+
+- Die Bibliothek behält `Neues Projekt`, `Projekt bearbeiten`, `Projekt prüfen` und `Zur Kodierstation` als sichtbaren Hauptweg. Die bisherigen Aktionen `Karte untersuchen`, `Projektordner öffnen` und `Projekt löschen` bleiben mit unveränderten Handlern hinter dem aufklappbaren Bereich `Weitere Projektaktionen` erreichbar; das technische Expertenmenü bleibt erhalten.
+- Der gewählte Projekteintrag erklärt den **nächsten möglichen Schritt** anhand der tatsächlich gültigen Schranke `CanOpenStation`. Ein vorhandener Betriebbuild ohne alten Vault darf nicht als reproduzierbar neu baubar dargestellt werden; ein Altbuild ohne Erkennungsfunktion erhält weiterhin seinen Hinweis.
+- Im Projekteditor stehen Bereitschaftsstatus und nächste Aktion **vor** den vielen Eingabefeldern. Zusätzliche Ausgangsschlüsselsätze sowie die bewusste Gruppenprojektübernahme sind weiterhin vorhanden, aber nicht permanent als alternative Hauptaktionen sichtbar.
+- Das bestehende `RefreshEditorWorkflow` hebt maximal **eine** passende nächste Aktion hervor. Bei bestehendem Projekt ohne ursprünglichen Vault wird der gefährliche Weg `Neue Schlüssel erzeugen` ausdrücklich **nicht** als normale Standardempfehlung hervorgehoben; die vorhandene Warnung und Bestätigung bleiben.
+- Eine wichtige bisherige Bedienlücke ist beseitigt: Wenn in einem **Gruppenprojekt** Schlüsselwerte bearbeitet wurden, erscheint in der Standardansicht `Vault-Änderungen sicher speichern` als erlaubter nächster Schritt; dafür ist kein Umschalten in den Expertenmodus mehr erforderlich. Der Aufruf verwendet unverändert den vorhandenen verschlüsselten Vault-Speicherweg und die Berechtigungs-/Revisionsprüfungen. Die Anzeige erteilt selbst keine Vault- oder Gruppenrechte.
+- Die bestehenden Software-Smokeprüfungen enthalten zusätzliche **noch nicht ausgeführte** Invarianten für die Trennung der Projektaktionen, Platzierung des Status, Schlüsselsatz-Expander, maximal eine hervorgehobene Editoraktion und die sichere Gruppen-Vault-Speicheraktion in der Standardansicht.
+
+**Abgrenzung:** Die Kartenkodierung, die tatsächlichen Rechte, die Runtime, das Installationpaket und `main` werden durch dieses Paket nicht umgestellt. Vor einem gebündelten Testlauf sind noch weitere UX-Verbesserungen vorgesehen; die Tests folgen **nicht pro Commit**.
