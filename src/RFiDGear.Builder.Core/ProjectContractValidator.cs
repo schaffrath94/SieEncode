@@ -13,7 +13,10 @@ public static partial class ProjectContractValidator
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(profileLibrary);
         var issues = new List<ValidationIssue>();
-        issues.AddRange(ProjectValidator.Validate(project, requireProductiveSecrets: false, requireTransportSecrets: requireTransportSecrets));
+        var catalogBound = project.Project.KeyLibrary is not null;
+        // Saved catalog-bound projects contain references, never raw keys.
+        issues.AddRange(ProjectValidator.Validate(project, requireProductiveSecrets: false,
+            requireTransportSecrets: requireTransportSecrets && !catalogBound));
         issues.AddRange(profileLibrary.Validate());
 
         ComposedProfiles composed;
@@ -33,11 +36,14 @@ public static partial class ProjectContractValidator
         foreach (var keyType in operationApplications.Select(application => application.KeyType).Distinct(StringComparer.Ordinal))
         {
             project.Transport.ApplicationKeys.TryGetValue(keyType, out var value);
-            if ((requireTransportSecrets || !string.IsNullOrWhiteSpace(value)) && !IsValidKey(value, keyType))
+            if (((requireTransportSecrets && !catalogBound) || !string.IsNullOrWhiteSpace(value)) && !IsValidKey(value, keyType))
                 issues.Add(new("TRANSPORT_APP_KEY", $"Transport Application Key für {keyType} fehlt oder ist ungültig."));
         }
 
-        if (requireProductiveSecrets && needsCoding)
+        if (catalogBound && requireProductiveSecrets)
+            issues.Add(new("KEY_LIBRARY_UNRESOLVED", "Schlüsselbibliothek vor dem Build autorisiert und versionsgenau auflösen."));
+
+        if (requireProductiveSecrets && needsCoding && !catalogBound)
         {
             if (!CardOperationMode.IsExtension(project) && !IsValidKey(project.Productive.PiccKey.Value, project.Productive.PiccKey.Type))
                 issues.Add(new("PRODUCTIVE_PICC", "Produktiver PICC Key fehlt oder ist ungültig."));
