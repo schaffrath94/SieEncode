@@ -71,7 +71,8 @@ public static class ProjectGroupVault
     }
 
     public static GroupVaultReconciliationResult Update(string projectPath, ProjectDefinition source, ProjectKeyVaultPayload keys,
-        OfflineGroupTrustStore trust, IEnumerable<X509Certificate2> identities, FileRevision expected, DateTimeOffset now, bool recovery = false)
+        OfflineGroupTrustStore trust, IEnumerable<X509Certificate2> identities, FileRevision expected, DateTimeOffset now,
+        bool recovery = false, string? privateBackupRoot = null)
     {
         var project = Clone(source); var current = trust.LoadOffline();
         var binding = ValidateBinding(project, current);
@@ -83,7 +84,7 @@ public static class ProjectGroupVault
             throw new InvalidOperationException("Gruppenempfänger haben sich geändert. Bitte zuerst den kontrollierten Empfängerabgleich bestätigen.");
         // Reject a different application payload before overwriting it, even if its envelope is valid.
         _ = Load(projectPath, project, trust, certificates, recovery);
-        return GroupVaultReconciliation.ApplyPayload(plan, trust, certificates, now, SerializePayload(keys));
+        return GroupVaultReconciliation.ApplyPayload(plan, trust, certificates, now, SerializePayload(keys), privateBackupRoot);
     }
 
     private static ProjectGroupVaultBinding ValidateBinding(ProjectDefinition project, VerifiedGroupPolicy current)
