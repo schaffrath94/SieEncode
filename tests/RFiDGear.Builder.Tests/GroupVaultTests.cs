@@ -190,6 +190,7 @@ internal static class GroupVaultTests
         X509Certificate2 recovery, DateTimeOffset now)
     {
         var directory = Path.Combine(Path.GetTempPath(), "SieEncode-project-group-" + Guid.NewGuid().ToString("N"));
+        var privateBackupRoot = directory + "-private-history";
         Directory.CreateDirectory(directory);
         try
         {
@@ -228,17 +229,25 @@ internal static class GroupVaultTests
             Reject(() => ProjectGroupVault.Load(path, reloaded, trust, [alice]));
             reloaded.Project.GroupVault = project.Project.GroupVault;
             keys.ProductivePicc.Value = new string('2', 32);
-            var updated = ProjectGroupVault.Update(path, reloaded, keys, trust, [alice], revision, now);
+            var updated = ProjectGroupVault.Update(path, reloaded, keys, trust, [alice], revision, now, privateBackupRoot: privateBackupRoot);
             if (ProjectGroupVault.Load(path, reloaded, trust, [alice]).ProductivePicc.Value != keys.ProductivePicc.Value ||
-                !File.Exists(updated.EncryptedBackupPath)) throw new Exception("Typed project update or backup failed.");
-            Reject(() => ProjectGroupVault.Update(path, reloaded, keys, trust, [alice], revision, now));
+                !File.Exists(updated.EncryptedBackupPath) ||
+                Directory.Exists(Path.Combine(directory, "GroupVaultBackups")) ||
+                !Path.GetFullPath(updated.EncryptedBackupPath).StartsWith(
+                    Path.GetFullPath(privateBackupRoot) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Typed group project update put historical Vault backup into shared project directory.");
+            Reject(() => ProjectGroupVault.Update(path, reloaded, keys, trust, [alice], revision, now, privateBackupRoot: privateBackupRoot));
             var newer = policy with { Revision = 2, Groups = [new("lokal", "Lokal", ["alice", "bob"]), policy.Groups[1]] };
             trust.AcceptUpdate(OfflineGroupPolicyService.Sign(newer, root));
-            Reject(() => ProjectGroupVault.Update(path, reloaded, keys, trust, [alice], updated.Revision, now));
+            Reject(() => ProjectGroupVault.Update(path, reloaded, keys, trust, [alice], updated.Revision, now, privateBackupRoot: privateBackupRoot));
             if (ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(path)) != updated.Revision)
                 throw new Exception("Ordinary save silently changed recipients.");
         }
-        finally { Directory.Delete(directory, true); }
+        finally
+        {
+            Directory.Delete(directory, true);
+            if (Directory.Exists(privateBackupRoot)) Directory.Delete(privateBackupRoot, true);
+        }
     }
 
     private static void VerifyReconciliation(GroupVaultDocument original, OfflineGroupPolicy oldPolicy, OfflineGroupPolicy targetPolicy,
