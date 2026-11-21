@@ -21,8 +21,18 @@ public partial class MainWindow
         try
         {
             VerifyAutomationContract(window);
-            window.LoadLibrary(library); window.LoadPerson("alice");
             var people = DescendantsAndSelf(window).OfType<ComboBox>().Single(box => box.Name == "People");
+            var invitationButton = DescendantsAndSelf(window).OfType<Button>()
+                .Single(button => button.Content?.ToString() == "Einladung an Hauptverwaltung exportieren");
+            var changeButton = DescendantsAndSelf(window).OfType<Button>()
+                .Single(button => button.Content?.ToString() == "Änderung signieren und exportieren");
+            if (people.Items.Count != 2 || people.SelectedItem is not null || invitationButton.IsEnabled || changeButton.IsEnabled)
+                throw new Exception("Delegate auto-load selected an ambiguous person or enabled an unapproved action.");
+            if (window.Content is not DockPanel)
+                throw new Exception("Delegate error display no longer stays visible outside the scrolling content.");
+            window.LoadLibrary(library); window.LoadPerson("alice");
+            if (!invitationButton.IsEnabled || changeButton.IsEnabled)
+                throw new Exception("No grant yet: invitation must be available and group change must remain disabled.");
             people.SelectedIndex = 1;
             try { window.GetInvitation(true); throw new Exception("Invitation created for a previously selected person."); }
             catch (InvalidOperationException) { }
@@ -33,6 +43,8 @@ public partial class MainWindow
             package = admin.GrantDelegation(invitation, GroupDelegationTransport.InvitationFingerprint(invitation), "alice-lokal", ["lokal"], GroupEnrollmentPackages.Validate(package).Checkpoint);
             trust.AcceptPackageUpdate(package, trust.LoadOffline().Checkpoint);
             window.LoadPerson("alice");
+            if (!changeButton.IsEnabled)
+                throw new Exception("Active delegation should enable only assigned group changes.");
             var grid = DescendantsAndSelf(window).OfType<DataGrid>().Single();
             var group = grid.Items.Cast<GroupAdministrationDraft>().Single();
             if (group.Id != "lokal") throw new Exception("Delegate UI exposes unauthorized group.");
@@ -65,6 +77,7 @@ public partial class MainWindow
             if (grid.Items.Count != 0) throw new Exception("Revoked scope still editable after reload.");
         }
         finally { window.Close(); }
-        checks.Add("Delegaten-Arbeitsplatz: explizite Schlüsselerzeugung, Einladung/Freigabe, nur erlaubte Gruppe, Mitgliederauswahl, signierter Dateiaustausch und Entzug gegen alten Entwurf geprüft. Synthetisch, ein Windows-Benutzer.");
+        checks.Add("Delegaten-Arbeitsplatz: eindeutiger Gruppenstand automatisch geladen, mehrere Personen NICHT automatisch ausgewählt, Einladung vor Vollmacht möglich, Änderungen erst mit aktiver Vollmacht, Fehlerbereich ohne Scrollsuche; Schlüsselerzeugung ausschließlich explizit. Synthetisch, ein Windows-Benutzer.");
+        checks.Add("Delegaten-Arbeitsplatz: nur erlaubte Gruppe, Mitgliederauswahl, signierter Dateiaustausch und Entzug gegen alten Entwurf geprüft. Keine Zweitbenutzer-/Hardwareabnahme.");
     }
 }
