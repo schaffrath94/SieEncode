@@ -19,10 +19,10 @@ internal sealed class KeyLibraryAssignmentWindow : Window
     {
         public string Label => $"{LibraryId:D} · Gruppe {GroupId}";
     }
-    private sealed record KeyChoice(KeyLibraryEntry Entry)
+    private sealed record KeyChoice(KeyLibraryEntry Entry, string CustomerName)
     {
         public KeyLibraryAddress Address => new(Entry.KeyId, Entry.Version);
-        public string Label => $"{Entry.Name} · v{Entry.Version} · {Entry.KeyType} · Kunde {Entry.CustomerId:D} · ID {Entry.KeyId.ToString("N")[..8]}";
+        public string Label => $"{Entry.Name} · v{Entry.Version} · {Entry.KeyType} · {CustomerName} · ID {Entry.KeyId.ToString("N")[..8]}";
     }
     private sealed record SlotPicker(string Slot, string Type, ComboBox Selection);
 
@@ -137,6 +137,7 @@ internal sealed class KeyLibraryAssignmentWindow : Window
             }
 
             var required = ProjectKeyLibraryResolution.RequiredSlots(project, profiles);
+            var customerNames = catalog.Customers.ToDictionary(c => c.CustomerId, c => c.Name);
             foreach (var (slot, type) in required)
             {
                 var picker = new ComboBox
@@ -148,7 +149,8 @@ internal sealed class KeyLibraryAssignmentWindow : Window
                         .Where(key => key.KeyType == type && key.Status == KeyLibraryContracts.Active)
                         .OrderBy(key => key.CustomerId).ThenBy(key => key.Name, StringComparer.CurrentCultureIgnoreCase)
                         .ThenBy(key => key.KeyId).ThenBy(key => key.Version)
-                        .Select(key => new KeyChoice(key)).ToArray()
+                        .Select(key => new KeyChoice(key,
+                            customerNames.GetValueOrDefault(key.CustomerId, "Kunde " + key.CustomerId.ToString("N")[..8]))).ToArray()
                 };
                 var existing = project.Project.KeyLibrary;
                 if (existing is not null && existing.LibraryId == catalog.LibraryId)
