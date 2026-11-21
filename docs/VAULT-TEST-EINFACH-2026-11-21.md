@@ -14,7 +14,7 @@ Dieser Kurztest nutzt die vorhandene Testbibliothek und **erfundene Testidentit�
 
 ## Test 1 – Mein eigener Zugang (Kollege)
 
-1. **Einstellungen → 1 · Mein persönlicher Vault-Zugang** öffnen. Erwartung: Nur **Zugang auswählen/anlegen**, **Öffentliche Einladung exportieren** und **Schließen**; *keine* Teamlisten-Speicheraktion.
+1. **Einstellungen → 1 · Mein persönlicher Vault-Zugang → Persönlichen Zugang einrichten / Eigenen Zugang ansehen** öffnen. Erwartung: Nur **Zugang auswählen/anlegen**, **Öffentliche Einladung exportieren** und **Schließen**; *keine* Teamlisten-Speicheraktion.
 2. Bei genau einer lokalen Identität ist diese vorausgewählt. Bei mehreren ausdrücklich anhand des Fingerabdrucks die richtige auswählen; SieEncode darf keinen zufälligen ersten Schlüssel benutzen. Anschließend schließen. Erwartung: Keine neue Identität und keine Änderung der bisherigen Teamliste.
 3. Nur wenn der Verwalter die Einladung noch nicht hat: „Öffentliche Einladung exportieren“ und übergeben. Erwartung: Datei enthält nur öffentliche Informationen; die eigentliche Gruppenberechtigung ist **noch nicht** erteilt. Ohne Teamprojekt kann man den Dialog nach Schritt 2 einfach schließen.
 
@@ -36,7 +36,7 @@ Dieser Kurztest nutzt die vorhandene Testbibliothek und **erfundene Testidentit�
 
 1. **Verwaltung:** Den Testkollegen aus **Test-Lokal** entfernen, ausdrücklich **Änderungen signiert speichern** und neuen Stand exportieren.
 2. Falls das betreffende Projekt einen bestehenden Gruppen-Vault hat: dessen **Gruppenempfänger explizit abgleichen**. Eine bloße Gruppenänderung entfernt noch keine alten verschlüsselten Empfänger aus vorhandenen Vaultkopien.
-3. **Kollege:** Neuen Stand über **Registrierte Gruppen aktualisieren** übernehmen; den aktuellen Test-Vault erneut prüfen. Erwartung: Der entzogene Zugang ist abgewiesen. Eine absichtlich aufbewahrte **alte Offline-Kopie kann weiterhin zugänglich sein** – das ist eine dokumentierte Grenze, keine Fernsperre.
+3. **Kollege:** Neuen Stand über **2 · Teamzugriff und Offline-Gruppen → Aktualisierten Gruppenstand importieren** übernehmen; den aktuellen Test-Vault erneut prüfen. Erwartung: Der entzogene Zugang ist abgewiesen. Eine absichtlich aufbewahrte **alte Offline-Kopie kann weiterhin zugänglich sein** – das ist eine dokumentierte Grenze, keine Fernsperre.
 4. Nur falls im Testplan vorgesehen, Freigabe wiederherstellen und nach erneutem signiertem Export/Import prüfen.
 
 **Rückmeldung:** „Entzug OK“ oder genaue Fehlermeldung. Keine Kunden- oder Produktivkarten.
