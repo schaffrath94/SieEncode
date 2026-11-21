@@ -88,14 +88,19 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
     }
 
     /// <summary>
-    /// Encrypted latest copy for a future authenticated sync endpoint. Caller
-    /// MUST authenticate/authorize the recipient; this core method is not an API.
+    /// Return an encrypted snapshot only after proving private member-key
+    /// possession against the pinned active group directory. A network server
+    /// must additionally require authenticated TLS and replay protection.
     /// </summary>
-    public SignedKeyLibrarySync? ReadEncryptedSnapshotForAuthorizedTransport()
+    public SignedKeyLibrarySync ReadEncryptedSnapshot(
+        SignedKeyLibraryDownload request, DateTimeOffset now)
     {
-        var accepted = Read().State.Accepted;
-        return accepted is null ? null : new(
-            accepted.Claim.ToArray(), accepted.Signature.ToArray(),
+        var state = Read().State;
+        if (state.Accepted is null)
+            throw new FileNotFoundException("Noch kein zentral freigegebener verschlüsselter Bibliotheksstand.");
+        KeyLibraryDownloadAuthorization.Verify(request, Head(state), state.Enrollment, now);
+        var accepted = state.Accepted;
+        return new(accepted.Claim.ToArray(), accepted.Signature.ToArray(),
             accepted.EncryptedVault.ToArray());
     }
 
