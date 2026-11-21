@@ -7,8 +7,26 @@
 1. **Keine SAM-Pflicht:** Vorhandene übliche Kartenleser bleiben die Zielhardware. Neue SAM-Geräte werden für 1.0 nicht vorausgesetzt.
 2. **Keine dauerhafte Internet-/Serververbindung:** Kodierung, Kartenuntersuchung und notwendige Schlüsselverwaltung funktionieren mit einem zuvor freigegebenen Offline-Bestand. Synchronisation erfolgt bei Gelegenheit; signierte, verschlüsselte Transportpakete über einen vertrauenswürdigen Datenträger sind als Alternative vorzusehen.
 3. **Schlüssel dürfen und müssen autorisiert im Klartext angezeigt, kopiert und exportiert werden können**, nicht nur für Kartenschreibvorgänge, sondern z. B. für die Konfiguration von SIPORT. „Schlüssel niemals ausgeben“ ist **kein** zulässiges Produktziel.
-4. **Zentrale Autorität für Verwaltung:** Kunden, Schlüsselsätze, Key-Versionen, Projekte, Mitarbeiter, Geräte, Rechte, Historie und Freigaben werden aus einer verantwortlichen zentralen Schlüsselbibliothek verwaltet. Die Zentrale ist *Quelle der Wahrheit*, nicht zwangsläufig während jeder Kartenoperation erreichbar.
+4. **Einzige Bedienoberfläche ist SieEncode Studio:** Kunden, Schlüsselsätze, Versionen, Projekte, Personen, Geräte, Rechte, Historie und Freigaben werden **ausschließlich in SieEncode** angelegt, bearbeitet, geprüft und freigegeben. Die zentrale Schlüsselbibliothek ist ein **headless Hintergrunddienst** für autorisierte Speicherung, Synchronisation, Revisions-/Konfliktprüfung und Audit – ausdrücklich **kein separates Admin-Webportal** und kein zweites Programm zur Datenpflege. Die Zentrale ist die autoritative Quelle des synchronisierten Bestandes, ohne während jeder Kartenoperation erreichbar zu sein.
 5. **Keine falsche sofortige Sperrgarantie:** Eine Person, die einen Schlüssel bereits im Klartext erhalten hat oder einen früher entschlüsselbaren Offline-Vault besitzt, kann diese Kenntnis unabhängig von späterer Sperre behalten. Soft-Expiry, lokale Richtlinien und späterer Import neuer Gruppenrevisionen verhindern das nicht gegen einen bewusst manipulierenden ehemaligen Mitarbeiter.
+
+## Entwicklungsstand: erstmalige Version 1.0
+
+**SieEncode wurde noch nie produktiv veröffentlicht.** Daher keine Altversionskompatibilität, keinen Import angeblich veröffentlichter früherer SieEncode-Projekte, keine Vault-Migration und keine Parallelhaltung alter Datenmodelle als Releasevoraussetzung planen. Wir dürfen die derzeitigen **internen** Projekt-/Vault-Datenformate vor 1.0 gezielt ändern und konsolidieren. Vorhandene nützliche Implementierungen (Projekteditor, AES-GCM-/Zertifikats-/Recovery-Funktionen, RFiDGear-Integration) werden **wiederverwendet**, nicht ohne Grund neu geschrieben.
+
+**„Nichts absichern bis zur Fertigstellung“ gilt für künstliche Kompatibilitäts- und Zwischenreleasepflichten**, nicht für Datenschutz, Kryptografiekorrektheit, bewusste Schlüsseländerungen, Tests, Backups oder sichere Kartenoperationen. Bei der ersten 1.0-Freigabe muss das neue Format selbst zuverlässig sein.
+
+## Bedien- und Speichertrennung: nur ein SieEncode
+
+| Baustein | Aufgabe | Bedienoberfläche |
+|---|---|---|
+| **SieEncode Studio** | Kunden, Schlüssel/Versionen, Projekte, Gruppen, Mitglieder, Rechte und Recovery verwalten; Schlüssel anzeigen/kopieren/exportieren; Kartenvorgänge und Konflikte entscheiden | **Einzige Anwendung mit UI** |
+| **Lokaler SieEncode-Vault** | Vollständige verschlüsselte Offline-Bibliothek des berechtigten Hauptverwalters, lokale Entwürfe und zuletzt bestätigter synchronisierter Stand | Über dieselbe SieEncode-Oberfläche |
+| **Zentraler SieEncode-Dienst** | Authentisierte API, verschlüsselte zentrale Datenhaltung, autoritative Revisionen, Zugriffsprüfung, Änderungsannahme, Konfliktrückgabe, Synchronisation, Audit und Backup | **Keine eigene UI**, keine zweite Personen-/Schlüsselverwaltung |
+
+**Ablauf:** Der Mitarbeiter erstellt oder ändert Daten in SieEncode. Bei Verbindung schickt **dieselbe Anwendung** die autorisierte Änderung an den Dienst; dieser prüft Rolle, Kundenzuständigkeit, Ausgangsrevision und Konflikte, übernimmt die Änderung atomar und veröffentlicht eine neue Revision. Bei Offline-Arbeit entsteht ein **lokaler, deutlich gekennzeichneter Änderungsentwurf**; die Anwendung synchronisiert ihn später. Vor serverseitiger Bestätigung darf der Entwurf **nicht** als bereits zentrale Wahrheit erscheinen. Bei Konflikten wird **in SieEncode** eine verständliche Entscheidung verlangt, kein „Admin muss noch ins Serverportal“.
+
+Die Zentrale darf intern Berechtigungen und Konsistenz durchsetzen, aber **nicht** die Pflegeoberfläche oder einen zweiten Satz konkurrierender Geschäftsregeln mit eigener UI bereitstellen. Bei Erstinbetriebnahme und administrativer Schlüsselübergabe bleiben kontrollierte sichere Bootstrap-/Recovery-Prozesse notwendig; auch diese werden soweit möglich **aus SieEncode** bedient, nicht über ein normales Admin-Webinterface.
 
 ## Zentrales Datenmodell (fachlich, noch nicht implementiert)
 
