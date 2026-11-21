@@ -17,6 +17,8 @@ public sealed class ProjectSection
     public Guid? Id { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ProjectGroupVaultBinding? GroupVault { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ProjectKeyLibrarySelection? KeyLibrary { get; set; }
     public string Name { get; set; } = "";
     public string OutputDirectory { get; set; } = "";
     public List<string> Build { get; set; } = [];
