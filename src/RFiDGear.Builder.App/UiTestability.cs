@@ -92,17 +92,21 @@ public partial class MainWindow
         {
             ExpertModeToggle.IsChecked = expert;
             UpdateLayout();
-            if (!TestAnalyzeCardButton.IsVisible || !TestAnalysisTree.IsVisible ||
-                additional.Any(control => control.IsVisible != expert) || TestMaintenanceActions.IsVisible != expert)
+            if (!TestAnalyzeCardButton.IsVisible || !TestInspectionResultBorder.IsVisible ||
+                TestInspectionDetails.IsExpanded || TestDeepAnalyzeButton.IsVisible ||
+                additional.Where(control => control != TestDeepAnalyzeButton).Any(control => control.IsVisible != expert) ||
+                TestMaintenanceActions.IsVisible != expert)
                 throw new InvalidOperationException($"Teststationsansicht fehlerhaft (Expertenmodus {expert}).");
         }
-        var section = DescendantsAndSelf(PageTestStation).OfType<Expander>()
-            .Single(item => Equals(item.Header, "Weitere Analyse und Berichte"));
-        section.SetCurrentValue(Expander.IsExpandedProperty, true);
+        TestAdditionalAnalysis.SetCurrentValue(Expander.IsExpandedProperty, true);
+        TestInspectionDetails.IsExpanded = true;
         UpdateLayout();
-        if (!TestDeepAnalyzeButton.IsVisible || !TestOpenInventoryPdfButton.IsVisible)
-            throw new InvalidOperationException("Analyseaktionen im Normalmodus nicht aufklappbar.");
-        Console.WriteLine("PASS: Standard, Experte, zurueck zu Standard, Berichte aufklappen.");
+        if (!TestOpenRecognitionResultButton.IsVisible || !TestOpenInventoryPdfButton.IsVisible ||
+            !TestAnalysisTree.IsVisible || !TestInspectionState.IsVisible)
+            throw new InvalidOperationException("Kartenbefund oder Berichte im Normalmodus nicht aufklappbar.");
+        TestInspectionDetails.IsExpanded = false;
+        TestAdditionalAnalysis.IsExpanded = false;
+        Console.WriteLine("PASS: Standard, Experte, zurueck zu Standard, Ergebnisübersicht, Kartendetails und Berichte aufklappen.");
     }
 #endif
     public string RunUiSmokeTest()
@@ -120,6 +124,7 @@ public partial class MainWindow
         VerifyDesignContract(checks);
         VerifyProjectUxHierarchyContract(checks);
         VerifyStationOperatorUiContract(checks);
+        VerifyCardInspectionPresentationContract(checks);
         VerifyOperatingModeContract(checks);
         VerifyPreflightPresentationContract(checks);
         VerifyNavigationContract(checks);
@@ -474,6 +479,54 @@ public partial class MainWindow
             throw new InvalidOperationException("F9-Zustandsregel gibt einen laufenden oder nicht vorbereiteten Datensatz frei.");
 
         checks.Add("Kodierstation: getrennte Kartenprüfung/Vorbereitung/Kodierung; zusätzliche Aktionen eingeklappt; technischer Nachweis erreichbar; höchstens eine Hauptaktion und keine Readback-Prüfung vor einem Lauf. Neuer Datensatz/F9 bleibt während eines laufenden Hostprozesses gesperrt. UI-Vertrag ohne Hardwarelauf.");
+    }
+
+    private void VerifyCardInspectionPresentationContract(List<string> checks)
+    {
+        // Synthetic data only. This tests the presentation boundary, not a real reader/card.
+        var unconfirmed = new CardRecognitionReport("UNKNOWN", "UNBEKANNT", "UNBEKANNT",
+            [], [], [], "AID-Inventur nicht vollständig.", "Kartenstatus prüfen.", true, "synthetic");
+        var confirmedEmpty = new CardRecognitionReport("RECOGNIZED", "LEER", "UNBEKANNT",
+            [], [], [], "Vollständige Inventur: keine AIDs.", "Erst den PICC-Schlüsselstatus klären.", true, "synthetic");
+        var populated = new CardRecognitionReport("RECOGNIZED", "BELEGT", "UNBEKANNT",
+            ["A1B2C3"], [], [], "Vollständige Inventur: 1 Application.", "Fileanalyse bei Bedarf.", true, "synthetic");
+        var inconsistent = confirmedEmpty with { ApplicationIds = ["A1B2C3"] };
+        var unsafeReport = confirmedEmpty with { ReadOnly = false };
+        if (HasConfirmedEmptyInventory(unconfirmed) || HasConfirmedEmptyInventory(inconsistent) ||
+            HasConfirmedEmptyInventory(unsafeReport) || !HasConfirmedEmptyInventory(confirmedEmpty))
+            throw new InvalidOperationException("Unvollständige/nicht lesende Erkennung wird als leere Karte angezeigt.");
+        var unknownState = DescribeCardInspection(unconfirmed);
+        var emptyState = DescribeCardInspection(confirmedEmpty);
+        var populatedState = DescribeCardInspection(populated);
+        if (unknownState.Complete || !unknownState.Title.Contains("UNGEKLÄRT", StringComparison.Ordinal) ||
+            !unknownState.NextAction.Contains("Keine Formatierung", StringComparison.Ordinal) ||
+            !emptyState.Complete || !emptyState.Title.Contains("0 APPLICATIONS", StringComparison.Ordinal) ||
+            !populatedState.Complete || !populatedState.Title.Contains("1 APPLICATION", StringComparison.Ordinal) ||
+            DescribeCardInspection(inconsistent).Complete || DescribeCardInspection(unsafeReport).Complete)
+            throw new InvalidOperationException("Kartenübersicht verwechselt bestätigte Inventur mit unbekanntem Zustand.");
+
+        try
+        {
+            PopulateTestAnalysisTree(unconfirmed);
+            var root = TestAnalysisTree.Items.OfType<TreeViewItem>().Single();
+            var headers = root.Items.OfType<TreeViewItem>().Select(node => node.Header?.ToString() ?? "").ToArray();
+            if (headers.Any(header => header.StartsWith("0 Applications", StringComparison.Ordinal)) ||
+                !headers.Any(header => header.Contains("Kartenbelegung unbekannt", StringComparison.Ordinal)))
+                throw new InvalidOperationException("Unvollständige Inventur erscheint als leerer Transponder im Detailbaum.");
+            PopulateTestAnalysisTree(confirmedEmpty);
+            root = TestAnalysisTree.Items.OfType<TreeViewItem>().Single();
+            if (!root.Items.OfType<TreeViewItem>().Any(node =>
+                    node.Header?.ToString()?.Contains("0 Applications", StringComparison.Ordinal) == true))
+                throw new InvalidOperationException("Bestätigt leere Karte fehlt im technischen Befund.");
+        }
+        finally
+        {
+            TestAnalysisTree.Items.Clear();
+            TestAnalysisTree.Items.Add(new TreeViewItem { Header = "Noch kein Transponder analysiert", IsExpanded = true });
+        }
+        if (TestInspectionDetails.IsExpanded || TestAdditionalAnalysis.IsExpanded)
+            throw new InvalidOperationException("Kartendetails/Berichte sind im Standard-Startzustand nicht eingeklappt.");
+        checks.Add("Kartenuntersuchung: nur vollständige read-only Inventur darf 0 Applications als leer anzeigen; unbekannt und widersprüchlich fail-closed, Expertennachweise bleiben aufklappbar. Synthetische UI-Prüfung vorgemerkt.");
     }
 
     private void VerifyConstrainedLayoutContract(List<string> checks)
