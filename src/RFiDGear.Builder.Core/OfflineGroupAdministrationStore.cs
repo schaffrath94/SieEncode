@@ -27,6 +27,26 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         finally { CryptographicOperations.ZeroMemory(privateKey); }
     }
 
+    /// <summary>
+    /// Require possession of the private signing authority AND an exact match
+    /// with this Windows user's independently registered public trust checkpoint.
+    /// A member certificate capable of decrypting a Vault is not administration.
+    /// </summary>
+    public GroupPolicyCheckpoint RequireLocalAuthority(OfflineGroupTrustStore trust)
+    {
+        ArgumentNullException.ThrowIfNull(trust);
+        var own = ExportPublic(); // Proves protected private signing-key possession.
+        var registered = trust.ExportPublic();
+        var signed = GroupEnrollmentPackages.Validate(own);
+        var pinned = GroupEnrollmentPackages.Validate(registered);
+        if (registered.LibraryId != libraryId ||
+            !own.AdministratorPublicKey.SequenceEqual(registered.AdministratorPublicKey) ||
+            signed.Checkpoint != pinned.Checkpoint)
+            throw new CryptographicException(
+                "Lokaler signierter Verwaltungsstand und bestätigte Gruppenregistrierung stimmen nicht überein.");
+        return signed.Checkpoint;
+    }
+
     public GroupEnrollmentPackage ExportPublic()
     {
         var (state, _) = Load();
