@@ -1915,6 +1915,14 @@ public partial class MainWindow : Window
                 ClearCompletedLaunch(completedLaunch);
                 RefreshOperationButtons();
             }
+            StationState.Text = "DATENSATZ ALS FEHLER ABGESCHLOSSEN";
+            StationStateDetail.Text = "Kein Kartenerfolg bestätigt. Der vorbereitete Datensatz wurde gesperrt und als Fehler protokolliert.";
+            StationStateBorder.Background = System.Windows.Media.Brushes.MistyRose;
+            SetStationGuidance("DATENSATZ ALS FEHLER ABGESCHLOSSEN",
+                "Der Bediener hat diesen Datensatz ausdrücklich als fehlgeschlagen bewertet. Ein bereits möglicherweise veränderter Transponder darf nicht ungeprüft erneut kodiert werden.",
+                "Kartenstatus bei Unsicherheit zuerst nur lesend prüfen. Erst danach die Fehlernummer bewusst erneut versuchen oder überspringen.",
+                "Manueller F9-Abschluss · kein Erfolgs- oder Kartenfreigabenachweis", System.Windows.Media.Brushes.MistyRose);
+            SetStatus("Kodierdatensatz als Fehler abgeschlossen · keine Kartenfreigabe bestätigt.", true);
         }
         catch (Exception exception) { ShowError(exception); }
     }
@@ -1951,6 +1959,12 @@ public partial class MainWindow : Window
             AdvanceSeriesInput();
             UpdateSeriesUi();
             UpdateSeriesCounts();
+            StationFailureOptions.IsExpanded = false;
+            SetStationGuidance("FEHLERNUMMER BEWUSST ÜBERSPRUNGEN",
+                "Die betreffende Nummer wurde als übersprungen dokumentiert – ausdrücklich nicht als erfolgreich kodiert.",
+                "Nächste Karte zuerst prüfen. Neue Kartendaten erst nach dem sicheren Abschluss der vorherigen Aktion bereitstellen.",
+                "Serienprotokoll: übersprungen · kein Kartenerfolg", System.Windows.Media.Brushes.LemonChiffon);
+            SetStatus("Fehlernummer bewusst übersprungen · nicht als Erfolg verbucht.");
         }
         catch (Exception exception) { ShowError(exception); }
     }
@@ -2014,6 +2028,11 @@ public partial class MainWindow : Window
             StationExportButton.IsEnabled = false;
             StationState.Text = "SITZUNG GESCHLOSSEN";
             StationStateDetail.Text = $"Zusammenfassung gespeichert: {files.TextPath}";
+            SetStationGuidance("SITZUNG ABGESCHLOSSEN",
+                "Die Sitzung wurde beendet und ihre Zusammenfassung gespeichert. Die bisherigen Erfolgs- und Fehlerergebnisse bleiben unverändert protokolliert.",
+                "Für eine weitere Sitzung ein geeignetes Projekt wählen und den Kartenstatus erneut prüfen.",
+                $"{files.Successful} erfolgreich · {files.Failed} fehlgeschlagen · {files.Skipped} übersprungen",
+                files.Failed == 0 && files.Skipped == 0 ? System.Windows.Media.Brushes.Honeydew : System.Windows.Media.Brushes.LemonChiffon);
             SetStatus($"Kodiersitzung geschlossen · {files.Successful} erfolgreich · {files.Failed} Fehler · {files.Skipped} übersprungen.");
         }
         catch (Exception exception) { ShowError(exception); }
