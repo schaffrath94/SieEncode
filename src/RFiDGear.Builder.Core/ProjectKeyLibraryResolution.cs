@@ -169,6 +169,29 @@ public static class ProjectKeyLibraryResolution
         return required;
     }
 
+    /// <summary>
+    /// Persisted project definitions with central bindings must never contain
+    /// even one raw key. Used by ProjectJson.Load and both Save overloads.
+    /// </summary>
+    public static void EnsureSafeStoredProject(ProjectDefinition project)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        var binding = project.Project.KeyLibrary;
+        if (binding is null) return;
+        if (project.Project.GroupVault is not null || binding.LibraryId == Guid.Empty ||
+            binding.CustomerId == Guid.Empty || binding.Bindings is null || binding.Bindings.Length == 0)
+            throw new InvalidDataException("Ungültige doppelte Vault-Bindung oder leere Bibliotheksreferenzen.");
+        var slots = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var item in binding.Bindings)
+        {
+            if (item is null || item.Slot is not { Length: > 0 and <= 160 } ||
+                item.Slot.Any(char.IsWhiteSpace) || !slots.Add(item.Slot) ||
+                item.Key is null || item.Key.KeyId == Guid.Empty || item.Key.Version < 1)
+                throw new InvalidDataException("Ungültiger oder doppelter Schlüsselplatz in gespeicherter Projektdefinition.");
+        }
+        EnsureNoEmbeddedSecrets(project);
+    }
+
     private static void EnsureNoEmbeddedSecrets(ProjectDefinition project)
     {
         if (!string.IsNullOrWhiteSpace(project.Transport.PiccKey?.Value) ||
