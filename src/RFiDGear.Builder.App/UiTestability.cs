@@ -424,7 +424,15 @@ public partial class MainWindow
             !keyContents.Contains(EditorDeleteInitialKeySetButton) || keyOptions.IsExpanded)
             throw new InvalidOperationException("Verwaltung der Ausgangsschlüsselsätze überlädt weiterhin den Hauptablauf.");
 
-        checks.Add("Projektbedienung: Haupt- und Löschaktionen getrennt, seltene Schlüsselverwaltung eingeklappt, Projektbereitschaft und nächster Schritt vor dem Editorformular.");
+        var primaryStyle = TryFindResource("PrimaryButton");
+        var editorMainActions = new[]
+        {
+            EditorBindProfilesButton, EditorGenerateKeysButton, EditorUnlockVaultButton,
+            EditorSaveVaultButton, EditorManageVaultAccessButton, EditorBuildButton
+        };
+        if (editorMainActions.Count(button => Equals(button.Style, primaryStyle)) > 1)
+            throw new InvalidOperationException("Projekteditor zeigt mehrere konkurrierende Hauptaktionen.");
+        checks.Add("Projektbedienung: Haupt- und Löschaktionen getrennt, seltene Schlüsselverwaltung eingeklappt, Projektbereitschaft vor dem Formular, höchstens eine hervorgehobene Editoraktion.");
     }
 
     private void VerifyConstrainedLayoutContract(List<string> checks)
