@@ -77,6 +77,38 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
     }
 
+    /// <summary>
+    /// Sign the precise encrypted Vault bytes for an offline or future HTTPS
+    /// central transfer. This does not upload or accept anything centrally.
+    /// </summary>
+    public SignedKeyLibrarySync SignEncryptedCentralSync(OfflineGroupTrustStore trust,
+        string groupId, CentralKeyLibraryHead expected, byte[] encryptedVault)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+        if (expected.LibraryId != libraryId)
+            throw new CryptographicException("Zentrale Revisionsantwort gehört zu einer anderen Bibliothek.");
+        var checkpoint = RequireLocalAuthority(trust);
+        if (expected.Policy != checkpoint)
+            throw new CryptographicException("Zentrale und lokale Gruppenrichtlinie stimmen nicht überein.");
+        var claim = KeyLibrarySyncTransport.Prepare(trust.ExportPublic(), groupId,
+            expected.CentralRevision, expected.CiphertextSha256, encryptedVault);
+        var (state, revision) = Load();
+        try
+        {
+            using var administrator = OpenKey(state);
+            if (OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId).Checkpoint != checkpoint ||
+                ConcurrentFileWriter.Capture(path) != revision ||
+                trust.LoadOffline().Checkpoint != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            var signed = KeyLibrarySyncTransport.Sign(claim, encryptedVault, administrator);
+            if (ConcurrentFileWriter.Capture(path) != revision ||
+                trust.LoadOffline().Checkpoint != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            return signed;
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     public GroupEnrollmentPackage ExportPublic()
     {
         var (state, _) = Load();
