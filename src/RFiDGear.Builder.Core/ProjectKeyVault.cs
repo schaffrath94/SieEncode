@@ -142,7 +142,7 @@ public static class ProjectKeyVault
             pair => pair.Key,
             pair => pair.Value.ToList(),
             StringComparer.OrdinalIgnoreCase);
-        if (project.Project.KeyLibrary is not null)
+        if (project.TransientKeyLibraryResolution || project.Project.KeyLibrary is not null)
         {
             // Transient decrypted copy only. Never persist it as a project.
             clone.Project.KeyLibrary = null;
