@@ -203,7 +203,7 @@ public static class KeyLibraryVaultStore
         });
     }
 
-    private static void ValidateImmutableHistory(KeyLibraryVaultPayload previous, KeyLibraryVaultPayload next)
+    internal static void ValidateImmutableHistory(KeyLibraryVaultPayload previous, KeyLibraryVaultPayload next)
     {
         var currentEntries = KeyLibraryContracts.Validate(next.Catalog);
         var newValues = next.Secrets.ToDictionary(item => item.Key, item => item.HexValue);
