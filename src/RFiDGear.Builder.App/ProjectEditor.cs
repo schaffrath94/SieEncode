@@ -535,6 +535,8 @@ public partial class MainWindow
             EditorAuditVaultButton.IsEnabled = false;
             EditorGroupRecoveryButton.IsEnabled = false;
             EditorGroupRecoveryButton.Visibility = Visibility.Collapsed;
+            EditorSaveVaultButton.Visibility = settings.ExpertMode ? Visibility.Visible : Visibility.Collapsed;
+            HighlightEditorNextAction(null);
             return;
         }
 
@@ -559,6 +561,11 @@ public partial class MainWindow
         EditorGroupRecoveryButton.Visibility = IsEditorGroupVault ? Visibility.Visible : Visibility.Collapsed;
         EditorGroupRecoveryButton.IsEnabled = vaultExists && IsEditorGroupVault;
         EditorSaveVaultButton.IsEnabled = keysLoaded && existingDefinition;
+        // Ordinary group-vault updates must be saveable without switching to expert mode.
+        // Other specialist vault actions keep the previous expert-mode requirement.
+        EditorSaveVaultButton.Visibility = settings.ExpertMode ||
+            (IsEditorGroupVault && keysLoaded && existingDefinition && !editorKeysPersisted)
+                ? Visibility.Visible : Visibility.Collapsed;
         EditorSaveVaultButton.Content = editorVaultVersion >= KeyVaultService.CertificateVersion
             ? "Vault-Änderungen sicher speichern"
             : "Einzelbenutzer-Vault speichern";
@@ -588,6 +595,36 @@ public partial class MainWindow
                 ? "Bereit: Sicher prüfen. Produktive RFiDGear-Dateien entstehen nur in einer lokalen, kurzlebigen Sitzung."
                 : "Bereit im Einzelbenutzermodus. Für den gemeinsamen Einsatz bitte Mehrbenutzerzugriff einrichten.";
         EditorBuildButton.IsEnabled = profilesOk && valuesOk && keysSafe;
+
+        // One visually emphasized *next* action, never several competing primaries.
+        // Do not highlight key replacement for an existing project without its original vault:
+        // that would suggest a destructive migration is the routine next step.
+        Button? nextAction =
+            !profilesOk ? (EditorBindProfilesButton.IsEnabled ? EditorBindProfilesButton : null) :
+            fieldIssues.Length > 0 || !valuesOk ? null :
+            !keysLoaded && vaultExists ? EditorUnlockVaultButton :
+            !keysLoaded && !existingDefinition ? EditorGenerateKeysButton :
+            !keysLoaded ? null :
+            editorGroupRecovery ? EditorUnlockVaultButton :
+            !editorKeysPersisted && IsEditorGroupVault ? EditorSaveVaultButton :
+            !editorVaultVerified && vaultExists ? EditorUnlockVaultButton :
+            !editorKeysPersisted && existingDefinition ? EditorManageVaultAccessButton :
+            keysSafe ? EditorBuildButton : null;
+        HighlightEditorNextAction(nextAction);
+    }
+
+    private void HighlightEditorNextAction(Button? nextAction)
+    {
+        var normal = (Style)FindResource(typeof(Button));
+        var primary = (Style)FindResource("PrimaryButton");
+        var buttons = new[]
+        {
+            EditorBindProfilesButton, EditorGenerateKeysButton, EditorUnlockVaultButton,
+            EditorSaveVaultButton, EditorManageVaultAccessButton, EditorBuildButton
+        };
+        foreach (var button in buttons)
+            button.Style = ReferenceEquals(button, nextAction) && button.IsEnabled &&
+                button.Visibility == Visibility.Visible ? primary : normal;
     }
 
     private void CaptureEditorControls(bool includeProfiles = true)
