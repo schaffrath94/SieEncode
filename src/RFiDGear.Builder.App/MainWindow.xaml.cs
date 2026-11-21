@@ -317,6 +317,10 @@ public partial class MainWindow : Window
             report.Recommendation, true);
     }
 
+    private static bool CanInspectApplicationFiles(CardRecognitionReport? report)
+        => report is { ReadOnly: true, State: "RECOGNIZED", ApplicationIds.Count: > 0 } &&
+            DescribeCardInspection(report).Complete;
+
     private void SetTestInspectionPresentation(string title, string detail, string nextAction,
         System.Windows.Media.Brush background)
     {
@@ -768,7 +772,7 @@ public partial class MainWindow : Window
         TestFormatCardButton.IsEnabled = operationAvailable && autorun;
         TestDeepAnalyzeButton.IsEnabled = operationAvailable && autorun &&
             rfidgearCapabilities?.Has(RFiDGearCapabilityId.ApplicationFileInventory) == true &&
-            lastCardRecognitionReport?.Report is { State: "RECOGNIZED", ReadOnly: true, ApplicationIds.Count: > 0 };
+            CanInspectApplicationFiles(lastCardRecognitionReport?.Report);
         TestDeepAnalyzeButton.Visibility = TestDeepAnalyzeButton.IsEnabled ? Visibility.Visible : Visibility.Collapsed;
         TestOpenRecognitionResultButton.IsEnabled = File.Exists(lastTestReportPath);
         TestOpenRecognitionResultButton.Visibility = TestOpenRecognitionResultButton.IsEnabled
@@ -858,8 +862,9 @@ public partial class MainWindow : Window
         try
         {
             RequireNoRunningRFiDGear("Eine vertiefte Analyse kann nicht gestartet werden.");
-            if (lastCardRecognitionReport?.Report is not { State: "RECOGNIZED", ApplicationIds.Count: > 0 } recognition)
-                throw new InvalidOperationException("Zuerst den Transponder analysieren und seine AID-Liste erfolgreich ermitteln.");
+            if (lastCardRecognitionReport?.Report is not { } recognition ||
+                !CanInspectApplicationFiles(recognition))
+                throw new InvalidOperationException("Zuerst den Transponder vollständig und nur lesend untersuchen. Ohne bestätigte AID-Inventur darf keine vertiefte Application-Auswertung aus einem unklaren Befund gestartet werden.");
             var capabilities = new RFiDGearCapabilityInspector().Inspect(settings.RFiDGear.ExecutablePath);
             if (!capabilities.Has(RFiDGearCapabilityId.ApplicationFileInventory))
                 throw new InvalidOperationException("Die konfigurierte Runtime besitzt keine ausführbare Application-/File-Inventur.");
