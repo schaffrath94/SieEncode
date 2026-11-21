@@ -36,8 +36,10 @@ public static class KeyLibrarySyncClient
             localPolicy, groupId, ownIdentities);
         if (library.Catalog.LibraryId != remoteHead.LibraryId)
             throw new CryptographicException("Lokaler Bibliotheksinhalt hat eine falsche Identität.");
+        if (library.Catalog.Revision <= remoteHead.CatalogRevision)
+            throw new InvalidDataException("Lokale Bibliotheksrevision ist nicht neuer als der zentral bestätigte Katalogstand.");
         var signed = administration.SignEncryptedCentralSync(trust, groupId,
-            remoteHead, encrypted);
+            remoteHead, library.Catalog.Revision, encrypted);
         if (ConcurrentFileWriter.Capture(path) != expected)
             throw new ConcurrentFileChangeException(path);
         return signed;
@@ -65,11 +67,14 @@ public static class KeyLibrarySyncClient
             claim.GroupId != groupId ||
             claim.NextCiphertextSha256 != verifiedRemoteHead.CiphertextSha256 ||
             claim.ExpectedCentralRevision + 1 != verifiedRemoteHead.CentralRevision ||
-            verifiedRemoteHead.GroupId != groupId)
+            verifiedRemoteHead.GroupId != groupId ||
+            claim.CatalogRevision != verifiedRemoteHead.CatalogRevision)
             throw new CryptographicException("Heruntergeladener Schlüsselstand stimmt nicht mit der bestätigten zentralen Revision überein.");
 
         var next = KeyLibraryVault.Unprotect(GroupVaultService.Read(transfer.EncryptedVault),
             policy, groupId, ownIdentities);
+        if (next.Catalog.Revision != claim.CatalogRevision)
+            throw new CryptographicException("Signierte Katalogrevision passt nicht zur entschlüsselten Bibliothek.");
         var path = Path.GetFullPath(localVaultPath);
         if (ConcurrentFileWriter.Capture(path) != expectedLocalFile)
             throw new ConcurrentFileChangeException(path);
