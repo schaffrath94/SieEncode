@@ -10,6 +10,28 @@ public sealed record KeyLibraryEditResult(KeyLibraryVaultPayload Next, KeyLibrar
 /// </summary>
 public static class KeyLibraryEditing
 {
+    /// <summary>Add a customer to the same encrypted library, not a separate customer database.</summary>
+    public static (KeyLibraryVaultPayload Next, KeyLibraryCustomer Customer) AddCustomer(
+        KeyLibraryVaultPayload current, string name)
+    {
+        ValidateCurrent(current);
+        if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > 200 ||
+            name.Any(char.IsControl))
+            throw new InvalidDataException("Kundenname fehlt oder ist ungültig.");
+        name = name.Trim();
+        if (current.Catalog.Customers.Any(item =>
+            string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidDataException("Dieser Kunde ist bereits vorhanden.");
+        var customer = new KeyLibraryCustomer(Guid.NewGuid(), name);
+        var next = current with { Catalog = current.Catalog with
+        {
+            Revision = NextRevision(current),
+            Customers = [.. current.Catalog.Customers, customer]
+        } };
+        KeyLibraryVault.Validate(next);
+        return (next, customer);
+    }
+
     public static KeyLibraryEditResult ImportNew(KeyLibraryVaultPayload current, Guid customerId,
         string name, string keyType, string purpose, string hostSystem, string hexValue)
     {
