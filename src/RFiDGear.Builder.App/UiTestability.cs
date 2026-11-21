@@ -119,6 +119,7 @@ public partial class MainWindow
         VerifyAutomationContract(checks);
         VerifyDesignContract(checks);
         VerifyProjectUxHierarchyContract(checks);
+        VerifyStationOperatorUiContract(checks);
         VerifyOperatingModeContract(checks);
         VerifyPreflightPresentationContract(checks);
         VerifyNavigationContract(checks);
@@ -433,6 +434,38 @@ public partial class MainWindow
         if (editorMainActions.Count(button => Equals(button.Style, primaryStyle)) > 1)
             throw new InvalidOperationException("Projekteditor zeigt mehrere konkurrierende Hauptaktionen.");
         checks.Add("Projektbedienung: Haupt- und Löschaktionen getrennt, seltene Schlüsselverwaltung eingeklappt, Projektbereitschaft vor dem Formular, höchstens eine hervorgehobene Editoraktion.");
+    }
+
+    private void VerifyStationOperatorUiContract(List<string> checks)
+    {
+        // Assertions only. No reader, card, vault, filesystem mutation or launch.
+        // The two explicit writing operations retain their own event handlers.
+        if (StationMasteringStep.IsExpanded || StationAdditionalReadOnlyActions.IsExpanded ||
+            StationProjectMoreActions.IsExpanded || StationFailureOptions.IsExpanded)
+            throw new InvalidOperationException("Kodierstation klappt seltene oder potenziell schreibende Aktionen unaufgefordert auf.");
+        if (StationGuidanceEvidencePanel is null ||
+            !DescendantsAndSelf(StationGuidanceEvidencePanel).Contains(StationGuidanceEvidence))
+            throw new InvalidOperationException("Technischer Laufnachweis ist nicht mehr erreichbar.");
+        var extraReadOnly = DescendantsAndSelf(StationAdditionalReadOnlyActions).ToHashSet();
+        var optionalPreparation = DescendantsAndSelf(StationMasteringStep).ToHashSet();
+        var errorOptions = DescendantsAndSelf(StationFailureOptions).ToHashSet();
+        if (!extraReadOnly.Contains(StationReadProjectContentButton) ||
+            !optionalPreparation.Contains(StationMasteringAutoButton) ||
+            !errorOptions.Contains(StationRetryButton) || !errorOptions.Contains(StationSkipButton))
+            throw new InvalidOperationException("Kodierstation hat wichtige Zusatzaktionen verloren.");
+
+        var stationActions = new[]
+        {
+            StationPreflightButton, StationRecognitionButton, StationLegacyTransportButton,
+            StationMasteringAutoButton, StationPrepareButton, StationStartAutoModeButton,
+            StationCheckReadbacksButton, StationExportButton
+        };
+        if (stationActions.Count(button => Equals(button.Style, TryFindResource("PrimaryButton"))) > 1)
+            throw new InvalidOperationException("Kodierstation bietet mehrere gleichrangige Hauptaktionen gleichzeitig.");
+        if (preparedSession is null && Equals(StationStartAutoModeButton.Style, TryFindResource("PrimaryButton")))
+            throw new InvalidOperationException("Kodierstart ohne vorbereiteten Datensatz hervorgehoben.");
+
+        checks.Add("Kodierstation: getrennte Kartenprüfung/Vorbereitung/Kodierung; zusätzliche Aktionen eingeklappt; technischer Nachweis erreichbar; maximal eine sichtbare Hauptaktion, niemals ein Kodierstart ohne vorbereiteten Datensatz. UI-Vertrag ohne Hardwarelauf.");
     }
 
     private void VerifyConstrainedLayoutContract(List<string> checks)
