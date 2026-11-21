@@ -7,6 +7,7 @@ internal static class OfflineGroupMatrixWorkflowTests
     public static void Verify()
     {
         var directory = Path.Combine(Path.GetTempPath(), "SieEncode-matrix-" + Guid.NewGuid().ToString("N"));
+        var privateBackupRoot = directory + "-private-history";
         Directory.CreateDirectory(directory);
         using var administrator = RSA.Create(3072);
         var keys = new List<RSA>();
@@ -68,9 +69,13 @@ internal static class OfflineGroupMatrixWorkflowTests
             Reject(() => Open(0, 1)); // Policy alone does not wrap the vault key for a newly added member.
             if (Open(2, 1) != Payload(1)) throw new Exception("Offline historical access unexpectedly disappeared.");
             var plan = GroupVaultReconciliation.Preview(paths[1], Store(3), projects[1], "lokal-2", [certificates[3]], now);
-            var result = GroupVaultReconciliation.Apply(plan, Store(3), [certificates[3]], now);
-            if (result.KeyGeneration == vaults[1].Header.KeyGeneration || !File.ReadAllBytes(result.EncryptedBackupPath).SequenceEqual(originals[1]))
-                throw new Exception("Reconciliation failed to rotate or preserve encrypted backup.");
+            var result = GroupVaultReconciliation.Apply(plan, Store(3), [certificates[3]], now, privateBackupRoot);
+            if (result.KeyGeneration == vaults[1].Header.KeyGeneration ||
+                !File.ReadAllBytes(result.EncryptedBackupPath).SequenceEqual(originals[1]) ||
+                !Path.GetFullPath(result.EncryptedBackupPath).StartsWith(
+                    Path.GetFullPath(privateBackupRoot) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+                Directory.Exists(Path.Combine(directory, "GroupVaultBackups")))
+                throw new Exception("Reconciliation rotated without private history storage outside the shared project tree.");
             Reject(() => Open(2, 1)); // Stale policy must not accept a newer vault.
             Store(2).AcceptPackageUpdate(updated, Store(2).LoadOffline().Checkpoint);
             for (var p = 0; p < 8; p++)
@@ -91,6 +96,7 @@ internal static class OfflineGroupMatrixWorkflowTests
             foreach (var certificate in certificates) certificate.Dispose();
             foreach (var key in keys) key.Dispose();
             Directory.Delete(directory, true);
+            if (Directory.Exists(privateBackupRoot)) Directory.Delete(privateBackupRoot, true);
         }
     }
 
