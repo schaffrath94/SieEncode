@@ -114,12 +114,19 @@ internal sealed class GroupDelegateWindow : Window
         exportInvitationButton.IsEnabled = false; exportChangeButton.IsEnabled = false;
         status.Text = "Registrierter Gruppenstand · Revision " + verified.Policy.Revision +
             ". Als Nächstes: Eigene Person wählen und laden.";
-        // Never guess a personal identity based on the public directory alone.
-        // Only auto-load when a single person already has a private delegate key on this Windows user.
-        if (people.Items.Count == 1 && people.Items[0] is PersonLabel onlyPerson)
+        // A registered person's name does not authorize anything. Automatically load only a
+        // unique already-existing local delegate key; never manufacture one or guess between keys.
+        var availablePeople = people.Items.Cast<PersonLabel>().ToArray();
+        var localKeyOwners = availablePeople.Where(person => File.Exists(KeyPath(id, person.Id))).ToArray();
+        if (localKeyOwners.Length == 1)
         {
-            people.SelectedItem = onlyPerson;
-            if (File.Exists(KeyPath(id, onlyPerson.Id))) LoadPerson(onlyPerson.Id);
+            people.SelectedItem = localKeyOwners[0];
+            LoadPerson(localKeyOwners[0].Id);
+        }
+        else if (availablePeople.Length == 1)
+        {
+            // No key (or no usable grant): preselect only, with an explicit loading action.
+            people.SelectedItem = availablePeople[0];
         }
     }
 
