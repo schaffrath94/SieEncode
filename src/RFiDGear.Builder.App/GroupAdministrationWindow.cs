@@ -187,22 +187,28 @@ internal sealed partial class GroupAdministrationWindow : Window
     private bool ReducesPreviouslySignedAccess()
     {
         RequireStore();
-        var prior = GroupEnrollmentPackages.Validate(store!.ExportPublic()).Policy;
-        var editedGroups = groups.ToDictionary(row => row.Id, row => row.Members.ToHashSet(StringComparer.Ordinal), StringComparer.Ordinal);
-        if (prior.Groups.Any(group => !editedGroups.TryGetValue(group.Id, out var currentMembers) ||
-            group.Members.Any(member => !currentMembers.Contains(member))))
+        return ReducesSignedAccess(
+            GroupEnrollmentPackages.Validate(store!.ExportPublic()).Policy, groups, people);
+    }
+
+    internal static bool ReducesSignedAccess(OfflineGroupPolicy prior,
+        IEnumerable<GroupAdministrationDraft> updatedGroups,
+        IEnumerable<PersonAdministrationDraft> updatedPeople)
+    {
+        var groupRows = updatedGroups.ToDictionary(row => row.Id,
+            row => row.Members.ToHashSet(StringComparer.Ordinal), StringComparer.Ordinal);
+        var personRows = updatedPeople.ToDictionary(row => row.Id, StringComparer.Ordinal);
+        if (prior.Groups.Any(group => !groupRows.TryGetValue(group.Id, out var members) ||
+            group.Members.Any(member => !members.Contains(member))))
             return true;
 
-        if (prior.People.Any(person =>
+        return prior.People.Any(person =>
         {
             if (!person.Enabled) return false;
-            var updated = people.FirstOrDefault(row => row.Id == person.Id);
-            return updated is null || !updated.Enabled ||
-                person.Devices.Any(device => device.Enabled && !updated.Devices.Any(current =>
-                    current.Fingerprint == device.Fingerprint && current.Enabled));
-        }))
-            return true;
-        return false;
+            if (!personRows.TryGetValue(person.Id, out var updated) || !updated.Enabled) return true;
+            return person.Devices.Any(device => device.Enabled && !updated.Devices.Any(current =>
+                current.Fingerprint == device.Fingerprint && current.Enabled));
+        });
     }
 
     private void ConfirmAndSaveGroups()
