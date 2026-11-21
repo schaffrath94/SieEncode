@@ -73,6 +73,16 @@ internal static class KeyLibraryVaultTests
             if (keys.Secrets[0].ToString()!.Contains(aes1, StringComparison.Ordinal))
                 throw new Exception("Secret-Diagnose könnte den Rohwert offenlegen.");
 
+            Reject<ArgumentNullException>(() => KeyLibraryVaultStore.Create(path, keys,
+                trust, "keys", [alice], now, null!));
+            var untrustedSigner = KeyLibraryMutationAuthorization.Sign(
+                KeyLibraryMutationAuthorization.Prepare("create", libraryId, "keys",
+                    trust.LoadOffline().Checkpoint, FileRevision.Missing, keys), aliceKey);
+            Reject<CryptographicException>(() => KeyLibraryVaultStore.Create(path, keys,
+                trust, "keys", [alice], now, untrustedSigner));
+            if (File.Exists(path))
+                throw new Exception("An unsigned or foreign-signed catalog create wrote a Vault.");
+
             var saved = KeyLibraryVaultStore.Create(path, keys, trust, "keys", [alice], now, AuthorizationFor("create", "keys", FileRevision.Missing, keys));
             if (!saved.Exists || saved != ConcurrentFileWriter.Capture(path))
                 throw new Exception("Vollständiger verschlüsselter Schlüsselbestand wurde nicht atomar gespeichert.");
