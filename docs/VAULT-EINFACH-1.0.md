@@ -58,6 +58,18 @@ Daher sind **vier verschiedene Maßnahmen** erforderlich:
 
 **Unmögliches Versprechen:** Vollständig offline verteilte, bereits entschlüsselbare Daten können nicht nachträglich zentral zurückgerufen werden. Für einen **unmittelbaren, überprüfbaren Entzug** vor jeder Verwendung müssen Schlüsseloperationen von einer erreichbaren, vertrauenswürdigen Autorisierungsstelle bzw. einem entsprechend gesicherten Schlüsselgerät kontrolliert werden. Das würde den Betriebsmodus beeinflussen. Zeitlich begrenzte Offline-Freigaben und Hardwaremodule können das Risiko begrenzen, ersetzen aber nicht automatisch die sofortige Fernsperre alter frei kopierbarer Dateien.
 
+## Geplante Erweiterung: Schlüsselverwaltung für Kodierung, Leser und SIPORT
+
+**Diese Produktanforderung ist beschlossen, aber die zentrale Synchronisation und die neue Schlüsselverwaltungsansicht sind noch nicht implementiert.** SieEncode soll nicht nur Projekt-Vaults öffnen und Karten kodieren, sondern als **zentrale, allgemeine Schlüsselverwaltung** für Kunden arbeiten. Dafür muss ein berechtigter Benutzer Schlüsselwerte ausdrücklich **im Klartext anzeigen, kopieren, importieren und z. B. für SIPORT bereitstellen** können.
+
+- **Zentrale Bibliothek:** Kunde → Schlüsselsatz → Schlüssel-ID → Version → Zweck (Karte, Leser, SIPORT) → berechtigte Personen und Geräte. Projekte beziehen sich auf konkrete Schlüsselversionen; die Projektdefinition bleibt frei von geheimen Werten.
+- **Offline-Bestand:** Nur tatsächlich freigegebene Schlüsselsets werden verschlüsselt auf dem jeweiligen Windows-Arbeitsplatz vorgehalten. Kodieren und verantwortete Schlüsselanzeige funktionieren nach lokaler Entsperrung **ohne dauernde Internetverbindung oder spezielle SAM-Leser**.
+- **Synchronisation:** Bei verfügbarer Firmenverbindung oder über ein signiertes, für den Empfänger verschlüsseltes Austauschpaket werden neue Schlüsselversionen, Rechte, Änderungen und spätere Audit-Ereignisse abgeglichen. Eine Offline-Station ist bis dahin nicht aktuell; eine entfernte Person könnte vorhandene frühere Klartextschlüssel weiterhin besitzen.
+- **Schlüssel anzeigen und exportieren:** Absichtlich verdeckte Standardanzeige, gesonderte Rechte und bewusste Aktionen für Klartext, Zwischenablage und SIPORT-Export; weder der Geheimwert noch ein Klartextexport gehören in ein normales Protokoll. Ein bereits ausgegebener Klartextwert lässt sich später nicht „zurückrufen“.
+- **Sicherheitsvorfall:** Berechtigungsentzug unterbindet zukünftige zentrale Ausgabe, **nicht** früheres Wissen. Echte Entwertung eines DESFire-Kartenschlüssels erfordert die kontrollierte Rotation auf allen betroffenen Karten und den zugehörigen Lesern/SIPORT-Systemen.
+
+Siehe `docs/design/ZENTRALE-SCHLUESSELARCHITEKTUR-1.0.md`. Diese geplante zentrale Synchronisation darf nicht mit den **bereits vorhandenen** lokalen Gruppen- und Projekt-Vault-Funktionen verwechselt werden.
+
 ## 1.0 – was wir bewusst nicht verlangen
 
 Für die erste Nutzung sind **keine Altprojekt-Migration, keine bisherige Team-Empfängerliste, kein Vault aus einer früheren SieEncode-Version und keine Konvertierung einer alten RFiDGear-Datei** erforderlich. Nur die Funktionen für neue persönliche oder Gruppenprojekte und deren sicheren Lebenszyklus gehören in den normalen Ablauf. Technische Kompatibilitätsroutinen können im Entwicklungsquellcode verbleiben, sind aber **keine** Benutzeraufgabe für Version 1.0.
