@@ -36,7 +36,9 @@ public sealed record KeyLibrarySnapshot(
 /// Key-free, version-pinned project assignment. Slot syntax will be fixed at
 /// the editor integration boundary; no runtime lookup is enabled yet.
 /// </summary>
-public sealed record ProjectKeyLibraryBinding(string Slot, KeyLibraryAddress Key);
+// A slot may override the project's default customer, for combined cards that
+// legitimately contain applications owned by several different customers.
+public sealed record ProjectKeyLibraryBinding(string Slot, KeyLibraryAddress Key, Guid? CustomerId = null);
 
 public static class KeyLibraryContracts
 {
