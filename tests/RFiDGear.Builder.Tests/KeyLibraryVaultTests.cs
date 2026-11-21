@@ -180,6 +180,12 @@ internal static class KeyLibraryVaultTests
                 throw new Exception("Verworfene Schlüsseländerung hat den Original-Vault verändert.");
 
             var approved = AuthorizationFor("update", "keys", saved, revision2);
+            var publicClaim = System.Text.Encoding.UTF8.GetString(approved.Payload);
+            if (publicClaim.Contains(aes1, StringComparison.OrdinalIgnoreCase) ||
+                publicClaim.Contains(aes2, StringComparison.OrdinalIgnoreCase) ||
+                publicClaim.Contains(threeDes, StringComparison.OrdinalIgnoreCase) ||
+                publicClaim.Contains("HexValue", StringComparison.Ordinal))
+                throw new Exception("The signed change request exposed raw card keys.");
             Reject<ArgumentNullException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
                 "keys", [alice], saved, now, null!));
             var damagedSignature = approved.Signature.ToArray();
@@ -213,7 +219,7 @@ internal static class KeyLibraryVaultTests
                     new KeyLibraryAddress(keyA, 2), "DF_KEY_AES").Value != aes2)
                 throw new Exception("Projektauflösung wechselte nicht ausdrücklich auf eine neue Schlüsselversion.");
             Reject<ConcurrentFileChangeException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
-                "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, revision2)));
+                "keys", [alice], saved, now, approved)); // Signed intent cannot be replayed against a changed Vault.
 
             var revision3 = revision2 with
             {
