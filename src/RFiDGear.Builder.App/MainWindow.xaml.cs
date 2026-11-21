@@ -1740,6 +1740,10 @@ public partial class MainWindow : Window
                 operatorAnalysis.EvidenceSummary, waitingBrush);
             SetStatus($"Laufanalyse: TERMINAL_PENDING · {preparedSession.Definition.ProjectName}" +
                 (automatic ? " · automatisch überwacht" : ""));
+            // When the tracked process has ended, the operator may deliberately record
+            // a failure if the terminal evidence never arrives. Never offer F9 while
+            // the process is still writing or reading a card.
+            RefreshOperationButtons();
             return false;
         }
         var effectiveEvaluation = evaluation.State == CodingRunState.Successful && !operatorAnalysis.CanReleaseCard
