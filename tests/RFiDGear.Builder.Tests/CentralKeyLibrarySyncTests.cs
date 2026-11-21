@@ -120,6 +120,16 @@ internal static class CentralKeyLibrarySyncTests
             var persisted = new CentralKeyLibraryStore(centralPath, library);
             var memberRead = KeyLibraryDownloadAuthorization.Sign(written, member, now);
             var memberDownload = persisted.ReadEncryptedSnapshot(memberRead, now);
+            var trust = new OfflineGroupTrustStore(Path.Combine(directory, "member-trust.bin"),
+                library, new OfflineGroupTrustTests.TestProtection());
+            trust.Enroll(enrolled.AdministratorPublicKey, root, enrolled.Policy);
+            var offlineCopyPath = Path.Combine(directory, "offline-key-library.json");
+            var offlineRevision = KeyLibrarySyncClient.InstallDownloadedSnapshot(
+                offlineCopyPath, trust, "keys", written, memberDownload,
+                [member], FileRevision.Missing);
+            if (KeyLibraryVaultStore.Load(offlineCopyPath, trust, "keys", [member])
+                .Secrets.Single().HexValue != secret)
+                throw new Exception("First signed central download did not become a usable offline library.");
             if (persisted.ReadHead() != written ||
                 !memberDownload.EncryptedVault.SequenceEqual(encrypted))
                 throw new Exception("Headless central state lost authenticated revision across restart.");
@@ -148,6 +158,15 @@ internal static class CentralKeyLibrarySyncTests
             Reject<CryptographicException>(() => persisted.ReadEncryptedSnapshot(memberRead, now));
             var currentMemberRead = KeyLibraryDownloadAuthorization.Sign(written2, member, now);
             var actual = persisted.ReadEncryptedSnapshot(currentMemberRead, now);
+            Reject<InvalidDataException>(() => KeyLibrarySyncClient.InstallDownloadedSnapshot(
+                offlineCopyPath, trust, "keys", written, memberDownload,
+                [member], offlineRevision));
+            var nextOfflineRevision = KeyLibrarySyncClient.InstallDownloadedSnapshot(
+                offlineCopyPath, trust, "keys", written2, actual, [member], offlineRevision);
+            if (nextOfflineRevision == offlineRevision ||
+                KeyLibraryVaultStore.Load(offlineCopyPath, trust, "keys", [member])
+                    .Catalog.Customers.Single().Name != "Synthetic customer")
+                throw new Exception("Second signed central download did not preserve offline customer and key history.");
             var recovered = KeyLibraryVault.Unprotect(
                 GroupVaultService.Read(actual.EncryptedVault), checkedPolicy, "keys", [member]);
             if (recovered.Catalog.Customers.Single().Name != "Synthetic customer" ||
