@@ -188,3 +188,16 @@ Die Änderungen sind auf `codex/offline-vault-groups` gespeichert. **Kein Einzel
 - `AGENTS.md` übernimmt das verbindliche 1.0-ohne-Altprojekt-Leitbild. Neu angelegte Quellen sind auf GitHub gespeichert; sämtliche WPF-/MSI-/Hardwaretests bleiben gesammelt auf den späteren Meilenstein verschoben.
 
 **Grenze der hier geprüften Quellen:** Nur Code-/Struktur-Sichtprüfung. Kein Build, keine tatsächlich getestete Freigabe, kein Produktiv-Release und keine Zusage, dass die gesamte UI unter Windows bereits fehlerfrei ist.
+
+## SEC-01 – Sicherheitsgrenze beim Entzug von Offline-Zugängen
+
+**Wichtiger Architekturentscheid für 1.0, bislang nicht als sofortige Sperre erfüllbar.** Es wurde konkret festgestellt, dass ein historischer Gruppen-Vault mit alter signierter Richtlinie und ehemals freigegebenem privatem Zertifikat auch nach einem neuen Gruppenentzug entschlüsselbar bleiben kann. Ein eingespielter neuer Gruppenstand ändert nichts an einem separat verwahrten alten Dateischnappschuss. Die Wieder-Verschlüsselung des aktuellen Projekt-Vaults rotiert lediglich dessen zufälligen Inhaltsschlüssel, nicht automatisch die auf Karten/Lesern verwendeten DESFire-Schlüssel.
+
+**Im Entwicklungszweig umgesetzt:**
+- Frühere Gruppen-Vault-Stände werden nicht mehr automatisch unter `Projektordner/GroupVaultBackups` für alle Projektberechtigten abgelegt. Default ist nun das lokale Profil des ausführenden Benutzers, bibliotheks- und projektgebunden. Explizit übergebene Backup-Pfade im Projektordner werden abgewiesen. **Achtung:** Das lokale Verzeichnis ist nicht per se ein beweisbar exklusiv verwalteter Sicherheits-Tresor; Zugriffsrechte und Sicherungsstrategie müssen gesondert geprüft werden.
+- Vor Signieren eines Entzugs und nach Export zeigt die Hauptverwaltung die Grenze und die erforderlichen Anschlussmaßnahmen. Der Gruppen-Vault-Empfängerabgleich benennt die aktuelle Reverschlüsselung ausdrücklich **nicht** als vollständigen Entzug früherer Kopien oder Kartenschlüssel.
+- Synthetische Regressionen für abgelehnte Sicherung im gemeinsamen Projektordner, unveränderte Datei bei Konflikt und nachvollziehbare Entzugs-Erkennung wurden im Quellcode ergänzt. **Noch nicht ausgeführt.**
+
+**Offene 1.0-Sicherheitsentscheidung:** Entweder nur Best-Effort-Offline-Gruppenverwaltung mit ehrlicher Beschreibung und bei wirklicher Schlüsselkompromittierung einer kontrollierten DESFire-/Leser-/SAM-Schlüsselrotation anbieten, oder für eine **wirklich sofortige, nicht umgehbare Freigabeprüfung vor jeder neuen Schlüsseloperation** das Design auf online erreichbare Schlüsseldienste bzw. geschützte Hardware mit kurzen Offline-Freigaben und nicht exportierbaren Geheimnissen umstellen. Letztere Option benötigt eigene Architektur- und Hardwareabnahme. Siehe `docs/design/OFFLINE-ENTZUG-GRENZEN-1.0.md`.
+
+Keinen Release als „entzogene Mitarbeiter verlieren sicher jeden Zugriff auf alte Schlüsselkopien“ darstellen. Keine automatische Kartenrotation oder destruktive Änderung aus einem Gruppenentzug ableiten.
