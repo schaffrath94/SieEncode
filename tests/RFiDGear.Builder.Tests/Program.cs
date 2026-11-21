@@ -49,6 +49,7 @@ var tests = new (string Name, Action Run)[]
     ("Scoped delegation, signed changes, revocation and atomic authority updates", OfflineGroupDelegationTests.Verify),
     ("Protected delegate key restart, enrolled scope and revocation checks", OfflineGroupDelegateStoreTests.Verify),
     ("Bound group vault, separate recovery, tamper rejection and fresh-key rotation", GroupVaultTests.Verify),
+    ("Versioned central key library metadata and fail-closed project references", KeyLibraryContractTests.Verify),
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
