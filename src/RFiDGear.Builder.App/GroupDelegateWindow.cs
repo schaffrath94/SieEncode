@@ -20,6 +20,8 @@ internal sealed class GroupDelegateWindow : Window
     private readonly ListBox members = new() { SelectionMode = SelectionMode.Multiple, DisplayMemberPath = nameof(PersonLabel.Label), MinHeight = 100, MaxHeight = 220 };
     private readonly TextBlock status = new() { TextWrapping = TextWrapping.Wrap };
     private readonly TextBlock error = new() { Foreground = Brushes.Firebrick, TextWrapping = TextWrapping.Wrap };
+    private readonly Button exportInvitationButton;
+    private readonly Button exportChangeButton;
     private VerifiedGroupPolicy? loaded;
     private OfflineGroupTrustStore? trust;
     private string? personId;
@@ -35,7 +37,8 @@ internal sealed class GroupDelegateWindow : Window
         Width = 900; Height = 800; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         directory = Path.GetFullPath(localDirectory);
         var root = new StackPanel { Margin = new Thickness(20) };
-        root.Children.Add(Note("1. Registrierte Bibliothek laden. 2. Eigene Person wählen und Arbeitsplatz laden. 3. Verwaltungseinladung exportieren und den Fingerabdruck separat bestätigen. Nach Freigabe den neuen Gruppenstand in Einstellungen importieren und hier neu laden."));
+        root.Children.Add(Note("Mein Gruppenverwaltungsplatz: Eigene Person auswählen, Freigabe anfordern und danach ausschließlich zugewiesene Gruppen bearbeiten. Bei nur einer Bibliothek wird der Gruppenstand automatisch geladen."));
+        root.Children.Add(Note("1 · Gruppenstand auswählen"));
         root.Children.Add(libraries);
         libraries.ItemsSource = Directory.Exists(directory) ? Directory.EnumerateFiles(directory, "*.trust.bin")
             .Select(Path.GetFileName).Select(n => n!.Replace(".trust.bin", "", StringComparison.Ordinal))
@@ -45,15 +48,20 @@ internal sealed class GroupDelegateWindow : Window
             if (libraries.SelectedItem is not Guid id) throw new InvalidOperationException("Bitte eine registrierte Bibliothek auswählen.");
             if (ConfirmDiscard()) LoadLibrary(id);
         }));
+        root.Children.Add(Note("2 · Eigene Person auswählen"));
         root.Children.Add(people);
-        root.Children.Add(Action("Person und Arbeitsplatz laden", () =>
+        root.Children.Add(Action("Meine Person laden", () =>
         {
             if (people.SelectedItem is not PersonLabel selected) throw new InvalidOperationException("Bitte die eigene Person auswählen.");
             if (ConfirmDiscard()) LoadPerson(selected.Id);
         }));
-        root.Children.Add(Action("Öffentliche Verwaltungseinladung exportieren", ExportInvitation));
-        root.Children.Add(Action("Privaten Verwaltungsschlüssel sichern", () => ShowPrivateBackup(false)));
-        root.Children.Add(Action("Privaten Verwaltungsschlüssel wiederherstellen", () => ShowPrivateBackup(true)));
+        exportInvitationButton = Action("Einladung an Hauptverwaltung exportieren", ExportInvitation);
+        exportInvitationButton.IsEnabled = false;
+        root.Children.Add(exportInvitationButton);
+        var backupActions = new StackPanel();
+        backupActions.Children.Add(Action("Privaten Verwaltungsschlüssel sichern", () => ShowPrivateBackup(false)));
+        backupActions.Children.Add(Action("Privaten Verwaltungsschlüssel wiederherstellen", () => ShowPrivateBackup(true)));
+        root.Children.Add(new Expander { Header = "Erweitert · Verwaltungsschlüssel sichern oder wiederherstellen", Content = backupActions, IsExpanded = false });
         root.Children.Add(status);
         root.Children.Add(Note("Bearbeitbar sind nur Ihre freigegebenen Gruppen. Personen und Geräte pflegt die Hauptverwaltung. Mitgliedschaften durch Auswahl umschalten; mehrere Personen sind möglich."));
         grid.Columns.Add(new DataGridTextColumn { Header = "Meine freigegebene Gruppe", Binding = new Binding(nameof(GroupAdministrationDraft.Name)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
@@ -68,12 +76,21 @@ internal sealed class GroupDelegateWindow : Window
             foreach (var person in members.SelectedItems.Cast<PersonLabel>()) group.Members.Add(person.Id);
             dirty = true;
         };
+        root.Children.Add(Note("3 · Nach erteilter Vollmacht: Freigegebene Gruppen bearbeiten"));
         root.Children.Add(grid); root.Children.Add(members);
-        root.Children.Add(Action("Änderung signieren und exportieren", ExportChange));
+        exportChangeButton = Action("Änderung signieren und exportieren", ExportChange);
+        exportChangeButton.IsEnabled = false;
+        root.Children.Add(exportChangeButton);
         root.Children.Add(Note("Exportierte Änderungen an die Hauptverwaltung weitergeben. Sie gelten erst nach deren Übernahme und Verteilung des neuen signierten Standes. Lokale Offline-Kopien können einen inzwischen erfolgten Entzug noch nicht kennen."));
         root.Children.Add(error); root.Children.Add(Action("Schließen", Close));
         Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         Closing += (_, e) => { if (!ConfirmDiscard()) e.Cancel = true; };
+        // Safe, read-only convenience: one local library is unambiguous.
+        if (libraries.Items.Count == 1 && libraries.Items[0] is Guid onlyLibrary)
+        {
+            try { LoadLibrary(onlyLibrary); }
+            catch (Exception exception) { error.Text = "Registrierten Gruppenstand nicht geladen: " + exception.Message; }
+        }
         MainWindow.InitializeAutomationContract(this, "GroupDelegate");
     }
 
