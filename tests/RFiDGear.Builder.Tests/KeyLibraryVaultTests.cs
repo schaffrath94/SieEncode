@@ -89,6 +89,17 @@ internal static class KeyLibraryVaultTests
             if (loaded.Catalog.Keys.Length != 2 || loaded.Secrets.Single(s => s.Key.KeyId == keyA).HexValue != aes1 ||
                 loaded.Secrets.Single(s => s.Key.KeyId == keyB).HexValue != threeDes)
                 throw new Exception("Vollständiger Bibliotheks-Roundtrip hat Schlüsselwerte oder Kunden verloren.");
+            var resolved = KeyLibraryKeyResolver.ResolveActive(loaded, customerA,
+                new KeyLibraryAddress(keyA, 1), "DF_KEY_AES");
+            if (resolved.Type != "DF_KEY_AES" || resolved.Value != aes1)
+                throw new Exception("Bestehende Projekt-KeyReference erhält nicht den exakt gebundenen Bibliothekswert.");
+            Reject<CryptographicException>(() => KeyLibraryKeyResolver.ResolveActive(loaded, customerB,
+                new KeyLibraryAddress(keyA, 1), "DF_KEY_AES"));
+            Reject<InvalidDataException>(() => KeyLibraryKeyResolver.ResolveActive(loaded, customerA,
+                new KeyLibraryAddress(keyA, 1), "DF_KEY_DES"));
+            Reject<InvalidDataException>(() => KeyLibraryKeyResolver.ResolveActive(loaded, customerA,
+                new KeyLibraryAddress(keyA, 999), "DF_KEY_AES"));
+
             var rescue = KeyLibraryVaultStore.Load(path, trust, "keys", [recovery], recovery: true);
             if (rescue.Secrets[0].HexValue != aes1) throw new Exception("Unabhängiger Recovery-Zugang fehlt.");
             Reject<CryptographicException>(() => KeyLibraryVaultStore.Load(path, trust, "keys", [bob]));
@@ -149,6 +160,12 @@ internal static class KeyLibraryVaultTests
             if (saved2 == saved || KeyLibraryVaultStore.Load(path, trust, "keys", [alice]).Catalog.Revision != 2 ||
                 KeyLibraryVaultStore.Load(path, trust, "keys", [alice]).Secrets.Length != 3)
                 throw new Exception("Kontrolliertes Bibliotheksupdate oder Geheimwert-Historie fehlgeschlagen.");
+            var updatedLibrary = KeyLibraryVaultStore.Load(path, trust, "keys", [alice]);
+            Reject<InvalidOperationException>(() => KeyLibraryKeyResolver.ResolveActive(updatedLibrary, customerA,
+                new KeyLibraryAddress(keyA, 1), "DF_KEY_AES"));
+            if (KeyLibraryKeyResolver.ResolveActive(updatedLibrary, customerA,
+                    new KeyLibraryAddress(keyA, 2), "DF_KEY_AES").Value != aes2)
+                throw new Exception("Projektauflösung wechselte nicht ausdrücklich auf eine neue Schlüsselversion.");
             Reject<ConcurrentFileChangeException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
                 "keys", [alice], saved, now));
 
