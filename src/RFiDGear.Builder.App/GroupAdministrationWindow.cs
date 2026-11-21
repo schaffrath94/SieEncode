@@ -95,14 +95,16 @@ internal sealed partial class GroupAdministrationWindow : Window
         memberActions.Children.Add(Action("Mitglied aus Gruppe entfernen", () =>
         {
             if (grid.SelectedItem is GroupAdministrationDraft group && members.SelectedItem is GroupMemberLabel selected &&
-                MessageBox.Show(this, "Diesen Zugang aus dem Gruppenentwurf entfernen? Alte Vaultkopien bleiben zugänglich.", Title, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                MessageBox.Show(this,
+                    "Person aus dieser Gruppe entfernen?\n\nWICHTIG: Dies entzieht noch keinen Zugang zu bereits kopierten Offline-Vaults oder schon bekannten Kartenschlüsseln. Nach dem Signieren den neuen Stand verteilen, alle betroffenen aktuellen Projekt-Vaults durch eine berechtigte Person neu verschlüsseln und bei ernstem Sicherheitsentzug die Kartenschlüssel samt betroffenen Lesern/SAMs kontrolliert rotieren.",
+                    "Berechtigungsentzug – nur zukünftiger Gruppenstand", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
             { group.Members.Remove(selected.Id); dirty = true; RefreshMemberLabels(); }
         }));
         root.Children.Add(memberActions);
         AddDelegationControls(root);
         AddRecoveryControls(root);
         var actions = new WrapPanel();
-        actions.Children.Add(Action("Änderungen signiert speichern", SaveGroups));
+        actions.Children.Add(Action("Änderungen signiert speichern", ConfirmAndSaveGroups));
         actions.Children.Add(Action("Aktuellen Gruppenstand für Kollegen exportieren", ExportPublic));
         root.Children.Add(actions);
         root.Children.Add(Action("Schließen", Close));
@@ -179,15 +181,64 @@ internal sealed partial class GroupAdministrationWindow : Window
         dirty = true;
     }
 
+    // Snapshot-based offline access is not cryptographically revocable.
+    // Detect administrative removals before signing, including a deactivated
+    // person/device or a removed group, and require an explicit risk decision.
+    private bool ReducesPreviouslySignedAccess()
+    {
+        RequireStore();
+        var prior = GroupEnrollmentPackages.Validate(store!.ExportPublic()).Policy;
+        var editedGroups = groups.ToDictionary(row => row.Id, row => row.Members.ToHashSet(StringComparer.Ordinal), StringComparer.Ordinal);
+        if (prior.Groups.Any(group => !editedGroups.TryGetValue(group.Id, out var currentMembers) ||
+            group.Members.Any(member => !currentMembers.Contains(member))))
+            return true;
+
+        if (prior.People.Any(person =>
+        {
+            if (!person.Enabled) return false;
+            var updated = people.FirstOrDefault(row => row.Id == person.Id);
+            return updated is null || !updated.Enabled ||
+                person.Devices.Any(device => device.Enabled && !updated.Devices.Any(current =>
+                    current.Fingerprint == device.Fingerprint && current.Enabled));
+        }))
+            return true;
+        return false;
+    }
+
+    private void ConfirmAndSaveGroups()
+    {
+        RequireStore();
+        CommitEdits();
+        if (ReducesPreviouslySignedAccess() &&
+            MessageBox.Show(this,
+                "ACHTUNG: Sie entfernen oder deaktivieren bestehende Zugänge.\n\n" +
+                "Das Signieren sperrt nur Zugänge bei Verwendung des neuen Gruppenstands. " +
+                "Ein Mitarbeiter mit alten Offline-Dateien und seinem bisherigen privaten Schlüssel kann historische Projekt-Vaults weiterhin öffnen – selbst wenn er den neuen Gruppenstand nicht importiert.\n\n" +
+                "Nach dem Signieren: 1. neuen Gruppenstand verteilen, 2. betroffene aktuelle Gruppen-Vaults mit neuem Inhaltsschlüssel und neuer Empfängerliste verschlüsseln, 3. alle historischen Vault-Kopien nur in geschützt verwalteten Backups belassen, 4. bei echter Schlüsselkompromittierung sämtliche betroffenen DESFire-Kartenschlüssel und Leser/SAM-Konfigurationen kontrolliert rotieren.\n\n" +
+                "Dies ist KEINE vollständige Fernsperre. Trotzdem den geänderten Gruppenstand signieren?",
+                "Offline-Entzug ist keine sofortige Schlüsselsperre",
+                MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
+            return;
+        SaveGroups();
+    }
+
     internal void SaveGroups()
     {
         RequireStore(); CommitEdits();
+        var accessReduced = ReducesPreviouslySignedAccess();
         var groupRows = groups.Select(g => new OfflineVaultGroup(g.Id, g.Name, g.Members.ToArray())).ToArray();
         if (!personMode && people.Count > 0) throw new InvalidOperationException("Bitte zuerst die bisherigen Gruppen auf Personen umstellen.");
         var package = personMode ? store!.UpdateDirectory(PersonRows(), groupRows, checkpoint!) : store!.UpdateGroups(groupRows, checkpoint!);
         checkpoint = GroupEnrollmentPackages.Validate(package).Checkpoint;
         dirty = false;
-        try { status.Text = $"Gruppenstand {checkpoint.Revision} signiert gespeichert.\nAls Nächstes: Aktuellen Gruppenstand für Kollegen exportieren. Andere Windows-Benutzer übernehmen ihn erst nach eigenem bestätigtem Import.\n{SynchronizeOwnRegistration(package)}"; }
+        try
+        {
+            var importStatus = SynchronizeOwnRegistration(package);
+            status.Text = accessReduced
+                ? $"Gruppenstand {checkpoint.Revision} signiert gespeichert. ACHTUNG: Nur künftige Freigabe geändert, keine vollständige Schlüsselsperre.\n" +
+                  "Nächste Aufgaben: neuen signierten Stand an alle Arbeitsplätze verteilen, betroffene aktuelle Projekt-Vaults neu verschlüsseln und bei Kompromittierung auch die DESFire-Kartenschlüssel auf Karten und Lesern/SAMs kontrolliert rotieren. Historische Offline-Kopien bleiben eventuell entschlüsselbar.\n" + importStatus
+                : $"Gruppenstand {checkpoint.Revision} signiert gespeichert.\nAls Nächstes: Aktuellen Gruppenstand für Kollegen exportieren. Andere Windows-Benutzer übernehmen ihn erst nach eigenem bestätigtem Import.\n{importStatus}";
+        }
         catch (Exception exception) { throw new InvalidOperationException("Signierte Änderung gespeichert, lokale Registrierung aber nicht aktualisiert. Verwaltung neu laden; vorhandenes Vertrauen wird nicht ersetzt.", exception); }
         RefreshMemberLabels();
     }
