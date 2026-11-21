@@ -290,6 +290,7 @@ public partial class MainWindow : Window
         Breadcrumb.Text = "SieEncode / " + PageTitle.Text + (PageTitle.Text == title ? "" : " / " + title);
         BackButton.IsEnabled = navigation.CanGoBack;
         RefreshWorkspaceNavigation();
+        if (page == "Settings") UpdateVaultSetupStatus();
     }
 
     // Presentation is derived only from a read-only, authoritatively recognized
@@ -2300,15 +2301,21 @@ public partial class MainWindow : Window
                     : $"{groupCount} Gruppenbibliotheken lokal registriert. Den Gruppenstand der richtigen Bibliothek auswählen und signiert aktualisieren. Keine Gruppenrechte allein aus der Dateianzahl ableiten.";
             // Mark only the next *import* action as primary, never auto-import or
             // interpret local files as a verified permission.
-            VaultRegisterGroupButton.Style = (Style)FindResource(
-                groupCount == 0 ? "PrimaryButton" : typeof(Button));
-            VaultUpdateGroupButton.Style = (Style)FindResource(
-                groupCount > 0 ? "PrimaryButton" : typeof(Button));
+            VaultRegisterGroupButton.Visibility = groupCount == 0 ? Visibility.Visible : Visibility.Collapsed;
+            VaultUpdateGroupButton.Visibility = groupCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+            VaultRegisterGroupButton.Style = groupCount == 0
+                ? (Style)FindResource("PrimaryButton")
+                : (Style)FindResource(typeof(Button));
+            VaultUpdateGroupButton.Style = groupCount > 0
+                ? (Style)FindResource("PrimaryButton")
+                : (Style)FindResource(typeof(Button));
         }
         catch (Exception exception)
         {
             VaultGroupStatus.Text = "Lokaler Gruppenstatus derzeit nicht lesbar: " + exception.Message +
                 ". Vor einer Freigabe die vertrauenswürdige Gruppenregistrierung prüfen.";
+            VaultRegisterGroupButton.Visibility = Visibility.Visible;
+            VaultUpdateGroupButton.Visibility = Visibility.Visible;
             VaultRegisterGroupButton.Style = (Style)FindResource(typeof(Button));
             VaultUpdateGroupButton.Style = (Style)FindResource(typeof(Button));
         }
