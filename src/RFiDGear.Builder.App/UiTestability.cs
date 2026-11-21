@@ -118,6 +118,7 @@ public partial class MainWindow
         checks.Add("Nebenfenster: Profil-Editor, Profilhistorie und rfPrj-Import initialisiert, versioniert und automatisierbar");
         VerifyAutomationContract(checks);
         VerifyDesignContract(checks);
+        VerifyProjectUxHierarchyContract(checks);
         VerifyOperatingModeContract(checks);
         VerifyPreflightPresentationContract(checks);
         VerifyNavigationContract(checks);
@@ -394,6 +395,36 @@ public partial class MainWindow
         if (!Equals(DeleteProjectButton.Style, TryFindResource("DangerButton")) || DeleteProjectButton.Visibility != Visibility.Visible)
             throw new InvalidOperationException("Die sichtbare Projekt-Löschaktion ist nicht eindeutig als destruktive Aktion gestaltet.");
         checks.Add($"Designvertrag: {ordinary.Length} Standardbuttons exakt 40 px, {navigation.Length} Navigationselemente exakt 44 px, {groupBoxes.Length} einheitliche Bereichskarten");
+    }
+
+    private void VerifyProjectUxHierarchyContract(List<string> checks)
+    {
+        // These checks are read-only assertions about the UI layout. They do not
+        // click project, card, vault or delete actions.
+        var secondary = DescendantsAndSelf(ProjectMoreActions).ToHashSet();
+        if (!secondary.Contains(DeleteProjectButton) || !secondary.Contains(ProjectOpenFolderButton) ||
+            secondary.Contains(ProjectEditButton) || secondary.Contains(ProjectOpenStationButton))
+            throw new InvalidOperationException("Projektbibliothek mischt sichere Hauptaktionen und seltene Neben-/Löschaktionen.");
+        if (ProjectMoreActions.IsExpanded)
+            throw new InvalidOperationException("Projekt-Nebenaktionen sind nicht standardmäßig eingeklappt.");
+
+        if (PageEditor.Content is not StackPanel editorLayout)
+            throw new InvalidOperationException("Projekteditor besitzt keine geordnete Oberfläche.");
+        var readiness = editorLayout.Children.OfType<Border>()
+            .Single(border => DescendantsAndSelf(border).Contains(EditorNextStep));
+        var projectDetails = editorLayout.Children.OfType<GroupBox>()
+            .Single(box => DescendantsAndSelf(box).Contains(EditorProjectName));
+        if (editorLayout.Children.IndexOf(readiness) >= editorLayout.Children.IndexOf(projectDetails))
+            throw new InvalidOperationException("Der nächste sichere Projektschritt ist erst nach dem Formular sichtbar.");
+
+        var keyOptions = DescendantsAndSelf(PageEditor).OfType<Expander>()
+            .Single(expander => Equals(expander.Header, "Weitere Ausgangsschlüssel verwalten"));
+        var keyContents = DescendantsAndSelf(keyOptions).ToHashSet();
+        if (!keyContents.Contains(EditorAddInitialKeySetButton) ||
+            !keyContents.Contains(EditorDeleteInitialKeySetButton) || keyOptions.IsExpanded)
+            throw new InvalidOperationException("Verwaltung der Ausgangsschlüsselsätze überlädt weiterhin den Hauptablauf.");
+
+        checks.Add("Projektbedienung: Haupt- und Löschaktionen getrennt, seltene Schlüsselverwaltung eingeklappt, Projektbereitschaft und nächster Schritt vor dem Editorformular.");
     }
 
     private void VerifyConstrainedLayoutContract(List<string> checks)
