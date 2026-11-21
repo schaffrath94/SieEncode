@@ -24,6 +24,9 @@ public sealed class ProjectBuildService
         ArgumentException.ThrowIfNullOrWhiteSpace(projectsDirectory);
         ArgumentException.ThrowIfNullOrWhiteSpace(builderVersion);
 
+        if (runtimeProject.Project.KeyLibrary is not null)
+            throw new InvalidOperationException("Ein bibliotheksgebundenes Projekt darf vor der autorisierten, versionsgenauen temporären Auflösung nicht gebaut werden.");
+
         ProfileBindingService.EnsureBuildCompatible(runtimeProject, library);
 
         var requiresProductiveSecrets = runtimeProject.Project.Build.Contains("Coding", StringComparer.OrdinalIgnoreCase);
