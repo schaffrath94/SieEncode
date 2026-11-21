@@ -142,7 +142,8 @@ public partial class MainWindow
             editorVaultVerified = false;
             editorGroupRecovery = false;
             editorVaultVersion = ReadVaultVersion(editorSourcePath);
-            editorVaultPayload = string.IsNullOrWhiteSpace(editorSourcePath) ? ProjectKeyVault.FromProject(editorProject) : null;
+            editorVaultPayload = editorProject.Project.KeyLibrary is null && string.IsNullOrWhiteSpace(editorSourcePath)
+                ? ProjectKeyVault.FromProject(editorProject) : null;
 
             RefreshEditorProfileChoices(library);
 
@@ -166,12 +167,16 @@ public partial class MainWindow
             RefreshInitialKeySets();
             RefreshCardModeUi();
             EditorSourcePath.Text = string.IsNullOrWhiteSpace(editorSourcePath) ? "Noch nicht gespeichert" : editorSourcePath;
-            EditorVaultStatus.Text = string.IsNullOrWhiteSpace(editorSourcePath)
+            EditorVaultStatus.Text = editorProject.Project.KeyLibrary is not null
+                ? "Projekt verwendet ausschließlich versionsgebundene Bibliotheksreferenzen."
+                : string.IsNullOrWhiteSpace(editorSourcePath)
                 ? "Vault kann nach dem ersten Speichern angelegt werden."
                 : File.Exists(ProjectKeyVault.GetPath(editorSourcePath))
                     ? "Vault vorhanden, für diese Sitzung noch gesperrt: " + ProjectKeyVault.GetPath(editorSourcePath)
                     : "Vault fehlt. Produktive Schlüssel aus vorhandenen rfPrj-Builds werden aus Sicherheitsgründen nicht zurück in den Editor importiert; ohne ursprünglichen Vault ist dieser Stand nicht reproduzierbar.";
-            EditorKeyGuidance.Text = string.IsNullOrWhiteSpace(editorSourcePath)
+            EditorKeyGuidance.Text = editorProject.Project.KeyLibrary is not null
+                ? "Schlüssel der zentralen Bibliothek sind fest referenziert. Rohwerte niemals im Projekt-Vault ablegen."
+                : string.IsNullOrWhiteSpace(editorSourcePath)
                 ? "Neues Projekt: Produktivschlüssel erzeugen, Projekt speichern und den Vault danach verschlüsselt sichern. Die Passphrase wird niemals gespeichert."
                 : File.Exists(ProjectKeyVault.GetPath(editorSourcePath))
                     ? "Bestehendes Projekt: den vorhandenen Vault für diese Sitzung entsperren. Neue Schlüssel nur verwenden, wenn bewusst eine neue Schlüsselidentität eingeführt werden soll."
@@ -542,6 +547,51 @@ public partial class MainWindow
             return;
         }
 
+        var catalogBinding = editorProject.Project.KeyLibrary;
+        EditorTransportSettings.IsEnabled = catalogBinding is null;
+        EditorProductiveKeyDetails.IsEnabled = catalogBinding is null;
+        EditorUnlockVaultButton.Visibility = catalogBinding is null ? Visibility.Visible : Visibility.Collapsed;
+        EditorManageVaultAccessButton.Visibility = catalogBinding is null ? Visibility.Visible : Visibility.Collapsed;
+        EditorAuditVaultButton.Visibility = catalogBinding is null ? Visibility.Visible : Visibility.Collapsed;
+        if (catalogBinding is not null)
+        {
+            var profileOk = ProfileBindingService.Evaluate(editorProject, editorLibrary).All(item => item.IsMatch);
+            var definitionOk = ProjectContractValidator.Validate(editorProject, editorLibrary,
+                requireProductiveSecrets: false).Count == 0;
+            bool slotsMatch;
+            try
+            {
+                var needed = ProjectKeyLibraryResolution.RequiredSlots(editorProject, editorLibrary);
+                slotsMatch = needed.Count == catalogBinding.Bindings.Length &&
+                    needed.Keys.ToHashSet(StringComparer.Ordinal)
+                        .SetEquals(catalogBinding.Bindings.Select(item => item.Slot));
+            }
+            catch (InvalidDataException) { slotsMatch = false; }
+            EditorWorkflowProfile.Text = profileOk ? "✓ Profile" : "! Profilbindung prüfen";
+            EditorWorkflowValues.Text = definitionOk ? "✓ Pflichtfelder" : "! Pflichtfelder prüfen";
+            EditorWorkflowKeys.Text = slotsMatch ? "✓ Bibliotheksreferenzen festgelegt" : "! Bibliothekszuordnung erneuern";
+            EditorWorkflowSaved.Text = !editorDirty && !string.IsNullOrWhiteSpace(editorSourcePath)
+                ? "✓ Gespeichert" : "! Noch nicht gespeichert";
+            EditorNextStep.Text = !profileOk ? "Nächster Schritt: aktuelle Profilbindung prüfen."
+                : !definitionOk ? "Nächster Schritt: Projektpflichtfelder korrigieren."
+                : !slotsMatch ? "Nächster Schritt: nach Profiländerungen alle Schlüsselplätze erneut zuordnen."
+                : "Projekt referenziert Schlüsselversionen ohne Rohwerte. Der Build bleibt bis zur autorisierten Bibliotheksauflösung gesperrt.";
+            EditorKeyGuidance.Text = "Zentrale Offline-Bibliothek: Schlüssel ausschließlich über feste Bibliotheksreferenzen bearbeiten. Kein unabhängiger Projekt-Vault.";
+            EditorVaultStatus.Text = $"Bibliothek {catalogBinding.LibraryId:D} · {catalogBinding.Bindings.Length} gebundene Plätze · keine Schlüssel im Projekt gespeichert.";
+            EditorGenerateKeysButton.IsEnabled = true;
+            EditorGenerateKeysButton.Content = "Bibliotheksschlüssel zuordnen";
+            EditorUnlockVaultButton.IsEnabled = false;
+            EditorSaveVaultButton.IsEnabled = false;
+            EditorSaveVaultButton.Visibility = Visibility.Collapsed;
+            EditorManageVaultAccessButton.IsEnabled = false;
+            EditorAuditVaultButton.IsEnabled = false;
+            EditorGroupRecoveryButton.Visibility = Visibility.Collapsed;
+            EditorGroupProjectSetupPanel.Visibility = Visibility.Collapsed;
+            EditorCreateGroupProjectButton.IsEnabled = false;
+            EditorBuildButton.IsEnabled = false;
+            HighlightEditorNextAction(null);
+            return;
+        }
         var profilesOk = ProfileBindingService.Evaluate(editorProject, editorLibrary).All(status => status.IsMatch);
         var definitionIssues = ProjectContractValidator.Validate(editorProject, editorLibrary, requireProductiveSecrets: false);
         var valuesOk = definitionIssues.Count == 0;
@@ -689,6 +739,8 @@ public partial class MainWindow
         if (editorProject is null || editorLibrary is null) throw new InvalidOperationException("Kein Projekt im Editor geöffnet.");
         CaptureEditorControls();
         ProjectDraftFactory.Synchronize(editorProject, editorLibrary);
+        if (editorProject.Project.KeyLibrary is not null)
+            ProjectKeyLibraryResolution.EnsureSafeStoredProject(editorProject);
         var issues = ProjectContractValidator.Validate(editorProject, editorLibrary, requireProductiveSecrets: false);
         if (issues.Count > 0) throw new InvalidDataException("Projektdefinition ist nicht speicherbar:\n" + string.Join("\n", issues.Select(issue => $"{issue.Code}: {issue.Message}")));
 
@@ -737,11 +789,36 @@ public partial class MainWindow
         return true;
     }
 
+    private void AssignEditorKeyLibrary()
+    {
+        if (editorProject is null || editorLibrary is null)
+            throw new InvalidOperationException("Kein Projekt geöffnet.");
+        if (!string.IsNullOrWhiteSpace(editorSourcePath) &&
+            File.Exists(ProjectKeyVault.GetPath(editorSourcePath)))
+            throw new InvalidOperationException("Dieser Projektpfad besitzt bereits einen unabhängigen Projekt-Vault. Ein Bibliotheksprojekt darf keinen zweiten dauerhaften Schlüsselspeicher haben. Bitte einen neuen, vaultfreien Projektentwurf verwenden.");
+
+        CaptureEditorControls();
+        var dialog = new KeyLibraryAssignmentWindow(this, editorProject, editorLibrary, localGroupTrustDirectory);
+        if (dialog.ShowDialog() != true || dialog.SelectedCatalog is null ||
+            dialog.SelectedBindings is null) return;
+
+        var bound = ProjectKeyLibraryResolution.Bind(editorProject, editorLibrary,
+            dialog.SelectedCatalog, dialog.SelectedCustomerId, dialog.SelectedBindings);
+        LoadEditor(bound, editorSourcePath);
+        SetEditorDirty(true);
+        SetStatus("Projekt mit exakt versionierten Schlüsselreferenzen verknüpft. Bitte speichern; kein Projekt-Vault wird erzeugt.");
+    }
+
     private void GenerateProductiveKeys_Click(object sender, RoutedEventArgs e)
     {
         try
         {
             if (editorProject is null) throw new InvalidOperationException("Kein Projekt im Editor geöffnet.");
+            if (editorProject.Project.KeyLibrary is not null || KeyLibraryAssignmentWindow.HasLocalVaults())
+            {
+                AssignEditorKeyLibrary();
+                return;
+            }
             if (!string.IsNullOrWhiteSpace(editorSourcePath))
             {
                 var vaultExists = File.Exists(ProjectKeyVault.GetPath(editorSourcePath));
