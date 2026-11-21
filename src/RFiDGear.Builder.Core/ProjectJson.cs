@@ -65,6 +65,7 @@ public static class ProjectJson
     {
         ArgumentNullException.ThrowIfNull(source);
         var clone = JsonSerializer.Deserialize<ProjectDefinition>(JsonSerializer.Serialize(source, Options), Options)!;
+        clone.TransientKeyLibraryResolution = source.TransientKeyLibraryResolution;
         clone.Productive.PiccKey.Value = "";
         foreach (var aid in clone.Productive.ApplicationKeys.Keys.ToArray())
             clone.Productive.ApplicationKeys[aid] = [];
