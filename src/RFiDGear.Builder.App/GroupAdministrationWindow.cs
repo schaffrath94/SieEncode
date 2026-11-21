@@ -80,7 +80,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         root.Children.Add(new Expander { Header = "Erweitert · Schlüssel sichern, Wiederherstellung und Nachfolge", Content = advancedAdministration, IsExpanded = false });
         AddPeopleControls(root);
         grid.Columns.Add(new DataGridTextColumn { Header = "Gruppe", Binding = new Binding(nameof(GroupAdministrationDraft.Name)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-        grid.Columns.Add(new DataGridTextColumn { Header = "Stabile Gruppen-ID", Binding = new Binding(nameof(GroupAdministrationDraft.Id)), IsReadOnly = true, Width = new DataGridLength(2, DataGridLengthUnitType.Star) });
+        grid.Columns.Add(new DataGridTextColumn { Header = "Interne Gruppen-ID", Binding = new Binding(nameof(GroupAdministrationDraft.Id)), IsReadOnly = true, Width = new DataGridLength(2, DataGridLengthUnitType.Star), Visibility = Visibility.Collapsed });
         grid.ItemsSource = groups;
         grid.CellEditEnding += (_, e) => { if (e.EditAction == DataGridEditAction.Commit) dirty = true; };
         grid.SelectionChanged += (_, _) => RefreshMemberLabels();
