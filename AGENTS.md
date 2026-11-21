@@ -32,7 +32,8 @@ These instructions apply to the entire `schaffrath94/SieEncode` repository. Read
 ## Build, test, and release
 
 - Development baseline: Windows, PowerShell, .NET SDK from `global.json`.
-- Run `./Test-CI.ps1` for changes affecting behavior. This builds the test harness, **executes it with `dotnet run`**, and builds the CLI and WPF app. `dotnet test` by itself does not execute the Studio's custom regression harness.
+- **Batched development and test milestones (21.11.2026):** Implement several cohesive UX/Vault/project/station improvements first, secure the incremental source commits, and add focused synthetic regression cases as code. Do **not** demand a new MSI, Windows session, UI click-through, workflow execution, or release after every small edit/commit. Treat the first release as a **single milestone acceptance**, not a stream of mini-releases. Exceptional critical blockers must be identified transparently, not masked.
+- At the **cohesive milestone gate**, run `./Test-CI.ps1` once for the accumulated behavior changes. This builds the test harness, **executes it with `dotnet run`**, and builds the CLI and WPF app. `dotnet test` alone does not execute the Studio's custom regression harness. Reuse valid unchanged evidence; focus manual checks on new or impacted workflows. No release without the appropriate Windows, installer, security and hardware acceptance evidence.
 - Add or update focused, synthetic regression cases for bug fixes and new behavior. Clearly distinguish **executed**, **not executed**, and **hardware-only** checks in the final report.
 - `Test-All.ps1` may require legacy external assets/customer fixtures; do not assume these are available or load real customer data into CI.
 - Build the Runtime separately with `Build-Runtime.ps1` only when relevant. Never treat a rebuild as bit-identical to a delivered binary or automatically inherit its hardware approval.
