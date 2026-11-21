@@ -496,7 +496,9 @@ public partial class MainWindow : Window
     {
         selectedProject = null;
         ProjectsGrid.SelectedItem = null;
-        HomeVaultButton.IsEnabled = false;
+        HomeVaultButton.Tag = "Settings";
+        HomeVaultButton.Content = "Persönlichen Vault-Zugang einrichten";
+        HomeVaultButton.IsEnabled = true;
         ProjectEditButton.IsEnabled = false;
         ProjectValidationButton.IsEnabled = false;
         ProjectOpenStationButton.IsEnabled = false;
@@ -2493,8 +2495,17 @@ public partial class MainWindow : Window
         HomePilotProjectState.Text = selectedProject is null
             ? $"{projects.Count} Projekt(e) vorhanden · noch keines ausgewählt"
             : $"Ausgewählt: {selectedProject.Name}";
-        HomePilotVaultState.Text = selectedProject is null || selectedProject.ArtifactOnly
-            ? "Bearbeitbares Projekt auswählen"
+        // Reuse the existing vault button for first-use help, rather than adding
+        // more competing start buttons on the home page.
+        HomeVaultButton.Tag = selectedProject is null ? "Settings" : "Editor";
+        HomeVaultButton.Content = selectedProject is null
+            ? "Persönlichen Vault-Zugang einrichten"
+            : "Projekt und Vault prüfen";
+        HomeVaultButton.IsEnabled = true;
+        HomePilotVaultState.Text = selectedProject is null
+            ? "Noch kein Projekt gewählt. Falls dies der erste Start ist: persönlichen Zugang unter Einstellungen einrichten. Für Teamprojekte zusätzlich die Freigabe der Hauptverwaltung importieren."
+            : selectedProject.ArtifactOnly
+                ? "Nur gebautes Projekt vorhanden. Bearbeiten prüft, ob eine sichere neue Projektdefinition möglich ist."
             : selectedProject.HasVault
                 ? "Vault vorhanden · Produktivkeys verschlüsselt gesichert"
                 : selectedProject.HasOperationalBuild
