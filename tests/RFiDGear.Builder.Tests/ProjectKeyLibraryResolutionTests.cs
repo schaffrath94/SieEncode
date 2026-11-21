@@ -76,8 +76,10 @@ internal static class ProjectKeyLibraryResolutionTests
             bound.Transport.ApplicationKeys.Values.Any(x => !string.IsNullOrEmpty(x)) ||
             bound.Productive.ApplicationKeys.Values.SelectMany(x => x).Any(x => !string.IsNullOrEmpty(x)))
             throw new Exception("Project library binding must preserve only key-free references.");
-        var synchronizedBound = ProjectDraftFactory.Synchronize(
-            JsonSerializer.Deserialize<ProjectDefinition>(JsonSerializer.Serialize(bound, ProjectJson.Options), ProjectJson.Options)!, profiles);
+        var unsynchronizedBound = JsonSerializer.Deserialize<ProjectDefinition>(
+            JsonSerializer.Serialize(bound, ProjectJson.Options), ProjectJson.Options)!;
+        unsynchronizedBound.Transport.ApplicationKeys.Clear(); // Simulate newly added profile types.
+        var synchronizedBound = ProjectDraftFactory.Synchronize(unsynchronizedBound, profiles);
         if (synchronizedBound.Transport.ApplicationKeys.Values.Any(value => !string.IsNullOrEmpty(value)))
             throw new Exception("Synchronizing a catalog-bound project injected raw fallback transport keys.");
         var unresolved = ProjectContractValidator.Validate(synchronizedBound, profiles, requireProductiveSecrets: true);
