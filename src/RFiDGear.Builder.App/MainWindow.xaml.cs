@@ -697,7 +697,7 @@ public partial class MainWindow : Window
             preparedSession is null && hostRun is null && codingLaunch is null;
         // An unfinished or still-running host must never invite a fresh dataset.
         StationPrepareButton.IsEnabled = sessionDefinition is not null && selectedProject is not null && operationAvailable;
-        StationMarkFailedButton.IsEnabled = preparedSession is not null && !trackedProcessRunning;
+        StationMarkFailedButton.IsEnabled = CanOperatorMarkFailed(preparedSession is not null, trackedProcessRunning);
         var extension = IsSelectedExtensionProject();
         var productiveExpectationAvailable = selectedProject is not null &&
             File.Exists(Path.Combine(selectedProject.ProjectDirectory, "card_preflight", "expected-card.json"));
@@ -1893,12 +1893,17 @@ public partial class MainWindow : Window
         RefreshOperationButtons();
     }
 
+    // A completed host process may be recorded as failed; a running host must retain
+    // ownership of its in-flight card. This helper is shared by presentation and handler.
+    private static bool CanOperatorMarkFailed(bool hasPreparedSession, bool trackedProcessRunning)
+        => hasPreparedSession && !trackedProcessRunning;
+
     private void MarkStationFailed_Click(object sender, RoutedEventArgs e)
     {
         try
         {
             if (preparedSession is null) throw new InvalidOperationException("Kein laufender Datensatz vorhanden.");
-            if (CurrentTrackedLaunch() is not null)
+            if (!CanOperatorMarkFailed(true, CurrentTrackedLaunch() is not null))
                 throw new InvalidOperationException("RFiDGear verarbeitet möglicherweise noch diese Karte. F9 darf den Datensatz nicht vorzeitig freigeben. Karte liegen lassen, den Laufstatus prüfen und erst nach beendetem Prozess ausdrücklich als Fehler abschließen.");
             var completedLaunch = codingLaunch;
             var signal = new RFiDGearDiagnosticSignal(true, true, "Bediener", "sicher", "Vom Bediener als fehlgeschlagen markiert.", null, "Operator", "");
