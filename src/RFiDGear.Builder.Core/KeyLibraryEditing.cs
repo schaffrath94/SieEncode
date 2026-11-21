@@ -36,6 +36,9 @@ public static class KeyLibraryEditing
         string name, string keyType, string purpose, string hostSystem, string hexValue)
     {
         ValidateCurrent(current);
+        if (current.Catalog.Customers.Length > 0 &&
+            !current.Catalog.Customers.Any(customer => customer.CustomerId == customerId))
+            throw new InvalidDataException("Kunde fehlt im verwalteten Kundenverzeichnis.");
         if (customerId == Guid.Empty || string.IsNullOrWhiteSpace(name))
             throw new InvalidDataException("Kunde und Schlüsselbezeichnung sind erforderlich.");
 
