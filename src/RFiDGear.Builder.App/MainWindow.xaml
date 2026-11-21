@@ -177,11 +177,23 @@
           <Border Grid.Row="2" Style="{StaticResource CardBorder}" Padding="14" Margin="0,12,0,0">
             <StackPanel>
             <TextBlock x:Name="ProjectSelectionInfo" Text="Projekt auswählen." Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="4,0,4,8"/>
-            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-              <WrapPanel><Button Content="Neues Projekt" Click="NewProject_Click" Style="{StaticResource PrimaryButton}"/><Button x:Name="ProjectEditButton" Content="Bearbeiten" Click="EditSelectedProject_Click" IsEnabled="False"/><Button x:Name="ProjectValidationButton" Content="Projekt prüfen" Click="Preflight_Click" IsEnabled="False"/><Button x:Name="ProjectOpenStationButton" Content="Zur Kodierstation" Click="LoadStation_Click" IsEnabled="False" AutomationProperties.AutomationId="Page.Projects.OpenStationButton"/><Button Content="In Teststation prüfen" Tag="TestStation" Click="Navigate_Click"/><Button x:Name="ProjectOpenFolderButton" Content="Ordner öffnen" Click="OpenProjectFolder_Click" IsEnabled="False"/></WrapPanel>
-              <Button x:Name="DeleteProjectButton" Grid.Column="1" Content="Projekt löschen …" Click="DeleteProject_Click" IsEnabled="False" Style="{StaticResource DangerButton}" ToolTip="Entfernt nach Bestätigung die bearbeitbare Projektdefinition. Vault und gebaute rfPrj-Artefakte bleiben als Sicherheitskopie erhalten."/>
-            </Grid>
-            <Expander x:Name="ProjectAdvancedActions" Header="Weitere Projektaktionen · Experten" Margin="4,6,4,0">
+            <WrapPanel>
+              <Button Content="Neues Projekt" Click="NewProject_Click"/>
+              <Button x:Name="ProjectEditButton" Content="Projekt bearbeiten" Click="EditSelectedProject_Click" IsEnabled="False"/>
+              <Button x:Name="ProjectValidationButton" Content="Projekt prüfen" Click="Preflight_Click" IsEnabled="False"/>
+              <Button x:Name="ProjectOpenStationButton" Content="Zur Kodierstation" Click="LoadStation_Click" IsEnabled="False" Style="{StaticResource PrimaryButton}" AutomationProperties.AutomationId="Page.Projects.OpenStationButton"/>
+            </WrapPanel>
+            <Expander x:Name="ProjectMoreActions" Header="Weitere Projektaktionen · untersuchen, Ordner und Löschen" IsExpanded="False" Margin="4,8,4,0">
+              <StackPanel Margin="6,4,0,4">
+                <TextBlock Text="Diese Aktionen sind nur bei Bedarf erforderlich. Das Löschen verändert keine bestehenden Vault-Sicherungen." Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                <WrapPanel>
+                  <Button Content="Karte untersuchen" Tag="TestStation" Click="Navigate_Click"/>
+                  <Button x:Name="ProjectOpenFolderButton" Content="Projektordner öffnen" Click="OpenProjectFolder_Click" IsEnabled="False"/>
+                </WrapPanel>
+                <Button x:Name="DeleteProjectButton" Content="Projekt löschen …" Click="DeleteProject_Click" IsEnabled="False" Style="{StaticResource DangerButton}" HorizontalAlignment="Left" Margin="0,6,0,0" ToolTip="Entfernt nach Bestätigung die bearbeitbare Projektdefinition. Vault und gebaute rfPrj-Artefakte bleiben als Sicherheitskopie erhalten."/>
+              </StackPanel>
+            </Expander>
+            <Expander x:Name="ProjectAdvancedActions" Header="Technische Projektaktionen · Experten" Margin="4,6,4,0">
               <WrapPanel Margin="0,6,0,0"><Button Content="Details" Click="ProjectDetails_Click"/><Button x:Name="ImportLegacyButton" Content="Alte JSON-Konfiguration importieren" Click="ImportLegacyProject_Click"/><Button Content="Analyse / Dry-Run" Click="AnalyzeSelectedProject_Click"/><Button x:Name="QuickStartCodingButton" Content="Kodierstation und RFiDGear öffnen" Click="QuickStartCoding_Click" IsEnabled="False" ToolTip="Öffnet das konkrete RFiDGear-Projekt ohne AUTORUN/AUTOMODE. Noch kein Kartenlauf."/></WrapPanel>
             </Expander>
             <Border x:Name="ProjectPreflightPanel" Visibility="Collapsed" Background="#F7F9FA" BorderBrush="#C9D1D4" BorderThickness="2" CornerRadius="5" Padding="12" Margin="4,10,4,0">
