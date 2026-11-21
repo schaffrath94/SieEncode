@@ -1,68 +1,78 @@
-# SieEncode – Zielbild für zentral kontrollierte DESFire-Schlüsseloperationen
+# SieEncode 1.0 – zentrale Schlüsselverwaltung mit Offline-Arbeitsplätzen
 
-**Entwurf zur Architekturentscheidung, 21.11.2026. Keine Implementierung oder Freigabe; erstes SieEncode-Release 1.0 ist noch in Entwicklung.**
+**Verbindlich korrigierte Produktarchitektur, 21.11.2026.** Ersetzt das vorherige Online-Krypto-/HSM-/SAM-Zielbild dieser Datei. Die frühere Idee eines zwingenden Serverkontakts vor jeder DESFire-Operation und die Pflicht zu SAM-Lesern passen **nicht** zu den Nutzeranforderungen. Es existiert noch **kein produktiv veröffentlichtes SieEncode-Projekt**. Dies ist eine Entwicklungsgrundlage, keine bereits implementierte Synchronisation oder Sicherheitsfreigabe.
 
-## Sicherheitsziel
+## Nicht verhandelbare fachliche Anforderungen
 
-Ein entfernter Mitarbeiter darf **nach Wirksamwerden eines Entzugs keine neue produktive DESFire-Kryptographie mehr ausführen**, sofern die Station nur mit einer aktuell autorisierenden, vertrauenswürdigen Stelle arbeiten darf. Ein Mitarbeiter darf **niemals Master- oder diversifizierte Langzeitschlüssel als Klartext vom Dienst erhalten**. **Historisch vorher ausgehändigte Schlüssel bleiben kompromittiert**, bis die betroffenen Karten und Leser/SAMs kontrolliert umgestellt wurden.
+1. **Keine SAM-Pflicht:** Vorhandene übliche Kartenleser bleiben die Zielhardware. Neue SAM-Geräte werden für 1.0 nicht vorausgesetzt.
+2. **Keine dauerhafte Internet-/Serververbindung:** Kodierung, Kartenuntersuchung und notwendige Schlüsselverwaltung funktionieren mit einem zuvor freigegebenen Offline-Bestand. Synchronisation erfolgt bei Gelegenheit; signierte, verschlüsselte Transportpakete über einen vertrauenswürdigen Datenträger sind als Alternative vorzusehen.
+3. **Schlüssel dürfen und müssen autorisiert im Klartext angezeigt, kopiert und exportiert werden können**, nicht nur für Kartenschreibvorgänge, sondern z. B. für die Konfiguration von SIPORT. „Schlüssel niemals ausgeben“ ist **kein** zulässiges Produktziel.
+4. **Zentrale Autorität für Verwaltung:** Kunden, Schlüsselsätze, Key-Versionen, Projekte, Mitarbeiter, Geräte, Rechte, Historie und Freigaben werden aus einer verantwortlichen zentralen Schlüsselbibliothek verwaltet. Die Zentrale ist *Quelle der Wahrheit*, nicht zwangsläufig während jeder Kartenoperation erreichbar.
+5. **Keine falsche sofortige Sperrgarantie:** Eine Person, die einen Schlüssel bereits im Klartext erhalten hat oder einen früher entschlüsselbaren Offline-Vault besitzt, kann diese Kenntnis unabhängig von späterer Sperre behalten. Soft-Expiry, lokale Richtlinien und späterer Import neuer Gruppenrevisionen verhindern das nicht gegen einen bewusst manipulierenden ehemaligen Mitarbeiter.
 
-Sofortiger, globaler Entzug bei beliebig langer Funk-/Netzwerk-Trennung ist **nicht möglich**. Eine Offline-Ausnahme benötigt eine klar benannte maximale Nachlaufzeit und eine geschützte Hardware-Vertrauensgrenze; andernfalls strikt `fail closed`.
+## Zentrales Datenmodell (fachlich, noch nicht implementiert)
 
-## Empfohlenes Zielmodell: Control Plane und Crypto Plane
+- **Mandant/Kunde:** eindeutige Kundenkennung, Standort-/Systemzuordnung, getrennte Schlüsselräume und Zuständigkeit.
+- **Schlüsselobjekt:** stabile `KeyId`, Schlüsseltyp und Algorithmus (z. B. DESFire-AES), Zweck (PICC/App/Leser/SIPORT), Referenz zum verschlüsselten Wert, Version, Status (geplant, aktiv, abgelöst, gesperrt/kompromittiert), Erzeugungs-/Importquelle, Metadaten und Nachfolger. **Keine Klartextwerte in Datenbank-Suchindizes, Logs oder Git.**
+- **Schlüsselsatz:** definierte Kombination aus `KeyId` und **Version**, einschließlich kartenseitiger AID-/Key-No.-Bindungen und eventueller Diversifikationsparameter. Gleichnamige Schlüssel sind nicht automatisch identisch.
+- **Projekt:** verweist auf ein versioniertes Schlüsselset; die normale Projektdefinition bleibt key-frei. Das Projekt darf keine zentrale, unkontrollierte Kopie sämtlicher Kundenschlüssel erzeugen.
+- **Person, Gerät, Rolle, Autorisierung:** Leserecht, Klartextanzeige/Kopieren, Export/SIPORT, Kodieren, Schlüsselwechsel, Vergabe-/Recovery-Administration ausdrücklich separat nach Mandant und Schlüsselset. Idealerweise getrennte Freigabe für hohe Risiken. Keine pauschale „Gruppenmitglied = alle Kundenschlüssel“-Berechtigung.
+- **Audit:** lokale und zentrale Änderungshistorie, explizit verantwortete Klartextanzeige/Export/Kodierung/Import/Rotation, beteiligter Benutzer und Gerät, Zeitpunkt, Schlüssel-ID und Version; niemals Geheimwert. Offline-Ereignisse werden später nachgemeldet. **Auf frei kontrollierten Offline-PCs ist vollständige, unveränderbare Protokollierung nicht beweisbar.**
 
-### Zentrale Verwaltung (SieEncode Control Plane)
+## Zentrale Speicherung und Offline-Kopie
 
-- Kunden-/Mandantenisolation: je Kunde getrennte Schlüsselräume, Gruppen, Projekte, Zertifikate, Recovery und Audit. Keine globale Karten-Masterschlüsselkopie in frei kopierbaren Projektdateien.
-- Personen- und Geräteidentitäten mit gesonderter Authentisierung (z. B. Unternehmens-SSO/FIDO2 plus Geräte-Zertifikat/mTLS). Der persönliche Windows-Vault-Schlüssel allein ist **keine** zentrale Autorisierung.
-- Rollen projekt- und tätigkeitsbezogen: z. B. Gruppenverwaltung, Projektplanung, Kartenuntersuchung, Testkodierung, produktive Personalisierung, Key Change, Recovery.
-- Vorgangsfreigabe mit Zweck, Projekt, Kartenfamilie, AID, Key-Version, Leser, Zeitfenster, Limit und optional Vier-Augen-Prüfung. Zentraler Status `REVOKED` muss zukünftige Vorgänge verweigern.
-- Unveränderbar nachvollziehbares Ereignisprotokoll: wer, welches Gerät, welcher freigegebene Auftrag, welcher Kartenlauf, Ergebnis/Abbruch; niemals Rohkeys, komplette authentisierte APDUs, Passphrasen oder nicht erforderliche personenbezogene Daten protokollieren.
-- Verwaltung von Schlüsselgenerationen, geplanten und nachgewiesenen Rotationen, betroffenen Karten und Reader-/SAM-Freigaben.
+**Zentrale Schlüsselbibliothek:**
+- Server bzw. administrierte Unternehmensinstanz für Autorität, Rechte, Versionierung, Konflikte und Audits. **Kein Internetzwang** für alltägliche Offline-Arbeit; der Server kann im Unternehmensnetz liegen.
+- Sensible Werte verschlüsselt, mit getrennt gesichertem Root-/Recovery-Schlüsselmaterial, kleinsten Berechtigungen und geeignetem Backup-/Wiederherstellungsprozess. GitHub/GitLab oder ein normales Quellcode-Repository ist **kein Ablageort für produktive Schlüsselwerte**.
+- Die Zentrale verteilt nur die tatsächlich freigegebenen Schlüsselsets an berechtigte Benutzer/Geräte, nicht eine gesamte Schlüsselbibliothek an alle Teammitglieder.
 
-### Kryptografischer Dienst (SieEncode Crypto Plane)
+**SieEncode Studio am Mitarbeiter-PC:**
+- Lokaler, authentisierter, verschlüsselter **Offline-Vault** als Arbeitsbestand. Enthält nur explizit freigegebene `KeyId + Version` samt notwendigen Metadaten. Schlüssel sind nach berechtigter Entsperrung für Kodierung **und** für gesondert autorisiertes Anzeigen/Exportieren tatsächlich lesbar.
+- Schutz durch Benutzer-/Geräteidentität und gesonderte Recovery nach einem dokumentierten Verfahren. Keine klar lesbare Dauerkopie aus einem normalen Projektordner; temporäre Ausgaben (auch RFiDGear) müssen begrenzt, gerechtfertigt und geschützt sein. **Bei lokalem Administratorzugriff und berechtigter Geheimwertanzeige besteht dennoch Extraktionsrisiko**.
+- Freigaben können ein von der zentralen Stelle signiertes Gültigkeitsintervall haben. Die aktuelle Anwendung kann nach Ablauf neue, nicht erneuerte Arbeitsvorgänge blockieren. **Ein Zeitstempel auf einer frei kopierbaren Datei ist kein manipulationssicherer kryptografischer Widerruf**, wenn der Benutzer alte Dateien, Clientzustände oder Software kontrolliert.
+- Offline-Bearbeitung: Klare Trennung von lokalem Entwurf und zentral bestätigter Revision; keine stillen Überschreibungen. Schlüsseländerungen nur mit definierter Rückmeldung und späterer Konfliktauflösung; freigegebene Kodieroperationen vor Ort bleiben innerhalb des lokalen Bestands möglich.
 
-- Vertrauenswürdiges HSM bzw. abgeschottete SAM-basierte Kryptografie. Master-Schlüssel werden geschützt **innerhalb** dieser Grenze erzeugt/importiert und bleiben nicht exportierbar.
-- Keine generische `GetKey`-API und kein beliebig für Clients verfügbarer AES-/CMAC-Oracle. Stattdessen überprüfte, kartenspezifische Vorgänge: `BeginCardSession`, `AuthenticateApplication`, `PrepareSecureCommand`, `VerifyCardResponse`, `CommitOrAbort` und separat freigegebener `RotateCardKey`.
-- Der Server bzw. das Hardwaremodul übernimmt die nötige DESFire-Authentisierung, Diversifikation und Secure Messaging; die Windows-Kodierstation leitet nur die vorgesehenen APDU-/NFC-Daten zwischen Reader/Karte und vertrauenswürdigem Dienst weiter. Die tatsächliche APDU-/SAM-Fähigkeit und Latenz müssen erprobt werden.
-- Sitzung eindeutig an bestätigten Bediener, Gerät, Aufgabe, Projekt, Leser und Karten-/Authentisierungsdialog binden; Nonces, Sequenznummern, kurze Laufzeit, Abbruch bei Richtlinienwechsel, Rate Limiting und manipulationssichere Ergebniszuordnung.
-- Diversifikation pro Karte/Applikation/Key-Version mit dokumentierter Kartenidentität und kompatibler Leserstrategie (etwa NXP AN10922), sofern für den Kundentyp überhaupt zugelassen. Nicht blind UID nutzen, wenn Karten mit Random-ID arbeiten.
-- Kryptografische Freigabe ist kein Ersatz für eine dokumentierte Kontrolle über die Leser-/Kartenwelt: jede Key-Rotation erfordert kartenseitige Verifikation sowie abgestimmten Rollout der betroffenen Leser/SAMs.
+**Synchronisation bei verfügbarer Verbindung:**
+- Anforderung an den zentralen Dienst oder signiertes/verschlüsseltes Datei-Paket (USB/SSD). Transport für klar definierte Empfänger; signierte Autorität, nachvollziehbare Revision und Schutz gegen unbemerkte Veränderung.
+- Eingehende Änderungen als **Vorschau**: neu, geändert, entzogen, Konflikt, erforderliche Rotation; Import ist ausdrücklich, atomar und prüfbar. Kein versehentlicher Rollback auf alte Gruppen-/Schlüsselrevisionen im normalen Client.
+- Ausgehende Änderungsentwürfe/Audit-Nachmeldungen mit stabiler Ereignis-ID und Konfliktbehandlung. Synchro-Bestätigung nur bei tatsächlicher Annahme durch die Zentrale. Nie „überall verteilt“ behaupten, wenn Offline-Geräte noch nicht aktualisiert sind.
 
-## SieEncode-Station und vorhandene RFiDGear-Engine: tatsächlicher Änderungsbedarf
+## Bedienoberfläche: neue Schwerpunktaufgabe „Schlüssel verwalten“
 
-Aktuell existieren `ProjectSecretPipeServer` (Antwort mit einem vollständigen Schlüsselwert an den lokalen Prozess) und `SecureOperationalSessionService.Materialize` (lokal temporär aus einem mit Schlüsseln angereicherten Projekt erzeugte Laufdateien). **Diese Pfade dürfen in einer strengen Zentral-Krypto-Sitzung nicht verwendet werden.** Ein Zentralserver, der nur denselben Rohschlüssel über HTTPS liefert, beseitigt das Kopier- oder Extraktionsrisiko nicht.
+**Neben** „Projekte“, „Karten untersuchen“ und „Karten kodieren“ ist die fachliche **Schlüsselverwaltung** ein vollwertiger Anwendungsfall (später in sinnvoller Navigation integrieren, nicht als ungeordneter Button-Wald).
 
-Geplante Schnittstellengrenze (noch nicht implementiert):
+- Kunden-/Standortkontext wählen → Schlüsselsätze, `KeyId`, Version, AID/PICC-Zuordnung und Status sehen. **Werte standardmäßig verdeckt**, Metadaten trotzdem nutzbar.
+- „Schlüssel anzeigen“ für berechtigte Benutzer nach bewusster Aktion; „Kopieren“ / „Für SIPORT exportieren“ **gesondert** berechtigen und im lokalen Audit erfassen. Benachrichtigung, dass Ausgaben extern nicht mehr durch Vault-Widerruf kontrolliert werden. Exportformat/Automatisierung erst nach konkreter SIPORT-Spezifikation verifizieren; kein erfundener direkter SIPORT-Import.
+- Import von einem vorhandenen System bzw. Schlüssel-Erfassung ausdrücklich, mit Format-, Versions- und Provenienzprüfung; vor dem Speichern Vergleich/Duplikaterkennung, niemals stillschweigende Schlüsselgleichsetzung.
+- Schlüssel neu erzeugen, Versionen wechseln oder kompromittierte Werte ersetzen als **eigene explizite Workflows**, mit Prüfung der Karten- und Leser-/SIPORT-Abhängigkeiten. Entfernen aus einer Gruppe bedeutet **keine** automatische Kartenrotation.
+- Eine zentrale Schlüsseländerung zeigt Folgen für Projekt, Karten, Leser, SIPORT, Offline-Arbeitsplätze, vorhandene Exporte und getrennte Sicherungen.
 
-- `IKeyOperationProvider` für geprüfte DESFire-Operationen **ohne Rohschlüsselrückgabe**.
-- `CentralAuthorizedProvider`: Netzwerk zu vertrauenswürdigem Crypto-Service, striktes Deny bei Ausfall.
-- `StationSamProvider`: nur bei dafür gebauter Reader-/SAM-Hardware, mit ebenfalls geschützter Schlüsselprovisionierung und klar definierten, überprüfbaren Offline-Grenzen.
-- `LegacyVaultProvider`: bestehender interner Entwicklungsweg; **keine Freigabe als zentral sofort widerrufbares Verfahren**.
-- Capability-Handshake für die tatsächliche unterstützte Reader-/RFiDGear-Engine, bevor produktive Kartenänderungen zur Auswahl stehen. Das heutige RFiDGear kann nicht ohne Weiteres als vollwertiger `IKeyOperationProvider` vorausgesetzt werden.
+## Ehrlicher Berechtigungsentzug
 
-### Strenger Sicherheitsmodus
+- Zentrale Verwaltung markiert Benutzer/Identität/Schlüsselsatz-Exportrechte als entzogen. Weitere zentral ausgegebene Freigaben und neue Offline-Pakete werden verweigert; bereits synchronisierte, kooperative Clients übernehmen den Entzug beim nächsten gesicherten Abgleich.
+- Der **aktuelle** Vault wird gegebenenfalls für neue Empfänger neu verschlüsselt und ein aktueller Schlüsselstand neu verteilt. Der vorher berechtigte Benutzer kann dennoch aufbewahrte Offline-Dateien entschlüsseln oder bereits im Klartext erhaltene Werte behalten.
+- Kompromittierte tatsächliche DESFire-Kartenschlüssel werden nach abgestimmtem, verifiziertem Plan auf betroffenen Karten und in Lesern/SIPORT gewechselt; gegebenenfalls mehrere Schlüsselversionen während der Übergangsphase und dokumentierte Vollständigkeit. **Nur so kann früheres Schlüsselwissen technisch entwertet werden.**
+- UI-Status differenziert: `Zentrale Freigabe entzogen`, `An Arbeitsplätze verteilt`, `Aktueller Vault neu verschlüsselt`, `Kartenschlüssel rotiert und an Karten/Lesern verifiziert`. Keiner dieser Status wird aus einer anderen Aktion automatisch abgeleitet.
 
-**Jede produktive Schlüsseloperation braucht aktuellen Serverkontakt.** Kein Netz, ungültige Server-Identität, widerrufener Mitarbeiter, kein freigegebener Auftrag oder Timeout → **keine Kodierung / kein Key Change**. Rein öffentliche Karteninventur kann bei gesichertem Lesepfad unabhängig bleiben. Ein autorisierter Auftrag ist **kein** Freibrief für spätere offline ausgeführte Schlüsseloperationen.
+## Umsetzungsschnitt zur vorhandenen Codebasis
 
-### Optionaler Standort-/Offline-Modus
+Das vorhandene `ProjectKeyVault`/`ProjectGroupVault` und die persönliche Zertifikats- und Gruppenlogik sind eine technische Grundlage. `ProjectSecretPipeServer` kann in der derzeitigen Entwicklungsengine **vollständige Schlüsselwerte** an RFiDGear liefern; damit ist das Ziel `Schlüssel unter keinen Umständen lokal sichtbar` ohnehin weder implementiert noch fachlich gewollt. Die temporären Projektstände und ihre Löschung sind eine Risiko-Reduktion, keine Extraktionssperre.
 
-- **Kunden-LAN mit Standort-Krypto-Appliance:** Station kann ohne Internet mit einem lokalen, vertrauenswürdigen Dienst arbeiten. Ein Entzug aus der zentralen Zentrale wird erst nach einem zuverlässigen, überprüften Abgleich am Standort wirksam; der Standort braucht gegebenenfalls einen eigenen autorisierten Administrator für sofortige lokale Sperren.
-- **Mobiler SAM-Einsatz:** Technisch begrenzter, nur durch Hardware durchsetzbarer freigegebener Vorgangsumfang; Schlüssel verlassen den SAM nicht. Sicherheitsfenster/secure time/rollback-Schutz dürfen nur zugesagt werden, wenn die gewählte Hardware das **nachweislich** implementiert. Stets Restgefahr bei gestohlenem oder noch offline befindlichem autorisiertem Gerät. Ein normaler Zertifikatstoken auf einem Windows-PC genügt nicht.
-- Weder Standort-Appliance noch SAM garantieren rückwirkende Löschung früher bekannter Karten-Geheimnisse.
+**Vorgeschlagene Reihenfolge:**
+1. Gemeinsames, projektunabhängiges `KeyRecord`/`KeySet`-Modell samt Version/Referenzen/Berechtigungen und klarer Trennung von Geheimwert und Metadaten konzipieren.
+2. Persönlichen/gruppenbasierten verschlüsselten lokalen Offline-Bestand auf diesem Modell aufbauen und die vorhandenen Projekt-Vault-Funktionen gezielt weiterverwenden, nicht parallel eine zweite kryptografische Implementation anfangen.
+3. Eigene Schlüsselverwaltungsansicht für Anzeigen/Kopieren/Import/Export/Versionierung gestalten, mit echten Rechteprüfungen und lokalen Auditereignissen – alles erst synthetisch testen.
+4. Zentrale Masterbibliothek und signierten/verschlüsselten Paketabgleich mit Offline-Konfliktprüfung integrieren, ohne einen ständig erreichbaren Dienst vorauszusetzen.
+5. Schutz der Schlüssel im normalen RFiDGear-/Kodierablauf, Testkarten, sichere Reader-/SIPORT-Exports und Wiederherstellung als gebündelte 1.0-Abnahme verifizieren.
 
-## Abnahmekriterien und PoC-Vorgehen
+**Kein** verpflichtender Umbau auf Online-`IKeyOperationProvider`, HSM oder SAM-Leser als Voraussetzung für das erste Release. HSM/SAM bleiben optionale, später unabhängig zu bewertende Unternehmens-/Hardwaremaßnahmen, wenn ein anderer Bedrohungsrahmen dies erfordert.
 
-1. **Vorab: Entscheidung und Threat Model** für echte Mitarbeiterabmeldung, gestohlenen PC, gestohlenen SAM, kopierte Projektdatei, kompromittiertes früheres Master-Key-Material, Offline-Standorte, abgelaufene Zertifikate, Zentral- oder Standortausfall, Angreifer mit lokalem Admin-Recht.
-2. **Enger Adapter-Prototyp ohne Karten-Write**: Client kann für einen synthetischen Job nur eine autorisierte Crypto-Operation anfordern; statische Analyse/Tests zeigen, dass weder Named Pipe noch temporäre `rfPrj` einen Raw-Key enthalten. Negativtests für Rollen, Widerruf, Mandantenwechsel, Replay, Session-/Prozesswechsel, Serverausfall und lokale Manipulation.
-3. **DESFire-Labortest mit freigegebener Testkarte**: vollständige mehrschrittige AES-Authentisierung, Secure Messaging, tatsächlicher Kartenstatus und Latenz ohne lokalen Raw-Key. Vergleich mit konkret unterstützten Readern und RFiDGear-Runtime; exakte Fähigkeiten nachweisen, nicht vermuten.
-4. **Geschützte Master-Schlüsselherkunft und Recovery**: HSM/SAM-Key-Provisionierung, Dual Control, Backup/Wiederanlauf, Versionierung, Notfallwechsel und vollständige Trennung der Kundendomänen.
-5. **Optional Hardware-SAM-PoC**: NXP SAM AV3 und ein kompatibler Reader/SAM-Host (S- oder X-Mode) unter realen Protokollbedingungen; Offline-Berechtigungen nur mit verifizierter Hardwarefunktion.
-6. **Erst danach** Migrations- und Releaseentscheidung für die gesamte 1.0-Architektur. Kein automatischer produktiver Key Change, keine vorgetäuschte Sofortsperre und keine Erweiterung der normalen UI mit unerprobten Sicherheitsaktionen.
+## Noch zu entscheiden / ohne falsche Versprechen
 
-## Strategische Entscheidung
+- Wo die zentrale Verwaltung betrieben wird und wer sie administriert (Firmen-LAN, kundenspezifische Instanz, sichere Datenträgerübergabe); wie viele Mitarbeiter und Geräte gleichzeitig beteiligt sind.
+- Ob Mitarbeiter **nur ausgewählte Schlüsselsets** oder kundenspezifische komplette Bestände offline mitnehmen dürfen; welche Rollen Klartextzugriff/SIPORT-Export bekommen.
+- Welche Offline-Intervalle und Sicherheitsmaßnahmen im Feld sinnvoll sind. Ein Ablaufdatum ist ein **Bedien- und Betriebs-Gate**, kein beweisbarer sofortiger Widerruf.
+- Schlüsselimport/-export zu SIPORT zunächst anhand seines konkreten Formats und der tatsächlich geforderten Karte-/Leser-Schlüsselverwendung prüfen.
+- Zentrale Benutzer-/Geräteidentitäten, unabhängiges Recovery, gelöschte/verlorene Endgeräte, verschlüsselte Backups, Verfügbarkeit und Wiederanlauf.
 
-**Bei geforderter sofortiger Sperre:** Standardmodus auf Online-`Crypto Plane` mit HSM, verpflichtender aktueller Autorisierung und ohne Rohschlüsselausgabe ausrichten. Das ist ein **substantieller Umbau der RFiDGear-Schlüsselverwendung**, kein zusätzlicher Vault-Dialog.
-
-**Bei zwingender Offline-Kodierung:** zusätzliche Kunden-LAN-Appliance oder SAM-Station, aber deutlich und vertraglich benannter Sicherheits-/Widerrufshorizont; gegebenenfalls betroffene DESFire-Kartenschlüssel rotieren. Keine Architektur behauptet gleichzeitige garantierte Sofortsperre und unbegrenzten Offline-Betrieb.
-
-Referenzen: NXP MIFARE SAM AV3; NXP AN12696 und AN12701 (SAM-/DESFire-Integration); NXP AN10922 (Diversifikation); NIST SP 800-57 (Key-Management-Lebenszyklus). Hersteller-Unterlagen begründen **Fähigkeiten**, keine automatisch bestätigte Integration oder Freigabe für unseren derzeitigen Reader-/Engine-Stand.
+**Referenz zur fundamentalen Entzugsgrenze:** `docs/design/OFFLINE-ENTZUG-GRENZEN-1.0.md`. Änderungen aus früheren Gesprächen, die ein reines Online-KMS und nie lesbare Schlüssel als Standard behaupten, sind durch die drei verbindlichen Anforderungen oben überholt.
