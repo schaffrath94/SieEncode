@@ -27,10 +27,16 @@ public sealed record KeyLibraryEntry(
 /// comprises this metadata AND a separately protected secret container.
 /// The catalog is not an authorization token and does not decrypt keys.
 /// </summary>
+public sealed record KeyLibraryCustomer(Guid CustomerId, string Name);
+
 public sealed record KeyLibrarySnapshot(
     Guid LibraryId,
     long Revision,
-    KeyLibraryEntry[] Keys);
+    KeyLibraryEntry[] Keys)
+{
+    // Customer names are metadata, not identifiers for card-key lookup.
+    public KeyLibraryCustomer[] Customers { get; init; } = [];
+}
 
 /// <summary>
 /// Key-free, version-pinned project assignment. Slot syntax will be fixed at
@@ -57,6 +63,19 @@ public static class KeyLibraryContracts
         if (snapshot.LibraryId == Guid.Empty || snapshot.Revision < 1 || snapshot.Keys is null ||
             snapshot.Keys.Length > 100_000)
             throw new InvalidDataException("Schlüsselbibliothek benötigt eine stabile Bibliotheks-ID, gültige Revision und begrenzten Katalog.");
+
+        if (snapshot.Customers is null || snapshot.Customers.Length > 100_000)
+            throw new InvalidDataException("Ungültiges Kundenverzeichnis der Schlüsselbibliothek.");
+        var customerIds = new HashSet<Guid>();
+        var customerNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var customer in snapshot.Customers)
+        {
+            if (customer is null || customer.CustomerId == Guid.Empty ||
+                string.IsNullOrWhiteSpace(customer.Name) || customer.Name.Length > 200 ||
+                customer.Name.Any(char.IsControl) ||
+                !customerIds.Add(customer.CustomerId) || !customerNames.Add(customer.Name.Trim()))
+                throw new InvalidDataException("Kundenname oder stabile Kunden-ID ist leer oder doppelt.");
+        }
 
         var index = new Dictionary<KeyLibraryAddress, KeyLibraryEntry>();
         var identities = new Dictionary<Guid, (Guid CustomerId, string KeyType)>();
