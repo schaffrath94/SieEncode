@@ -27,8 +27,9 @@ public static class KeyLibrarySyncClient
             throw new ConcurrentFileChangeException(path);
         var localPolicy = trust.LoadOffline();
         if (localPolicy.Policy.LibraryId != remoteHead.LibraryId ||
-            localPolicy.Checkpoint != remoteHead.Policy)
-            throw new CryptographicException("Lokale und zentral signierte Gruppenstände passen nicht zusammen.");
+            localPolicy.Checkpoint != remoteHead.Policy ||
+            remoteHead.CentralRevision > 0 && remoteHead.GroupId != groupId)
+            throw new CryptographicException("Lokale und zentral signierte Gruppen- oder Bibliotheksstände passen nicht zusammen.");
 
         // Successful authenticated local decryption is a prerequisite for upload.
         // This is deliberately the same library decoder as the project editor.
