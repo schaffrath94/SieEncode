@@ -954,8 +954,10 @@ public partial class MainWindow
             var path = ProjectKeyVault.GetPath(editorSourcePath);
             KeyVaultDocument? existing = null;
             if (File.Exists(path)) existing = JsonSerializer.Deserialize<KeyVaultDocument>(File.ReadAllText(path), ProjectJson.Options);
-            var teamRecipients = new TeamVaultRecipientStore(projectsDirectory).Load().Recipients;
-            var dialog = new VaultAccessWindow(this, existing, teamRecipients, loadEditorVaultIdentities);
+            // Clean-slate 1.0: no unpublished legacy team recipient template is
+            // used to grant access. The operator explicitly chooses recipients
+            // in this project's Vault dialog; existing recipients remain intact.
+            var dialog = new VaultAccessWindow(this, existing, identityProvider: loadEditorVaultIdentities);
             if (dialog.ShowDialog() != true) return;
             var recipients = dialog.TakeRecipients();
             try { editorVaultRevision = ProjectKeyVault.SaveForRecipients(path, CreateVaultPayload(), dialog.RecoveryPassphrase, recipients, editorVaultRevision); }
