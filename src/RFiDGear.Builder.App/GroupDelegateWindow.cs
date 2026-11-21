@@ -100,9 +100,21 @@ internal sealed class GroupDelegateWindow : Window
         var verified = candidate.LoadOffline();
         if (verified.Policy.Version != 2) throw new InvalidOperationException("Die Hauptverwaltung muss zuerst ein Personenverzeichnis bereitstellen.");
         trust = candidate; loaded = verified; personId = null; grantId = null; groups.Clear(); members.ItemsSource = null;
-        people.ItemsSource = verified.Policy.People.Where(p => p.Enabled).Select(p => new PersonLabel(p.Id, p.Name + " (" + p.Id + ")")).ToArray();
+        people.ItemsSource = verified.Policy.People.Where(p => p.Enabled).Select(p =>
+            new PersonLabel(p.Id, verified.Policy.People.Count(other => other.Enabled &&
+                string.Equals(other.Name, p.Name, StringComparison.OrdinalIgnoreCase)) > 1
+                    ? p.Name + " · " + p.Id : p.Name)).ToArray();
         libraries.SelectedItem = id; dirty = false;
-        status.Text = $"Bibliothek {id:D} · lokal registrierte Revision {verified.Policy.Revision}. Bitte eigene Person wählen.";
+        exportInvitationButton.IsEnabled = false; exportChangeButton.IsEnabled = false;
+        status.Text = "Registrierter Gruppenstand · Revision " + verified.Policy.Revision +
+            ". Als Nächstes: Eigene Person wählen und laden.";
+        // Never guess a personal identity based on the public directory alone.
+        // Only auto-load when a single person already has a private delegate key on this Windows user.
+        if (people.Items.Count == 1 && people.Items[0] is PersonLabel onlyPerson)
+        {
+            people.SelectedItem = onlyPerson;
+            if (File.Exists(KeyPath(id, onlyPerson.Id))) LoadPerson(onlyPerson.Id);
+        }
     }
 
     internal void LoadPerson(string id)
@@ -128,9 +140,11 @@ internal sealed class GroupDelegateWindow : Window
             groups.Add(draft);
         }
         dirty = false;
-        status.Text = $"{person.Name} · Revision {current.Policy.Revision}\n" + (grant is null
-            ? "Keine aktive Vollmacht für diesen lokalen Verwaltungsschlüssel. Einladung exportieren bzw. Freigabe und aktuellen Gruppenstand anfordern."
-            : $"Aktive Vollmacht: {grant.Id}. {groups.Count} freigegebene Gruppen.");
+        exportInvitationButton.IsEnabled = true;
+        exportChangeButton.IsEnabled = grant is not null && groups.Count > 0;
+        status.Text = person.Name + " · Gruppenstand " + current.Policy.Revision + "\n" + (grant is null
+            ? "Noch keine aktive Vollmacht. Nächster Schritt: Einladung exportieren, Fingerabdruck unabhängig bestätigen lassen und nach Freigabe den aktuellen Gruppenstand importieren."
+            : "Vollmacht aktiv für " + groups.Count + " Gruppe(n). Bearbeiten und signierte Änderung zur Bestätigung senden.");
         grid.SelectedItem = groups.FirstOrDefault(); SelectMembers();
     }
 
@@ -167,7 +181,7 @@ internal sealed class GroupDelegateWindow : Window
         if (!exists && MessageBox.Show(this, "Einen separaten lokalen Verwaltungsschlüssel für diese Person erzeugen? Die Hauptverwaltung muss die Einladung danach unabhängig bestätigen; allein entsteht keine Berechtigung.", Title, MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
         var invitation = GetInvitation(allowCreate: !exists);
         if (SavePublic(GroupDelegationTransport.WriteInvitation(invitation), personId + ".group-delegate.json", "Verwaltungseinladung (*.group-delegate.json)|*.group-delegate.json"))
-            status.Text = "Einladung exportiert. Diesen Fingerabdruck unabhängig an die Hauptverwaltung übermitteln:\n" + GroupDelegationTransport.InvitationFingerprint(invitation);
+            status.Text = "Einladung gespeichert. Datei an die Hauptverwaltung weitergeben und Fingerabdruck über einen zweiten Weg bestätigen (z. B. telefonisch). Danach den aktualisierten Gruppenstand importieren.\nFingerabdruck:\n" + GroupDelegationTransport.InvitationFingerprint(invitation);
     }
 
     private void ExportChange()
@@ -191,7 +205,10 @@ internal sealed class GroupDelegateWindow : Window
         selectingMembers = true;
         try
         {
-            members.ItemsSource = loaded?.Policy.People.Select(p => new PersonLabel(p.Id, p.Name + (p.Enabled ? "" : " · inaktiv") + " (" + p.Id + ")")).ToArray();
+            members.ItemsSource = loaded?.Policy.People.Select(p => new PersonLabel(p.Id,
+                p.Name + (p.Enabled ? "" : " · inaktiv") +
+                (loaded.Policy.People.Count(other => string.Equals(other.Name, p.Name, StringComparison.OrdinalIgnoreCase)) > 1
+                    ? " · " + p.Id : ""))).ToArray();
             if (grid.SelectedItem is GroupAdministrationDraft group)
                 foreach (var person in members.Items.Cast<PersonLabel>().Where(p => group.Members.Contains(p.Id))) members.SelectedItems.Add(person);
         }
@@ -224,7 +241,7 @@ internal sealed class GroupDelegateWindow : Window
     {
         RequireSelectedLibrary();
         if (people.SelectedItem is not PersonLabel selected || selected.Id != personId)
-            throw new InvalidOperationException("Bitte für die ausgewählte Person zuerst „Person und Arbeitsplatz laden“ wählen.");
+            throw new InvalidOperationException("Bitte zuerst die eigene Person auswählen und „Meine Person laden“ wählen.");
     }
     private bool ConfirmDiscard() => !dirty || MessageBox.Show(this, "Nicht exportierte Gruppenänderungen verwerfen?", Title, MessageBoxButton.YesNo) == MessageBoxResult.Yes;
     private Button Action(string text, Action action) { var button = new Button { Content = text }; button.Click += (_, _) => { try { error.Text = ""; action(); } catch (Exception e) { error.Text = e.Message; } }; return button; }
