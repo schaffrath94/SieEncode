@@ -29,6 +29,10 @@ internal sealed class VaultAccessWindow : Window
     private readonly PasswordBox recovery = new() { MinWidth = 360 };
     private readonly PasswordBox confirmation = new() { MinWidth = 360 };
     private IReadOnlyList<(X509Certificate2 Certificate, string DisplayName)> acceptedRecipients = [];
+    private readonly TextBlock accessGuidance = new() { TextWrapping = TextWrapping.Wrap, FontWeight = FontWeights.SemiBold };
+    private Button? createIdentityButton;
+    private Button? addIdentityButton;
+    private Button? exportIdentityButton;
 
     public VaultAccessWindow(Window owner, KeyVaultDocument? existing = null, IEnumerable<VaultRecipientInvitation>? teamRecipients = null, Func<IReadOnlyList<WindowsVaultIdentity>>? identityProvider = null)
     {
@@ -36,6 +40,8 @@ internal sealed class VaultAccessWindow : Window
         Owner = owner; Title = "Vault-Zugriff für mehrere Benutzer"; Width = 680; MaxHeight = 760; SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner; ResizeMode = ResizeMode.CanResizeWithGrip;
         recipientList.ItemsSource = recipients; identityList.ItemsSource = identities;
+        identityList.SelectionChanged += (_, _) => UpdateIdentityGuidance();
+        recipientList.CollectionChanged += (_, _) => UpdateIdentityGuidance();
         ReloadIdentities();
         if (existing is { Version: KeyVaultService.CertificateVersion })
             foreach (var row in existing.Recipients.Where(row => !string.IsNullOrWhiteSpace(row.Certificate)))
@@ -53,14 +59,31 @@ internal sealed class VaultAccessWindow : Window
         root.Children.Add(new TextBlock { Text = existing is { Version: KeyVaultService.CertificateVersion }
             ? "Die Empfänger dieses Vaults sind übernommen. Weitere Benutzer können Sie ausdrücklich hinzufügen oder importieren. Änderungen der zentralen Teamliste ändern diesen Vault nicht automatisch."
             : "Die zentrale Teamliste ist bereits übernommen. Jeder freigegebene Benutzer öffnet den Vault mit seiner persönlichen Windows-Identität. Öffentliche Einladungsdateien enthalten keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 16), Foreground = System.Windows.Media.Brushes.DimGray });
-        root.Children.Add(new TextBlock { Text = "Eigene Windows-Identität", FontWeight = FontWeights.SemiBold });
+        root.Children.Add(new Border
+        {
+            Background = System.Windows.Media.Brushes.AliceBlue,
+            BorderBrush = System.Windows.Media.Brushes.LightSteelBlue,
+            BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(10), Margin = new Thickness(0, 0, 0, 9),
+            Child = accessGuidance
+        });
+        root.Children.Add(new TextBlock { Text = "Mein persönlicher Zugang", FontWeight = FontWeights.SemiBold });
         root.Children.Add(identityList);
         root.Children.Add(new TextBlock { Text = "Vorhandene Identität auswählen und bei Bedarf zur Empfängerliste hinzufügen. Für Updates oder weitere Projekte keinen neuen Zugang anlegen. Diese Freigabe gilt nur für den aktuellen Vault.", TextWrapping = TextWrapping.Wrap, Foreground = System.Windows.Media.Brushes.DimGray, Margin = new Thickness(0, 5, 0, 5) });
         var identityButtons = new WrapPanel();
-        identityButtons.Children.Add(Button("Neue Identität", (_, _) => CreateIdentity()));
-        identityButtons.Children.Add(Button("Zur Empfängerliste hinzufügen", (_, _) => AddSelectedIdentity()));
-        identityButtons.Children.Add(Button("Eigene Einladung exportieren", (_, _) => ExportIdentity()));
+        addIdentityButton = Button("Zur Empfängerliste hinzufügen", (_, _) => AddSelectedIdentity());
+        exportIdentityButton = Button("Eigene Einladung exportieren", (_, _) => ExportIdentity());
+        identityButtons.Children.Add(addIdentityButton);
+        identityButtons.Children.Add(exportIdentityButton);
         root.Children.Add(identityButtons);
+        createIdentityButton = Button("Neue Identität", (_, _) => CreateIdentity());
+        root.Children.Add(new Expander
+        {
+            Header = "Nur falls kein persönlicher Zugang vorhanden ist · neue Identität anlegen",
+            IsExpanded = identities.Count == 0,
+            Margin = new Thickness(0, 5, 0, 0),
+            Content = createIdentityButton
+        });
         root.Children.Add(new TextBlock { Text = "Freigegebene Empfänger", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 14, 0, 4) });
         root.Children.Add(recipientList);
         var recipientButtons = new WrapPanel();
@@ -78,6 +101,7 @@ internal sealed class VaultAccessWindow : Window
         root.Children.Add(footer);
         Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         MainWindow.InitializeAutomationContract(this, "VaultAccess");
+        UpdateIdentityGuidance();
     }
 
     public string RecoveryPassphrase => recovery.Password;
@@ -87,7 +111,9 @@ internal sealed class VaultAccessWindow : Window
     private static Button Button(string text, RoutedEventHandler click) { var button = new Button { Content = text, IsCancel = text == "Abbrechen" }; button.Click += click; return button; }
     internal void ReloadIdentities()
     {
-        // Drop the selected certificate before releasing its native handle.
+        // Keep an explicit choice by fingerprint. Multiple certificates (even when
+        // identically named) must never silently use the first private identity.
+        var previousFingerprint = (identityList.SelectedItem as WindowsVaultIdentity)?.Fingerprint;
         identityList.SelectedItem = null;
         identityList.ItemsSource = null;
         var previous = identities.ToArray();
@@ -95,14 +121,35 @@ internal sealed class VaultAccessWindow : Window
         foreach (var row in previous) row.Certificate.Dispose();
         foreach (var row in loadIdentities()) identities.Add(row);
         identityList.ItemsSource = identities;
-        identityList.SelectedIndex = identities.Count > 0 ? 0 : -1;
+        var previousChoice = previousFingerprint is null ? null : identities.FirstOrDefault(row =>
+            string.Equals(row.Fingerprint, previousFingerprint, StringComparison.OrdinalIgnoreCase));
+        identityList.SelectedItem = previousChoice ?? (identities.Count == 1 ? identities[0] : null);
+        UpdateIdentityGuidance();
     }
+    private void UpdateIdentityGuidance()
+    {
+        var chosen = identityList.SelectedItem as WindowsVaultIdentity;
+        accessGuidance.Text = identities.Count == 0
+            ? "Kein persönlicher Zugang vorhanden. Einmalig einen neuen anlegen; bestehende Empfänger bleiben unverändert."
+            : chosen is null
+                ? "Mehrere persönliche Zugänge gefunden. Den richtigen anhand des Fingerabdrucks ausdrücklich auswählen. Keinen neuen Schlüssel nur für diesen Vault erzeugen."
+                : $"Ausgewählt: {chosen.DisplayName} · {chosen.Fingerprint[..12]}…\n{recipients.Count} Empfänger in diesem Vault-Entwurf. Nur mit „Vault sicher freigeben“ werden Änderungen nach Prüfung und Bestätigung der Recovery-Passphrase übernommen.";
+        if (createIdentityButton is not null) createIdentityButton.IsEnabled = identities.Count == 0;
+        if (addIdentityButton is not null) addIdentityButton.IsEnabled = chosen is not null;
+        if (exportIdentityButton is not null) exportIdentityButton.IsEnabled = chosen is not null;
+    }
+
     private void CreateIdentity()
     {
         var name = TextEntryPrompt.Show(this, "Neue SieEncode-Identität", "Anzeigename, zum Beispiel Vorname Nachname oder Kodierstation 01", Environment.UserName);
         if (name is null) return;
-        using var created = WindowsVaultIdentityService.Create(name).Certificate; ReloadIdentities();
-        identityList.SelectedItem = identities.FirstOrDefault(row => row.DisplayName == name);
+        if (identities.Count > 0)
+            throw new InvalidOperationException("Ein vorhandener persönlicher Zugang sollte weiterverwendet werden. Keine neue Identität nur für diesen Projekt-Vault erzeugen.");
+        using var created = WindowsVaultIdentityService.Create(name).Certificate;
+        var createdFingerprint = CertificateVaultService.Fingerprint(created);
+        ReloadIdentities();
+        identityList.SelectedItem = identities.SingleOrDefault(row =>
+            string.Equals(row.Fingerprint, createdFingerprint, StringComparison.OrdinalIgnoreCase));
         AddSelectedIdentity();
     }
     private void AddSelectedIdentity()
@@ -142,8 +189,9 @@ internal sealed class VaultAccessWindow : Window
         var fingerprint = CertificateVaultService.Fingerprint(certificate);
         if (recipients.Any(row => row.Fingerprint == fingerprint)) { certificate.Dispose(); return; }
         recipients.Add(new VaultRecipientChoice(certificate, displayName));
+        UpdateIdentityGuidance();
     }
-    private void RemoveRecipient() { if (recipientList.SelectedItem is VaultRecipientChoice row) { recipients.Remove(row); row.Dispose(); } }
+    private void RemoveRecipient() { if (recipientList.SelectedItem is VaultRecipientChoice row) { recipients.Remove(row); row.Dispose(); UpdateIdentityGuidance(); } }
     private void Accept()
     {
         if (recipients.Count == 0) { MessageBox.Show(this, "Mindestens ein Empfänger ist erforderlich.", Title); return; }
