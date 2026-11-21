@@ -19,6 +19,7 @@ internal sealed class GroupAdministrationDraft
 internal sealed partial class GroupAdministrationWindow : Window
 {
     private readonly string localDirectory;
+    private readonly string localTrustDirectory;
     private readonly ComboBox libraries = new() { MinWidth = 360 };
     private readonly ObservableCollection<GroupAdministrationDraft> groups = [];
     private readonly DataGrid grid = new() { AutoGenerateColumns = false, CanUserAddRows = false, CanUserDeleteRows = false, MinHeight = 140, MaxHeight = 220 };
@@ -37,9 +38,10 @@ internal sealed partial class GroupAdministrationWindow : Window
         grid.Name = "GroupsGrid"; members.Name = "MembersList";
         peopleGrid.Name = "PeopleGrid"; deviceGrid.Name = "DevicesGrid";
         delegationList.Name = "DelegationsList";
-        Owner = owner; Title = "Hauptverwaltung · Personen und Gruppen"; Width = 880; MaxHeight = 850; SizeToContent = SizeToContent.Height;
+        Owner = owner; Title = "Hauptverwaltung · Schlüssel, Kunden und Gruppen"; Width = 880; MaxHeight = 850; SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        localDirectory = Path.Combine(Path.GetFullPath(localTrustDirectory), "Administrations");
+        this.localTrustDirectory = Path.GetFullPath(localTrustDirectory);
+        localDirectory = Path.Combine(this.localTrustDirectory, "Administrations");
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(Note("Hauptverwaltung: Personen und Gruppen freigeben, Änderungen signiert speichern und den neuen öffentlichen Stand an Kollegen weitergeben. Die Verwaltung ist nur mit dem privaten Schlüssel dieses Windows-Benutzers möglich."));
         root.Children.Add(Note("Ablauf: 1 · Bestehende Bibliothek wählen  →  2 · Kollegen oder Gruppen zuordnen  →  3 · Änderung signiert speichern  →  4 · neuen öffentlichen Stand an die Kollegen geben. Jeder Kollege muss ihn ausdrücklich importieren. Ein privater Verwaltungsschlüssel wird nie mitgegeben."));
@@ -104,6 +106,11 @@ internal sealed partial class GroupAdministrationWindow : Window
         root.Children.Add(memberActions);
         AddDelegationControls(root);
         AddRecoveryControls(root);
+        var keyManagement = new StackPanel();
+        keyManagement.Children.Add(Note("Kunden und Schlüsselversionen werden im selben verschlüsselten Offline-Bestand verwaltet. Nur die bestätigte Hauptverwaltung mit separatem, berechtigtem persönlichen Gruppenzertifikat darf hier Werte anlegen, bearbeiten und bewusst einsehen. Änderungen sind lokal noch nicht zentral bestätigt."));
+        keyManagement.Children.Add(Action("Schlüsselbibliothek verwalten", OpenKeyLibraryManagement));
+        root.Children.Add(new Expander { Header = "Schlüsselverwaltung · Kunden, Schlüssel und Versionen",
+            Content = keyManagement, IsExpanded = false, Margin = new Thickness(0, 9, 0, 5) });
         var actions = new WrapPanel();
         actions.Children.Add(Action("Änderungen signiert speichern", ConfirmAndSaveGroups));
         actions.Children.Add(Action("Aktuellen Gruppenstand für Kollegen exportieren", ExportPublic));
@@ -280,6 +287,19 @@ internal sealed partial class GroupAdministrationWindow : Window
         var fingerprint = CertificateVaultService.Fingerprint(certificate);
         if (MessageBox.Show(this, $"{invitation.DisplayName}\n{fingerprint}\n\nFingerabdruck unabhängig mit der Person abgeglichen?", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         if (!group.Members.Contains(fingerprint)) { group.Members.Add(fingerprint); dirty = true; RefreshMemberLabels(); }
+    }
+
+    private void OpenKeyLibraryManagement()
+    {
+        RequireStore();
+        if (dirty)
+            throw new InvalidOperationException("Gruppen-/Personenänderungen erst signiert speichern, bevor die Schlüsselbibliothek bearbeitet wird.");
+        var id = currentLibrary ?? throw new InvalidOperationException("Bibliotheks-ID fehlt.");
+        var trust = new OfflineGroupTrustStore(
+            Path.Combine(localTrustDirectory, id.ToString("N") + ".trust.bin"),
+            id, new WindowsGroupTrustProtection(id));
+        Store(id).RequireLocalAuthority(trust);
+        new KeyLibraryManagementWindow(this, Store(id), trust, id).ShowDialog();
     }
 
     private OfflineGroupAdministrationStore Store(Guid id) => new(Path.Combine(localDirectory, id.ToString("N") + ".admin.bin"), id, new WindowsGroupTrustProtection(id, signingAuthority: true));
