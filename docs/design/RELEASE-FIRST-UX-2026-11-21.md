@@ -2,6 +2,19 @@
 
 Stand: 21.11.2026. Arbeitsgrundlage für den bestehenden Entwicklungszweig, **keine Releasefreigabe**.
 
+## Verbindlicher Entwicklungs- und Testrhythmus
+
+**Zuerst zusammenhängende Änderungen umsetzen, dann gebündelt testen.** Nicht nach jedem UI-Text, Dialog-Fix oder einzelnen Commit einen Windows-Test, MSI-Build, Kandidaten oder Release verlangen.
+
+- Mehrere UX-/Vault-/Projektverbesserungen in einer Entwicklungsrunde implementieren und im Entwicklungszweig sichern.
+- Währenddessen Code sorgfältig prüfen und Sicherheitsinvarianten erhalten; notwendige Testfälle im Quellcode ergänzen, aber keine wiederholten manuellen Tests oder Releases anstoßen.
+- Erst wenn ein zusammenhängender Meilenstein erreicht ist oder ein tatsächlich kritisches Risiko/Blocker vorliegt, einen **gemeinsamen** Build mit Regressionen, UI-Smoketests und gezielter manueller Restabnahme durchführen.
+- Bereits bestandene, zum unveränderten Stand passende Nachweise wiederverwenden. Nur neue oder veränderte Abläufe erneut prüfen.
+- MSI-/Testkandidaten gezielt für gebündelte Meilensteine erstellen; ein öffentliches Release erst nach gesamter Releaseabnahme, nicht nach kleinen Einzeländerungen.
+- Die nötigen Testschritte für den Anwender als kurze, nachvollziehbare Bedienabläufe zusammenfassen. Keine fortlaufenden Testerfordernisse während der Implementierungsphase melden.
+
+Diese Regel hat Vorrang vor älteren Formulierungen in dieser Planung, die einen sofortigen Test nach einer kleinen Änderung nahelegen. Kein Testlauf oder Release wird durch diese Dokumentationsänderung ausgelöst.
+
 ## Verbindliche Reihenfolge
 
 1. **Bestehendes SieEncode Studio + mitgelieferte Runtime stabilisieren und die Bedienung vereinfachen.**
