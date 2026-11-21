@@ -36,12 +36,21 @@ internal sealed partial class GroupAdministrationWindow : Window
         grid.Name = "GroupsGrid"; members.Name = "MembersList";
         peopleGrid.Name = "PeopleGrid"; deviceGrid.Name = "DevicesGrid";
         delegationList.Name = "DelegationsList";
-        Owner = owner; Title = "Offline-Gruppen verwalten · Entwicklung"; Width = 880; MaxHeight = 850; SizeToContent = SizeToContent.Height;
+        Owner = owner; Title = "Hauptverwaltung · Personen und Gruppen"; Width = 880; MaxHeight = 850; SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         localDirectory = Path.Combine(Path.GetFullPath(localTrustDirectory), "Administrations");
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(Note("Hauptverwaltung: Personen und Gruppen freigeben, Änderungen signiert speichern und den neuen öffentlichen Stand an Kollegen weitergeben. Die Verwaltung ist nur mit dem privaten Schlüssel dieses Windows-Benutzers möglich."));
-        root.Children.Add(Note("Ablauf: 1 · Bibliothek laden / neu anlegen  →  2 · Personen und Gruppen pflegen  →  3 · signiert speichern  →  4 · neuen Stand exportieren. Für neue Gruppen-Vaults zusätzlich einen separaten Recovery-Zugang einrichten; Fingerabdrücke unabhängig bestätigen."));
+        root.Children.Add(Note("Ablauf: 1 · Bestehende Bibliothek wählen  →  2 · Kollegen oder Gruppen zuordnen  →  3 · Änderung signiert speichern  →  4 · neuen öffentlichen Stand an die Kollegen geben. Jeder Kollege muss ihn ausdrücklich importieren. Ein privater Verwaltungsschlüssel wird nie mitgegeben."));
+        root.Children.Add(new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(240, 246, 247)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(183, 204, 207)),
+            BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(12), Margin = new Thickness(0, 5, 0, 12),
+            Child = status
+        });
+        status.Text = "Bitte eine bestehende Verwaltung wählen. Eine neue unabhängige Bibliothek nur anlegen, wenn noch keine für dieses Team vorhanden ist.";
         root.Children.Add(Note("1 · Meine verwaltete Bibliothek auswählen (bei genau einer automatisch geladen)"));
         root.Children.Add(libraries);
         libraries.SelectionChanged += (_, _) =>
@@ -55,11 +64,14 @@ internal sealed partial class GroupAdministrationWindow : Window
                 loading = true; libraries.SelectedItem = currentLibrary; loading = false;
             }
         };
-        root.Children.Add(Action("Neue Verwaltung erstellen", () =>
+        var newAdministration = new StackPanel { Margin = new Thickness(8, 5, 8, 5) };
+        newAdministration.Children.Add(Note("Nur für ein tatsächlich neues, unabhängiges Team. Für bestehende Teams deren ursprünglichen Verwaltungsschlüssel laden oder wiederherstellen. Ein neuer Schlüssel ersetzt alte Freigaben nicht."));
+        newAdministration.Children.Add(Action("Neue unabhängige Hauptverwaltung erstellen", () =>
         {
             if (ConfirmDiscard() && MessageBox.Show(this, "Eine neue unabhängige Bibliothek mit eigenem Verwaltungsschlüssel erstellen und auf diesem Windows-Benutzer registrieren? Für bestehende Teams deren Registrierung verwenden. Den neuen Schlüssel anschließend über ‚Privaten Schlüssel sichern‘ separat sichern.", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 CreateAdministration();
         }));
+        root.Children.Add(new Expander { Header = "Nur bei Neugründung · eigene Hauptverwaltung anlegen", Content = newAdministration, IsExpanded = false });
         var advancedAdministration = new StackPanel();
         advancedAdministration.Children.Add(Action("Privaten Schlüssel sichern", ShowPrivateBackup));
         advancedAdministration.Children.Add(Action("Privaten Schlüssel wiederherstellen", ShowPrivateRestore));
@@ -92,7 +104,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         var actions = new WrapPanel();
         actions.Children.Add(Action("Änderungen signiert speichern", SaveGroups));
         actions.Children.Add(Action("Aktuellen Gruppenstand für Kollegen exportieren", ExportPublic));
-        root.Children.Add(actions); root.Children.Add(status);
+        root.Children.Add(actions);
         root.Children.Add(Action("Schließen", Close));
         var layout = new DockPanel();
         DockPanel.SetDock(error, Dock.Bottom);
