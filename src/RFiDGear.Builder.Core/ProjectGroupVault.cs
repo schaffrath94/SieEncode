@@ -102,6 +102,9 @@ public static class ProjectGroupVault
 
     private static string SerializePayload(ProjectKeyVaultPayload keys)
     {
+        ArgumentNullException.ThrowIfNull(keys);
+        if (keys.TemporaryLibraryPayload)
+            throw new InvalidOperationException("Temporäre Bibliotheksschlüssel dürfen nicht in einem separaten Gruppen-Projekt-Vault gespeichert werden.");
         var json = JsonSerializer.Serialize(new Payload(PayloadFormat, 1, keys), Options);
         return JsonSerializer.Serialize(new Payload(PayloadFormat, 1, ParsePayload(json)), Options);
     }
