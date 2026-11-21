@@ -132,6 +132,8 @@ public static class ProjectKeyLibraryResolution
                 throw new InvalidDataException("Lückenhafter oder unsortierter produktiver Keyset-Slot.");
             values.Add(Resolve(applicationSlot).Value);
         }
+        hydrated.Project.KeyLibrary = null;
+        hydrated.TransientKeyLibraryResolution = true;
         return hydrated;
 
         KeyReference Resolve(string slot) =>
