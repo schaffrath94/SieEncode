@@ -28,6 +28,7 @@ internal sealed partial class GroupAdministrationWindow : Window
     private OfflineGroupAdministrationStore? store;
     private GroupPolicyCheckpoint? checkpoint;
     private bool dirty;
+    private bool lastSignedAccessReduction;
     private bool loading;
     private Guid? currentLibrary;
 
@@ -154,6 +155,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         }
         store = candidate; checkpoint = verified.Checkpoint; currentLibrary = id;
         loading = true; libraries.SelectedItem = id; loading = false; dirty = false;
+        lastSignedAccessReduction = false;
         RefreshMemberLabels();
         RefreshDelegations(verified.Policy);
         RefreshRecovery(verified.Policy);
@@ -237,6 +239,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         var package = personMode ? store!.UpdateDirectory(PersonRows(), groupRows, checkpoint!) : store!.UpdateGroups(groupRows, checkpoint!);
         checkpoint = GroupEnrollmentPackages.Validate(package).Checkpoint;
         dirty = false;
+        lastSignedAccessReduction = accessReduced;
         try
         {
             var importStatus = SynchronizeOwnRegistration(package);
@@ -260,7 +263,10 @@ internal sealed partial class GroupAdministrationWindow : Window
         if (dialog.ShowDialog(this) != true) return;
         var revision = ConcurrentFileWriter.Capture(dialog.FileName);
         ConcurrentFileWriter.Write(dialog.FileName, revision, temporary => File.WriteAllBytes(temporary, bytes));
-        status.Text = $"Öffentliche Registrierung exportiert.\nBibliotheks-ID: {package.LibraryId:D}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}\nDiese Angaben den Kollegen unabhängig vom Dateiübertragungsweg bestätigen. Kein privater Schlüssel exportiert.";
+        status.Text = $"Öffentliche Registrierung exportiert.\nBibliotheks-ID: {package.LibraryId:D}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}\nDiese Angaben den Kollegen unabhängig vom Dateiübertragungsweg bestätigen. Kein privater Schlüssel exportiert." +
+            (lastSignedAccessReduction
+                ? "\n\nACHTUNG: Enthält einen Entzug. Dieser Export ist KEINE rückwirkende Schlüsselsperre. Neuen Gruppenstand verteilen, aktuelle betroffene Projekt-Vaults abgleichen und die Rotation bereits bekannter DESFire-Kartenschlüssel gesondert durchführen."
+                : "");
     }
 
     private void ImportMember()
