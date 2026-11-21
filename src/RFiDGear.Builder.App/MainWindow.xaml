@@ -343,7 +343,7 @@
               <StackPanel Margin="12">
                 <WrapPanel><Button x:Name="StationMarkFailedButton" Content="Unklaren Lauf als Fehler abschließen (F9)" Click="MarkStationFailed_Click" IsEnabled="False" ToolTip="Nur nach bewusster Beurteilung. Der Datensatz wird nicht als erfolgreich gewertet."/><Button x:Name="StationExportButton" Content="Sitzung abschließen und Bericht speichern" Click="ExportStation_Click" IsEnabled="False"/></WrapPanel>
                 <TextBlock x:Name="StationCounts" Text="0 erfolgreich · 0 Fehler · 0 übersprungen" Foreground="#526B70" Margin="0,5"/>
-                <Expander Header="Nach Fehler · erneut versuchen oder Nummer überspringen" IsExpanded="False" Margin="0,6,0,0">
+                <Expander x:Name="StationFailureOptions" Header="Nach Fehler · erneut versuchen oder Nummer überspringen" IsExpanded="False" Margin="0,6,0,0">
                   <WrapPanel Margin="8,4,0,4"><Button x:Name="StationRetryButton" Content="Fehlernummer erneut versuchen" Click="RetryStation_Click" IsEnabled="False"/><Button x:Name="StationSkipButton" Content="Fehlernummer überspringen" Click="SkipStation_Click" IsEnabled="False"/></WrapPanel>
                 </Expander>
                 <Expander Header="Technische Diagnose · Support" IsExpanded="{Binding IsChecked, ElementName=ExpertModeToggle, Mode=OneWay}" Margin="0,6,0,0">
