@@ -133,6 +133,14 @@ internal static class KeyLibraryVaultTests
             Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision2 with
             { Catalog = revision2.Catalog with { Keys = [snapshot.Keys[1], versionTwo] },
               Secrets = [keys.Secrets[1], revision2.Secrets[2]] }, trust, "keys", [alice], saved, now));
+            Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision2 with
+            { Catalog = revision2.Catalog with { Keys =
+                [revision2.Catalog.Keys[0], revision2.Catalog.Keys[1] with { CustomerId = customerA }, versionTwo] } },
+                trust, "keys", [alice], saved, now));
+            Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision2 with
+            { Catalog = revision2.Catalog with { Keys =
+                [revision2.Catalog.Keys[0], revision2.Catalog.Keys[1] with { KeyType = "DF_KEY_AES" }, versionTwo] } },
+                trust, "keys", [alice], saved, now));
             if (!File.ReadAllBytes(path).SequenceEqual(beforeFailures))
                 throw new Exception("Verworfene Schlüsseländerung hat den Original-Vault verändert.");
 
