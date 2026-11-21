@@ -12,6 +12,8 @@ namespace RFiDGear.Builder.App;
 internal sealed class TeamVaultWindow : Window
 {
     private readonly TeamVaultRecipientStore store;
+    private readonly bool identityOnly;
+    private readonly TextBlock identityExportStatus = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DarkSlateGray };
     private readonly Func<IReadOnlyList<WindowsVaultIdentity>> loadIdentities;
     private readonly ObservableCollection<VaultRecipientChoice> recipients = [];
     private readonly ObservableCollection<WindowsVaultIdentity> identities = [];
@@ -24,9 +26,10 @@ internal sealed class TeamVaultWindow : Window
     public TeamVaultWindow(Window owner, string projectsDirectory, bool initialSetup = false, Func<IReadOnlyList<WindowsVaultIdentity>>? identityProvider = null)
     {
         Owner = owner;
+        identityOnly = initialSetup;
         loadIdentities = identityProvider ?? WindowsVaultIdentityService.List;
         store = new TeamVaultRecipientStore(projectsDirectory);
-        Title = initialSetup ? "Vault-Ersteinrichtung für mehrere Nutzer" : "Vault-Teamzugriff verwalten";
+        Title = initialSetup ? "Meinen persönlichen Vault-Zugang einrichten" : "Bisherige Team-Vaults verwalten";
         Width = 780; MaxHeight = 760; SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner; ResizeMode = ResizeMode.CanResizeWithGrip;
         recipientList.ItemsSource = recipients; identityList.ItemsSource = identities;
@@ -40,11 +43,14 @@ internal sealed class TeamVaultWindow : Window
         }
 
         var root = new StackPanel { Margin = new Thickness(22) };
-        root.Children.Add(new TextBlock { Text = initialSetup ? "Vault einmalig für das Team einrichten" : "Vault-Teamzugriff", FontSize = 23, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(Color.FromRgb(26, 91, 98)) });
-        root.Children.Add(new TextBlock { Text = "Eine Identität ist Ihr persönlicher Zugang auf diesem Windows-Benutzer. Für Gruppen-Vaults nur Identität auswählen bzw. anlegen und in Schritt 2 die öffentliche Einladung exportieren; danach den Dialog schließen. Die Teamliste in Schritt 3 und 4 gilt ausschließlich für neue bisherige Team-Vaults. Gruppenrechte verwaltet der Hauptverwalter unter Offline-Gruppen verwalten. Bestehende Vaults werden hier nicht geändert.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, Margin = new Thickness(0, 6, 0, 14) });
-        root.Children.Add(new Expander
+        root.Children.Add(new TextBlock { Text = initialSetup ? "Mein persönlicher Zugang" : "Bisherige Team-Vaults", FontSize = 23, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(Color.FromRgb(26, 91, 98)) });
+        root.Children.Add(new TextBlock { Text = initialSetup
+            ? "1 · Vorhandenen persönlichen Zugang auswählen oder einmalig anlegen. 2 · Öffentliche Einladung an die Hauptverwaltung weitergeben. Keine Teamliste speichern und keine neue Identität bei jedem Test erstellen. Die Hauptverwaltung vergibt anschließend die Gruppenrechte."
+            : "Nur für bisherige Team-Vaults: lokale Empfängerliste für neue Vaults verwalten. Offline-Gruppen und deren Vollmachten werden separat verwaltet. Bestehende Vaults bleiben unverändert.",
+            TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray, Margin = new Thickness(0, 6, 0, 14) });
+        if (!initialSetup) root.Children.Add(new Expander
         {
-            Header = "Anleitung: allein starten, Kollegen hinzufügen, bestehendes Projekt freigeben",
+            Header = "Erweitert: bisherige Team-Vaults und Empfängerliste",
             Margin = new Thickness(0, 0, 0, 12),
             Content = new TextBlock
             {
@@ -61,13 +67,16 @@ internal sealed class TeamVaultWindow : Window
         identityContent.Children.Add(identityList); identityContent.Children.Add(identityFingerprint);
         var own = new WrapPanel();
         own.Children.Add(ActionButton("Neue persönliche Identität anlegen", CreateIdentity, identities.Count == 0));
-        own.Children.Add(ActionButton("Eigene Identität zum Team hinzufügen", AddSelectedIdentity));
+        if (!initialSetup) own.Children.Add(ActionButton("Eigene Identität zum Team hinzufügen", AddSelectedIdentity));
         identityContent.Children.Add(own);
-        root.Children.Add(Step("1", "Meinen vorhandenen Zugang auswählen", "Vorhandene persönliche Identität weiterverwenden; für ein Update keine neue anlegen. Nur bei bisherigen Team-Vaults zusätzlich zur Teamliste hinzufügen. Gruppenmitgliedschaften vergibt die zentrale Verwaltung.", identityContent));
+        root.Children.Add(Step("1", "Meinen vorhandenen Zugang auswählen", initialSetup
+            ? "Wenn schon ein Zugang vorhanden ist, diesen weiterverwenden. Kein neuer Schlüssel nötig; Gruppenmitgliedschaft vergibt die Hauptverwaltung."
+            : "Vorhandenen persönlichen Zugang für bisherige Team-Vaults in die Teamliste aufnehmen. Gruppenmitgliedschaften vergibt separat die Hauptverwaltung.", identityContent));
 
         var exportContent = new StackPanel();
         exportContent.Children.Add(new TextBlock { Text = "Exportieren Sie die öffentliche Einladung und geben Sie sie an den Hauptverwalter Ihrer Gruppen bzw. den Verantwortlichen der bisherigen Teamliste. Fingerabdruck unabhängig abgleichen. Die Datei enthält keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray });
         exportContent.Children.Add(ActionButton("Öffentliche Einladung exportieren", ExportIdentity));
+        exportContent.Children.Add(identityExportStatus);
         root.Children.Add(Step("2", "Kollege: eigene Einladung weitergeben", "Nur für Teamzugriff nötig. Jeder Kollege führt diesen Schritt auf seinem eigenen Windows-Benutzer aus.", exportContent));
 
         var importContent = new StackPanel(); importContent.Children.Add(recipientList);
@@ -75,17 +84,22 @@ internal sealed class TeamVaultWindow : Window
         team.Children.Add(ActionButton("Einladungen mehrerer Nutzer importieren", ImportInvitation));
         team.Children.Add(ActionButton("Ausgewähltes Mitglied entfernen", RemoveRecipient));
         importContent.Children.Add(team);
-        root.Children.Add(Step("3", "Verantwortlicher: Einladungen einsammeln", "Die Einladungen der Kollegen importieren. Die Liste ist eine Vorlage für neue Vaults; kein Nachweis für Zugriff auf ein bestehendes Projekt.", importContent));
+        if (!initialSetup) root.Children.Add(Step("3", "Verantwortlicher: Einladungen einsammeln", "Nur für bisherige Team-Vaults. Die Liste ist kein Nachweis für Zugriff auf ein bestehendes Projekt.", importContent));
 
         var statusBorder = new Border { Background = new SolidColorBrush(Color.FromRgb(240, 246, 247)), BorderBrush = new SolidColorBrush(Color.FromRgb(183, 204, 207)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(4), Padding = new Thickness(10), Child = setupStatus };
         var saveContent = new StackPanel(); saveContent.Children.Add(statusBorder);
         saveContent.Children.Add(new TextBlock { Text = "Speichern ändert nur die Teamliste. Bestehende Vaults separat im Projekt freigeben. Entfernte Empfänger können alte Vaultkopien weiterhin öffnen – auch nach einer Änderung der aktuellen Empfängerliste.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DarkGoldenrod, Margin = new Thickness(0, 7, 0, 0) });
-        root.Children.Add(Step("4", "Gemeinsame Liste speichern", $"Speicherort: {store.Path}", saveContent));
+        if (!initialSetup) root.Children.Add(Step("4", "Gemeinsame Liste speichern", $"Speicherort: {store.Path}", saveContent));
 
         root.Children.Add(actionError);
         var footer = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 12, 0, 0) };
-        footer.Children.Add(ActionButton("Abbrechen", (_, _) => DialogResult = false));
-        footer.Children.Add(ActionButton("Einrichtung speichern", Save, true)); root.Children.Add(footer);
+        if (initialSetup) footer.Children.Add(ActionButton("Schließen", (_, _) => DialogResult = false, true));
+        else
+        {
+            footer.Children.Add(ActionButton("Abbrechen", (_, _) => DialogResult = false));
+            footer.Children.Add(ActionButton("Einrichtung speichern", Save, true));
+        }
+        root.Children.Add(footer);
         Content = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = root };
         MainWindow.InitializeAutomationContract(this, "TeamVault");
         UpdateStatus();
@@ -139,7 +153,8 @@ internal sealed class TeamVaultWindow : Window
         var name = TextEntryPrompt.Show(this, "Neue SieEncode-Identität", "Eindeutiger Anzeigename, zum Beispiel Vorname Nachname oder Kodierstation 01", Environment.UserName);
         if (name is null) return;
         using var created = WindowsVaultIdentityService.Create(name).Certificate;
-        ReloadIdentities(); identityList.SelectedItem = identities.FirstOrDefault(row => row.DisplayName == name); AddSelectedIdentity(sender, e);
+        ReloadIdentities(); identityList.SelectedItem = identities.FirstOrDefault(row => row.DisplayName == name);
+        if (!identityOnly) AddSelectedIdentity(sender, e);
     }
 
     private void AddSelectedIdentity(object sender, RoutedEventArgs e)
@@ -152,7 +167,11 @@ internal sealed class TeamVaultWindow : Window
     {
         if (identityList.SelectedItem is not WindowsVaultIdentity identity) { MessageBox.Show(this, "Bitte zuerst eine eigene Identität anlegen oder auswählen.", Title); return; }
         var dialog = new SaveFileDialog { Title = "Öffentliche SieEncode-Einladung exportieren", Filter = "SieEncode-Empfängereinladung (*.recipient.json)|*.recipient.json", FileName = SafeFileName(identity.DisplayName) + ".recipient.json", AddExtension = true };
-        if (dialog.ShowDialog(this) == true) WindowsVaultIdentityService.ExportInvitation(identity, dialog.FileName);
+        if (dialog.ShowDialog(this) == true)
+        {
+            WindowsVaultIdentityService.ExportInvitation(identity, dialog.FileName);
+            identityExportStatus.Text = "Öffentliche Einladung gespeichert. Datei an die Hauptverwaltung weitergeben; Fingerabdruck unabhängig, z. B. telefonisch, bestätigen. Es wurde kein privater Schlüssel übertragen.";
+        }
     }
 
     private void ImportInvitation(object sender, RoutedEventArgs e)
@@ -188,11 +207,13 @@ internal sealed class TeamVaultWindow : Window
         var selected = identityList.SelectedItem as WindowsVaultIdentity;
         var selectedInTeam = selected is not null && recipients.Any(row => string.Equals(row.Fingerprint, selected.Fingerprint, StringComparison.OrdinalIgnoreCase));
         identityFingerprint.Text = selected is null ? "Noch keine lokale Identität vorhanden."
+            : identityOnly ? $"Persönlicher Zugang: {selected.DisplayName}\nFingerabdruck: {selected.Fingerprint}\nNächster Schritt: öffentliche Einladung exportieren (nur wenn die Hauptverwaltung sie noch nicht hat)."
             : $"Fingerabdruck: {selected.Fingerprint}\n" + (selectedInTeam
                 ? "Ausgewählter Zugang ist in dieser Teamliste enthalten (Änderungen noch speichern)."
                 : "Ausgewählter Zugang fehlt in dieser Teamliste. Bei Bedarf unten zum Team hinzufügen.");
         var own = recipients.Any(row => identities.Any(identity => string.Equals(identity.Fingerprint, row.Fingerprint, StringComparison.OrdinalIgnoreCase)));
-        setupStatus.Text = identities.Count == 0 ? "Offen: eigene Windows-Identität anlegen."
+        setupStatus.Text = identityOnly ? "Persönlicher Zugang bereit; die Gruppenrechte werden von der Hauptverwaltung separat vergeben."
+            : identities.Count == 0 ? "Offen: eigene Windows-Identität anlegen."
             : !own ? $"Offen: eigene Identität zur Teamliste hinzufügen. Aktuell {recipients.Count} Empfänger."
             : recipients.Count < 2 ? "Teamliste mit einem eigenen Zugang vorbereitet. Jetzt speichern; weitere Kollegen sind optional."
             : $"Teamliste mit {recipients.Count} Zugängen vorbereitet, eigener Zugang enthalten. Jetzt speichern. Mehrere lokale Identitäten sind nicht automatisch mehrere Benutzer.";
