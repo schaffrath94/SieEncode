@@ -211,6 +211,10 @@ Nicht nur Kodieren: Verzeichnis für Kunden, zentrale Schlüsselsätze, stabile 
 Die bisherige Online-only-/HSM-Architektur ist **nicht** der Release-Standard; siehe das ersetzte Zielbild unter `docs/design/ZENTRALE-SCHLUESSELARCHITEKTUR-1.0.md`.
 
 
+## KEY-03 – Keine Schlüsseldiversifikation in SieEncode 1.0
+
+**Verbindlicher Ausschluss:** Keine Diversifikationsverfahren, Ableitungsparameter, Profile, UI-Optionen oder Tests hierfür in Version 1.0 planen oder umsetzen. Das Produkt soll die ausdrücklich hinterlegten vorhandenen Kundenschlüssel verwalten und verwenden, einschließlich Klartextausgabe für SIPORT, vollständiger Offline-Bibliothek, Versionierung und kontrolliertem Schlüsselwechsel. Eine spätere mögliche Erweiterung darf den 1.0-Fertigstellungsgrad nicht beeinflussen.
+
 ## KEY-02 – Vollständige Offline-Bibliothek statt Einsatzpaketen (21.11.2026)
 
 **Benutzerentscheidung:** Hauptverwalter führt **immer alle Schlüssel aller Kunden und Projekte** mit. Eine projektweise oder kundenweise Mitnahmeauswahl ist im Alltag zu unbequem und darf **nicht** zur Pflicht des normalen Arbeitsablaufs werden. Das gilt auch für Schlüssel, die beim Kunden erst unerwartet für SIPORT, Leser oder Kartenauswertung benötigt werden.
