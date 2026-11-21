@@ -101,9 +101,9 @@ public partial class MainWindow
         TestAdditionalAnalysis.SetCurrentValue(Expander.IsExpandedProperty, true);
         TestInspectionDetails.IsExpanded = true;
         UpdateLayout();
-        if (!TestOpenRecognitionResultButton.IsVisible || !TestOpenInventoryPdfButton.IsVisible ||
-            !TestAnalysisTree.IsVisible || !TestInspectionState.IsVisible)
-            throw new InvalidOperationException("Kartenbefund oder Berichte im Normalmodus nicht aufklappbar.");
+        if (!TestOpenInventoryPdfButton.IsVisible || !TestAnalysisTree.IsVisible ||
+            !TestInspectionState.IsVisible || TestOpenRecognitionResultButton.IsVisible)
+            throw new InvalidOperationException("Kartenbefund, Berichte oder Nachweis-Gate im Normalmodus fehlerhaft.");
         TestInspectionDetails.IsExpanded = false;
         TestAdditionalAnalysis.IsExpanded = false;
         Console.WriteLine("PASS: Standard, Experte, zurueck zu Standard, Ergebnisübersicht, Kartendetails und Berichte aufklappen.");
@@ -500,8 +500,8 @@ public partial class MainWindow
         var populatedState = DescribeCardInspection(populated);
         if (unknownState.Complete || !unknownState.Title.Contains("UNGEKLÄRT", StringComparison.Ordinal) ||
             !unknownState.NextAction.Contains("Keine Formatierung", StringComparison.Ordinal) ||
-            !emptyState.Complete || !emptyState.Title.Contains("0 APPLICATIONS", StringComparison.Ordinal) ||
-            !populatedState.Complete || !populatedState.Title.Contains("1 APPLICATION", StringComparison.Ordinal) ||
+            !emptyState.Complete || !emptyState.Title.Contains("KEINE ANWENDUNGEN", StringComparison.Ordinal) ||
+            !populatedState.Complete || !populatedState.Title.Contains("ANWENDUNGEN ERKANNT · 1", StringComparison.Ordinal) ||
             DescribeCardInspection(inconsistent).Complete || DescribeCardInspection(unsafeReport).Complete)
             throw new InvalidOperationException("Kartenübersicht verwechselt bestätigte Inventur mit unbekanntem Zustand.");
 
