@@ -41,6 +41,8 @@ public partial class MainWindow
         try
         {
             if (editorProject is null) throw new InvalidOperationException("Bitte zuerst einen Projektentwurf öffnen.");
+            if (editorProject.Project.KeyLibrary is not null)
+                throw new InvalidOperationException("Ein Bibliotheksprojekt erhält keinen zusätzlichen unabhängigen Gruppen-Vault.");
             if (IsEditorGroupVault) throw new InvalidOperationException("Dieses Projekt ist bereits einer Gruppe zugeordnet. Für Empfängeränderungen den Gruppenabgleich verwenden.");
             var migration = !string.IsNullOrWhiteSpace(editorSourcePath) && editorVaultRevision.Exists;
             if (migration && (editorDirty || editorVaultPayload is not null && !editorKeysPersisted)) throw new InvalidOperationException("Vor der Migration Projekt- und Schlüsseländerungen speichern oder verwerfen.");
