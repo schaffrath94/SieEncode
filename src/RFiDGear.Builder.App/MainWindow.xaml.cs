@@ -1477,6 +1477,9 @@ public partial class MainWindow : Window
             var number = string.IsNullOrWhiteSpace(SeriesFieldId()) ? "" : values.GetValueOrDefault(SeriesFieldId(), "");
             if (series.IsKnownSuccessful(number) && MessageBox.Show(this, $"Die Nummer '{number}' wurde bereits erfolgreich protokolliert. Trotzdem bewusst erneut bereitstellen?", "Doppelte Nummer", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             preparedSession = sessionService.Prepare(sessionDefinition, values);
+            // A prepared dataset is immutable until its run is resolved. Hide the
+            // duplicate prepare action instead of relying on a rejected second click.
+            StationPrepareButton.IsEnabled = false;
             RefreshOperationButtons();
             StationPayloadInfo.Text = $"{preparedSession.Payloads.Count} vollständig validierte Payload(s) sicher geschrieben · Baseline für {preparedSession.Expectations.Count} finale Readback(s) und RFiDGear-Log erfasst · {preparedSession.PreparedAt:dd.MM.yyyy HH:mm:ss}";
             var executableAvailable = File.Exists(settings.RFiDGear.ExecutablePath);
@@ -1677,6 +1680,8 @@ public partial class MainWindow : Window
             // Once a real host run exists, F8 is available as an explicit refresh.
             // Success still requires the terminal, correlated final readbacks.
             StationCheckReadbacksButton.IsEnabled = true;
+            StationStartAutoModeButton.IsEnabled = false;
+            StationOpenRFiDGearButton.IsEnabled = false;
             operationTimer.Start();
             StationState.Text = autoMode ? "SERIENMODUS AKTIV" : "RFiDGear GEÖFFNET";
             StationStateDetail.Text = autoMode
@@ -1852,6 +1857,7 @@ public partial class MainWindow : Window
         StationMarkFailedButton.IsEnabled = false;
         StationOpenRFiDGearButton.IsEnabled = false;
         StationStartAutoModeButton.IsEnabled = false;
+        StationPrepareButton.IsEnabled = sessionDefinition is not null;
         if (result == CodingSeriesResult.Successful) { lastFailedValues = null; AdvanceSeriesInput(); }
         else
         {
