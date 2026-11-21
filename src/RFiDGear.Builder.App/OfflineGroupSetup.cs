@@ -26,7 +26,10 @@ public partial class MainWindow
             var bytes = new byte[(int)stream.Length]; stream.ReadExactly(bytes);
             var transition = GroupAdministratorTransition.Read(bytes);
             if (new GroupAdministratorTransitionWindow(this, transition, localGroupTrustDirectory).ShowDialog() == true)
+            {
+                UpdateVaultSetupStatus();
                 SetStatus("Neuer Verwaltungsschlüssel lokal übernommen. Andere Arbeitsplätze und private Verwaltungsschlüssel wurden nicht geändert.");
+            }
         }
         catch (Exception exception) { ShowError(exception); }
     }
@@ -51,14 +54,21 @@ public partial class MainWindow
             if (dialog.ShowDialog(this) != true) return;
             var package = GroupEnrollmentPackages.Read(GroupDelegationTransport.ReadFile(dialog.FileName));
             if (new GroupPolicyUpdateWindow(this, package, localGroupTrustDirectory).ShowDialog() == true)
-                SetStatus("Registrierter Gruppenstand aktualisiert. Bestehende Vault-Dateien wurden nicht verändert.");
+            {
+                UpdateVaultSetupStatus();
+                SetStatus("Signierten Gruppenstand lokal übernommen. Die Hauptverwaltung oder andere Windows-Benutzer wurden dadurch nicht geändert. Zugriff auf konkrete Projekte weiterhin gesondert prüfen.");
+            }
         }
         catch (Exception exception) { ShowError(exception); }
     }
 
     private void ManageOfflineGroups_Click(object sender, RoutedEventArgs e)
     {
-        try { new GroupAdministrationWindow(this, localGroupTrustDirectory).ShowDialog(); }
+        try
+        {
+            new GroupAdministrationWindow(this, localGroupTrustDirectory).ShowDialog();
+            UpdateVaultSetupStatus();
+        }
         catch (Exception exception) { ShowError(exception); }
     }
 
@@ -73,7 +83,10 @@ public partial class MainWindow
             var bytes = new byte[(int)stream.Length]; stream.ReadExactly(bytes);
             var package = GroupEnrollmentPackages.Read(bytes);
             if (new GroupEnrollmentWindow(this, package, localGroupTrustDirectory).ShowDialog() == true)
-                SetStatus("Gruppenverwaltung für diesen Windows-Benutzer registriert. Projekt-Vaults wurden nicht verändert.");
+            {
+                UpdateVaultSetupStatus();
+                SetStatus("Signierte Gruppenbibliothek auf diesem Windows-Benutzer registriert. Eigene Gruppenrechte und Projektzugriff sind dadurch noch nicht automatisch bestätigt. Kein Projekt-Vault geändert.");
+            }
         }
         catch (Exception exception) { ShowError(exception); }
     }
