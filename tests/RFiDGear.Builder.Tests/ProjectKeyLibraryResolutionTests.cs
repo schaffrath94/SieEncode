@@ -118,6 +118,10 @@ internal static class ProjectKeyLibraryResolutionTests
         var hydrated = ProjectKeyLibraryResolution.ResolveForBuild(reloaded, profiles, vault);
         if (!hydrated.TransientKeyLibraryResolution || hydrated.Project.KeyLibrary is not null)
             throw new Exception("Resolved plaintext project was not marked transient.");
+        var scrubbedTransient = ProjectJson.WithoutAllSecrets(hydrated);
+        if (!scrubbedTransient.TransientKeyLibraryResolution)
+            throw new Exception("A sanitized transient project lost its do-not-persist marker.");
+        Reject<InvalidDataException>(() => ProjectJson.Save(projectFile, scrubbedTransient));
         Reject<InvalidDataException>(() => ProjectJson.Save(projectFile, hydrated));
         Reject<InvalidDataException>(() => ProjectJson.Save(projectFile, hydrated, FileRevision.Missing));
         if (hydrated.Transport.PiccKey.Value != secrets[0].HexValue ||
