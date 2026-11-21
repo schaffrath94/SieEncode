@@ -47,6 +47,36 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         return signed.Checkpoint;
     }
 
+    /// <summary>
+    /// Explicitly sign a single encrypted-catalog change. The signature binds
+    /// the expected Vault file revision, exact next catalog contents and current
+    /// trusted signed group policy. No raw key or private authority leaves here.
+    /// </summary>
+    public SignedKeyLibraryMutation SignKeyLibraryMutation(OfflineGroupTrustStore trust,
+        string operation, string groupId, FileRevision previousVault,
+        KeyLibraryVaultPayload next)
+    {
+        var checkpoint = RequireLocalAuthority(trust);
+        var claim = KeyLibraryMutationAuthorization.Prepare(operation, libraryId,
+            groupId, checkpoint, previousVault, next);
+        var (state, revision) = Load();
+        try
+        {
+            using var administrator = OpenKey(state);
+            var verified = OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId);
+            if (verified.Checkpoint != checkpoint ||
+                trust.LoadOffline().Checkpoint != checkpoint ||
+                ConcurrentFileWriter.Capture(path) != revision)
+                throw new ConcurrentFileChangeException(path);
+            var signed = KeyLibraryMutationAuthorization.Sign(claim, administrator);
+            if (ConcurrentFileWriter.Capture(path) != revision ||
+                trust.LoadOffline().Checkpoint != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            return signed;
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     public GroupEnrollmentPackage ExportPublic()
     {
         var (state, _) = Load();
