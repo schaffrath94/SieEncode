@@ -12,7 +12,7 @@ public sealed record KeyLibrarySyncClaim(
     string Format, int Version, Guid LibraryId, string GroupId,
     GroupPolicyCheckpoint Policy, long ExpectedCentralRevision,
     string ExpectedCentralCiphertextSha256, string NextCiphertextSha256,
-    Guid TransferId);
+    long CatalogRevision, Guid TransferId);
 
 public sealed record SignedKeyLibrarySync(
     byte[] Claim, byte[] Signature, byte[] EncryptedVault);
@@ -41,10 +41,11 @@ public static class KeyLibrarySyncTransport
 
     public static KeyLibrarySyncClaim Prepare(GroupEnrollmentPackage enrolled,
         string groupId, long expectedCentralRevision, string expectedCentralCiphertextSha256,
-        byte[] encrypted)
+        long catalogRevision, byte[] encrypted)
     {
         var policy = GroupEnrollmentPackages.Validate(enrolled);
-        if (expectedCentralRevision < 0 || expectedCentralRevision == long.MaxValue ||
+        if (catalogRevision < 1 || expectedCentralRevision < 0 ||
+            expectedCentralRevision == long.MaxValue ||
             expectedCentralRevision == 0 && expectedCentralCiphertextSha256 != "" ||
             expectedCentralRevision > 0 &&
                 !IsSha(expectedCentralCiphertextSha256))
@@ -52,7 +53,7 @@ public static class KeyLibrarySyncTransport
         ValidateEnvelope(enrolled, policy, groupId, encrypted);
         return new(Format, 1, enrolled.LibraryId, groupId, policy.Checkpoint,
             expectedCentralRevision, expectedCentralCiphertextSha256,
-            CiphertextSha256(encrypted), Guid.NewGuid());
+            CiphertextSha256(encrypted), catalogRevision, Guid.NewGuid());
     }
 
     public static SignedKeyLibrarySync Sign(KeyLibrarySyncClaim claim,
@@ -104,6 +105,7 @@ public static class KeyLibrarySyncTransport
     {
         if (claim is null || claim.Format != Format || claim.Version != 1 ||
             claim.LibraryId == Guid.Empty || claim.TransferId == Guid.Empty ||
+            claim.CatalogRevision < 1 ||
             claim.GroupId is not { Length: > 0 and <= 128 } ||
             !claim.GroupId.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-') ||
             claim.Policy is null || claim.Policy.Revision < 1 ||
