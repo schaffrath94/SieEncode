@@ -15,6 +15,15 @@ namespace RFiDGear.Builder.App;
 internal sealed class KeyLibraryManagementWindow : Window
 {
     private sealed record GroupChoice(string Id, string Name);
+    private sealed record KeyRow(KeyLibraryEntry Entry, string CustomerName)
+    {
+        public string Name => Entry.Name;
+        public string KeyType => Entry.KeyType;
+        public int Version => Entry.Version;
+        public string Status => Entry.Status;
+        public string Purpose => Entry.Purpose;
+        public string HostSystem => Entry.HostSystem;
+    }
     private readonly OfflineGroupAdministrationStore administration;
     private readonly OfflineGroupTrustStore trust;
     private readonly Guid libraryId;
@@ -60,13 +69,13 @@ internal sealed class KeyLibraryManagementWindow : Window
         customerBar.Children.Add(addCustomer);
         root.Children.Add(customerBar);
         root.Children.Add(Note("Schlüssel und historische Versionen"));
-        keys.Columns.Add(new DataGridTextColumn { Header = "Kunde", Binding = new Binding(nameof(KeyLibraryEntry.CustomerId)), Width = new DataGridLength(1.4, DataGridLengthUnitType.Star) });
-        keys.Columns.Add(new DataGridTextColumn { Header = "Bezeichnung", Binding = new Binding(nameof(KeyLibraryEntry.Name)), Width = new DataGridLength(1.5, DataGridLengthUnitType.Star) });
-        keys.Columns.Add(new DataGridTextColumn { Header = "Typ", Binding = new Binding(nameof(KeyLibraryEntry.KeyType)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-        keys.Columns.Add(new DataGridTextColumn { Header = "Version", Binding = new Binding(nameof(KeyLibraryEntry.Version)), Width = new DataGridLength(0.55, DataGridLengthUnitType.Star) });
-        keys.Columns.Add(new DataGridTextColumn { Header = "Status", Binding = new Binding(nameof(KeyLibraryEntry.Status)), Width = new DataGridLength(0.8, DataGridLengthUnitType.Star) });
-        keys.Columns.Add(new DataGridTextColumn { Header = "Verwendung", Binding = new Binding(nameof(KeyLibraryEntry.Purpose)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
-        keys.Columns.Add(new DataGridTextColumn { Header = "Host", Binding = new Binding(nameof(KeyLibraryEntry.HostSystem)), Width = new DataGridLength(0.8, DataGridLengthUnitType.Star) });
+        keys.Columns.Add(new DataGridTextColumn { Header = "Kunde", Binding = new Binding(nameof(KeyRow.CustomerName)), Width = new DataGridLength(1.4, DataGridLengthUnitType.Star) });
+        keys.Columns.Add(new DataGridTextColumn { Header = "Bezeichnung", Binding = new Binding(nameof(KeyRow.Name)), Width = new DataGridLength(1.5, DataGridLengthUnitType.Star) });
+        keys.Columns.Add(new DataGridTextColumn { Header = "Typ", Binding = new Binding(nameof(KeyRow.KeyType)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+        keys.Columns.Add(new DataGridTextColumn { Header = "Version", Binding = new Binding(nameof(KeyRow.Version)), Width = new DataGridLength(0.55, DataGridLengthUnitType.Star) });
+        keys.Columns.Add(new DataGridTextColumn { Header = "Status", Binding = new Binding(nameof(KeyRow.Status)), Width = new DataGridLength(0.8, DataGridLengthUnitType.Star) });
+        keys.Columns.Add(new DataGridTextColumn { Header = "Verwendung", Binding = new Binding(nameof(KeyRow.Purpose)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+        keys.Columns.Add(new DataGridTextColumn { Header = "Host", Binding = new Binding(nameof(KeyRow.HostSystem)), Width = new DataGridLength(0.8, DataGridLengthUnitType.Star) });
         root.Children.Add(keys);
 
         var addActions = new WrapPanel();
@@ -159,10 +168,14 @@ internal sealed class KeyLibraryManagementWindow : Window
         var selection = (customerSelection.SelectedItem as KeyLibraryCustomer)?.CustomerId;
         var current = groupSelection.SelectedItem is GroupChoice && File.Exists(CurrentPath())
             ? OpenCurrent() : null;
+        var names = current?.Catalog.Customers.ToDictionary(c => c.CustomerId, c => c.Name)
+            ?? new Dictionary<Guid, string>();
         keys.ItemsSource = current?.Catalog.Keys
             .Where(k => selection is null || k.CustomerId == selection)
             .OrderBy(k => k.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ThenBy(k => k.KeyId).ThenBy(k => k.Version).ToArray();
+            .ThenBy(k => k.KeyId).ThenBy(k => k.Version)
+            .Select(k => new KeyRow(k, names.GetValueOrDefault(k.CustomerId, "Unbenannter Kunde " + k.CustomerId.ToString("N")[..8])))
+            .ToArray();
         RefreshActions();
     }
 
@@ -170,12 +183,14 @@ internal sealed class KeyLibraryManagementWindow : Window
     {
         var group = groupSelection.SelectedItem is GroupChoice;
         var exists = group && File.Exists(CurrentPath());
-        var entry = keys.SelectedItem as KeyLibraryEntry;
+        var entry = (keys.SelectedItem as KeyRow)?.Entry;
         create.IsEnabled = group && !exists;
         addCustomer.IsEnabled = exists;
         generate.IsEnabled = import.IsEnabled = exists && customerSelection.SelectedItem is KeyLibraryCustomer;
         versionGenerate.IsEnabled = versionImport.IsEnabled = exists && entry is not null;
-        retire.IsEnabled = compromise.IsEnabled = exists && entry is { Status: KeyLibraryContracts.Active };
+        retire.IsEnabled = exists && entry is { Status: KeyLibraryContracts.Active };
+        compromise.IsEnabled = exists && entry is not null &&
+            entry.Status != KeyLibraryContracts.Compromised;
         reveal.IsEnabled = exists && entry is not null;
     }
 
@@ -234,7 +249,7 @@ internal sealed class KeyLibraryManagementWindow : Window
             : KeyLibraryEditing.ImportNew(current, customer.CustomerId, input.Name, input.KeyType, input.Purpose, input.HostSystem, input.Secret).Next);
     }
 
-    private KeyLibraryEntry SelectedKey() => keys.SelectedItem as KeyLibraryEntry
+    private KeyLibraryEntry SelectedKey() => (keys.SelectedItem as KeyRow)?.Entry
         ?? throw new InvalidOperationException("Bitte zuerst einen Schlüssel auswählen.");
 
     private void AddVersion(bool generateValue)
@@ -277,7 +292,7 @@ internal sealed class KeyLibraryManagementWindow : Window
         catch (Exception ex)
         {
             error.Text = ex.Message;
-            status.Text = "Keine Änderung freigegeben.";
+            status.Text = "Vorgang nicht vollständig bestätigt. Bei Speicher-/Prüffehlern den aktuellen Bibliotheksstand erneut öffnen und die Revision kontrollieren; es kann bereits eine Änderung geschrieben worden sein.";
             RefreshActions();
         }
     }
