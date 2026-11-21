@@ -52,8 +52,8 @@ internal static class CentralKeyLibrarySyncTests
             if (File.Exists(centralPath))
                 throw new Exception("Unconfirmed central administrator enrolled.");
             var before = center.Register(enrolled, root);
-            if (before.CentralRevision != 0 || before.CiphertextSha256 != "" ||
-                before.GroupId != "")
+            if (before.CentralRevision != 0 || before.CatalogRevision != 0 ||
+                before.CiphertextSha256 != "" || before.GroupId != "")
                 throw new Exception("Headless store did not start at an empty authoritative revision.");
             Reject<ConcurrentFileChangeException>(() => center.Register(enrolled, root));
             Reject<FileNotFoundException>(() => center.ReadEncryptedSnapshot(
@@ -64,7 +64,7 @@ internal static class CentralKeyLibrarySyncTests
             if (Encoding.UTF8.GetString(encrypted).Contains(secret, StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Central transport leaked a raw key.");
             var claim = KeyLibrarySyncTransport.Prepare(enrolled, "keys",
-                before.CentralRevision, before.CiphertextSha256, encrypted);
+                before.CentralRevision, before.CiphertextSha256, catalog.Catalog.Revision, encrypted);
             var signed = KeyLibrarySyncTransport.Sign(claim, encrypted, admin);
             if (Encoding.UTF8.GetString(signed.Claim).Contains(secret, StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Signed transport claim included the card secret.");
@@ -92,7 +92,7 @@ internal static class CentralKeyLibrarySyncTests
                 GroupVaultService.Protect("{\"not-key-library\":true}",
                     checkedPolicy, library, "keys", now));
             Reject<CryptographicException>(() =>
-                KeyLibrarySyncTransport.Prepare(enrolled, "keys", 0, "", projectVault));
+                KeyLibrarySyncTransport.Prepare(enrolled, "keys", 0, "", 1, projectVault));
 
             var envelope = GroupVaultService.Read(encrypted);
             var altered = GroupVaultService.Write(envelope with
@@ -107,10 +107,10 @@ internal static class CentralKeyLibrarySyncTests
             // Even the genuine administrator must not upload a recipient list
             // contradicting the separately signed group policy.
             Reject<CryptographicException>(() =>
-                KeyLibrarySyncTransport.Prepare(enrolled, "keys", 0, "", altered));
+                KeyLibrarySyncTransport.Prepare(enrolled, "keys", 0, "", 1, altered));
 
             var written = center.Accept(signed);
-            if (written.CentralRevision != 1 ||
+            if (written.CentralRevision != 1 || written.CatalogRevision != 1 ||
                 written.CiphertextSha256 != KeyLibrarySyncTransport.CiphertextSha256(encrypted))
                 throw new Exception("Central store failed to accept authenticated encrypted Vault.");
             if (File.ReadAllText(centralPath).Contains(secret, StringComparison.OrdinalIgnoreCase))
@@ -145,12 +145,12 @@ internal static class CentralKeyLibrarySyncTests
                 KeyLibraryVault.Protect(second, checkedPolicy, "keys", now));
             var next = KeyLibrarySyncTransport.Sign(
                 KeyLibrarySyncTransport.Prepare(enrolled, "keys", written.CentralRevision,
-                    written.CiphertextSha256, encrypted2), encrypted2, admin);
+                    written.CiphertextSha256, second.Catalog.Revision, encrypted2), encrypted2, admin);
             var competing = KeyLibrarySyncTransport.Sign(
                 KeyLibrarySyncTransport.Prepare(enrolled, "keys", written.CentralRevision,
-                    written.CiphertextSha256, encrypted), encrypted, admin);
+                    written.CiphertextSha256, catalog.Catalog.Revision, encrypted), encrypted, admin);
             var written2 = persisted.Accept(next);
-            if (written2.CentralRevision != 2 ||
+            if (written2.CentralRevision != 2 || written2.CatalogRevision != 2 ||
                 written2.CiphertextSha256 != KeyLibrarySyncTransport.CiphertextSha256(encrypted2))
                 throw new Exception("Second central revision did not advance.");
             Reject<ConcurrentFileChangeException>(() => center.Accept(competing));
