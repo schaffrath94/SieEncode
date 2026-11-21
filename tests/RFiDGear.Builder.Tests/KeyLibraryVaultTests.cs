@@ -58,6 +58,12 @@ internal static class KeyLibraryVaultTests
             var authority = administrator.ExportSubjectPublicKeyInfo();
             trust.Enroll(authority, OfflineGroupTrustStore.AdministratorFingerprint(authority),
                 OfflineGroupPolicyService.Sign(policy, administrator));
+            SignedKeyLibraryMutation AuthorizationFor(string operation, string group,
+                FileRevision before, KeyLibraryVaultPayload next) =>
+                KeyLibraryMutationAuthorization.Sign(
+                    KeyLibraryMutationAuthorization.Prepare(operation, libraryId, group,
+                        trust.LoadOffline().Checkpoint, before, next), administrator);
+
             var path = Path.Combine(rootDir, "full.key-library.vault.json");
             if (KeyLibraryVaultStore.DefaultPath(libraryId, "keys") == path ||
                 !KeyLibraryVaultStore.DefaultPath(libraryId, "keys").Contains(libraryId.ToString("N")))
@@ -67,7 +73,7 @@ internal static class KeyLibraryVaultTests
             if (keys.Secrets[0].ToString()!.Contains(aes1, StringComparison.Ordinal))
                 throw new Exception("Secret-Diagnose könnte den Rohwert offenlegen.");
 
-            var saved = KeyLibraryVaultStore.Create(path, keys, trust, "keys", [alice], now);
+            var saved = KeyLibraryVaultStore.Create(path, keys, trust, "keys", [alice], now, AuthorizationFor("create", "keys", FileRevision.Missing, keys));
             if (!saved.Exists || saved != ConcurrentFileWriter.Capture(path))
                 throw new Exception("Vollständiger verschlüsselter Schlüsselbestand wurde nicht atomar gespeichert.");
             var raw = File.ReadAllText(path);
@@ -105,9 +111,9 @@ internal static class KeyLibraryVaultTests
             Reject<CryptographicException>(() => KeyLibraryVaultStore.Load(path, trust, "keys", [bob]));
             Reject<CryptographicException>(() => KeyLibraryVaultStore.Load(path, trust, "keys", [recovery]));
             Reject<CryptographicException>(() => KeyLibraryVaultStore.Load(path, trust, "keys", [alice], recovery: true));
-            Reject<ConcurrentFileChangeException>(() => KeyLibraryVaultStore.Create(path, keys, trust, "keys", [alice], now));
+            Reject<ConcurrentFileChangeException>(() => KeyLibraryVaultStore.Create(path, keys, trust, "keys", [alice], now, AuthorizationFor("create", "keys", FileRevision.Missing, keys)));
             Reject<CryptographicException>(() => KeyLibraryVaultStore.Create(Path.Combine(rootDir, "denied.json"),
-                keys, trust, "keys", [bob], now));
+                keys, trust, "keys", [bob], now, AuthorizationFor("create", "keys", FileRevision.Missing, keys)));
 
             // A library document cannot be opened as a project and vice versa,
             // even with a valid group identity and the same library identifier.
@@ -137,26 +143,34 @@ internal static class KeyLibraryVaultTests
             };
             var beforeFailures = File.ReadAllBytes(path);
             Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision2 with
-            { Catalog = revision2.Catalog with { Revision = 1 } }, trust, "keys", [alice], saved, now));
+            { Catalog = revision2.Catalog with { Revision = 1 } }, trust, "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, revision2 with
+            { Catalog = revision2.Catalog with { Revision = 1 } })));
             Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision2 with
             { Secrets = [new(keys.Secrets[0].Key, aes3), keys.Secrets[1], revision2.Secrets[2]] },
-                trust, "keys", [alice], saved, now));
+                trust, "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, revision2 with
+            { Secrets = [new(keys.Secrets[0].Key, aes3), keys.Secrets[1], revision2.Secrets[2]] })));
             Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision2 with
             { Catalog = revision2.Catalog with { Keys = [snapshot.Keys[1], versionTwo] },
-              Secrets = [keys.Secrets[1], revision2.Secrets[2]] }, trust, "keys", [alice], saved, now));
+              Secrets = [keys.Secrets[1], revision2.Secrets[2]] }, trust, "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, revision2 with
+            { Catalog = revision2.Catalog with { Keys = [snapshot.Keys[1], versionTwo] },
+              Secrets = [keys.Secrets[1], revision2.Secrets[2]] })));
             Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision2 with
             { Catalog = revision2.Catalog with { Keys =
                 [revision2.Catalog.Keys[0], revision2.Catalog.Keys[1] with { CustomerId = customerA }, versionTwo] } },
-                trust, "keys", [alice], saved, now));
+                trust, "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, revision2 with
+            { Catalog = revision2.Catalog with { Keys =
+                [revision2.Catalog.Keys[0], revision2.Catalog.Keys[1] with { CustomerId = customerA }, versionTwo] } })));
             Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision2 with
             { Catalog = revision2.Catalog with { Keys =
                 [revision2.Catalog.Keys[0], revision2.Catalog.Keys[1] with { KeyType = "DF_KEY_AES" }, versionTwo] } },
-                trust, "keys", [alice], saved, now));
+                trust, "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, revision2 with
+            { Catalog = revision2.Catalog with { Keys =
+                [revision2.Catalog.Keys[0], revision2.Catalog.Keys[1] with { KeyType = "DF_KEY_AES" }, versionTwo] } })));
             if (!File.ReadAllBytes(path).SequenceEqual(beforeFailures))
                 throw new Exception("Verworfene Schlüsseländerung hat den Original-Vault verändert.");
 
-            Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path, revision2, trust, "keys", [bob], saved, now));
-            var saved2 = KeyLibraryVaultStore.Update(path, revision2, trust, "keys", [alice], saved, now);
+            Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path, revision2, trust, "keys", [bob], saved, now, AuthorizationFor("update", "keys", saved, revision2)));
+            var saved2 = KeyLibraryVaultStore.Update(path, revision2, trust, "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, revision2));
             if (saved2 == saved || KeyLibraryVaultStore.Load(path, trust, "keys", [alice]).Catalog.Revision != 2 ||
                 KeyLibraryVaultStore.Load(path, trust, "keys", [alice]).Secrets.Length != 3)
                 throw new Exception("Kontrolliertes Bibliotheksupdate oder Geheimwert-Historie fehlgeschlagen.");
@@ -167,7 +181,7 @@ internal static class KeyLibraryVaultTests
                     new KeyLibraryAddress(keyA, 2), "DF_KEY_AES").Value != aes2)
                 throw new Exception("Projektauflösung wechselte nicht ausdrücklich auf eine neue Schlüsselversion.");
             Reject<ConcurrentFileChangeException>(() => KeyLibraryVaultStore.Update(path, revision2, trust,
-                "keys", [alice], saved, now));
+                "keys", [alice], saved, now, AuthorizationFor("update", "keys", saved, revision2)));
 
             var revision3 = revision2 with
             {
@@ -176,25 +190,27 @@ internal static class KeyLibraryVaultTests
                  revision2.Catalog.Keys[1], revision2.Catalog.Keys[2]] }
             };
             Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path, revision3, trust,
-                "keys", [alice], saved2, now)); // Retired versions cannot be silently resurrected.
+                "keys", [alice], saved2, now, AuthorizationFor("update", "keys", saved2, revision3))); // Retired versions cannot be silently resurrected.
 
             var withCustomer = KeyLibraryEditing.AddCustomer(updatedLibrary, "Synthetic customer").Next;
-            var saved3 = KeyLibraryVaultStore.Update(path, withCustomer, trust, "keys", [alice], saved2, now);
+            var saved3 = KeyLibraryVaultStore.Update(path, withCustomer, trust, "keys", [alice], saved2, now, AuthorizationFor("update", "keys", saved2, withCustomer));
             if (KeyLibraryVaultStore.Load(path, trust, "keys", [alice]).Catalog.Customers.Length != 1)
                 throw new Exception("Kundenstammdaten wurden nicht im verschlüsselten Bestand persistiert.");
             Reject<InvalidDataException>(() => KeyLibraryVaultStore.Update(path,
                 withCustomer with { Catalog = withCustomer.Catalog with
                     { Revision = withCustomer.Catalog.Revision + 1, Customers = [] } },
-                trust, "keys", [alice], saved3, now)); // Existing customer IDs may not disappear.
+                trust, "keys", [alice], saved3, now, AuthorizationFor("update", "keys", saved3, withCustomer with { Catalog = withCustomer.Catalog with
+                    { Revision = withCustomer.Catalog.Revision + 1, Customers = [] } }))); // Existing customer IDs may not disappear.
             Reject<ConcurrentFileChangeException>(() => KeyLibraryVaultStore.Update(path,
-                withCustomer, trust, "keys", [alice], saved2, now));
+                withCustomer, trust, "keys", [alice], saved2, now, AuthorizationFor("update", "keys", saved2, withCustomer)));
 
             // Signed policy changes require an explicit recipient reconciliation.
             trust.AcceptUpdate(OfflineGroupPolicyService.Sign(policy with { Revision = 2 }, administrator));
             Reject<CryptographicException>(() => KeyLibraryVaultStore.Update(path,
                 withCustomer with { Catalog = withCustomer.Catalog with
                     { Revision = withCustomer.Catalog.Revision + 1 } },
-                trust, "keys", [alice], saved3, now));
+                trust, "keys", [alice], saved3, now, AuthorizationFor("update", "keys", saved3, withCustomer with { Catalog = withCustomer.Catalog with
+                    { Revision = withCustomer.Catalog.Revision + 1 } })));
             if (KeyLibraryVaultStore.Load(path, trust, "keys", [alice]).Secrets.Length != 3)
                 throw new Exception("Existing authorized encrypted library unexpectedly became unreadable.");
         }
