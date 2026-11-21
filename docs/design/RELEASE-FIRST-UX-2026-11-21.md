@@ -69,3 +69,18 @@ Für ein wirkliches erstes Release müssen folgende Nachweise an genau einem Rel
 ## Änderung des ersten UX-Schrittes
 
 `TestMaintenanceActions` wird in `ApplyOperatingMode` bei Standardansicht ausgeblendet und erscheint im Expertenmodus wieder. Die Prüfungen `VerifyStationLayout` und `VerifyOperatingModeContract` berücksichtigen die Trennung. In der Projektbibliothek heißt die eindeutige Übergabeaktion nun **„Zur Kodierstation“** statt des doppeldeutigen „Projekt wählen“; Handler und Automation-ID bleiben gleich. **Diese Änderungen sind committed, aber mangels Windows-WPF-Laufzeit hier noch nicht praktisch ausgeführt oder visuell abgenommen.** Keine sonstigen Kartenaktionen verändert.
+
+## UX-03 – Vault- und Gruppenverwaltung: erste konkrete Vereinfachungen
+
+**Bereits implementiert im Entwicklungszweig, aber noch nicht als MSI getestet:**
+
+- **Persönlichen Zugang einrichten:** Ein eigenes kurzes Fenster mit vorhandene Identität wählen / bei Bedarf anlegen / öffentliche Einladung exportieren / Schließen. Die bisherige Teamlistenpflege, die ältere Vaults betrifft, hat einen getrennten Einstieg. Die persönliche Einrichtung lädt oder speichert die alte Teamliste nicht.
+- **Einstellungen:** Persönlicher Zugang vor Gruppenverwaltung; längere Einrichtungshilfe standardmäßig eingeklappt. Der bisherige Hilfebutton führt zur kurzen Selbsttestanleitung `docs/VAULT-TEST-EINFACH-2026-11-21.md`.
+- **Hauptverwaltung:** Ist nur eine lokal verwaltete Bibliothek vorhanden, wird sie lesend vorausgewählt; beim bloßen Öffnen wird **keine** lokale Registrierung synchronisiert. Speichern und Export sind als unterschiedliche, verständliche Schritte bezeichnet; Sonderaktionen für private Schlüssel/Nachfolge eingeklappt.
+- **Delegationsplatz:** Einzige Bibliothek wird geladen. Ein persönlicher Zugang wird nur dann automatisch geladen, wenn genau **ein bereits bestehender lokaler Delegationsschlüssel** zu einer registrierten Person passt. Kein Schlüssel wird allein durch Öffnen erzeugt. Ohne aktive Vollmacht bleibt „Änderung signieren und exportieren“ deaktiviert. Mehrere nicht eindeutig zuordenbare Identitäten verlangen Auswahl.
+- **Fehler:** Der Fehlerbereich des Delegationsplatzes bleibt außerhalb des langen scrollbaren Inhalts sichtbar.
+- **Softwareprüfungen:** `VaultUiTestability` sichert die Trennung der persönlichen Einrichtung von alter Teamlistenpflege ab; `GroupDelegateTestability` sichert die Ablehnung mehrdeutiger Personenauswahl, fehlende Vollmacht sowie Wiederöffnen eines eindeutig vorhandenen Delegationsschlüssels ab. Die Prüfroutinen sind ergänzt, **noch nicht auf Windows ausgeführt**.
+
+**Keine automatische Verwaltungsvollmacht, keine automatische Schlüsselgenerierung, keine Kartenaktion und keine Freigabe durch UI-Änderungen.** Die getrennte Windows- und Geräteabnahme, samt unabhängigem Fingerabdruckabgleich und Grenzen des Offline-Entzugs, bleibt verpflichtend.
+
+**Nächste Umsetzung:** Quellstand unter Windows bauen, WPF-Smoketest inklusive neuer UX-Gates ausführen, dann Testkandidat mit Prüfsummen und Installations-/Upgrade-Prüfung erstellen. Erst mit genau diesem Kandidaten kann der Anwender die verkürzte UI-Testfolge wirklich bedienen und die sichtbaren Ergebnisse melden. Kein älterer Kandidat wird stillschweigend als neuer Stand ausgegeben.
