@@ -302,16 +302,17 @@ public partial class MainWindow : Window
     private static (string Title, string Detail, string NextAction, bool Complete) DescribeCardInspection(CardRecognitionReport report)
     {
         var complete = report.ReadOnly && report.State == "RECOGNIZED" &&
-            (report.Structure != "LEER" || report.ApplicationIds.Count == 0);
+            (HasConfirmedEmptyInventory(report) || (report.ApplicationIds.Count > 0 &&
+                report.Structure is "BELEGT" or "FREMD" or "ERWARTET_VOLLSTAENDIG" or "ERWARTET_TEILWEISE" or "GEMISCHT"));
         if (!complete)
             return ("KARTENZUSTAND UNGEKLÄRT",
                 "Die vollständige, nur lesende Inventur konnte nicht sicher bestätigt werden. Null gemeldete Applications bedeuten in diesem Fall nicht, dass die Karte leer ist. " + report.Summary,
                 "Reader und Karte prüfen, bei Bedarf erneut lesend untersuchen. Keine Formatierung, Vorbereitung oder Kodierung aus diesem Befund ableiten.", false);
         if (HasConfirmedEmptyInventory(report))
-            return ("AID-INVENTUR VOLLSTÄNDIG · 0 APPLICATIONS",
+            return ("KEINE ANWENDUNGEN ERKANNT · VOLLSTÄNDIG GEPRÜFT",
                 report.Summary + " Der PICC-Schlüsselzustand und die Schreibberechtigung müssen für einen späteren Kartenlauf gesondert geprüft werden.",
                 report.Recommendation, true);
-        return ("AID-INVENTUR VOLLSTÄNDIG · " + report.ApplicationIds.Count + " APPLICATION(S)",
+        return ("ANWENDUNGEN ERKANNT · " + report.ApplicationIds.Count,
             report.Summary + " Die aufgeführten Applications wurden erkannt; geschützte Dateiinhalte sind dadurch nicht automatisch gelesen.",
             report.Recommendation, true);
     }
@@ -770,6 +771,8 @@ public partial class MainWindow : Window
             lastCardRecognitionReport?.Report is { State: "RECOGNIZED", ReadOnly: true, ApplicationIds.Count: > 0 };
         TestDeepAnalyzeButton.Visibility = TestDeepAnalyzeButton.IsEnabled ? Visibility.Visible : Visibility.Collapsed;
         TestOpenRecognitionResultButton.IsEnabled = File.Exists(lastTestReportPath);
+        TestOpenRecognitionResultButton.Visibility = TestOpenRecognitionResultButton.IsEnabled
+            ? Visibility.Visible : Visibility.Collapsed;
         TestOpenInventoryPdfButton.IsEnabled = LatestInventoryPdfPath() is not null;
         TestExportInventoryComparisonButton.IsEnabled = TestOpenInventoryPdfButton.IsEnabled;
         TestProjectRecognitionButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && Has(RFiDGearOperationKind.CardRecognitionReadOnly);
