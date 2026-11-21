@@ -767,7 +767,8 @@ public partial class MainWindow : Window
         TestFormatCardButton.IsEnabled = operationAvailable && autorun;
         TestDeepAnalyzeButton.IsEnabled = operationAvailable && autorun &&
             rfidgearCapabilities?.Has(RFiDGearCapabilityId.ApplicationFileInventory) == true &&
-            lastCardRecognitionReport?.Report is { State: "RECOGNIZED", ApplicationIds.Count: > 0 };
+            lastCardRecognitionReport?.Report is { State: "RECOGNIZED", ReadOnly: true, ApplicationIds.Count: > 0 };
+        TestDeepAnalyzeButton.Visibility = TestDeepAnalyzeButton.IsEnabled ? Visibility.Visible : Visibility.Collapsed;
         TestOpenRecognitionResultButton.IsEnabled = File.Exists(lastTestReportPath);
         TestOpenInventoryPdfButton.IsEnabled = LatestInventoryPdfPath() is not null;
         TestExportInventoryComparisonButton.IsEnabled = TestOpenInventoryPdfButton.IsEnabled;
@@ -934,6 +935,21 @@ public partial class MainWindow : Window
             operationHostRun = pending;
             _ = hostContractService.MarkRunning(operationHostRun, operationSession.Launch);
             operationFinalized = false;
+            // A destructive operation invalidates the previous visual card inspection.
+            // Do not keep a previous AID list or an old "empty" claim as current evidence.
+            lastCardRecognitionReport = null;
+            lastTestReportPath = null;
+            TestOpenRecognitionResultButton.IsEnabled = false;
+            TestOpenInventoryPdfButton.IsEnabled = false;
+            TestExportInventoryComparisonButton.IsEnabled = false;
+            TestDeepAnalyzeButton.IsEnabled = false;
+            TestDeepAnalyzeButton.Visibility = Visibility.Collapsed;
+            TestAnalysisTree.Items.Clear();
+            TestAnalysisTree.Items.Add(new TreeViewItem { Header = "Früherer Kartenbefund nicht mehr gültig · Formatierung läuft" });
+            SetTestInspectionPresentation("KARTENZUSTAND UNGEKLÄRT · FORMATIERUNG LÄUFT",
+                "Die Wartungsaktion kann die Kartenstruktur verändern. Eine frühere Untersuchung beschreibt nicht mehr sicher den aktuellen Transponder.",
+                "Karte bis zum terminalen Ergebnis liegen lassen. Danach vor jeder weiteren Bewertung frisch nur lesend untersuchen.",
+                System.Windows.Media.Brushes.LemonChiffon);
             operationTimer.Start();
             Navigate("TestStation");
             TestAnalysisInfo.Text = "Formatierung läuft · Transponder liegen lassen, bis der terminale Laufstatus vorliegt.";
