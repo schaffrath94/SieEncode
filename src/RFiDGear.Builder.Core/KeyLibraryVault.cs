@@ -141,10 +141,13 @@ public static class KeyLibraryVaultStore
 
     public static FileRevision Create(string path, KeyLibraryVaultPayload payload,
         OfflineGroupTrustStore trust, string groupId, IEnumerable<X509Certificate2> identities,
-        DateTimeOffset now)
+        DateTimeOffset now, SignedKeyLibraryMutation authorization)
     {
         ArgumentNullException.ThrowIfNull(trust);
         var current = trust.LoadOffline();
+        KeyLibraryVault.Validate(payload);
+        KeyLibraryMutationAuthorization.Verify(authorization, trust, "create",
+            payload.Catalog.LibraryId, groupId, FileRevision.Missing, payload, current.Checkpoint);
         var document = KeyLibraryVault.Protect(payload, current, groupId, now);
         var identitiesArray = identities.ToArray();
         _ = KeyLibraryVault.Unprotect(document, current, groupId, identitiesArray);
@@ -166,7 +169,7 @@ public static class KeyLibraryVaultStore
 
     public static FileRevision Update(string path, KeyLibraryVaultPayload next, OfflineGroupTrustStore trust,
         string groupId, IEnumerable<X509Certificate2> identities, FileRevision expected,
-        DateTimeOffset now)
+        DateTimeOffset now, SignedKeyLibraryMutation authorization)
     {
         ArgumentNullException.ThrowIfNull(trust);
         ArgumentNullException.ThrowIfNull(expected);
@@ -187,6 +190,8 @@ public static class KeyLibraryVaultStore
             next.Catalog.Revision != previous.Catalog.Revision + 1)
             throw new InvalidDataException("Schlüsselbibliothek muss dieselbe ID und die direkt folgende Revision besitzen.");
         ValidateImmutableHistory(previous, next);
+        KeyLibraryMutationAuthorization.Verify(authorization, trust, "update",
+            next.Catalog.LibraryId, groupId, expected, next, current.Checkpoint);
 
         var document = KeyLibraryVault.Protect(next, current, groupId, now);
         _ = KeyLibraryVault.Unprotect(document, current, groupId, identitiesArray);
