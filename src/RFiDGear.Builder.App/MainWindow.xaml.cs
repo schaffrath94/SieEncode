@@ -600,6 +600,9 @@ public partial class MainWindow : Window
             StationSeriesStep.Visibility = Visibility.Visible;
             StationCodingStep.Visibility = Visibility.Visible;
             StationCompletionStep.Visibility = Visibility.Visible;
+            StationCompletionStep.IsExpanded = false;
+            StationFailureOptions.IsExpanded = false;
+            StationMasteringStep.IsExpanded = false;
             StationPreflightButton.IsEnabled = true;
             StationPrepareButton.IsEnabled = true;
             StationOpenRFiDGearButton.IsEnabled = false;
@@ -732,6 +735,7 @@ public partial class MainWindow : Window
         TestProjectTransportButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && Has(RFiDGearOperationKind.CardPreflightTransport);
         TestProjectProductiveButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && productiveExpectationAvailable && Has(RFiDGearOperationKind.CardPreflightProductive);
         TestProjectAcceptanceButton.IsEnabled = selectedProject is not null && operationAvailable && autorun && Has(RFiDGearOperationKind.ApplicationAcceptanceProductive);
+        UpdateStationActionEmphasis();
     }
 
     private bool IsSelectedExtensionProject()
@@ -1762,6 +1766,58 @@ public partial class MainWindow : Window
         StationGuidanceNextAction.Text = nextAction;
         StationGuidanceEvidence.Text = evidence;
         StationGuidanceBorder.Background = background;
+        UpdateStationActionEmphasis();
+    }
+
+    // Visual guidance only. Do not synthesize button clicks or interpret an available
+    // operation as an authorization to write a card. Explicit actions and all existing
+    // preflight/reader/host/readback gates stay in their original handlers.
+    private void UpdateStationActionEmphasis()
+    {
+        if (StationPreflightButton is null || StationRecognitionButton is null || StationPrepareButton is null)
+            return;
+        var normalStyle = (Style)FindResource(typeof(Button));
+        var primaryStyle = (Style)FindResource("PrimaryButton");
+        var actions = new[]
+        {
+            StationPreflightButton, StationRecognitionButton, StationLegacyTransportButton,
+            StationMasteringAutoButton, StationPrepareButton, StationStartAutoModeButton,
+            StationCheckReadbacksButton, StationExportButton
+        };
+        foreach (var action in actions) action.Style = normalStyle;
+
+        Button? next = null;
+        var headline = StationGuidanceTitle.Text;
+        var operationRunning = operationStartInProgress ||
+            (operationSession is { Operation.Autorun: true } && !operationFinalized);
+        if (selectedProject is not null && !operationRunning)
+        {
+            if (preparedSession is not null)
+            {
+                // Preparing a dataset does not authorize an implicit write. A coding start
+                // is highlighted only while that dataset is ready and no host run has begun.
+                if (headline == "BEREIT ZUR KODIERUNG" && hostRun is null && codingLaunch is null &&
+                    StationStartAutoModeButton.IsEnabled)
+                    next = StationStartAutoModeButton;
+            }
+            else if (headline.StartsWith("PROJEKT GELADEN", StringComparison.Ordinal) &&
+                     StationPreflightButton.IsEnabled)
+            {
+                next = StationPreflightButton;
+            }
+            else if (headline is "PROJEKT BEREIT" or "ALTPROJEKT VERWENDBAR")
+            {
+                if (StationRecognitionButton.IsEnabled && StationRecognitionButton.Visibility == Visibility.Visible)
+                    next = StationRecognitionButton;
+                else if (StationLegacyTransportButton.IsEnabled &&
+                         StationLegacyTransportButton.Visibility == Visibility.Visible)
+                    next = StationLegacyTransportButton;
+                else if (StationPrepareButton.IsEnabled)
+                    next = StationPrepareButton;
+            }
+        }
+        if (next is { IsEnabled: true, Visibility: Visibility.Visible })
+            next.Style = primaryStyle;
     }
 
     private void CompleteSeriesRecord(CodingRunEvaluation evaluation, CodingRunOperatorAnalysis? operatorAnalysis = null)
@@ -1806,6 +1862,10 @@ public partial class MainWindow : Window
             }
         }
         StationRetryButton.IsEnabled = lastFailedValues is not null;
+        // Show the result immediately, and offer retry/skip only after an actual failed
+        // record. Expanding these sections never retries or skips anything by itself.
+        StationCompletionStep.IsExpanded = true;
+        StationFailureOptions.IsExpanded = lastFailedValues is not null;
         UpdateSeriesUi();
         UpdateSeriesCounts();
         RefreshOperationButtons();
