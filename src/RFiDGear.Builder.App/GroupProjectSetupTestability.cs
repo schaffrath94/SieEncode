@@ -13,6 +13,21 @@ public partial class MainWindow
     {
         loadEditorVaultIdentities = () => [new("Synthetic creation", CertificateVaultService.Fingerprint(identity), new X509Certificate2(identity))];
         LoadEditor(fixture, "");
+        // Opening group-project creation must never manufacture a new group/trust
+        // registration or enable project creation before a library is present.
+        var missingTrust = Path.Combine(projectsDirectory, "synthetic-no-group-registration");
+        var firstUse = new GroupProjectSetupWindow(this, missingTrust, "UI Group New", false, CreateEditorGroupProject);
+        try
+        {
+            var createAction = DescendantsAndSelf(firstUse).OfType<Button>()
+                .Single(button => Equals(button.Content, "Gruppenprojekt sicher erstellen"));
+            if (createAction.IsEnabled || !DescendantsAndSelf(firstUse).OfType<TextBlock>()
+                    .Any(text => text.Text.Contains("Noch keine Gruppenbibliothek registriert", StringComparison.Ordinal)))
+                throw new Exception("Empty group setup invites project creation without verified enrollment.");
+            try { firstUse.CreateSelected("UI Group New", null, true); throw new Exception("Group project created without library."); }
+            catch (InvalidOperationException) { }
+        }
+        finally { firstUse.Close(); }
         var create = new GroupProjectSetupWindow(this, localGroupTrustDirectory, "UI Group New", false, CreateEditorGroupProject);
         try
         {
