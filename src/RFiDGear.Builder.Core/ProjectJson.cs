@@ -25,6 +25,8 @@ public static class ProjectJson
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ArgumentNullException.ThrowIfNull(definition);
+        if (definition.TransientKeyLibraryResolution)
+            throw new InvalidDataException("Ein temporär entschlüsseltes Bibliotheksprojekt darf nicht als Projektdefinition gespeichert werden.");
         ProjectKeyLibraryResolution.EnsureSafeStoredProject(definition);
         var fullPath = Path.GetFullPath(path);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
@@ -48,6 +50,8 @@ public static class ProjectJson
     public static FileRevision Save(string path, ProjectDefinition definition, FileRevision expected)
     {
         ArgumentNullException.ThrowIfNull(definition);
+        if (definition.TransientKeyLibraryResolution)
+            throw new InvalidDataException("Ein temporär entschlüsseltes Bibliotheksprojekt darf nicht als Projektdefinition gespeichert werden.");
         ProjectKeyLibraryResolution.EnsureSafeStoredProject(definition);
         return ConcurrentFileWriter.Write(path, expected, temporary =>
         {
