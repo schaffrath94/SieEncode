@@ -25,6 +25,25 @@ public partial class MainWindow
             var store = new TeamVaultRecipientStore(fixture);
             store.Save([invitation]);
             var original = File.ReadAllBytes(store.Path);
+            // The group-vault identity setup is intentionally independent of legacy team-list storage.
+            // It must not offer legacy save/remove actions or mutate the recipient list when opened/closed.
+            var identitySetup = new TeamVaultWindow(this, fixture, initialSetup: true, identityProvider: () => []);
+            try
+            {
+                VerifyAutomationContract(identitySetup);
+                var buttons = DescendantsAndSelf(identitySetup).OfType<Button>()
+                    .Select(button => button.Content?.ToString()).ToArray();
+                if (!buttons.Contains("Öffentliche Einladung exportieren") || !buttons.Contains("Schließen") ||
+                    buttons.Contains("Einrichtung speichern") || buttons.Contains("Eigene Identität zum Team hinzufügen") ||
+                    DescendantsAndSelf(identitySetup).OfType<ListBox>().Any())
+                    throw new InvalidOperationException("Persönlicher Vault-Einstieg zeigt Aktionen der bisherigen Teamliste.");
+                if (!File.ReadAllBytes(store.Path).SequenceEqual(original))
+                    throw new InvalidOperationException("Öffnen der persönlichen Identität verändert die bisherige Teamliste.");
+            }
+            finally { identitySetup.Close(); }
+            if (!File.ReadAllBytes(store.Path).SequenceEqual(original))
+                throw new InvalidOperationException("Schließen der persönlichen Identität verändert die bisherige Teamliste.");
+            checks.Add("Persönlicher Vault-Einstieg: nur Identität und öffentliche Einladung, keine bisherige Teamlistenpflege oder Speicherung beim Öffnen/Schließen.");
             // Empty provider keeps the Windows certificate store entirely outside this smoke test.
             foreach (var dialog in new Window[] {
                 new TeamVaultWindow(this, fixture, identityProvider: () => []),
