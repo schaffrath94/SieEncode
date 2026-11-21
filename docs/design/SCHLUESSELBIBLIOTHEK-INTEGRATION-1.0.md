@@ -1,6 +1,6 @@
 # SieEncode 1.0 – bestehende Vault-/Projekttechnik zur vollständigen Schlüsselbibliothek erweitern
 
-**Umsetzungsplan vom 21.11.2026. Kein Rewrite. Erster Produktrelease 1.0 – keine veröffentlichte Altversion, keine Kunden-Altprojektmigration oder Zwischenrelease-Kompatibilität.** Alle Verwaltungsaktionen erfolgen ausschließlich in **SieEncode Studio**. Die Zentrale ist ein **headless** Daten-, Rechte- und Synchronisationsdienst **ohne eigene UI**. Die zentrale Bibliothek, Synchronisation und Klartextverwaltung sind noch **nicht implementiert**. Der erste unabhängige Metadatenvertrag `KeyLibraryContracts.cs` und synthetische Tests liegen auf dem Entwicklungszweig, noch **nicht ausgeführt**.
+**Umsetzungsplan vom 21.11.2026. Kein Rewrite. Erster Produktrelease 1.0 – keine veröffentlichte Altversion, keine Kunden-Altprojektmigration oder Zwischenrelease-Kompatibilität.** Alle Verwaltungsaktionen erfolgen ausschließlich in **SieEncode Studio**. Die Zentrale ist ein **headless** Daten-, Rechte- und Synchronisationsdienst **ohne eigene UI**. Der Metadatenvertrag und der verschlüsselte lokale Bibliotheksspeicherkern sind im Quellcode vorhanden, aber **noch nicht gebaut oder getestet**. Die Studio-Oberfläche, zentrale Synchronisation und freigegebene Klartext-Schlüsselverwaltung sind **noch nicht** angeschlossen.
 
 ## Technischer Befund aus aktuellen Quellen
 
@@ -53,11 +53,16 @@ Vollständiger lokaler Offline-Bestand (geschützte Geheimwerte + Metadaten)
 
 **Noch nicht:** Kunden-UI, zentraler Datentransport, Klartextschlüssel, Projekt-Formatänderung oder Runtime-Änderung.
 
-### Phase 2 – verschlüsselte vollständige lokale Bibliothek
+### Phase 2 – verschlüsselte vollständige lokale Bibliothek (Kern implementiert, ungetestet)
 
-- Bereits implementierte AES-GCM-/Zertifikats-/Recovery-Bausteine **wiederverwenden**, dabei den Bibliotheks-Typ kryptografisch von Projekt-Vaults trennen und Manipulation/Vertauschung per AAD/Domänenbindung verhindern. Keine neue unabhängige zweite Kryptoimplementierung.
-- Bibliotheks-Schlüsselcontainer selbst besitzt stabilen `LibraryId`, einen definierten Schlüsselsatz, zugelassene Empfänger und atomare Revisionen. Für Benutzer mit begrenzten Rechten sind echte getrennte Kryptozugänge pro Kunden-/Schlüsseldomäne nötig; eine einzige von allen Kollegen entschlüsselbare Vollkopie reicht **nicht**. Voll berechtigter Administrator führt hingegen den **gesamten** Schlüsselbestand verschlüsselt bei sich.
-- Recovery, Backups und Versionshistorie müssen getrennt geschützt sein. Keinen historischen Vault in einen gemeinsam lesbaren Projektordner kopieren.
+- **Quellcode vorhanden:** `GroupVaultService` nutzt für beide Domänen dieselbe geprüfte Kryptografie, aber **zwei verschiedene authentisierte Formate** (`SieEncode-Group-Vault` und `SieEncode-Group-Key-Library-Vault`). Die Auswahl `GroupVaultPurpose` wird beim Öffnen erzwungen. Projekt-Vaults sollen nicht als Schlüsselbibliothek funktionieren und umgekehrt; keine zweite AES-Implementierung.
+- **Quellcode vorhanden:** `KeyLibraryVault.cs` verschlüsselt einen vollständigen `KeyLibrarySnapshot` plus exakt einen realen Geheimwert je `KeyId + Version`, gebunden an die signierte Bibliotheks-ID, ausgewählte berechtigte Gruppe und separate Recovery-Zertifikate. Die Geheimwerte sind bewusst **nicht** im unverschlüsselten Index `KeyLibraryContracts` enthalten; das neue Vault-Format hat einen zusätzlichen geprüften internen Dokumenttyp.
+- **Quellcode vorhanden:** `KeyLibraryVaultStore` erstellt einen neuen verschlüsselten Bibliothekssnapshot, lädt ihn für berechtigte Gruppenmitglieder oder über gesonderten Recovery-Zugang und aktualisiert ihn unter **optimistischer Dateirevision** sowie exakt um **eine** Bibliotheksrevision. Historische Schlüsselgenerationen können nicht gelöscht, unter derselben Version überschrieben oder unbemerkt reaktiviert werden; die bereits gespeicherte Kunden-/Typbindung ist unveränderlich. Geänderte signierte Gruppenpolitik darf **nicht** bei einem gewöhnlichen Schlüsselupdate automatisch Empfänger umwickeln.
+- **Synthetische Testfälle vorbereitet, noch nicht ausgeführt:** Neuer `KeyLibraryVaultTests.Verify` ist in `tests/RFiDGear.Builder.Tests/Program.cs` registriert: vollständiger verschlüsselter Zwei-Kunden-Roundtrip, Gruppen-/Recovery-Rechte, Projekt-/Bibliotheksdomänentrennung, Datei-/Versionskonflikte, Manipulation, Historie, Rollenfehler und Empfängerpolitikänderung.
+- **Noch offen vor einer echten Anwendung:** Das ist ein **isolierter Kernbaustein**, nicht bereits die vollständige Schlüsselverwaltung. Bislang wird **eine** berechtigte Bibliotheksgruppe mit vollständigem Entschlüsselungsrecht verwendet. Die technisch getrennte Verschlüsselung nach Kunden-/Mitarbeiterrechten, sichere Aufbewahrungs-ACL, Recovery-/Backup-Lebenszyklus, Empfängerabgleich nach Gruppenänderung, größere Bibliotheken (gegenwärtige Gruppenvault-Obergrenze: 16 MiB), echte UI-Anbindung, Datenbank/Synchronisation, Konfliktbehandlung und RFiDGear-Projektauflösung sind **nicht** implementiert oder nachgewiesen.
+- Der Einbau bleibt **auf die vorhandenen Vault-, Zertifikats- und Gruppenfunktionen** begrenzt. Kein eigenständiger Krypto-Stack, kein Server-Admin-Client und keine separate Schlüsselverwaltung als zweites Programm. Vor Abschluss des nächsten zusammenhängenden Meilensteins **keine produktiven Kundenschlüssel** in dieser neuen Datenstruktur pflegen.
+
+
 
 ### Phase 3 – Projektreferenz und eindeutiger Resolver
 
