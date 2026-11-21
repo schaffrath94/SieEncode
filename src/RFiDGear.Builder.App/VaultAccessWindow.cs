@@ -41,7 +41,7 @@ internal sealed class VaultAccessWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner; ResizeMode = ResizeMode.CanResizeWithGrip;
         recipientList.ItemsSource = recipients; identityList.ItemsSource = identities;
         identityList.SelectionChanged += (_, _) => UpdateIdentityGuidance();
-        recipientList.CollectionChanged += (_, _) => UpdateIdentityGuidance();
+        recipients.CollectionChanged += (_, _) => UpdateIdentityGuidance();
         ReloadIdentities();
         if (existing is { Version: KeyVaultService.CertificateVersion })
             foreach (var row in existing.Recipients.Where(row => !string.IsNullOrWhiteSpace(row.Certificate)))
