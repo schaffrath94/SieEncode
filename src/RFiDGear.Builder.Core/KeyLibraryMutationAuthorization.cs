@@ -71,7 +71,7 @@ public static class KeyLibraryMutationAuthorization
         ArgumentNullException.ThrowIfNull(trust);
         ArgumentNullException.ThrowIfNull(signed);
         if (signed.Payload is not { Length: > 0 and <= MaximumClaimBytes } ||
-            signed.Signature is not { Length: 384 })
+            signed.Signature is not { Length: >= 384 and <= 1024 })
             throw new CryptographicException("Fehlende oder ungültige Bibliotheks-Verwaltungssignatur.");
 
         var registered = trust.ExportPublic();
@@ -80,7 +80,8 @@ public static class KeyLibraryMutationAuthorization
             throw new CryptographicException("Signaturverwaltung und lokal bestätigter Gruppenstand weichen ab.");
         using var authority = RSA.Create();
         authority.ImportSubjectPublicKeyInfo(registered.AdministratorPublicKey, out var consumed);
-        if (consumed != registered.AdministratorPublicKey.Length || authority.KeySize != 3072 ||
+        if (consumed != registered.AdministratorPublicKey.Length || authority.KeySize < 3072 ||
+            signed.Signature.Length != authority.KeySize / 8 ||
             !authority.VerifyData(signed.Payload, signed.Signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pss))
             throw new CryptographicException("Bibliotheksänderung nicht von der bestätigten Hauptverwaltung signiert.");
 
@@ -112,7 +113,9 @@ public static class KeyLibraryMutationAuthorization
             !claim.Policy.PayloadSha256.All(c => c is >= '0' and <= '9' or >= 'A' and <= 'F') ||
             claim.PreviousVault is null ||
             claim.Operation == "create" && claim.PreviousVault.Exists ||
-            claim.Operation == "update" && !claim.PreviousVault.Exists ||
+            claim.Operation == "update" && (!claim.PreviousVault.Exists ||
+                claim.PreviousVault.Sha256 is not { Length: 64 } ||
+                !claim.PreviousVault.Sha256.All(c => c is >= '0' and <= '9' or >= 'A' and <= 'F')) ||
             claim.GroupId is not { Length: > 0 and <= 128 } ||
             !claim.GroupId.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-') ||
             claim.NextPayloadSha256 is not { Length: 64 } ||
