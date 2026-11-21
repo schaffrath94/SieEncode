@@ -292,6 +292,39 @@ public partial class MainWindow : Window
         RefreshWorkspaceNavigation();
     }
 
+    // Presentation is derived only from a read-only, authoritatively recognized
+    // inventory. A failed/partial scan may contain zero reported AIDs, but that
+    // must NEVER be interpreted or displayed as an empty transponder.
+    private static bool HasConfirmedEmptyInventory(CardRecognitionReport report)
+        => report.ReadOnly && report.State == "RECOGNIZED" &&
+            report.Structure == "LEER" && report.ApplicationIds.Count == 0;
+
+    private static (string Title, string Detail, string NextAction, bool Complete) DescribeCardInspection(CardRecognitionReport report)
+    {
+        var complete = report.ReadOnly && report.State == "RECOGNIZED" &&
+            (report.Structure != "LEER" || report.ApplicationIds.Count == 0);
+        if (!complete)
+            return ("KARTENZUSTAND UNGEKLÄRT",
+                "Die vollständige, nur lesende Inventur konnte nicht sicher bestätigt werden. Null gemeldete Applications bedeuten in diesem Fall nicht, dass die Karte leer ist. " + report.Summary,
+                "Reader und Karte prüfen, bei Bedarf erneut lesend untersuchen. Keine Formatierung, Vorbereitung oder Kodierung aus diesem Befund ableiten.", false);
+        if (HasConfirmedEmptyInventory(report))
+            return ("AID-INVENTUR VOLLSTÄNDIG · 0 APPLICATIONS",
+                report.Summary + " Der PICC-Schlüsselzustand und die Schreibberechtigung müssen für einen späteren Kartenlauf gesondert geprüft werden.",
+                report.Recommendation, true);
+        return ("AID-INVENTUR VOLLSTÄNDIG · " + report.ApplicationIds.Count + " APPLICATION(S)",
+            report.Summary + " Die aufgeführten Applications wurden erkannt; geschützte Dateiinhalte sind dadurch nicht automatisch gelesen.",
+            report.Recommendation, true);
+    }
+
+    private void SetTestInspectionPresentation(string title, string detail, string nextAction,
+        System.Windows.Media.Brush background)
+    {
+        TestInspectionState.Text = title;
+        TestInspectionSummary.Text = detail;
+        TestInspectionNextAction.Text = nextAction;
+        TestInspectionResultBorder.Background = background;
+    }
+
     private void PopulateTestAnalysisTree(CardRecognitionReport report)
     {
         TestAnalysisTree.Items.Clear();
@@ -315,8 +348,10 @@ public partial class MainWindow : Window
         }
         foreach (var aid in report.ApplicationIds)
             root.Items.Add(new TreeViewItem { Header = $"Application {aid} · für Fileanalyse auswählen", Tag = aid });
-        if (report.ApplicationIds.Count == 0)
-            root.Items.Add(new TreeViewItem { Header = "Keine Applications (vollständige Inventur erfolgreich)" });
+        if (HasConfirmedEmptyInventory(report))
+            root.Items.Add(new TreeViewItem { Header = "0 Applications · vollständige AID-Inventur autoritativ erfolgreich" });
+        else if (report.State != "RECOGNIZED" || !report.ReadOnly)
+            root.Items.Add(new TreeViewItem { Header = "AID-Inventur unvollständig oder unbestätigt · Kartenbelegung unbekannt" });
         TestAnalysisTree.Items.Add(root);
     }
 
@@ -1038,6 +1073,16 @@ public partial class MainWindow : Window
             _ = hostContractService.MarkRunning(operationHostRun, operationSession.Launch);
             operationFinalized = false;
             lastCardRecognitionReport = null;
+            lastTestReportPath = null;
+            TestOpenRecognitionResultButton.IsEnabled = false;
+            TestOpenInventoryPdfButton.IsEnabled = false;
+            TestExportInventoryComparisonButton.IsEnabled = false;
+            TestAnalysisTree.Items.Clear();
+            TestAnalysisTree.Items.Add(new TreeViewItem { Header = "Analyse läuft · noch kein gültiger Kartenbefund" });
+            SetTestInspectionPresentation("LESEVORGANG LÄUFT",
+                "SieEncode inventarisiert die Karte nur lesend. Bisher gibt es für diesen Vorgang noch keinen bestätigten Kartenstatus.",
+                "Transponder bis zum Abschluss liegen lassen und nicht für eine andere Aktion verwenden.",
+                System.Windows.Media.Brushes.LemonChiffon);
             operationTimer.Start();
             Navigate("TestStation");
             StationCardStep.Visibility = Visibility.Visible;
@@ -1247,7 +1292,10 @@ public partial class MainWindow : Window
                     StationOperationInfo.Text = $"Applications {report.ApplicationIds.Count} · PICC {report.PiccState} · Bericht: {lastCardRecognitionReport.TextPath}";
                     TestAnalysisInfo.Text = report.Summary + " PICC: " + report.PiccState;
                     PopulateTestAnalysisTree(report);
-                    var recognized = report.State == "RECOGNIZED";
+                    var inspection = DescribeCardInspection(report);
+                    SetTestInspectionPresentation(inspection.Title, inspection.Detail, inspection.NextAction,
+                        inspection.Complete ? System.Windows.Media.Brushes.Honeydew : System.Windows.Media.Brushes.MistyRose);
+                    var recognized = inspection.Complete;
                     StationStateBorder.Background = recognized ? System.Windows.Media.Brushes.Honeydew : System.Windows.Media.Brushes.MistyRose;
                     SetStationGuidance("TRANSPONDER-ERKENNUNG · " + report.Structure,
                         report.Summary, report.Recommendation,
@@ -1266,6 +1314,10 @@ public partial class MainWindow : Window
                     TestAnalysisInfo.Text = report.Summary;
                     AppendApplicationInventoryTree(report.JsonPath);
                     TestOpenRecognitionResultButton.IsEnabled = true;
+                    SetTestInspectionPresentation("APPLICATION-LESEBERICHT ERSTELLT",
+                        report.Summary,
+                        "Kartendetails für Authentisierung, Metadaten und einzelne Lesenachweise öffnen. Nicht lesbare Files niemals als leer oder freigegeben behandeln.",
+                        System.Windows.Media.Brushes.LemonChiffon);
                     SetStationGuidance("APPLICATION-INVENTUR ABGESCHLOSSEN", report.Summary,
                         "Bericht öffnen. Ein nicht lesbarer Inhalt darf niemals als leer bewertet werden.",
                         "Nur-Lese-Lauf autoritativ abgeschlossen", System.Windows.Media.Brushes.Honeydew);
@@ -1276,6 +1328,10 @@ public partial class MainWindow : Window
                     TestAnalysisInfo.Text = successful
                         ? "Formatierung autoritativ abgeschlossen. Für eine belastbare Zustandsaussage jetzt erneut analysieren."
                         : "Formatierung nicht erfolgreich abgeschlossen. Transponderzustand ist unbekannt; erneut analysieren.";
+                    SetTestInspectionPresentation(successful ? "FORMATIERUNG GEMELDET · NEUANALYSE NÖTIG" : "FORMATIERUNG NICHT BESTÄTIGT",
+                        TestAnalysisInfo.Text + " Ein früherer Kartenbefund ist für den aktuellen Zustand nicht mehr gültig.",
+                        "Transponder erst nach beendeter Runtime erneut nur lesend analysieren. Vorher keine Aussage über vorhandene oder gelöschte Applications treffen.",
+                        successful ? System.Windows.Media.Brushes.LemonChiffon : System.Windows.Media.Brushes.MistyRose);
                     SetStationGuidance(successful ? "FORMATIERUNG ABGESCHLOSSEN" : "FORMATIERUNG FEHLGESCHLAGEN",
                         TestAnalysisInfo.Text, "Transponder anschließend mit der projektlosen Analyse neu inventarisieren.",
                         evaluation.Summary, successful ? System.Windows.Media.Brushes.Honeydew : System.Windows.Media.Brushes.MistyRose);
