@@ -116,6 +116,11 @@ internal static class CentralKeyLibrarySyncTests
             if (File.ReadAllText(centralPath).Contains(secret, StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Headless central state persisted a plaintext card secret.");
             Reject<ConcurrentFileChangeException>(() => center.Accept(signed));
+            var unchangedRevisionUpload = KeyLibrarySyncTransport.Sign(
+                KeyLibrarySyncTransport.Prepare(enrolled, "keys",
+                    written.CentralRevision, written.CiphertextSha256,
+                    catalog.Catalog.Revision, encrypted), encrypted, admin);
+            Reject<ConcurrentFileChangeException>(() => center.Accept(unchangedRevisionUpload));
 
             var persisted = new CentralKeyLibraryStore(centralPath, library);
             var memberRead = KeyLibraryDownloadAuthorization.Sign(written, member, now);
@@ -139,6 +144,9 @@ internal static class CentralKeyLibrarySyncTests
                 memberRead, now.AddHours(1)));
             Reject<CryptographicException>(() => persisted.ReadEncryptedSnapshot(
                 KeyLibraryDownloadAuthorization.Sign(written, recovery, now), now));
+            using var unknownIdentity = MakeCert("Unregistered key", stranger);
+            Reject<CryptographicException>(() => persisted.ReadEncryptedSnapshot(
+                KeyLibraryDownloadAuthorization.Sign(written, unknownIdentity, now), now));
 
             var second = KeyLibraryEditing.AddCustomer(catalog, "Synthetic customer").Next;
             var encrypted2 = GroupVaultService.Write(
