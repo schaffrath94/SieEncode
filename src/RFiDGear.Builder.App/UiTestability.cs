@@ -464,8 +464,13 @@ public partial class MainWindow
             throw new InvalidOperationException("Kodierstation bietet mehrere gleichrangige Hauptaktionen gleichzeitig.");
         if (preparedSession is null && Equals(StationStartAutoModeButton.Style, TryFindResource("PrimaryButton")))
             throw new InvalidOperationException("Kodierstart ohne vorbereiteten Datensatz hervorgehoben.");
+        if (preparedSession is null && StationCheckReadbacksButton.IsEnabled)
+            throw new InvalidOperationException("Manuelle Readback-Prüfung schon vor einem Kodierlauf freigegeben.");
+        if (CurrentTrackedLaunch() is not null &&
+            (StationPrepareButton.IsEnabled || StationMarkFailedButton.IsEnabled))
+            throw new InvalidOperationException("Neuer Datensatz oder F9-Abschluss bei noch laufendem Kartenprozess angeboten.");
 
-        checks.Add("Kodierstation: getrennte Kartenprüfung/Vorbereitung/Kodierung; zusätzliche Aktionen eingeklappt; technischer Nachweis erreichbar; maximal eine sichtbare Hauptaktion, niemals ein Kodierstart ohne vorbereiteten Datensatz. UI-Vertrag ohne Hardwarelauf.");
+        checks.Add("Kodierstation: getrennte Kartenprüfung/Vorbereitung/Kodierung; zusätzliche Aktionen eingeklappt; technischer Nachweis erreichbar; höchstens eine Hauptaktion und keine Readback-Prüfung vor einem Lauf. Neuer Datensatz/F9 bleibt während eines laufenden Hostprozesses gesperrt. UI-Vertrag ohne Hardwarelauf.");
     }
 
     private void VerifyConstrainedLayoutContract(List<string> checks)
