@@ -9,7 +9,8 @@ namespace RFiDGear.Builder.Core;
 /// receipt or proof that a remote client is authorized to DOWNLOAD secrets.
 /// </summary>
 public sealed record CentralKeyLibraryHead(Guid LibraryId, long CentralRevision,
-    string CiphertextSha256, string GroupId, GroupPolicyCheckpoint Policy);
+    string CiphertextSha256, string GroupId, GroupPolicyCheckpoint Policy,
+    long CatalogRevision);
 
 /// <summary>
 /// Headless encrypted-only acceptance engine for one pinned independent library.
@@ -71,7 +72,8 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
         if (claim.ExpectedCentralRevision != state.CentralRevision ||
             claim.ExpectedCentralCiphertextSha256 != current.CiphertextSha256 ||
             state.CentralRevision == long.MaxValue ||
-            state.CentralRevision > 0 && claim.GroupId != state.GroupId)
+            state.CentralRevision > 0 && claim.GroupId != state.GroupId ||
+            claim.CatalogRevision <= current.CatalogRevision)
             throw new ConcurrentFileChangeException(path);
 
         // Detach arrays owned by the transport caller before durable acceptance.
@@ -123,7 +125,9 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
         new(state.LibraryId, state.CentralRevision,
             state.Accepted is null ? "" :
                 KeyLibrarySyncTransport.CiphertextSha256(state.Accepted.EncryptedVault),
-            state.GroupId, GroupEnrollmentPackages.Validate(state.Enrollment).Checkpoint);
+            state.GroupId, GroupEnrollmentPackages.Validate(state.Enrollment).Checkpoint,
+            state.Accepted is null ? 0 :
+                KeyLibrarySyncTransport.Verify(state.Accepted, state.Enrollment).CatalogRevision);
 
     private void Validate(State state)
     {
@@ -150,7 +154,7 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
             throw new InvalidDataException("Zentrale Revision ohne verschlüsselten Bibliotheksstand.");
         var claim = KeyLibrarySyncTransport.Verify(state.Accepted, state.Enrollment);
         if (claim.ExpectedCentralRevision != state.CentralRevision - 1 ||
-            claim.GroupId != state.GroupId)
+            claim.CatalogRevision < 1 || claim.GroupId != state.GroupId)
             throw new CryptographicException("Zentrale Dateirevision stimmt nicht mit dem zuletzt signierten Auftrag überein.");
     }
 
