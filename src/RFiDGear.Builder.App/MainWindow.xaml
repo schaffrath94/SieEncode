@@ -525,7 +525,7 @@
               </StackPanel></Expander>
               <Expander Header="Ich verwalte Personen und Gruppen · Hauptverwaltung" IsExpanded="False" Margin="0,9,0,0"><StackPanel Margin="8,4,0,4">
                 <TextBlock Text="Nur auf dem Windows-Benutzer mit dem privaten Hauptverwaltungsschlüssel. Einladung des Kollegen prüfen, Person/Gruppe freigeben, Änderung signieren und den neuen öffentlichen Stand exportieren. Der Kollege muss ihn selbst importieren." TextWrapping="Wrap" Foreground="#526B70" Margin="0,0,0,6"/>
-                <Button Content="Personen und Gruppen verwalten" Click="ManageOfflineGroups_Click" HorizontalAlignment="Left"/>
+                <Button Content="Schlüssel, Kunden und Gruppen verwalten" Click="ManageOfflineGroups_Click" HorizontalAlignment="Left"/>
               </StackPanel></Expander>
               <Expander Header="Ich bearbeite Gruppen mit einer Vollmacht" IsExpanded="False" Margin="0,6,0,0"><StackPanel Margin="8,4,0,4">
                 <TextBlock Text="Nur wenn die Hauptverwaltung Ihnen ausdrücklich eine aktive Vollmacht für bestimmte Gruppen erteilt hat. Gruppenmitgliedschaft allein gibt keine Verwaltungsrechte." TextWrapping="Wrap" Foreground="#526B70" Margin="0,0,0,6"/>
