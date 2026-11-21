@@ -58,7 +58,7 @@ internal sealed class VaultAccessWindow : Window
         root.Children.Add(new TextBlock { Text = "Mehrbenutzerzugriff", FontSize = 22, FontWeight = FontWeights.SemiBold });
         root.Children.Add(new TextBlock { Text = existing is { Version: KeyVaultService.CertificateVersion }
             ? "Die Empfänger dieses Vaults sind übernommen. Weitere Benutzer können Sie ausdrücklich hinzufügen oder importieren. Änderungen der zentralen Teamliste ändern diesen Vault nicht automatisch."
-            : "Die zentrale Teamliste ist bereits übernommen. Jeder freigegebene Benutzer öffnet den Vault mit seiner persönlichen Windows-Identität. Öffentliche Einladungsdateien enthalten keinen privaten Schlüssel.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 16), Foreground = System.Windows.Media.Brushes.DimGray });
+            : "Persönliches 1.0-Projekt: hier ausdrücklich mindestens einen berechtigten Empfänger auswählen und eine getrennte Recovery-Passphrase festlegen. Der eigene Windows-Zugang ist nicht automatisch eine bereits gespeicherte Projektfreigabe. Es werden keine früheren Teamlisten übernommen.", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 16), Foreground = System.Windows.Media.Brushes.DimGray });
         root.Children.Add(new Border
         {
             Background = System.Windows.Media.Brushes.AliceBlue,
