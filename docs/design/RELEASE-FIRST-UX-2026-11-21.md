@@ -61,11 +61,11 @@ Für ein wirkliches erstes Release müssen folgende Nachweise an genau einem Rel
 
 - **UX-01 (aktiv):** Normal-/Expertenansicht sauber trennen; Wartungsfunktion nur für Experten; Klarheit der drei Arbeitsbereiche und Vermeidung doppelter Primäraktionen prüfen.
 - **UX-02:** Projektbibliothek und Editor nach dem tatsächlichen nächsten Schritt führen, ohne Handler/Autosaves/Legacy-Importe zu entfernen.
-- **UX-03:** Team-/Vault-Einstiege und positive Delegations-/Nachfolgedialoge verbessern und mit echten Rollen testen.
+- **UX-03 (aktiv):** Team-/Vault-Einstiege und positive Delegations-/Nachfolgedialoge verbessern und mit echten Rollen testen. Persönliche Identität ist inzwischen als eigenständiger Zweischritt-Dialog von der bisherigen Teamlistenpflege getrennt; Delegation und Hauptverwaltung wurden nach Aufgabe gegliedert, Status und Fehlermeldungen verbessert.
 - **UX-04:** Kodierstation und Untersuchung auf eine Hauptaktion pro Status verdichten, inklusive Ergebnisbericht und eindeutiger Freigabe.
 - **REL-01:** Bestehende Testnachweise mit UI-/MSI-/Hardware-Restpunkten zusammenführen, reale Lücken schließen und den ersten Releasekandidaten abnehmen.
 - **ENGINE-01 (geparkt):** Offizielle Bridge hinter optionalem Adapter statt Ersatz der bestehenden Runtime; erst nach der ersten stabilen Veröffentlichung.
 
-## Änderung dieses Schrittes
+## Änderung des ersten UX-Schrittes
 
 `TestMaintenanceActions` wird in `ApplyOperatingMode` bei Standardansicht ausgeblendet und erscheint im Expertenmodus wieder. Die Prüfungen `VerifyStationLayout` und `VerifyOperatingModeContract` berücksichtigen die Trennung. In der Projektbibliothek heißt die eindeutige Übergabeaktion nun **„Zur Kodierstation“** statt des doppeldeutigen „Projekt wählen“; Handler und Automation-ID bleiben gleich. **Diese Änderungen sind committed, aber mangels Windows-WPF-Laufzeit hier noch nicht praktisch ausgeführt oder visuell abgenommen.** Keine sonstigen Kartenaktionen verändert.
