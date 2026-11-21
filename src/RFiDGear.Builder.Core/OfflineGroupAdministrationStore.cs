@@ -82,7 +82,8 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
     /// central transfer. This does not upload or accept anything centrally.
     /// </summary>
     public SignedKeyLibrarySync SignEncryptedCentralSync(OfflineGroupTrustStore trust,
-        string groupId, CentralKeyLibraryHead expected, byte[] encryptedVault)
+        string groupId, CentralKeyLibraryHead expected, long catalogRevision,
+        byte[] encryptedVault)
     {
         ArgumentNullException.ThrowIfNull(expected);
         if (expected.LibraryId != libraryId)
@@ -91,7 +92,8 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         if (expected.Policy != checkpoint)
             throw new CryptographicException("Zentrale und lokale Gruppenrichtlinie stimmen nicht überein.");
         var claim = KeyLibrarySyncTransport.Prepare(trust.ExportPublic(), groupId,
-            expected.CentralRevision, expected.CiphertextSha256, encryptedVault);
+            expected.CentralRevision, expected.CiphertextSha256, catalogRevision,
+            encryptedVault);
         var (state, revision) = Load();
         try
         {
