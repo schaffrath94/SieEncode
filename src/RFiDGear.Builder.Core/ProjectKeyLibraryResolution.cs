@@ -109,7 +109,7 @@ public static class ProjectKeyLibraryResolution
 
         var required = ValidateBindings(project, profiles, unlockedLibrary.Catalog,
             binding.CustomerId, binding.Bindings);
-        var lookup = binding.Bindings.ToDictionary(item => item.Slot, item => item.Key, StringComparer.Ordinal);
+        var lookup = binding.Bindings.ToDictionary(item => item.Slot, item => item, StringComparer.Ordinal);
 
         var hydrated = ProjectJson.WithoutAllSecrets(project);
         hydrated.Transport.PiccKey = Resolve(TransportPicc);
@@ -135,7 +135,8 @@ public static class ProjectKeyLibraryResolution
         return hydrated;
 
         KeyReference Resolve(string slot) =>
-            KeyLibraryKeyResolver.ResolveActive(unlockedLibrary, binding.CustomerId, lookup[slot], required[slot]);
+            KeyLibraryKeyResolver.ResolveActive(unlockedLibrary,
+                lookup[slot].CustomerId ?? binding.CustomerId, lookup[slot].Key, required[slot]);
     }
 
     public static ProjectKeyVaultPayload ResolveTransientPayload(ProjectDefinition keyFreeProject,
@@ -159,8 +160,9 @@ public static class ProjectKeyLibraryResolution
                 !used.Add(binding.Slot) || binding.Key is null ||
                 !index.TryGetValue(binding.Key, out var entry))
                 throw new InvalidDataException("Unbekannter, mehrfacher oder fehlender Bibliotheks-Schlüsselplatz.");
-            if (entry.CustomerId != customerId)
-                throw new CryptographicException("Schlüsselplatz verweist auf einen anderen Kunden.");
+            var slotCustomer = binding.CustomerId ?? customerId;
+            if (slotCustomer == Guid.Empty || entry.CustomerId != slotCustomer)
+                throw new CryptographicException("Schlüsselplatz verweist auf einen anderen als den ausdrücklich zugeordneten Kunden.");
             if (!string.Equals(entry.KeyType, expectedType, StringComparison.Ordinal))
                 throw new InvalidDataException("Schlüsseltyp stimmt nicht mit dem kartenseitigen Schlüsselplatz überein.");
             if (entry.Status != KeyLibraryContracts.Active)
@@ -186,7 +188,8 @@ public static class ProjectKeyLibraryResolution
         {
             if (item is null || item.Slot is not { Length: > 0 and <= 160 } ||
                 item.Slot.Any(char.IsWhiteSpace) || !slots.Add(item.Slot) ||
-                item.Key is null || item.Key.KeyId == Guid.Empty || item.Key.Version < 1)
+                item.Key is null || item.Key.KeyId == Guid.Empty || item.Key.Version < 1 ||
+                item.CustomerId == Guid.Empty)
                 throw new InvalidDataException("Ungültiger oder doppelter Schlüsselplatz in gespeicherter Projektdefinition.");
         }
         EnsureNoEmbeddedSecrets(project);
