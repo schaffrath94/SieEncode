@@ -498,6 +498,8 @@
             <GroupBox Header="1 · Mein persönlicher Vault-Zugang"><StackPanel>
               <Border x:Name="VaultSetupStatusBorder" Background="#F7F9FA" BorderBrush="#C9D1D4" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,8"><StackPanel><TextBlock x:Name="VaultSetupStatusTitle" Text="Persönlicher Zugang wird geprüft …" FontWeight="SemiBold"/><TextBlock x:Name="VaultSetupStatusText" Text="Ein persönlicher Zugang gehört zu diesem Windows-Benutzer, nicht zu einem einzelnen Projekt." Foreground="#526B70" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel></Border>
               <TextBlock Text="Den vorhandenen Zugang weiterverwenden. Nur wenn keiner vorhanden ist, einmalig neu anlegen. Für Teamprojekte die öffentliche Einladung nur bei Bedarf an die Hauptverwaltung weitergeben. Ein persönlicher Schlüssel erteilt noch keine Gruppen- oder Projektberechtigungen." Foreground="#526B70" TextWrapping="Wrap" Margin="0,0,0,8"/>
+              <TextBlock Text="Merken: 1. Persönlicher Zugang = mein Schlüssel. 2. Gruppe = Freigabe durch die Verwaltung. 3. Projekt-Vault = verschlüsselte Kartenschlüssel eines Projekts." Foreground="#174F55" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,5"/>
+              <Button Content="So funktioniert der Vault (1.0)" Tag="docs/VAULT-EINFACH-1.0.md" Click="OpenHelpDocument_Click" HorizontalAlignment="Left"/>
               <Button x:Name="InitializeTeamVaultButton" Content="Persönlichen Zugang einrichten" Click="InitializeTeamVault_Click" HorizontalAlignment="Left" Style="{StaticResource PrimaryButton}"/>
               <Expander x:Name="VaultUnreleasedCompatibility" Header="Interne Kompatibilitätswerkzeuge · nicht Bestandteil von 1.0" IsExpanded="False" Visibility="Collapsed" Margin="0,8,0,0">
                 <StackPanel Margin="8,4,0,4">
@@ -533,8 +535,7 @@
                 <TextBlock Text="Recovery-Schlüssel nur getrennt und geschützt verwahren. Ein Verwaltungswechsel erfordert die ausdrückliche Autorisierung und anschließend den öffentlichen Import an jedem Offline-Arbeitsplatz." TextWrapping="Wrap" Foreground="#8A5A00" Margin="0,0,0,6"/>
                 <WrapPanel><Button Content="Separate Recovery-Identität einrichten" Click="OpenGroupRecoverySetup_Click"/><Button Content="Verwaltungsnachfolge vorbereiten" Click="OpenGroupSuccessorSetup_Click"/><Button Content="Bestätigten Verwaltungswechsel importieren" Click="ImportAdministratorTransition_Click"/></WrapPanel>
               </StackPanel></Expander>
-              <Expander Header="Vault verstehen · Einrichtung und späterer Test" IsExpanded="False" Margin="0,6,0,0"><StackPanel Margin="8,4,0,4">
-                <Button Content="Vault einfach erklärt · Schritte für Version 1.0" Tag="docs/VAULT-EINFACH-1.0.md" Click="OpenHelpDocument_Click" HorizontalAlignment="Left"/>
+              <Expander Header="Abnahmetest · erst zum gemeinsamen Meilenstein" IsExpanded="False" Margin="0,6,0,0"><StackPanel Margin="8,4,0,4">
                 <Button Content="Kurzen Vault-Abnahmetest öffnen" Tag="docs/VAULT-TEST-EINFACH-2026-11-21.md" Click="OpenHelpDocument_Click" HorizontalAlignment="Left"/>
               </StackPanel></Expander>
               <TextBlock Text="Wichtig für 1.0: Der signierte Gruppenstand verteilt Berechtigungen, aber bereits erzeugte Gruppen-Vaults müssen nach Mitgliederänderungen im Projekteditor ausdrücklich neu verschlüsselt werden. Auf bereits kopierte Offline-Dateien wirkt kein Fernentzug." Foreground="#8A5A00" TextWrapping="Wrap" Margin="0,8,0,0"/>
