@@ -602,6 +602,19 @@ public partial class MainWindow : Window
             operationTimer.Stop();
             lastCardPreflightReport = null;
             lastCardRecognitionReport = null;
+            // Switching the operational project also changes the expected card/key
+            // context. Do not display an earlier card result as current evidence.
+            lastTestReportPath = null;
+            TestOpenRecognitionResultButton.IsEnabled = false;
+            TestOpenRecognitionResultButton.Visibility = Visibility.Collapsed;
+            TestOpenInventoryPdfButton.IsEnabled = false;
+            TestExportInventoryComparisonButton.IsEnabled = false;
+            TestAnalysisTree.Items.Clear();
+            TestAnalysisTree.Items.Add(new TreeViewItem { Header = "Projekt gewechselt · Karte noch nicht mit diesem Projekt geprüft" });
+            SetTestInspectionPresentation("NEUES PROJEKT · KARTENBEFUND FEHLT",
+                "Die vorherige Kartenanalyse belegt den Status im neu gewählten Projektkontext nicht.",
+                "Transponder vor einer Änderung erneut nur lesend untersuchen und die Projektprüfung beachten.",
+                System.Windows.Media.Brushes.LemonChiffon);
             StationOpenPreflightResultButton.IsEnabled = false;
             stationFields.Clear();
             foreach (var field in sessionDefinition.CardFields) stationFields.Add(new CodingFieldInput(field));
