@@ -438,7 +438,18 @@ public partial class MainWindow
         };
         if (editorMainActions.Count(button => Equals(button.Style, primaryStyle)) > 1)
             throw new InvalidOperationException("Projekteditor zeigt mehrere konkurrierende Hauptaktionen.");
-        checks.Add("Projektbedienung: Haupt- und Löschaktionen getrennt, seltene Schlüsselverwaltung eingeklappt, Projektbereitschaft vor dem Formular, höchstens eine hervorgehobene Editoraktion.");
+        // SieEncode 1.0 starts with new projects only. Older technical import
+        // adapters can remain in source, but are not operator navigation.
+        if (ImportLegacyButton.Visibility != Visibility.Collapsed ||
+            VaultUnreleasedCompatibility.Visibility != Visibility.Collapsed)
+            throw new InvalidOperationException("Unveröffentlichte Legacy-Importe überladen den neuen 1.0-Bedienweg.");
+        if (!DescendantsAndSelf(PageEditor).Contains(EditorCreateGroupProjectButton) ||
+            !DescendantsAndSelf(EditorGroupProjectSetupPanel).Contains(EditorCreateGroupProjectButton))
+            throw new InvalidOperationException("Gruppen-Vault für neue 1.0-Projekte im Editor nicht erreichbar.");
+        if (editorProject is not null &&
+            EditorGroupProjectSetupPanel.Visibility != (IsEditorGroupVault ? Visibility.Collapsed : Visibility.Visible))
+            throw new InvalidOperationException("Projekt-Gruppenzuordnung wird nach Erstellung erneut angeboten.");
+        checks.Add("1.0-Projektbedienung: keine unveröffentlichten Legacy-Importe im Normalweg; neue Gruppen-Vault-Einrichtung direkt im Editor. Haupt- und Löschaktionen getrennt; Schlüsselverwaltung eingeklappt, höchstens eine hervorgehobene Editoraktion.");
     }
 
     private void VerifyStationOperatorUiContract(List<string> checks)
