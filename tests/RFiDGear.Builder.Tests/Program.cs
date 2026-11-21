@@ -53,6 +53,7 @@ var tests = new (string Name, Action Run)[]
     ("Full offline key library encrypted with existing group trust and separate recovery", KeyLibraryVaultTests.Verify),
     ("Project library binding resolves all exact-version slots into existing build payload without leaking keys", ProjectKeyLibraryResolutionTests.Verify),
     ("In-app full key library editing supports import, versions and explicit lifecycle without silent rotation", KeyLibraryEditingTests.Verify),
+    ("Local catalog management requires the current signed administrator key and matching enrolled policy", KeyLibraryAdministrationTests.Verify),
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
