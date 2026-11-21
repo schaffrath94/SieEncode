@@ -889,6 +889,10 @@ public partial class MainWindow : Window
             operationHostRun = pending;
             _ = hostContractService.MarkRunning(operationHostRun, operationSession.Launch);
             operationFinalized = false;
+            SetTestInspectionPresentation("APPLICATION WIRD GELESEN",
+                "Die ausgewählte Application wird nur lesend untersucht. Bis zur abgeschlossenen Auswertung sind die File-Eigenschaften und Inhalte dieses Vorgangs noch ungeklärt.",
+                "Karte liegen lassen. Bei nicht lesbaren Files den Zugriffsstatus prüfen, niemals leere Inhalte unterstellen.",
+                System.Windows.Media.Brushes.LemonChiffon);
             operationTimer.Start();
             TestAnalysisInfo.Text = $"AID {dialog.Request.Aid} wird nur lesend inventarisiert · Transponder liegen lassen.";
             SetStatus("Vertiefte Application-Inventur gestartet.");
@@ -1231,7 +1235,17 @@ public partial class MainWindow : Window
             else
                 operationTimer.Stop();
         }
-        catch (Exception exception) { operationTimer.Stop(); ShowError(exception); }
+        catch (Exception exception)
+        {
+            operationTimer.Stop();
+            if (operationSession?.Operation.Kind is RFiDGearOperationKind.CardRecognitionReadOnly or
+                RFiDGearOperationKind.ApplicationInventoryReadOnly or RFiDGearOperationKind.CardFormatStandalone)
+                SetTestInspectionPresentation("UNTERSUCHUNGSERGEBNIS NICHT AUSWERTBAR",
+                    "Der laufende Vorgang konnte von SieEncode nicht sicher zu Ende ausgewertet werden. Ein früherer Bericht belegt nicht den aktuellen Kartenzustand.",
+                    "Transponder nicht verändern. Zuerst prüfen, ob RFiDGear noch läuft, und den technischen Laufstatus klären. Erst danach bei Bedarf neu lesend untersuchen.",
+                    System.Windows.Media.Brushes.MistyRose);
+            ShowError(exception);
+        }
     }
 
     private void UpdateOperationStatus()
