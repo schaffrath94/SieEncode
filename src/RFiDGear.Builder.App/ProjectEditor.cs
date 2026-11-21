@@ -779,7 +779,9 @@ public partial class MainWindow
         editorVaultRevision = ConcurrentFileWriter.Capture(ProjectKeyVault.GetPath(editorSourcePath));
         EditorSourcePath.Text = editorSourcePath;
         SetEditorDirty(false);
-        EditorValidation.Text = "Projektdefinition gespeichert und validiert. Sie enthält keine Schlüsselwerte. Änderungen an Schlüsseln müssen separat im Vault gespeichert werden.";
+        EditorValidation.Text = editorProject.Project.KeyLibrary is not null
+            ? "Projektdefinition mit exakten Bibliotheksreferenzen gespeichert. Keine Schlüsselwerte und kein zweiter Projekt-Vault."
+            : "Projektdefinition gespeichert und validiert. Sie enthält keine Schlüsselwerte. Änderungen an Schlüsseln müssen separat im Vault gespeichert werden.";
         RefreshProjects();
         var entry = projects.FirstOrDefault(item => string.Equals(item.SourcePath, editorSourcePath, StringComparison.OrdinalIgnoreCase));
         if (entry is not null) { SelectProject(entry); ProjectsGrid.SelectedItem = entry; }
@@ -853,6 +855,8 @@ public partial class MainWindow
         try
         {
             if (string.IsNullOrWhiteSpace(editorSourcePath)) throw new InvalidOperationException("Projekt bitte zuerst speichern.");
+            if (editorProject?.Project.KeyLibrary is not null)
+                throw new InvalidOperationException("Bibliotheksgebundene Projekte dürfen keinen unabhängigen Projekt-Vault entsperren.");
             var path = ProjectKeyVault.GetPath(editorSourcePath);
             if (!File.Exists(path)) throw new FileNotFoundException("Kein Key-Vault für dieses Projekt gefunden.", path);
             if (ConcurrentFileWriter.Capture(path) != editorVaultRevision) throw new ConcurrentFileChangeException(path);
@@ -974,6 +978,8 @@ public partial class MainWindow
         try
         {
             if (editorProject is null || editorLibrary is null) throw new InvalidOperationException("Kein Projekt im Editor geöffnet.");
+            if (editorProject.Project.KeyLibrary is not null)
+                throw new InvalidOperationException("Bei bibliotheksgebundenen Projekten gibt es keinen unabhängigen Projekt-Vault.");
             if (string.IsNullOrWhiteSpace(editorSourcePath) && !SaveEditorProject(saveAs: false)) return;
             CaptureEditorControls();
             var issues = ProjectContractValidator.Validate(editorProject, editorLibrary, requireProductiveSecrets: true)
@@ -1034,6 +1040,8 @@ public partial class MainWindow
     {
         try
         {
+            if (editorProject?.Project.KeyLibrary is not null)
+                throw new InvalidOperationException("Die Schlüsselzugriffsrechte des Bibliotheksprojekts werden in der zentralen Schlüsselverwaltung festgelegt, nicht im Projekt-Vault.");
             if (IsEditorGroupVault) { ReconcileEditorGroupVault(); return; }
             if (editorProject is null || editorLibrary is null || string.IsNullOrWhiteSpace(editorSourcePath)) throw new InvalidOperationException("Projekt bitte zuerst speichern und Schlüssel laden.");
             CaptureEditorControls();
@@ -1066,6 +1074,8 @@ public partial class MainWindow
     {
         try
         {
+            if (editorProject?.Project.KeyLibrary is not null)
+                throw new InvalidOperationException("Dieses Projekt besitzt keinen unabhängigen Vault. Die Bibliothek wird beim Zuordnen authentisiert geöffnet.");
             if (IsEditorGroupVault) { AuditEditorGroupVault(); return; }
             if (editorProject is null || editorLibrary is null || string.IsNullOrWhiteSpace(editorSourcePath))
                 throw new InvalidOperationException("Gespeichertes Projekt bitte zuerst im Editor öffnen.");
@@ -1100,6 +1110,8 @@ public partial class MainWindow
         try
         {
             if (editorProject is null || editorLibrary is null) throw new InvalidOperationException("Kein Projekt im Editor geöffnet.");
+            if (editorProject.Project.KeyLibrary is not null)
+                throw new InvalidOperationException("Build gesperrt: Der autorisierte, versionsgenaue Bibliotheksadapter zur Kodiersitzung wird noch angeschlossen.");
             CaptureEditorControls();
             if (string.IsNullOrWhiteSpace(editorSourcePath) || editorDirty)
                 if (!SaveEditorProject(saveAs: false)) return;
