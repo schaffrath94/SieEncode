@@ -265,7 +265,11 @@ public partial class MainWindow
             ? "Erhält vorhandene Applications. Nur neue AIDs aus Zusatzprofilen werden angelegt und kodiert. PICC-Keywechsel und Format-Recovery sind gesperrt; vor dem Schreiben ist eine erfolgreiche Transponder-Erkennung erforderlich."
             : "Baut einen neuen oder bewusst zurückgesetzten Transponder vollständig aus Grund- und Zusatzprofilen auf.";
         EditorProductivePiccPanel.Visibility = extension ? Visibility.Collapsed : Visibility.Visible;
-        EditorGenerateKeysButton.Content = extension ? "Schlüssel für neue Applications erzeugen" : "Neue Schlüssel erzeugen";
+        EditorGenerateKeysButton.Content = editorProject.Project.KeyLibrary is not null
+            ? "Bibliotheksschlüssel zuordnen"
+            : KeyLibraryAssignmentWindow.HasLocalVaults()
+                ? "Schlüssel aus Bibliothek wählen"
+                : extension ? "Schlüssel für neue Applications erzeugen" : "Neue Schlüssel erzeugen";
     }
 
     private void EditorProfileSelection_Changed(object sender, SelectionChangedEventArgs e)
