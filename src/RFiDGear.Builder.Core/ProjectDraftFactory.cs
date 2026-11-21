@@ -46,7 +46,9 @@ public static class ProjectDraftFactory
         foreach (var type in composition.Applications.Select(application => application.KeyType).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             if (!project.Transport.ApplicationKeys.ContainsKey(type))
-                project.Transport.ApplicationKeys[type] = type == "DF_KEY_3K3DES" ? new string('0', 48) : new string('0', 32);
+                project.Transport.ApplicationKeys[type] = project.Project.KeyLibrary is not null
+                    ? "" // A catalog-bound draft must never silently acquire a raw fallback key.
+                    : type == "DF_KEY_3K3DES" ? new string('0', 48) : new string('0', 32);
         }
 
         var productive = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
