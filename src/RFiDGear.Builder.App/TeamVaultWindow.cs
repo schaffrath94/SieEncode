@@ -182,7 +182,11 @@ internal sealed class TeamVaultWindow : Window
         if (identityOnly && identities.Count > 0)
             throw new InvalidOperationException("Ein persönlicher Zugang ist bereits vorhanden. Diesen weiterverwenden; bei mehreren Zugängen den richtigen bewusst auswählen.");
         using var created = WindowsVaultIdentityService.Create(name).Certificate;
-        ReloadIdentities(); identityList.SelectedItem = identities.FirstOrDefault(row => row.DisplayName == name);
+        var createdFingerprint = CertificateVaultService.Fingerprint(created);
+        ReloadIdentities();
+        identityList.SelectedItem = identities.SingleOrDefault(row =>
+            string.Equals(row.Fingerprint, createdFingerprint, StringComparison.OrdinalIgnoreCase));
+        UpdateStatus();
         if (!identityOnly) AddSelectedIdentity(sender, e);
     }
 
