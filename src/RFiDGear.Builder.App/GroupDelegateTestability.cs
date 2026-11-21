@@ -45,6 +45,17 @@ public partial class MainWindow
             window.LoadPerson("alice");
             if (!changeButton.IsEnabled)
                 throw new Exception("Active delegation should enable only assigned group changes.");
+            var reopened = new GroupDelegateWindow(this, directory);
+            try
+            {
+                var reloadedPerson = DescendantsAndSelf(reopened).OfType<ComboBox>().Single(box => box.Name == "People");
+                var reloadedChange = DescendantsAndSelf(reopened).OfType<Button>()
+                    .Single(button => button.Content?.ToString() == "Änderung signieren und exportieren");
+                if (reloadedPerson.SelectedItem is null || reloadedChange.IsEnabled == false ||
+                    DescendantsAndSelf(reopened).OfType<DataGrid>().Single().Items.Count != 1)
+                    throw new Exception("Unique existing delegate key did not restore the approved local person.");
+            }
+            finally { reopened.Close(); }
             var grid = DescendantsAndSelf(window).OfType<DataGrid>().Single();
             var group = grid.Items.Cast<GroupAdministrationDraft>().Single();
             if (group.Id != "lokal") throw new Exception("Delegate UI exposes unauthorized group.");
