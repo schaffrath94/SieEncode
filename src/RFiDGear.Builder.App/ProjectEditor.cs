@@ -535,6 +535,8 @@ public partial class MainWindow
             EditorAuditVaultButton.IsEnabled = false;
             EditorGroupRecoveryButton.IsEnabled = false;
             EditorGroupRecoveryButton.Visibility = Visibility.Collapsed;
+            EditorGroupProjectSetupPanel.Visibility = Visibility.Collapsed;
+            EditorCreateGroupProjectButton.IsEnabled = false;
             EditorSaveVaultButton.Visibility = settings.ExpertMode ? Visibility.Visible : Visibility.Collapsed;
             HighlightEditorNextAction(null);
             return;
@@ -555,6 +557,19 @@ public partial class MainWindow
         var saved = !string.IsNullOrWhiteSpace(editorSourcePath) && !editorDirty;
         var vaultExists = !string.IsNullOrWhiteSpace(editorSourcePath) && File.Exists(ProjectKeyVault.GetPath(editorSourcePath));
         var existingDefinition = !string.IsNullOrWhiteSpace(editorSourcePath);
+
+        // 1.0 creates a NEW group project from the current editable draft. This
+        // option is not a migration step and cannot modify an existing group binding.
+        EditorGroupProjectSetupPanel.Visibility = IsEditorGroupVault ? Visibility.Collapsed : Visibility.Visible;
+        var mayChooseGroup = profilesOk && valuesOk && keysLoaded && !editorGroupRecovery;
+        EditorCreateGroupProjectButton.IsEnabled = mayChooseGroup;
+        EditorGroupProjectSetupHint.Text = !profilesOk
+            ? "Zuerst die Profilbindung prüfen und ausdrücklich übernehmen."
+            : fieldIssues.Length > 0 || !valuesOk
+                ? "Zuerst die Pflichtfelder vollständig und korrekt ausfüllen."
+                : !keysLoaded
+                    ? "Zuerst die Kartenschlüssel erzeugen oder einen bereits gespeicherten Vault entsperren."
+                    : "Bereit zur bewussten Gruppenauswahl. Die Hauptverwaltung muss Ihre Person, die Gruppe und einen separaten Recovery-Zugang zuvor freigegeben haben. Eine neue Projektkopie wird erst nach Bestätigung angelegt.";
 
         EditorGenerateKeysButton.IsEnabled = true;
         EditorUnlockVaultButton.IsEnabled = vaultExists;
@@ -584,13 +599,15 @@ public partial class MainWindow
             : fieldIssues.Length > 0 ? "Nächster Schritt: " + string.Join(" ", fieldIssues.Take(3).Select(issue => issue.Message))
             : !keysLoaded && vaultExists ? "Nächster Schritt: vorhandenen Schlüsselspeicher für diese Sitzung entsperren."
             : !keysLoaded && existingDefinition ? "Nächster Schritt: Zu dieser bestehenden Definition fehlt der Vault. Vorhandene Build-Schlüssel sind nicht wiederherstellbar; neue Schlüssel nur für eine bewusst neue Schlüsselidentität erzeugen."
-            : !keysLoaded ? "Nächster Schritt: Produktivschlüssel erzeugen, Projekt speichern und anschließend den Vault verschlüsselt sichern."
+            : !keysLoaded ? "Nächster Schritt: Kartenschlüssel erzeugen. Für ein Teamprojekt danach den Gruppen-Vault auswählen; für persönliche Projekte anschließend den Vault verschlüsselt speichern."
             : !valuesOk ? "Nächster Schritt: Grundschlüssel prüfen. " + string.Join(" ", definitionIssues.Take(3).Select(issue => issue.Message))
             : editorVaultVersion == 1 ? "Nächster Schritt: alten Vault mit einer neuen starken Passphrase als Vault v2 speichern. Vorher bleibt der Neubau gesperrt."
             : editorGroupRecovery ? "Recovery-Sitzung: Änderungen bei Bedarf speichern. Vor einem Build über ‚Vault entsperren‘ mit normalem Gruppenzugang öffnen."
             : IsEditorGroupVault && !editorKeysPersisted && keysLoaded
                 ? "Nächster Schritt: geänderte Gruppenschlüssel mit „Vault-Änderungen sicher speichern“ sichern und von SieEncode erneut prüfen lassen. Die Gruppenmitgliedschaft wird dadurch nicht geändert."
-            : !editorVaultVerified ? "Nächster Schritt: Vault speichern oder entsperren; SieEncode muss ihn erfolgreich wieder öffnen."
+            : !editorVaultVerified && !IsEditorGroupVault && !existingDefinition
+                ? "Nächster Schritt: Bei Teamnutzung „Gruppen-Vault für dieses Projekt einrichten“ wählen. Für ein persönliches Projekt zuerst zwischenspeichern und den Vault-Zugang einrichten."
+            : !editorVaultVerified ? "Nächster Schritt: Vault sicher speichern oder mit berechtigtem Zugang entsperren; SieEncode muss ihn erfolgreich wieder öffnen."
             : backupRequired && !backupReady ? "Nächster Schritt: Unter Einstellungen einen vom Projektordner unabhängigen Vault-Sicherungsort wählen. Mastering bleibt bis dahin gesperrt."
             : !editorKeysPersisted ? "Nächster Schritt: Mehrbenutzerzugriff einrichten und Recovery-Passphrase in KeePass ablegen."
             : editorVaultVersion >= KeyVaultService.CertificateVersion
