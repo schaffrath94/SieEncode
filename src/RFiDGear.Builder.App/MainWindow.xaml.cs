@@ -2269,12 +2269,12 @@ public partial class MainWindow : Window
                 var state = DescribePersonalVaultSetup(count);
                 VaultSetupStatusTitle.Text = state.Title;
                 VaultSetupStatusText.Text = state.Detail;
-                VaultSetupStatusBorder.Background = count == 0
-                    ? System.Windows.Media.Brushes.LemonChiffon
-                    : System.Windows.Media.Brushes.Honeydew;
-                VaultSetupStatusBorder.BorderBrush = count == 0
-                    ? System.Windows.Media.Brushes.DarkGoldenrod
-                    : System.Windows.Media.Brushes.SeaGreen;
+                VaultSetupStatusBorder.Background = count == 1
+                    ? System.Windows.Media.Brushes.Honeydew
+                    : System.Windows.Media.Brushes.LemonChiffon;
+                VaultSetupStatusBorder.BorderBrush = count == 1
+                    ? System.Windows.Media.Brushes.SeaGreen
+                    : System.Windows.Media.Brushes.DarkGoldenrod;
                 InitializeTeamVaultButton.Content = count == 0
                     ? "Persönlichen Zugang einrichten"
                     : "Eigenen Zugang ansehen / Einladung exportieren";
@@ -2299,8 +2299,8 @@ public partial class MainWindow : Window
             VaultGroupStatus.Text = groupCount == 0
                 ? "Noch kein öffentlicher Gruppenstand auf diesem Windows-Benutzer gefunden. Für Teamzugriff zuerst die signierte Registrierung der Hauptverwaltung übernehmen und den Fingerabdruck unabhängig prüfen."
                 : groupCount == 1
-                    ? "Eine Gruppenbibliothek lokal registriert. Neue Freigaben gelten erst nach ausdrücklich importiertem signierten Gruppenstand. Die lokale Registrierung allein bestätigt keinen Zugriff auf ein bestimmtes Projekt."
-                    : $"{groupCount} Gruppenbibliotheken lokal registriert. Den Gruppenstand der richtigen Bibliothek auswählen und signiert aktualisieren. Keine Gruppenrechte allein aus der Dateianzahl ableiten.";
+                    ? "Eine lokale Gruppenregistrierungsdatei vorhanden. Aktuelle Freigaben gelten erst nach ausdrücklich übernommenem signierten Gruppenstand. Datei vorhanden bedeutet noch nicht, dass diese Bibliothek und ihr Projektzugriff tatsächlich geprüft und freigegeben sind."
+                    : $"{groupCount} lokale Gruppenregistrierungsdateien vorhanden. Die richtige Bibliothek wählen und signiert aktualisieren. Dateianzahl belegt weder aktuelle Gültigkeit noch eigene Zugriffsrechte.";
             // Mark only the next *import* action as primary, never auto-import or
             // interpret local files as a verified permission.
             VaultRegisterGroupButton.Visibility = groupCount == 0 ? Visibility.Visible : Visibility.Collapsed;
