@@ -469,6 +469,9 @@ public partial class MainWindow
         if (CurrentTrackedLaunch() is not null &&
             (StationPrepareButton.IsEnabled || StationMarkFailedButton.IsEnabled))
             throw new InvalidOperationException("Neuer Datensatz oder F9-Abschluss bei noch laufendem Kartenprozess angeboten.");
+        if (CanOperatorMarkFailed(false, false) || CanOperatorMarkFailed(false, true) ||
+            CanOperatorMarkFailed(true, true) || !CanOperatorMarkFailed(true, false))
+            throw new InvalidOperationException("F9-Zustandsregel gibt einen laufenden oder nicht vorbereiteten Datensatz frei.");
 
         checks.Add("Kodierstation: getrennte Kartenprüfung/Vorbereitung/Kodierung; zusätzliche Aktionen eingeklappt; technischer Nachweis erreichbar; höchstens eine Hauptaktion und keine Readback-Prüfung vor einem Lauf. Neuer Datensatz/F9 bleibt während eines laufenden Hostprozesses gesperrt. UI-Vertrag ohne Hardwarelauf.");
     }
