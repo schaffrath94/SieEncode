@@ -8,6 +8,25 @@ internal static class KeyLibraryEditingTests
         var customerId = Guid.NewGuid();
         var empty = new KeyLibraryVaultPayload(new KeyLibrarySnapshot(libraryId, 1, []), []);
         KeyLibraryVault.Validate(empty);
+        var customer = KeyLibraryEditing.AddCustomer(empty, " Test-Kunde ");
+        if (customer.Customer.CustomerId == Guid.Empty || customer.Customer.Name != "Test-Kunde" ||
+            customer.Next.Catalog.Revision != 2 || customer.Next.Catalog.Customers.Length != 1 ||
+            customer.Next.Secrets.Length != 0 || empty.Catalog.Customers.Length != 0)
+            throw new Exception("Kundenanlage hat keine stabile Metadaten-ID oder veränderte Geheimwerte.");
+        Reject<InvalidDataException>(() => KeyLibraryEditing.AddCustomer(customer.Next, "test-kunde"));
+        Reject<InvalidDataException>(() => KeyLibraryEditing.AddCustomer(customer.Next, "  "));
+        Reject<InvalidDataException>(() => KeyLibraryEditing.ImportNew(customer.Next,
+            Guid.NewGuid(), "Unbekannter Kunde", "DF_KEY_AES", "", "", new string('A', 32)));
+        var managed = KeyLibraryEditing.GenerateNew(customer.Next, customer.Customer.CustomerId,
+            "Test-PICC", "DF_KEY_AES", "PICC", "SIPORT");
+        if (managed.Next.Catalog.Revision != 3 ||
+            managed.Next.Catalog.Keys.Single().CustomerId != customer.Customer.CustomerId)
+            throw new Exception("Schlüsselanlage muss dieselbe verwaltete Kunden-ID nutzen.");
+        Reject<InvalidDataException>(() => KeyLibraryVault.Validate(customer.Next with
+        { Catalog = customer.Next.Catalog with { Customers =
+            [customer.Customer, customer.Customer with { CustomerId = Guid.NewGuid(), Name = "TEST-KUNDE" }] } }));
+        Reject<InvalidDataException>(() => KeyLibraryVault.Validate(customer.Next with
+        { Catalog = customer.Next.Catalog with { Customers = [customer.Customer, customer.Customer] } }));
 
         const string first = "0123456789ABCDEF0123456789ABCDEF";
         const string second = "AABBCCDDEEFF00112233445566778899";
