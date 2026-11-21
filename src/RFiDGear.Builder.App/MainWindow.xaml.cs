@@ -1688,6 +1688,7 @@ public partial class MainWindow : Window
             StationCheckReadbacksButton.IsEnabled = true;
             StationStartAutoModeButton.IsEnabled = false;
             StationOpenRFiDGearButton.IsEnabled = false;
+            RefreshOperationButtons();
             operationTimer.Start();
             StationState.Text = autoMode ? "SERIENMODUS AKTIV" : "RFiDGear GEÖFFNET";
             StationStateDetail.Text = autoMode
