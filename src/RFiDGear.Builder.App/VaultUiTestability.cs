@@ -44,6 +44,47 @@ public partial class MainWindow
             if (!File.ReadAllBytes(store.Path).SequenceEqual(original))
                 throw new InvalidOperationException("Schließen der persönlichen Identität verändert die bisherige Teamliste.");
             checks.Add("Persönlicher Vault-Einstieg: nur Identität und öffentliche Einladung, keine bisherige Teamlistenpflege oder Speicherung beim Öffnen/Schließen.");
+            // Two certificates can share the same display name. Never guess the
+            // active key or enable invitation export until the operator chooses one.
+            using var otherRsa = RSA.Create(3072);
+            var otherRequest = new CertificateRequest("CN=Synthetic UI Recipient 2", otherRsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            using var otherCertificate = otherRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
+            IReadOnlyList<WindowsVaultIdentity> DuplicateNames() =>
+            [
+                new("Synthetic Duplicate", CertificateVaultService.Fingerprint(certificate), new X509Certificate2(certificate)),
+                new("Synthetic Duplicate", CertificateVaultService.Fingerprint(otherCertificate), new X509Certificate2(otherCertificate))
+            ];
+            var multiple = new TeamVaultWindow(this, fixture, initialSetup: true, identityProvider: DuplicateNames);
+            try
+            {
+                var all = DescendantsAndSelf(multiple).ToArray();
+                var choice = all.OfType<ComboBox>().Single();
+                var export = all.OfType<Button>().Single(button => Equals(button.Content, "Öffentliche Einladung exportieren"));
+                var create = all.OfType<Button>().Single(button => Equals(button.Content, "Neue persönliche Identität anlegen"));
+                if (choice.SelectedItem is not null || export.IsEnabled || create.IsEnabled)
+                    throw new InvalidOperationException("Bei zwei gleichnamigen Vault-Identitäten wurde ein Zugang ungefragt vorausgewählt.");
+                choice.SelectedIndex = 1;
+                var originalFingerprint = ((WindowsVaultIdentity)choice.SelectedItem).Fingerprint;
+                multiple.ReloadIdentities();
+                if (choice.SelectedItem is not WindowsVaultIdentity reloaded ||
+                    !string.Equals(originalFingerprint, reloaded.Fingerprint, StringComparison.OrdinalIgnoreCase) ||
+                    !export.IsEnabled || create.IsEnabled)
+                    throw new InvalidOperationException("Bewusst gewählte Vault-Identität geht beim erneuten Öffnen/Neuladen verloren.");
+                if (!File.ReadAllBytes(store.Path).SequenceEqual(original))
+                    throw new InvalidOperationException("Mehrfachidentität verändert die alte Teamliste.");
+            }
+            finally { multiple.Close(); }
+            var absent = DescribePersonalVaultSetup(0);
+            var existing = DescribePersonalVaultSetup(1);
+            var ambiguous = DescribePersonalVaultSetup(2);
+            if (!absent.Title.Contains("fehlt", StringComparison.Ordinal) ||
+                !existing.Title.Contains("vorhanden", StringComparison.Ordinal) ||
+                existing.Detail.Contains("Gruppenrechte erteilt", StringComparison.Ordinal) ||
+                !ambiguous.Title.Contains("Mehrere", StringComparison.Ordinal) ||
+                ambiguous.Detail.Contains("automatisch auswählen", StringComparison.Ordinal))
+                throw new InvalidOperationException("Persönlicher Vaultstatus vermischt bestehende Identität mit Gruppenfreigaben.");
+            checks.Add("Persönliche Vault-Einrichtung: mehrere gleichnamige Zertifikate erzwingen eindeutige Auswahl, behalten Fingerabdruck über Neuladen und erzeugen/speichern keine neuen Keys; Status behauptet keine Gruppenfreigabe.");
+
             // Empty provider keeps the Windows certificate store entirely outside this smoke test.
             foreach (var dialog in new Window[] {
                 new TeamVaultWindow(this, fixture, identityProvider: () => []),
