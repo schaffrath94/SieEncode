@@ -38,6 +38,22 @@ public partial class MainWindow
             throw new Exception("Group editor unlock failed.");
         var changed = KeyVaultService.GenerateKey("DF_KEY_AES");
         EditorProductivePiccKey.Text = changed;
+        // A group key edit must be saveable in the ordinary operator view,
+        // not require an unexplained switch to expert mode.
+        var originalExpertMode = settings.ExpertMode;
+        try
+        {
+            settings.ExpertMode = false;
+            ApplyOperatingMode();
+            if (EditorSaveVaultButton.Visibility != Visibility.Visible || !EditorSaveVaultButton.IsEnabled ||
+                !Equals(EditorSaveVaultButton.Style, TryFindResource("PrimaryButton")))
+                throw new Exception("Editing a group vault has no clear safe save action in standard view.");
+        }
+        finally
+        {
+            settings.ExpertMode = originalExpertMode;
+            ApplyOperatingMode();
+        }
         EditorSaveVaultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         if (!editorVaultVerified || ProjectGroupVault.Load(path, ProjectJson.Load(path), trust, [identity]).ProductivePicc.Value != changed)
             throw new Exception("Group editor save failed.");
