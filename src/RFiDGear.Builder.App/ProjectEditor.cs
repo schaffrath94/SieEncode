@@ -838,6 +838,18 @@ public partial class MainWindow
             RefreshEditorWorkflow();
             SetStatus("Produktivkeys für diese Sitzung entsperrt.");
         }
+        catch (CryptographicException exception) when (IsEditorGroupVault)
+        {
+            // Only a diagnosis, never a workaround: a validly enrolled group
+            // member, a matching project binding and the original ciphertext
+            // must all agree before secrets can be loaded.
+            const string guidance = "Gruppen-Vault nicht entsperrt. Bitte im eigenen Windows-Benutzer den persönlichen Zugang prüfen. Dann die Hauptverwaltung fragen, ob Person und Gerät zur richtigen Projektgruppe gehören und ob der aktuelle signierte Gruppenstand importiert wurde. Nach Gruppenänderungen den Vault durch eine berechtigte Person ausdrücklich abgleichen lassen. Es kann auch ein Integritäts-/Projektbindungsfehler vorliegen. Keinesfalls neue Kartenschlüssel oder einen Ersatz-Vault erzeugen.";
+            editorVaultVerified = false;
+            EditorVaultStatus.Text = guidance;
+            EditorNextStep.Text = guidance;
+            SetStatus("Gruppen-Vault-Zugang nicht bestätigt. Keine Schlüssel freigegeben.", true);
+            ShowError(new InvalidOperationException(guidance + "\n\nTechnischer Hinweis: " + exception.Message, exception));
+        }
         catch (Exception exception) { ShowError(exception); }
     }
 
