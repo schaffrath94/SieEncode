@@ -151,14 +151,24 @@ internal sealed class KeyLibraryManagementWindow : Window
         retire.Click += async (_, _) => await ExecuteAndSyncAsync(() => SetStatus(KeyLibraryContracts.Retired));
         compromise.Click += async (_, _) => await ExecuteAndSyncAsync(() => SetStatus(KeyLibraryContracts.Compromised));
         reveal.Click += (_, _) => Execute(Reveal);
-        var savedEndpoint = endpointStore.Load();
-        if (savedEndpoint is not null)
+        try
         {
-            serverOrigin.Text = savedEndpoint.HttpsOrigin;
-            serverPin.Text = savedEndpoint.ServerCertificateSha256;
-            centralStatus.Text = "Zentralverbindung konfiguriert; wird bei Gruppenauswahl geprüft.";
+            var savedEndpoint = endpointStore.Load();
+            if (savedEndpoint is not null)
+            {
+                serverOrigin.Text = savedEndpoint.HttpsOrigin;
+                serverPin.Text = savedEndpoint.ServerCertificateSha256;
+                centralStatus.Text = "Zentralverbindung konfiguriert; wird bei Gruppenauswahl geprüft.";
+            }
+            else centralStatus.Text = "Offline-Betrieb. Keine bestätigte Zentralverbindung hinterlegt.";
         }
-        else centralStatus.Text = "Offline-Betrieb. Keine bestätigte Zentralverbindung hinterlegt.";
+        catch (Exception exception)
+        {
+            // Corrupted optional connection settings must not make the entire
+            // offline key-management window unusable.
+            centralStatus.Text = "Zentralverbindung ungültig; kein automatischer Netzabruf. " +
+                exception.Message;
+        }
         var policy = trust.LoadOffline();
         groupSelection.ItemsSource = policy.Policy.Groups.Select(g => new GroupChoice(g.Id, g.Name)).ToArray();
         if (groupSelection.Items.Count == 1) groupSelection.SelectedIndex = 0;
