@@ -12,7 +12,7 @@ try {
     # This is an executable test harness; dotnet test alone does not execute it.
     & dotnet run --project $tests -c Release --no-build --no-restore
     if ($LASTEXITCODE -ne 0) { throw 'Regression tests failed.' }
-    foreach ($project in @('src/RFiDGear.Builder.Cli/RFiDGear.Builder.Cli.csproj', 'src/RFiDGear.Builder.App/RFiDGear.Builder.App.csproj')) {
+    foreach ($project in @('src/RFiDGear.Builder.Cli/RFiDGear.Builder.Cli.csproj', 'src/RFiDGear.Builder.App/RFiDGear.Builder.App.csproj', 'src/RFiDGear.Builder.SyncServer/RFiDGear.Builder.SyncServer.csproj')) {
         & dotnet build $project -c Release --configfile NuGet.Config
         if ($LASTEXITCODE -ne 0) { throw "Build failed: $project" }
     }
