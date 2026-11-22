@@ -44,7 +44,7 @@ internal static class CentralKeyLibraryCursorTests
             Reject<CryptographicException>(() =>
                 new CentralKeyLibraryCursorStore(file, lib,
                     new OfflineGroupTrustTests.TestProtection()).RequireNotRolledBack(version2));
-            Reject<CryptographicException>(() =>
+            Reject<InvalidDataException>(() =>
                 new CentralKeyLibraryCursorStore(file, Guid.NewGuid(), protector)
                     .RequireNotRolledBack(version2));
             new CentralKeyLibraryCursorStore(file, lib, protector)
