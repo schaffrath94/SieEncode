@@ -111,7 +111,7 @@ internal sealed class KeyLibraryManagementWindow : Window
                     new KeyLibrarySyncEndpoint(libraryId, serverOrigin.Text.Trim(),
                         serverPin.Text.Trim().ToUpperInvariant()));
                 if (MessageBox.Show(this,
-                    $"Bitte den folgenden vollständigen Fingerabdruck über einen unabhängigen vertrauenswürdigen Kanal prüfen:\\n\\n{proposed.ServerCertificateSha256}\\n\\nIst er unabhängig bestätigt und ist die HTTPS-Adresse die richtige Zentrale?",
+                    $"Bitte den folgenden vollständigen Fingerabdruck über einen unabhängigen vertrauenswürdigen Kanal prüfen:\n\n{proposed.ServerCertificateSha256}\n\nIst er unabhängig bestätigt und ist die HTTPS-Adresse die richtige Zentrale?",
                     Title, MessageBoxButton.YesNo, MessageBoxImage.Warning,
                     MessageBoxResult.No) != MessageBoxResult.Yes) return;
                 endpointStore.Save(proposed);
