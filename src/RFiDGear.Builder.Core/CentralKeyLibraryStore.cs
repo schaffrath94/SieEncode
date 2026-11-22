@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -21,7 +22,13 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
 {
     private sealed record State(string Format, int Version, Guid LibraryId,
         string AdministratorFingerprint, GroupEnrollmentPackage Enrollment,
-        long CentralRevision, string GroupId, SignedKeyLibrarySync? Accepted);
+        long CentralRevision, string GroupId, SignedKeyLibrarySync? Accepted)
+    {
+        public ReadNonce[] RecentReadNonces { get; init; } = [];
+    }
+    private sealed record ReadNonce(Guid RequestId, DateTimeOffset AcceptedAt);
+    private const int MaximumRecentReads = 8192;
+    private static readonly TimeSpan ReadNonceRetention = TimeSpan.FromMinutes(6);
 
     private const string Format = "SieEncode-Headless-Central-KeyLibrary";
     private const int MaximumStateBytes = 32 * 1024 * 1024;
@@ -61,6 +68,32 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
     public CentralKeyLibraryHead ReadHead() => Head(Read().State);
 
     /// <summary>
+    /// Authenticate a TLS client certificate against the active signed directory.
+    /// Certificates need not have a public CA chain: the exact DER is pinned by
+    /// the signed group registration, and TLS verifies private-key possession.
+    /// Neither recovery devices nor disabled group members are TLS operators.
+    /// </summary>
+    public bool IsAuthorizedTlsMember(X509Certificate2 certificate, DateTimeOffset now)
+    {
+        if (certificate is null) return false;
+        var state = Read().State;
+        var policy = GroupEnrollmentPackages.Validate(state.Enrollment).Policy;
+        if (policy.Version != 2 || policy.People is null) return false;
+        var groupIds = state.CentralRevision == 0
+            ? policy.Groups.Select(g => g.Id).ToHashSet(StringComparer.Ordinal)
+            : new HashSet<string>([state.GroupId], StringComparer.Ordinal);
+        var activeIds = policy.Groups.Where(g => groupIds.Contains(g.Id))
+            .SelectMany(g => g.Members).ToHashSet(StringComparer.Ordinal);
+        var fingerprint = CertificateVaultService.Fingerprint(certificate);
+        return policy.People.Where(p => p.Enabled && activeIds.Contains(p.Id))
+            .SelectMany(p => p.Devices)
+            .Any(d => d.Enabled && d.Fingerprint == fingerprint &&
+                d.Certificate == Convert.ToBase64String(certificate.RawData) &&
+                now.UtcDateTime >= certificate.NotBefore.ToUniversalTime() &&
+                now.UtcDateTime < certificate.NotAfter.ToUniversalTime());
+    }
+
+    /// <summary>
     /// Accept one authenticated encrypted snapshot if and only if its signed
     /// expected server revision+hash match the persisted state. No silent merges.
     /// </summary>
@@ -97,10 +130,21 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
     public SignedKeyLibrarySync ReadEncryptedSnapshot(
         SignedKeyLibraryDownload request, DateTimeOffset now)
     {
-        var state = Read().State;
+        var (state, fileRevision) = Read();
         if (state.Accepted is null)
             throw new FileNotFoundException("Noch kein zentral freigegebener verschlüsselter Bibliotheksstand.");
-        KeyLibraryDownloadAuthorization.Verify(request, Head(state), state.Enrollment, now);
+        var claim = KeyLibraryDownloadAuthorization.Verify(request, Head(state), state.Enrollment, now);
+        var active = state.RecentReadNonces
+            .Where(n => n.AcceptedAt > now - ReadNonceRetention &&
+                n.AcceptedAt <= now + ReadNonceRetention).ToArray();
+        if (active.Any(n => n.RequestId == claim.RequestId))
+            throw new CryptographicException("Signierter Bibliotheksabruf wurde bereits verwendet.");
+        if (active.Length >= MaximumRecentReads)
+            throw new CryptographicException("Zu viele Download-Autorisierungen im aktuellen Prüfzeitraum.");
+        // Persist accepted request IDs BEFORE returning any ciphertext. Failed
+        // concurrent writes fail closed; callers must issue a fresh signed request.
+        Save(state with { RecentReadNonces = [.. active, new(claim.RequestId, now)] },
+            fileRevision);
         var accepted = state.Accepted;
         return new(accepted.Claim.ToArray(), accepted.Signature.ToArray(),
             accepted.EncryptedVault.ToArray());
@@ -134,7 +178,11 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
         if (state is null || state.Format != Format || state.Version != 1 ||
             state.LibraryId != expectedLibraryId || state.Enrollment is null ||
             state.AdministratorFingerprint is not { Length: 64 } ||
-            state.CentralRevision < 0 || state.GroupId is null)
+            state.CentralRevision < 0 || state.GroupId is null ||
+            state.RecentReadNonces is null || state.RecentReadNonces.Length > MaximumRecentReads ||
+            state.RecentReadNonces.Any(n => n is null ||
+                n.RequestId == Guid.Empty) ||
+            state.RecentReadNonces.Select(n => n.RequestId).Distinct().Count() != state.RecentReadNonces.Length)
             throw new InvalidDataException("Zentrale Bibliothekszustandsdaten sind ungültig.");
         var validated = GroupEnrollmentPackages.Validate(state.Enrollment);
         if (state.Enrollment.LibraryId != expectedLibraryId ||
