@@ -19,7 +19,7 @@ Windows with the .NET 8 SDK selected by `global.json`:
 ./Test-CI.ps1
 ```
 
-This builds the CLI and WPF app and executes the synthetic regression harness.
+This builds the CLI, WPF app and headless HTTPS sync host, and executes the synthetic regression harness.
 No card reader is accessed. The optional legacy `Test-All.ps1` additionally
 requires the external historical builder and customer fixtures; it is not the CI entry point.
 
