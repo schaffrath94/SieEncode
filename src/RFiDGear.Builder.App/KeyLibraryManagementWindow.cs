@@ -210,7 +210,7 @@ internal sealed class KeyLibraryManagementWindow : Window
         customerSelection.ItemsSource = customers;
         customerSelection.SelectedItem = customers.FirstOrDefault(c => c.CustomerId == prior) ??
             (customers.Length == 1 ? customers[0] : null);
-        status.Text = $"Lokaler Vault geöffnet · Revision {state.Catalog.Revision} · {state.Catalog.Keys.Length} Schlüsselversionen · keine zentrale Bestätigung. Geheime Werte werden nicht in der Übersicht ausgegeben.";
+        status.Text = $"Lokaler Vault geöffnet · Revision {state.Catalog.Revision} · {state.Catalog.Keys.Length} Schlüsselversionen · Zentralstatus separat darunter. Geheimwerte werden nicht in der Übersicht ausgegeben.";
         RefreshKeys();
     }
 
@@ -235,14 +235,15 @@ internal sealed class KeyLibraryManagementWindow : Window
         var group = groupSelection.SelectedItem is GroupChoice;
         var exists = group && File.Exists(CurrentPath());
         var entry = (keys.SelectedItem as KeyRow)?.Entry;
-        create.IsEnabled = group && !exists;
-        addCustomer.IsEnabled = exists;
-        generate.IsEnabled = import.IsEnabled = exists && customerSelection.SelectedItem is KeyLibraryCustomer;
-        versionGenerate.IsEnabled = versionImport.IsEnabled = exists && entry is not null;
-        retire.IsEnabled = exists && entry is { Status: KeyLibraryContracts.Active };
-        compromise.IsEnabled = exists && entry is not null &&
+        create.IsEnabled = !syncing && group && !exists;
+        addCustomer.IsEnabled = !syncing && exists;
+        generate.IsEnabled = import.IsEnabled = !syncing && exists &&
+            customerSelection.SelectedItem is KeyLibraryCustomer;
+        versionGenerate.IsEnabled = versionImport.IsEnabled = !syncing && exists && entry is not null;
+        retire.IsEnabled = !syncing && exists && entry is { Status: KeyLibraryContracts.Active };
+        compromise.IsEnabled = !syncing && exists && entry is not null &&
             entry.Status != KeyLibraryContracts.Compromised;
-        reveal.IsEnabled = exists && entry is not null;
+        reveal.IsEnabled = !syncing && exists && entry is not null;
     }
 
     private void CreateEmpty()
@@ -342,14 +343,115 @@ internal sealed class KeyLibraryManagementWindow : Window
         view.ShowDialog();
     }
 
-    private void Execute(Action operation)
+    private async Task ExecuteAndSyncAsync(Action action)
     {
-        try { error.Text = ""; operation(); }
+        if (syncing)
+        {
+            error.Text = "Zentraler Abgleich läuft. Bitte zuerst den aktuellen Revisionsstand abwarten.";
+            return;
+        }
+        if (Execute(action)) await SynchronizeCurrentAsync();
+    }
+
+    private async Task SynchronizeCurrentAsync()
+    {
+        if (syncing || groupSelection.SelectedItem is not GroupChoice group) return;
+        KeyLibrarySyncEndpoint? endpoint;
+        try { endpoint = endpointStore.Load(); }
+        catch (Exception exception)
+        {
+            centralStatus.Text = "Zentralverbindung nicht vertrauenswürdig: " + exception.Message;
+            return;
+        }
+        if (endpoint is null)
+        {
+            centralStatus.Text = "Offline-Betrieb: Keine bestätigte HTTPS-Zentrale eingerichtet.";
+            return;
+        }
+
+        syncing = true;
+        groupSelection.IsEnabled = false;
+        RefreshActions();
+        var identities = WindowsVaultIdentityService.List();
+        try
+        {
+            var policy = trust.LoadOffline().Policy;
+            var allowedGroup = policy.Groups.SingleOrDefault(g => g.Id == group.Id)
+                ?? throw new CryptographicException("Signierte Schlüsselgruppe fehlt.");
+            var permitted = policy.People.Where(p => p.Enabled &&
+                    allowedGroup.Members.Contains(p.Id, StringComparer.Ordinal))
+                .SelectMany(p => p.Devices).Where(d => d.Enabled)
+                .Select(d => d.Fingerprint).ToHashSet(StringComparer.Ordinal);
+            var certificate = identities.Select(i => i.Certificate)
+                .FirstOrDefault(c => c.HasPrivateKey &&
+                    permitted.Contains(CertificateVaultService.Fingerprint(c)));
+            if (certificate is null)
+            {
+                centralStatus.Text = "Zentralabgleich nicht möglich: Kein aktives persönliches Gruppen-Zertifikat auf diesem Windows-Benutzer.";
+                return;
+            }
+            using var transport = new KeyLibraryHttpsTransport(
+                new Uri(endpoint.HttpsOrigin), libraryId,
+                endpoint.ServerCertificateSha256, certificate);
+            var result = await KeyLibraryAutomaticSync.SynchronizeOnceAsync(
+                transport, CurrentPath(), trust, group.Id, certificate, administration);
+            centralStatus.Text = result.Outcome switch
+            {
+                KeyLibrarySyncOutcome.InSync =>
+                    $"Zentrale bestätigt · Katalogrevision {result.Central.CatalogRevision}, Serverrevision {result.Central.CentralRevision}",
+                KeyLibrarySyncOutcome.Downloaded =>
+                    $"Aktueller zentraler Bestand offline übernommen · Katalogrevision {result.Central.CatalogRevision}",
+                KeyLibrarySyncOutcome.Uploaded =>
+                    $"Lokale Änderung zentral bestätigt · Katalogrevision {result.Central.CatalogRevision}, Serverrevision {result.Central.CentralRevision}",
+                KeyLibrarySyncOutcome.Empty =>
+                    "Zentrale erreichbar, aber noch keine Bibliothek vorhanden.",
+                KeyLibrarySyncOutcome.AdministrationRequired =>
+                    "Lokaler Stand noch nicht zentral bestätigt: gültige Verwaltungsfreigabe erforderlich.",
+                KeyLibrarySyncOutcome.Conflict =>
+                    "Zentraler Konflikt: Unterschiedliche Bibliotheksstände. Kein Schlüssel wurde automatisch überschrieben.",
+                _ => "Zentraler Abgleich liefert keinen eindeutigen Status."
+            };
+            if (result.Outcome == KeyLibrarySyncOutcome.Downloaded) Refresh();
+        }
+        catch (HttpRequestException)
+        {
+            centralStatus.Text = "Zentrale nicht erreichbar oder HTTPS-Vertrauen fehlgeschlagen. Lokale Schlüsselbibliothek bleibt offline verfügbar; kein Upload bestätigt.";
+        }
+        catch (TaskCanceledException)
+        {
+            centralStatus.Text = "Zentraler Abgleich nicht abgeschlossen (Timeout). Zentralen Stand erneut prüfen; lokaler Bestand bleibt erhalten.";
+        }
+        catch (ConcurrentFileChangeException)
+        {
+            centralStatus.Text = "Zentraler oder lokaler Revisionskonflikt. Kein automatisches Überschreiben; aktuellen Stand erneut prüfen.";
+        }
+        catch (CryptographicException)
+        {
+            centralStatus.Text = "Zentralabgleich wegen Zertifikat-, Signatur- oder Berechtigungsfehler abgewiesen. Keine zentrale Bestätigung.";
+        }
+        catch (Exception exception)
+        {
+            centralStatus.Text = "Zentralabgleich fehlgeschlagen: " + exception.Message +
+                " (lokalen und zentralen Revisionsstand prüfen).";
+        }
+        finally
+        {
+            foreach (var identity in identities) identity.Certificate.Dispose();
+            syncing = false;
+            groupSelection.IsEnabled = true;
+            RefreshActions();
+        }
+    }
+
+    private bool Execute(Action operation)
+    {
+        try { error.Text = ""; operation(); return true; }
         catch (Exception ex)
         {
             error.Text = ex.Message;
             status.Text = "Vorgang nicht vollständig bestätigt. Bei Speicher-/Prüffehlern den aktuellen Bibliotheksstand erneut öffnen und die Revision kontrollieren; es kann bereits eine Änderung geschrieben worden sein.";
             RefreshActions();
+            return false;
         }
     }
 }
