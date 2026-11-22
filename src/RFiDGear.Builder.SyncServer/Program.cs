@@ -21,8 +21,24 @@ var tlsPassword = Required("SIEENCODE_SYNC_TLS_PASSWORD");
 var portText = Required("SIEENCODE_SYNC_PORT");
 if (!int.TryParse(portText, out var port) || port is < 1024 or > 65535)
     throw new InvalidOperationException("HTTPS-Port ist ungültig.");
+// One-time local bootstrap only. The public enrollment package originates
+// from the existing SieEncode Studio group administration. Its fingerprint
+// must be independently verified and supplied by the server operator.
+// No remote HTTP request can create or replace the trust root.
+var store = new CentralKeyLibraryStore(stateFile, libraryId);
 if (!File.Exists(stateFile))
-    throw new InvalidOperationException("Bibliotheksverwaltung muss vor dem Dienststart unabhängig provisioniert sein.");
+{
+    var publicPackageFile = Path.GetFullPath(
+        Required("SIEENCODE_SYNC_BOOTSTRAP_ENROLLMENT_FILE"));
+    var confirmedFingerprint = Required(
+        "SIEENCODE_SYNC_BOOTSTRAP_ADMIN_FINGERPRINT");
+    var info = new FileInfo(publicPackageFile);
+    if (!info.Exists || info.Length is <= 0 or > GroupEnrollmentPackages.MaximumBytes)
+        throw new InvalidDataException("Öffentliches SieEncode-Gruppenpaket fehlt oder ist ungültig.");
+    var signedEnrollment = GroupEnrollmentPackages.Read(
+        File.ReadAllBytes(publicPackageFile));
+    store.Register(signedEnrollment, confirmedFingerprint);
+}
 using var serverCertificate = new X509Certificate2(tlsPath, tlsPassword,
     X509KeyStorageFlags.EphemeralKeySet);
 if (!serverCertificate.HasPrivateKey ||
@@ -30,7 +46,6 @@ if (!serverCertificate.HasPrivateKey ||
     DateTime.UtcNow >= serverCertificate.NotAfter.ToUniversalTime())
     throw new CryptographicException("Gültiges TLS-Serverzertifikat mit privatem Schlüssel fehlt.");
 
-var store = new CentralKeyLibraryStore(stateFile, libraryId);
 _ = store.ReadHead(); // Verify the already pinned authority before listening.
 
 var builder = WebApplication.CreateBuilder(args);
