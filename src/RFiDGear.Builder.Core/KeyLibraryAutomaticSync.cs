@@ -62,6 +62,10 @@ public static class KeyLibraryAutomaticSync
         {
             var transfer = await DownloadVerifiedAsync(transport, trust, remote,
                 personalIdentity, groupId, cancellationToken).ConfigureAwait(false);
+            // Pin the already verified latest central head before touching the
+            // local Vault. If local replacement fails, a later run can safely
+            // retry without accepting an older central backup.
+            cursor.Remember(remote);
             try
             {
                 KeyLibrarySyncClient.InstallDownloadedSnapshot(localVaultPath, trust,
