@@ -56,6 +56,7 @@ var tests = new (string Name, Action Run)[]
     ("Local catalog management requires the current signed administrator key and matching enrolled policy", KeyLibraryAdministrationTests.Verify),
     ("Headless encrypted central library sync: pinned authority, signatures, conflicts, replay and offline recovery", CentralKeyLibrarySyncTests.Verify),
     ("User-protected HTTPS endpoint, explicit server pin and non-HTTP transport denial", KeyLibrarySyncEndpointTests.Verify),
+    ("User-protected central sync cursor prevents server revision rollback and divergent epochs", CentralKeyLibraryCursorTests.Verify),
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
