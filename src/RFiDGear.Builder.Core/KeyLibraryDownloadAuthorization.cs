@@ -48,7 +48,7 @@ public static class KeyLibraryDownloadAuthorization
             RSASignaturePadding.Pss));
     }
 
-    public static void Verify(SignedKeyLibraryDownload signed, CentralKeyLibraryHead head,
+    public static KeyLibraryDownloadClaim Verify(SignedKeyLibraryDownload signed, CentralKeyLibraryHead head,
         GroupEnrollmentPackage enrolled, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(signed);
@@ -91,5 +91,6 @@ public static class KeyLibraryDownloadAuthorization
             !rsa.VerifyData(signed.Claim, signed.Signature, HashAlgorithmName.SHA256,
                 RSASignaturePadding.Pss))
             throw new CryptographicException("Download-Anfrage besitzt keine gültige persönliche Signatur.");
+        return request;
     }
 }
