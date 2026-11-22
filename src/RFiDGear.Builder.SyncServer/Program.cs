@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.AspNetCore.Mvc;
 using RFiDGear.Builder.Core;
 
 // Server provisioning is deliberately out of band: a remote upload cannot
