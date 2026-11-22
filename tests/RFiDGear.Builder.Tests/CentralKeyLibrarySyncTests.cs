@@ -123,8 +123,14 @@ internal static class CentralKeyLibrarySyncTests
             Reject<ConcurrentFileChangeException>(() => center.Accept(unchangedRevisionUpload));
 
             var persisted = new CentralKeyLibraryStore(centralPath, library);
+            if (!persisted.IsAuthorizedTlsMember(member, now) ||
+                persisted.IsAuthorizedTlsMember(recovery, now))
+                throw new Exception("TLS certificate authorization did not enforce signed group membership.");
             var memberRead = KeyLibraryDownloadAuthorization.Sign(written, member, now);
             var memberDownload = persisted.ReadEncryptedSnapshot(memberRead, now);
+            Reject<CryptographicException>(() => persisted.ReadEncryptedSnapshot(memberRead, now));
+            var persistedAfterRead = new CentralKeyLibraryStore(centralPath, library);
+            Reject<CryptographicException>(() => persistedAfterRead.ReadEncryptedSnapshot(memberRead, now));
             var trust = new OfflineGroupTrustStore(Path.Combine(directory, "member-trust.bin"),
                 library, new OfflineGroupTrustTests.TestProtection());
             trust.Enroll(enrolled.AdministratorPublicKey, root, enrolled.Policy);
