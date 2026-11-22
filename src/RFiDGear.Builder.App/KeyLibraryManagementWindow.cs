@@ -1,4 +1,7 @@
 using System.IO;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -27,6 +30,11 @@ internal sealed class KeyLibraryManagementWindow : Window
     private readonly OfflineGroupAdministrationStore administration;
     private readonly OfflineGroupTrustStore trust;
     private readonly Guid libraryId;
+    private readonly KeyLibrarySyncEndpointStore endpointStore;
+    private readonly TextBox serverOrigin = new() { MinWidth = 310 };
+    private readonly TextBox serverPin = new() { MinWidth = 420, CharacterCasing = CharacterCasing.Upper };
+    private readonly TextBlock centralStatus = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DarkSlateGray };
+    private bool syncing;
     private readonly ComboBox groupSelection = new() { DisplayMemberPath = nameof(GroupChoice.Name), MinWidth = 350 };
     private readonly ComboBox customerSelection = new() { DisplayMemberPath = nameof(KeyLibraryCustomer.Name), MinWidth = 260 };
     private readonly DataGrid keys = new() { AutoGenerateColumns = false, IsReadOnly = true,
@@ -50,6 +58,9 @@ internal sealed class KeyLibraryManagementWindow : Window
         this.administration = administration;
         this.trust = trust;
         this.libraryId = libraryId;
+        endpointStore = new KeyLibrarySyncEndpointStore(
+            KeyLibrarySyncEndpointStore.DefaultPath(libraryId), libraryId,
+            new WindowsGroupTrustProtection(libraryId));
         Title = "SieEncode · Zentrale Schlüsselverwaltung (lokaler Entwicklungsstand)";
         Width = 990;
         MaxHeight = 870;
@@ -58,7 +69,7 @@ internal sealed class KeyLibraryManagementWindow : Window
         administration.RequireLocalAuthority(trust);
 
         var root = new StackPanel { Margin = new Thickness(18) };
-        root.Children.Add(Note("Eine verschlüsselte Offline-Bibliothek für alle Kunden. Änderungen sind bis zur zentralen Synchronisation ausschließlich lokal und NICHT zentral bestätigt."));
+        root.Children.Add(Note("Eine verschlüsselte Offline-Bibliothek für alle Kunden. Lokale Änderungen gelten erst nach bestätigt erfolgreichem Abgleich als zentral übernommen."));
         root.Children.Add(Note("Die signierte Hauptverwaltung und ein separat berechtigtes persönliches Gruppen-Zertifikat sind erforderlich. Alle Versionswechsel sind ausdrücklich; vorhandene Karten, Leser und SIPORT bleiben unverändert."));
         root.Children.Add(Note("Berechtigte Schlüsselgruppe"));
         root.Children.Add(groupSelection);
@@ -85,7 +96,35 @@ internal sealed class KeyLibraryManagementWindow : Window
         var sensitiveActions = new WrapPanel();
         sensitiveActions.Children.Add(retire); sensitiveActions.Children.Add(compromise); sensitiveActions.Children.Add(reveal);
         root.Children.Add(sensitiveActions);
+        var syncSettings = new StackPanel();
+        syncSettings.Children.Add(Note("Einmalige Verbindung der bestehenden Hauptverwaltung. HTTPS und den SHA-256-Fingerabdruck des Serverzertifikats unabhängig prüfen. Keine automatische Vertrauensübernahme!"));
+        syncSettings.Children.Add(Note("HTTPS-Zentrale (z. B. https://server:7443/)"));
+        syncSettings.Children.Add(serverOrigin);
+        syncSettings.Children.Add(Note("Unabhängig bestätigter SHA-256-Fingerabdruck des TLS-Serverzertifikats"));
+        syncSettings.Children.Add(serverPin);
+        var storeConnection = ActionButton("Bestätigte Zentralverbindung speichern");
+        storeConnection.Click += async (_, _) =>
+        {
+            try
+            {
+                var proposed = KeyLibrarySyncEndpointStore.Validate(
+                    new KeyLibrarySyncEndpoint(libraryId, serverOrigin.Text.Trim(),
+                        serverPin.Text.Trim().ToUpperInvariant()));
+                if (MessageBox.Show(this,
+                    $"Bitte den folgenden vollständigen Fingerabdruck über einen unabhängigen vertrauenswürdigen Kanal prüfen:\\n\\n{proposed.ServerCertificateSha256}\\n\\nIst er unabhängig bestätigt und ist die HTTPS-Adresse die richtige Zentrale?",
+                    Title, MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                    MessageBoxResult.No) != MessageBoxResult.Yes) return;
+                endpointStore.Save(proposed);
+                centralStatus.Text = "HTTPS-Zentrale lokal hinterlegt. Kryptografischer Abgleich wird versucht.";
+                await SynchronizeCurrentAsync();
+            }
+            catch (Exception exception) { error.Text = exception.Message; }
+        };
+        syncSettings.Children.Add(storeConnection);
+        root.Children.Add(new Expander { Header = "Zentralverbindung · HTTPS und Zertifikat",
+            Content = syncSettings, IsExpanded = false, Margin = new Thickness(0, 8, 0, 4) });
         root.Children.Add(status);
+        root.Children.Add(centralStatus);
         root.Children.Add(error);
         var close = ActionButton("Schließen");
         close.HorizontalAlignment = HorizontalAlignment.Right;
@@ -93,18 +132,29 @@ internal sealed class KeyLibraryManagementWindow : Window
         root.Children.Add(close);
         Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
 
-        groupSelection.SelectionChanged += (_, _) => Execute(Refresh);
+        groupSelection.SelectionChanged += async (_, _) =>
+        {
+            if (Execute(Refresh)) await SynchronizeCurrentAsync();
+        };
         customerSelection.SelectionChanged += (_, _) => Execute(RefreshKeys);
         keys.SelectionChanged += (_, _) => RefreshActions();
-        create.Click += (_, _) => Execute(CreateEmpty);
-        addCustomer.Click += (_, _) => Execute(AddCustomer);
-        generate.Click += (_, _) => Execute(() => AddKey(generateValue: true));
-        import.Click += (_, _) => Execute(() => AddKey(generateValue: false));
-        versionGenerate.Click += (_, _) => Execute(() => AddVersion(generateValue: true));
-        versionImport.Click += (_, _) => Execute(() => AddVersion(generateValue: false));
-        retire.Click += (_, _) => Execute(() => SetStatus(KeyLibraryContracts.Retired));
-        compromise.Click += (_, _) => Execute(() => SetStatus(KeyLibraryContracts.Compromised));
+        create.Click += async (_, _) => await ExecuteAndSyncAsync(CreateEmpty);
+        addCustomer.Click += async (_, _) => await ExecuteAndSyncAsync(AddCustomer);
+        generate.Click += async (_, _) => await ExecuteAndSyncAsync(() => AddKey(generateValue: true));
+        import.Click += async (_, _) => await ExecuteAndSyncAsync(() => AddKey(generateValue: false));
+        versionGenerate.Click += async (_, _) => await ExecuteAndSyncAsync(() => AddVersion(generateValue: true));
+        versionImport.Click += async (_, _) => await ExecuteAndSyncAsync(() => AddVersion(generateValue: false));
+        retire.Click += async (_, _) => await ExecuteAndSyncAsync(() => SetStatus(KeyLibraryContracts.Retired));
+        compromise.Click += async (_, _) => await ExecuteAndSyncAsync(() => SetStatus(KeyLibraryContracts.Compromised));
         reveal.Click += (_, _) => Execute(Reveal);
+        var savedEndpoint = endpointStore.Load();
+        if (savedEndpoint is not null)
+        {
+            serverOrigin.Text = savedEndpoint.HttpsOrigin;
+            serverPin.Text = savedEndpoint.ServerCertificateSha256;
+            centralStatus.Text = "Zentralverbindung konfiguriert; wird bei Gruppenauswahl geprüft.";
+        }
+        else centralStatus.Text = "Offline-Betrieb. Keine bestätigte Zentralverbindung hinterlegt.";
         var policy = trust.LoadOffline();
         groupSelection.ItemsSource = policy.Policy.Groups.Select(g => new GroupChoice(g.Id, g.Name)).ToArray();
         if (groupSelection.Items.Count == 1) groupSelection.SelectedIndex = 0;
