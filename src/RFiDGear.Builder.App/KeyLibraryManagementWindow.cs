@@ -31,6 +31,7 @@ internal sealed class KeyLibraryManagementWindow : Window
     private readonly OfflineGroupTrustStore trust;
     private readonly Guid libraryId;
     private readonly KeyLibrarySyncEndpointStore endpointStore;
+    private readonly CentralKeyLibraryCursorStore cursorStore;
     private readonly TextBox serverOrigin = new() { MinWidth = 310 };
     private readonly TextBox serverPin = new() { MinWidth = 420, CharacterCasing = CharacterCasing.Upper };
     private readonly TextBlock centralStatus = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DarkSlateGray };
@@ -60,7 +61,10 @@ internal sealed class KeyLibraryManagementWindow : Window
         this.libraryId = libraryId;
         endpointStore = new KeyLibrarySyncEndpointStore(
             KeyLibrarySyncEndpointStore.DefaultPath(libraryId), libraryId,
-            new WindowsGroupTrustProtection(libraryId));
+            new WindowsGroupTrustProtection(libraryId, syncState: true));
+        cursorStore = new CentralKeyLibraryCursorStore(
+            CentralKeyLibraryCursorStore.DefaultPath(libraryId), libraryId,
+            new WindowsGroupTrustProtection(libraryId, syncState: true));
         Title = "SieEncode · Zentrale Schlüsselverwaltung (lokaler Entwicklungsstand)";
         Width = 990;
         MaxHeight = 870;
@@ -395,7 +399,8 @@ internal sealed class KeyLibraryManagementWindow : Window
                 new Uri(endpoint.HttpsOrigin), libraryId,
                 endpoint.ServerCertificateSha256, certificate);
             var result = await KeyLibraryAutomaticSync.SynchronizeOnceAsync(
-                transport, CurrentPath(), trust, group.Id, certificate, administration);
+                transport, CurrentPath(), trust, cursorStore, group.Id, certificate,
+                administration);
             centralStatus.Text = result.Outcome switch
             {
                 KeyLibrarySyncOutcome.InSync =>
