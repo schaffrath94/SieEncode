@@ -372,9 +372,10 @@ internal sealed class KeyLibraryManagementWindow : Window
         syncing = true;
         groupSelection.IsEnabled = false;
         RefreshActions();
-        var identities = WindowsVaultIdentityService.List();
+        WindowsVaultIdentity[] identities = [];
         try
         {
+            identities = WindowsVaultIdentityService.List().ToArray();
             var policy = trust.LoadOffline().Policy;
             var allowedGroup = policy.Groups.SingleOrDefault(g => g.Id == group.Id)
                 ?? throw new CryptographicException("Signierte Schlüsselgruppe fehlt.");
