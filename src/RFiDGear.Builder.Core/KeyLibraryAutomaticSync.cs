@@ -26,27 +26,36 @@ public static class KeyLibraryAutomaticSync
 {
     public static async Task<KeyLibrarySyncResult> SynchronizeOnceAsync(
         KeyLibraryHttpsTransport transport, string localVaultPath,
-        OfflineGroupTrustStore trust, string groupId,
+        OfflineGroupTrustStore trust, CentralKeyLibraryCursorStore cursor,
+        string groupId,
         X509Certificate2 personalIdentity,
         OfflineGroupAdministrationStore? administration,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(trust);
+        ArgumentNullException.ThrowIfNull(cursor);
         ArgumentNullException.ThrowIfNull(personalIdentity);
+        KeyLibrarySyncResult Record(KeyLibrarySyncOutcome outcome,
+            CentralKeyLibraryHead head)
+        {
+            cursor.Remember(head);
+            return new(outcome, head);
+        }
         var policy = trust.LoadOffline();
         var remote = await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false);
         if (remote.LibraryId != policy.Policy.LibraryId ||
             remote.Policy != policy.Checkpoint ||
             remote.CentralRevision > 0 && remote.GroupId != groupId)
             throw new CryptographicException("Zentrale und lokal bestätigte Gruppenbibliothek stimmen nicht überein.");
+        cursor.RequireNotRolledBack(remote);
 
         var expectedLocal = ConcurrentFileWriter.Capture(localVaultPath);
         KeyLibraryVaultPayload? local = expectedLocal.Exists
             ? KeyLibraryVaultStore.Load(localVaultPath, trust, groupId, [personalIdentity])
             : null;
         if (remote.CentralRevision == 0 && local is null)
-            return new(KeyLibrarySyncOutcome.Empty, remote);
+            return Record(KeyLibrarySyncOutcome.Empty, remote);
 
         if (remote.CentralRevision > 0 &&
             (local is null || local.Catalog.Revision < remote.CatalogRevision))
@@ -57,12 +66,12 @@ public static class KeyLibraryAutomaticSync
             {
                 KeyLibrarySyncClient.InstallDownloadedSnapshot(localVaultPath, trust,
                     groupId, remote, transfer, [personalIdentity], expectedLocal);
-                return new(KeyLibrarySyncOutcome.Downloaded, remote);
+                return Record(KeyLibrarySyncOutcome.Downloaded, remote);
             }
             catch (InvalidDataException)
             {
                 // An unmerged offline branch must never be silently overwritten.
-                return new(KeyLibrarySyncOutcome.Conflict, remote);
+                return Record(KeyLibrarySyncOutcome.Conflict, remote);
             }
         }
 
@@ -73,20 +82,20 @@ public static class KeyLibraryAutomaticSync
             local.Catalog.Revision == remote.CatalogRevision)
         {
             if (expectedLocal.Sha256 == remote.CiphertextSha256)
-                return new(KeyLibrarySyncOutcome.InSync, remote);
+                return Record(KeyLibrarySyncOutcome.InSync, remote);
 
             var transfer = await DownloadVerifiedAsync(transport, trust, remote,
                 personalIdentity, groupId, cancellationToken).ConfigureAwait(false);
             var central = KeyLibraryVault.Unprotect(GroupVaultService.Read(
                 transfer.EncryptedVault), policy, groupId, [personalIdentity]);
-            return new(LogicallyEquivalent(local, central)
+            return Record(LogicallyEquivalent(local, central)
                 ? KeyLibrarySyncOutcome.InSync : KeyLibrarySyncOutcome.Conflict, remote);
         }
 
         if (local.Catalog.Revision <= remote.CatalogRevision)
-            return new(KeyLibrarySyncOutcome.Conflict, remote);
+            return Record(KeyLibrarySyncOutcome.Conflict, remote);
         if (administration is null)
-            return new(KeyLibrarySyncOutcome.AdministrationRequired, remote);
+            return Record(KeyLibrarySyncOutcome.AdministrationRequired, remote);
 
         // Before uploading a newer offline branch, prove it retained every
         // previously centrally accepted key generation and secret.
@@ -99,7 +108,7 @@ public static class KeyLibraryAutomaticSync
             try { KeyLibraryVaultStore.ValidateImmutableHistory(central, local); }
             catch (InvalidDataException)
             {
-                return new(KeyLibrarySyncOutcome.Conflict, remote);
+                return Record(KeyLibrarySyncOutcome.Conflict, remote);
             }
         }
 
@@ -114,7 +123,7 @@ public static class KeyLibraryAutomaticSync
             acknowledged.CiphertextSha256 != claim.NextCiphertextSha256 ||
             acknowledged.Policy != remote.Policy || acknowledged.GroupId != groupId)
             throw new CryptographicException("Zentrale hat die signierte Bibliotheksänderung nicht eindeutig bestätigt.");
-        return new(KeyLibrarySyncOutcome.Uploaded, acknowledged);
+        return Record(KeyLibrarySyncOutcome.Uploaded, acknowledged);
     }
 
     private static async Task<SignedKeyLibrarySync> DownloadVerifiedAsync(
