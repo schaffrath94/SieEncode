@@ -117,6 +117,8 @@ public sealed class CentralKeyLibraryCursorStore(
             old.Policy != observed.Policy ||
             observed.CentralRevision < old.CentralRevision ||
             observed.CatalogRevision < old.CatalogRevision ||
+            observed.CentralRevision > old.CentralRevision &&
+                observed.CatalogRevision <= old.CatalogRevision ||
             old.CentralRevision > 0 && old.GroupId != observed.GroupId ||
             observed.CentralRevision == old.CentralRevision &&
                 (observed.CatalogRevision != old.CatalogRevision ||
