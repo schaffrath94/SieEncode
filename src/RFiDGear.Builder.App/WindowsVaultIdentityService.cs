@@ -30,7 +30,7 @@ internal static class WindowsVaultIdentityService
         if (safeName.Length < 3) throw new ArgumentException("Bitte einen eindeutigen Anzeigenamen mit mindestens drei Zeichen angeben.", nameof(displayName));
         using var rsa = RSA.Create(3072);
         var request = new CertificateRequest($"CN=SieEncode Vault {safeName}", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-        request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment, true));
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DigitalSignature, true));
         request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
         using var generated = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-5), DateTimeOffset.UtcNow.AddYears(5));
         var password = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
