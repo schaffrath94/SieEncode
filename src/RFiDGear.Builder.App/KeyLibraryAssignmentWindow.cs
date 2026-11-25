@@ -15,7 +15,7 @@ namespace RFiDGear.Builder.App;
 internal sealed class KeyLibraryAssignmentWindow : Window
 {
     private const string VaultSuffix = ".key-library.vault.json";
-    private sealed record VaultChoice(Guid LibraryId, string GroupId, string Path)
+    internal sealed record VaultChoice(Guid LibraryId, string GroupId, string Path)
     {
         public string Label => $"{LibraryId:D} · Gruppe {GroupId}";
     }
@@ -94,7 +94,7 @@ internal sealed class KeyLibraryAssignmentWindow : Window
         (localTrustDirectory is null ? DiscoverLocalVaults() :
             DiscoverAvailableVaults(localTrustDirectory)).Length > 0;
 
-    private static VaultChoice[] DiscoverAvailableVaults(string localTrustDirectory)
+    internal static VaultChoice[] DiscoverAvailableVaults(string localTrustDirectory)
     {
         var choices = DiscoverLocalVaults().ToList();
         if (!Directory.Exists(localTrustDirectory)) return choices.ToArray();
