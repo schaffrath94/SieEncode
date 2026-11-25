@@ -1,6 +1,6 @@
 # SieEncode – Headless HTTPS-Synchronisation (Entwicklungsvertrag 1.0)
 
-**Stand 22.11.2026: Quellcode, noch kein Windows-/TLS-/Installations- oder Hardwaretest. Nicht produktiv bereitstellen.**
+**Stand 25.11.2026: Quellcode, noch kein Windows-/TLS-/Installations- oder Hardwaretest. Nicht produktiv bereitstellen.**
 
 ## Architektur und Bedienung
 
@@ -34,13 +34,18 @@ Der Code erfordert folgende Umgebungsvariablen bei der Serverstartkonfiguration:
 
 Der aktuelle Code lauscht mit Kestrel auf der gewählten Netzwerkschnittstelle. **Firewall, restriktive Dienstidentität, Backup-/Restore-Ablauf, TLS-Serverzertifikatserneuerung, Sperrung unnötiger Netzwerkzugriffe und Windows-Service-Installation sind noch nicht abgenommen.** Beim Bootstrap müssen sowohl die exportierte Paketdatei als auch der unabhängig bestätigte Fingerabdruck vorliegen; die lokale Serverkonfiguration benötigt geschützte ACLs. Diese Bootstrap-Funktion ist keine zusätzliche Benutzungs-/Verwaltungsoberfläche. Kein öffentliches Deployment oder Produktivnetz ohne diese Schutzmaßnahmen und synthetische/Windows-Akzeptanz.
 
+## Gemeinsamer HTTPS-Transportvertrag
+
+Studio und Server verwenden denselben strikten PascalCase-JSON-Codec (`KeyLibrarySyncWire`); die ASP.NET-Web-Defaults dürfen keine abweichende camelCase-Antwort erzeugen. Doppelte und unbekannte Felder werden abgewiesen. Die inneren signierten Claim-, Signatur- und Chiffrebytes werden unverändert übertragen. Größenlimits gelten auch beim Streaming ohne Content-Length (16 KiB Head-Antwort, 64 KiB Download-Anfrage, 32 MiB verschlüsselter JSON-Transport); der Client begrenzt den vollständigen Abruf einschließlich Antwortkörper auf zwei Minuten. TLS 1.2/1.3 und der bestätigte Zertifikatspin bleiben verpflichtend. Die synthetischen Codec-Regressionen sind registriert, **nicht ausgeführt**. Ein tatsächlicher Kestrel-/Studio-mTLS-Rundlauf ist weiterhin offen.
+
 ## Offline-Lebenszyklus
 
 1. Bei fehlender Verbindung bleibt der bestehende verschlüsselte lokale Vault benutzbar. Ohne erreichte und überprüfte zentrale Annahme erscheint keine zentrale Freigabemeldung.
 2. Ist die Zentrale neuer, muss der verschlüsselte Download sowohl die bestätigte Serverrevision als auch die tatsächliche entschlüsselte Katalogrevision erfüllen. Bestehende KeyId/Version-Geheimwerte und historische Kundenzuordnungen dürfen nicht verschwinden; sonst **Konflikt**, kein automatischer Ersatz.
 3. Ist die lokale Bibliothek neuer, prüft der Client zuerst die vollständige zentral bekannte Historie, bevor der private Hauptverwaltungsschlüssel den verschlüsselten Upload signiert. Ein bloß berechtigter Leser darf nicht hochladen.
 4. Bei gleicher logischer Revision und verschiedenem Chiffre-Hash wird der gesamte entschlüsselte Nutzinhalt verglichen; ein Unterschied führt zu **Konflikt**.
-5. Ein geschützter lokaler Cursor merkt sich den zuletzt bestätigten zentralen Katalog-/Serverstand. Alte oder widersprüchliche Head-Antworten werden abgelehnt. Vor einem bestätigten Download wird die neue Revision im Cursor gesichert.
+5. Ein geschützter lokaler Cursor merkt sich den zuletzt beobachteten zentralen Katalog-/Serverstand. Alte oder widersprüchliche Head-Antworten werden abgelehnt. Vor einem bestätigten Download wird die neue Revision im Cursor gesichert.
+6. Zusätzlich hält derselbe geschützte Cursor den **letzten tatsächlich erfolgreich abgeglichenen** zentralen Head und den exakten lokalen Chiffre-Dateihash. Eine beobachtete neuere Revision oder ein Konflikt ersetzt diese Basis ausdrücklich nicht. Automatischer Upload auf eine nichtleere Zentrale erfordert genau den zuletzt gemeinsam abgeglichenen Head. Automatischer Download über einen vorhandenen lokalen Vault erfordert dessen unveränderten Abgleichhash. Bei unabhängigen Offline-Änderungen oder fehlender Basis wird der Bestand nicht überschrieben; ein Erstabgleich gleicher Inhalte darf eine Basis herstellen. Bei laufenden Dateiänderungen vor dem Upload wird abgebrochen; eine spätere Änderung nach dem gesendeten Snapshot bleibt als Offline-Änderung erhalten. Diese konservative Schranke verhindert blindes Zusammenführen, ersetzt jedoch keine manuelle Konfliktauflösung oder echte Drei-Wege-Zusammenführung.
 
 **Grenze:** Die lokale Cursor-Datei ist gegen zufälliges Wiederherstellen eines älteren Server-Backups hilfreich, aber keine von der Zentrale signierte oder extern unveränderlich verankerte Quittung. Werden die Daten eines Windows-Benutzerprofils **einschließlich aller geschützten Merker** gemeinsam zurückgesetzt, ist dieser Schutz nicht ausreichend. Für 1.0 sind unabhängig signierte Quittungen, Audit und Restore-/Recovery-Abnahme notwendig.
 
