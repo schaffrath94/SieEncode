@@ -23,8 +23,17 @@ internal static class CentralKeyLibraryCursorTests
             cursor.RequireNotRolledBack(initial);
             cursor.Remember(initial);
             cursor.Remember(version1);
+            var local1 = new FileRevision(true, new string('D', 64));
+            var localEdited = new FileRevision(true, new string('E', 64));
+            if (cursor.HasUploadBase(version1) || cursor.HasUnchangedLocalBase(local1))
+                throw new Exception("An observed head was incorrectly treated as a successful reconciliation.");
+            cursor.RememberReconciled(version1, local1);
             var reloaded = new CentralKeyLibraryCursorStore(file, lib, protector);
             reloaded.RequireNotRolledBack(version1);
+            if (!reloaded.HasUploadBase(version1) ||
+                !reloaded.HasUnchangedLocalBase(local1) ||
+                reloaded.HasUnchangedLocalBase(localEdited))
+                throw new Exception("Reconciled base did not distinguish an offline edit.");
             Reject<CryptographicException>(() => reloaded.RequireNotRolledBack(initial));
             Reject<CryptographicException>(() => reloaded.RequireNotRolledBack(
                 version1 with { CiphertextSha256 = new string('D', 64) }));
@@ -36,7 +45,20 @@ internal static class CentralKeyLibraryCursorTests
                 version2 with { Policy = policy with { Revision = 2 } }));
             Reject<CryptographicException>(() => reloaded.RequireNotRolledBack(
                 version2 with { GroupId = "other" }));
-            reloaded.Remember(version2);
+            reloaded.Remember(version2); // conflict/observation, NOT reconciliation
+            if (reloaded.HasUploadBase(version2) ||
+                !reloaded.HasUnchangedLocalBase(local1) ||
+                reloaded.HasUnchangedLocalBase(localEdited))
+                throw new Exception("Conflict observation incorrectly replaced the last shared base.");
+            var afterConflict = new CentralKeyLibraryCursorStore(file, lib, protector);
+            if (afterConflict.HasUploadBase(version2))
+                throw new Exception("Restart turned a conflict into an eligible automatic upload.");
+            Reject<InvalidDataException>(() => afterConflict.RememberReconciled(version2, FileRevision.Missing));
+            afterConflict.RememberReconciled(version2, localEdited);
+            if (!afterConflict.HasUploadBase(version2) ||
+                !afterConflict.HasUnchangedLocalBase(localEdited) ||
+                afterConflict.HasUnchangedLocalBase(local1))
+                throw new Exception("A successful reconciliation did not replace the base.");
             if (File.ReadAllText(file).Contains(version2.CiphertextSha256,
                     StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Central cursor was written unprotected.");
