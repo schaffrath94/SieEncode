@@ -11,7 +11,8 @@ public enum KeyLibrarySyncOutcome
     Uploaded,
     Empty,
     AdministrationRequired,
-    Conflict
+    Conflict,
+    PolicyDownloaded
 }
 
 public sealed record KeyLibrarySyncResult(KeyLibrarySyncOutcome Outcome,
@@ -156,6 +157,49 @@ public static class KeyLibraryAutomaticSync
         // Record the exact submitted file, not a newer local edit made while
         // the request was in flight. Such an edit remains an offline change.
         return Reconciled(KeyLibrarySyncOutcome.Uploaded, acknowledged, expectedLocal);
+    }
+
+    /// <summary>Read-only workstation sync. The member never submits a
+    /// central write, even when an administrator has a pending journal.</summary>
+    public static async Task<KeyLibrarySyncResult> SynchronizeMemberAsync(
+        KeyLibraryHttpsTransport transport, string localVaultPath,
+        OfflineGroupTrustStore trust, CentralKeyLibraryCursorStore cursor,
+        KeyLibraryPolicyTransitionJournal journal, string groupId,
+        X509Certificate2 personalIdentity, CancellationToken cancellationToken = default)
+    {
+        if (journal.HasPending)
+        {
+            if (!journal.IsReceiveOnly || journal.PendingExpected?.GroupId != groupId)
+                throw new InvalidOperationException("Ausstehenden Verwaltungsauftrag zuerst in der Hauptverwaltung abschließen.");
+            var resumed = await journal.ResumeAsync(transport, trust, cursor, personalIdentity,
+                cancellationToken).ConfigureAwait(false);
+            return new(KeyLibrarySyncOutcome.PolicyDownloaded, resumed);
+        }
+
+        var policy = trust.LoadOffline();
+        var remote = await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false);
+        if (remote.LibraryId != policy.Policy.LibraryId ||
+            remote.CentralRevision > 0 && remote.GroupId != groupId)
+            throw new CryptographicException("Zentrale gehört zu einer anderen Bibliothek oder Gruppe.");
+        if (remote.Policy == policy.Checkpoint)
+            return await SynchronizeOnceAsync(transport, localVaultPath, trust, cursor, groupId,
+                personalIdentity, null, cancellationToken).ConfigureAwait(false);
+
+        var baseline = cursor.ReadReconciledHead() ??
+            throw new InvalidOperationException("Kein bestätigter lokaler Ausgangsstand für automatische Richtlinienübernahme.");
+        if (baseline.GroupId != groupId || baseline.Policy != policy.Checkpoint ||
+            remote.Policy.Revision <= policy.Checkpoint.Revision ||
+            remote.CentralRevision <= baseline.CentralRevision ||
+            remote.CatalogRevision < baseline.CatalogRevision)
+            throw new CryptographicException("Zentrale meldet einen widersprüchlichen oder älteren Richtlinienstand.");
+        var proof = KeyLibraryDownloadAuthorization.Sign(remote, personalIdentity, DateTimeOffset.UtcNow);
+        var snapshot = await transport.DownloadSnapshotAsync(proof, cancellationToken).ConfigureAwait(false);
+        if (snapshot.Head != remote)
+            throw new ConcurrentFileChangeException("Zentrale Schlüsselbibliothek");
+        journal.StageReceived(trust, cursor, baseline, snapshot, personalIdentity);
+        var confirmed = await journal.ResumeAsync(transport, trust, cursor, personalIdentity,
+            cancellationToken).ConfigureAwait(false);
+        return new(KeyLibrarySyncOutcome.PolicyDownloaded, confirmed);
     }
 
     private static async Task<SignedKeyLibrarySync> DownloadVerifiedAsync(
