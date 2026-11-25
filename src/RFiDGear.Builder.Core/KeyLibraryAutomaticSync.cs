@@ -42,6 +42,12 @@ public static class KeyLibraryAutomaticSync
             cursor.Remember(head);
             return new(outcome, head);
         }
+        KeyLibrarySyncResult Reconciled(KeyLibrarySyncOutcome outcome,
+            CentralKeyLibraryHead head, FileRevision file)
+        {
+            cursor.RememberReconciled(head, file);
+            return new(outcome, head);
+        }
         var policy = trust.LoadOffline();
         var remote = await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false);
         if (remote.LibraryId != policy.Policy.LibraryId ||
@@ -54,6 +60,8 @@ public static class KeyLibraryAutomaticSync
         KeyLibraryVaultPayload? local = expectedLocal.Exists
             ? KeyLibraryVaultStore.Load(localVaultPath, trust, groupId, [personalIdentity])
             : null;
+        if (ConcurrentFileWriter.Capture(localVaultPath) != expectedLocal)
+            throw new ConcurrentFileChangeException(localVaultPath);
         if (remote.CentralRevision == 0 && local is null)
             return Record(KeyLibrarySyncOutcome.Empty, remote);
 
@@ -62,15 +70,20 @@ public static class KeyLibraryAutomaticSync
         {
             var transfer = await DownloadVerifiedAsync(transport, trust, remote,
                 personalIdentity, groupId, cancellationToken).ConfigureAwait(false);
+            // An observed remote revision does not prove that the existing
+            // offline branch has no unmerged changes. Never overwrite it unless
+            // its encrypted bytes still match the last successfully shared base.
+            if (expectedLocal.Exists && !cursor.HasUnchangedLocalBase(expectedLocal))
+                return Record(KeyLibrarySyncOutcome.Conflict, remote);
             // Pin the already verified latest central head before touching the
             // local Vault. If local replacement fails, a later run can safely
             // retry without accepting an older central backup.
             cursor.Remember(remote);
             try
             {
-                KeyLibrarySyncClient.InstallDownloadedSnapshot(localVaultPath, trust,
+                var installed = KeyLibrarySyncClient.InstallDownloadedSnapshot(localVaultPath, trust,
                     groupId, remote, transfer, [personalIdentity], expectedLocal);
-                return Record(KeyLibrarySyncOutcome.Downloaded, remote);
+                return Reconciled(KeyLibrarySyncOutcome.Downloaded, remote, installed);
             }
             catch (InvalidDataException)
             {
@@ -86,20 +99,29 @@ public static class KeyLibraryAutomaticSync
             local.Catalog.Revision == remote.CatalogRevision)
         {
             if (expectedLocal.Sha256 == remote.CiphertextSha256)
-                return Record(KeyLibrarySyncOutcome.InSync, remote);
+                return Reconciled(KeyLibrarySyncOutcome.InSync, remote, expectedLocal);
 
             var transfer = await DownloadVerifiedAsync(transport, trust, remote,
                 personalIdentity, groupId, cancellationToken).ConfigureAwait(false);
             var central = KeyLibraryVault.Unprotect(GroupVaultService.Read(
                 transfer.EncryptedVault), policy, groupId, [personalIdentity]);
-            return Record(LogicallyEquivalent(local, central)
-                ? KeyLibrarySyncOutcome.InSync : KeyLibrarySyncOutcome.Conflict, remote);
+            if (ConcurrentFileWriter.Capture(localVaultPath) != expectedLocal)
+                throw new ConcurrentFileChangeException(localVaultPath);
+            return LogicallyEquivalent(local, central)
+                ? Reconciled(KeyLibrarySyncOutcome.InSync, remote, expectedLocal)
+                : Record(KeyLibrarySyncOutcome.Conflict, remote);
         }
 
         if (local.Catalog.Revision <= remote.CatalogRevision)
             return Record(KeyLibrarySyncOutcome.Conflict, remote);
         if (administration is null)
             return Record(KeyLibrarySyncOutcome.AdministrationRequired, remote);
+
+        // A newer catalog revision is not proof of ancestry. A competing
+        // offline branch can retain all keys yet overwrite metadata or status.
+        // Only an unchanged last reconciled central head permits auto-upload.
+        if (remote.CentralRevision > 0 && !cursor.HasUploadBase(remote))
+            return Record(KeyLibrarySyncOutcome.Conflict, remote);
 
         // Before uploading a newer offline branch, prove it retained every
         // previously centrally accepted key generation and secret.
@@ -118,16 +140,22 @@ public static class KeyLibraryAutomaticSync
 
         var signed = KeyLibrarySyncClient.PrepareUpload(localVaultPath, trust,
             administration, groupId, remote, [personalIdentity]);
+        var claim = KeyLibrarySyncTransport.Verify(signed, trust.ExportPublic());
+        if (claim.NextCiphertextSha256 != expectedLocal.Sha256 ||
+            claim.CatalogRevision != local.Catalog.Revision ||
+            ConcurrentFileWriter.Capture(localVaultPath) != expectedLocal)
+            throw new ConcurrentFileChangeException(localVaultPath);
         var acknowledged = await transport.UploadAsync(signed,
             cancellationToken).ConfigureAwait(false);
-        var claim = KeyLibrarySyncTransport.Verify(signed, trust.ExportPublic());
         if (acknowledged.LibraryId != remote.LibraryId ||
             acknowledged.CentralRevision != remote.CentralRevision + 1 ||
             acknowledged.CatalogRevision != local.Catalog.Revision ||
             acknowledged.CiphertextSha256 != claim.NextCiphertextSha256 ||
             acknowledged.Policy != remote.Policy || acknowledged.GroupId != groupId)
             throw new CryptographicException("Zentrale hat die signierte Bibliotheksänderung nicht eindeutig bestätigt.");
-        return Record(KeyLibrarySyncOutcome.Uploaded, acknowledged);
+        // Record the exact submitted file, not a newer local edit made while
+        // the request was in flight. Such an edit remains an offline change.
+        return Reconciled(KeyLibrarySyncOutcome.Uploaded, acknowledged, expectedLocal);
     }
 
     private static async Task<SignedKeyLibrarySync> DownloadVerifiedAsync(
