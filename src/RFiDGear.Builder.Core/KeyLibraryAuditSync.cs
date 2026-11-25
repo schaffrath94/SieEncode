@@ -119,4 +119,33 @@ public sealed class CentralKeyLibraryAuditStore(string directory)
             return old.Receipt;
         }
     }
+    internal KeyLibraryAuditPage ReadPage(KeyLibraryAuditQuery query)
+    {
+        KeyLibraryAuditReview.Validate(query);
+        if (!Directory.Exists(directory)) return new([], null);
+        // Cursor order is by stable event ID, not by untrusted client time.
+        // Retain at most Limit+1 names even for a large audit directory.
+        var names = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var file in Directory.EnumerateFiles(directory, "*.json"))
+        {
+            var id = Path.GetFileNameWithoutExtension(file);
+            if (!KeyLibraryAuditReview.IsCursor(id))
+                throw new InvalidDataException("Ungültiger Dateiname im zentralen Audit-Archiv.");
+            if (string.CompareOrdinal(id, query.AfterId) <= 0) continue;
+            names.Add(id);
+            if (names.Count > query.Limit + 1) names.Remove(names.Max!);
+        }
+        var records = new List<AcceptedKeyLibraryAudit>();
+        foreach (var id in names.Take(query.Limit))
+        {
+            using var stream = new FileStream(Path.Combine(directory, id + ".json"),
+                FileMode.Open, FileAccess.Read, FileShare.Read);
+            var record = KeyLibrarySyncWire.ReadAsync<AcceptedKeyLibraryAudit>(stream, 64 * 1024)
+                .GetAwaiter().GetResult();
+            if (KeyLibraryAuditReview.ValidateRecord(record, query.LibraryId).EventId.ToString("N") != id)
+                throw new InvalidDataException("Audit-Datei stimmt nicht mit Ereignis-ID überein.");
+            records.Add(record);
+        }
+        return new(records.ToArray(), names.Count > query.Limit ? records[^1].Receipt.EventId.ToString("N") : null);
+    }
 }
