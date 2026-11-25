@@ -37,6 +37,7 @@ internal sealed class KeyLibraryAssignmentWindow : Window
     private KeyLibrarySnapshot? catalog;
     private bool syncing;
     private string syncStatus = "";
+    private readonly Button configureCentral = new() { Content = "Zentralverbindung einmalig einrichten", Margin = new Thickness(0, 4, 0, 4) };
     private readonly TextBlock syncInfo = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray };
 
     internal KeyLibrarySnapshot? SelectedCatalog { get; private set; }
@@ -61,6 +62,9 @@ internal sealed class KeyLibraryAssignmentWindow : Window
         root.Children.Add(Note("1 · Bereits bereitgestellte, berechtigte Offline-Bibliothek wählen"));
         root.Children.Add(vaults);
         root.Children.Add(syncInfo);
+        configureCentral.Click += async (_, _) => await ConfigureCentralAsync();
+        root.Children.Add(new Expander { Header = "Erweitert · Zentralverbindung",
+            Content = configureCentral, IsExpanded = false });
         root.Children.Add(Note("2 · Für jeden benötigten Karten-Schlüsselplatz eine ausdrückliche Zuordnung wählen"));
         root.Children.Add(slotsPanel);
         root.Children.Add(status);
@@ -124,6 +128,7 @@ internal sealed class KeyLibraryAssignmentWindow : Window
         if (vaults.SelectedItem is not VaultChoice choice) return;
         syncing = true;
         vaults.IsEnabled = false;
+        configureCentral.IsEnabled = false;
         syncInfo.Text = "Schlüsselbibliothek wird geprüft …";
         try
         {
@@ -189,7 +194,37 @@ internal sealed class KeyLibraryAssignmentWindow : Window
             syncInfo.Text = "Kein neuer Zentralstand bestätigt.";
             ShowError(ex);
         }
-        finally { syncing = false; vaults.IsEnabled = true; RefreshReadyStateAfterSuccess(); }
+        finally { syncing = false; vaults.IsEnabled = true; configureCentral.IsEnabled = true; RefreshReadyStateAfterSuccess(); }
+    }
+
+    private async Task ConfigureCentralAsync()
+    {
+        if (syncing || vaults.SelectedItem is not VaultChoice choice) return;
+        try
+        {
+            using (CentralGroupPolicyWorkflow.Acquire(choice.LibraryId))
+            {
+                CentralGroupPolicyWorkflow.RequireNoPending(choice.LibraryId);
+                var current = CentralGroupPolicyWorkflow.Endpoint(choice.LibraryId);
+                var origin = TextEntryPrompt.Show(this, "Zentralverbindung",
+                    "HTTPS-Adresse der bestätigten Zentrale (z. B. https://server:7443/):",
+                    current?.HttpsOrigin ?? "");
+                if (origin is null) return;
+                var pin = TextEntryPrompt.Show(this, "Serverzertifikat",
+                    "Den unabhängig von der Hauptverwaltung bestätigten SHA-256-Fingerabdruck eingeben:",
+                    current?.ServerCertificateSha256 ?? "");
+                if (pin is null) return;
+                var proposed = KeyLibrarySyncEndpointStore.Validate(new(choice.LibraryId,
+                    origin.Trim(), string.Concat(pin.Where(c => !char.IsWhiteSpace(c))).ToUpperInvariant()));
+                if (MessageBox.Show(this, $"HTTPS-Adresse und Fingerabdruck unabhängig bestätigt?\n\n{proposed.HttpsOrigin}\n{proposed.ServerCertificateSha256}",
+                    Title, MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                    MessageBoxResult.No) != MessageBoxResult.Yes) return;
+                new KeyLibrarySyncEndpointStore(KeyLibrarySyncEndpointStore.DefaultPath(choice.LibraryId),
+                    choice.LibraryId, new WindowsGroupTrustProtection(choice.LibraryId, syncState: true)).Save(proposed);
+            }
+            await LoadSelectedVaultAsync();
+        }
+        catch (Exception exception) { ShowError(exception); }
     }
 
     private void RefreshReadyStateAfterSuccess()
