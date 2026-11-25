@@ -285,7 +285,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         var reduced = ReducesPreviouslySignedAccess();
         policySyncing = true; IsEnabled = false;
         status.Text = "Berechtigungsänderung wird vorbereitet und zentral bestätigt …";
-        var head = await CentralGroupPolicyWorkflow.SaveAsync(id, store!, OwnTrust(id), proposed, endpoint);
+        var head = await CentralGroupPolicyWorkflow.SaveAsync(id, store!, OwnTrust(id), proposed, endpoint, expectedPolicy: current.Checkpoint);
         dirty = false;
         LoadAdministration(id, synchronizeOwnRegistration: false);
         lastSignedAccessReduction = reduced;
@@ -297,6 +297,55 @@ internal sealed partial class GroupAdministrationWindow : Window
             RefreshPolicyRecoveryStatus();
         }
         finally { policySyncing = false; IsEnabled = true; }
+    }
+
+    // Special administrative changes share the exact same staged central
+    // transition, without publishing the proposal to local trust first.
+    private async Task ApplySpecialPolicyAsync(Func<VerifiedGroupPolicy, OfflineGroupPolicy> propose,
+        Action offlineOperation, string description)
+    {
+        if (policySyncing) return;
+        RequireSavedAdministration();
+        var id = currentLibrary!.Value;
+        var endpoint = CentralGroupPolicyWorkflow.Endpoint(id);
+        if (endpoint is null)
+        {
+            offlineOperation();
+            return;
+        }
+        var current = GroupEnrollmentPackages.Validate(store!.ExportPublic());
+        if (current.Checkpoint != checkpoint)
+            throw new InvalidOperationException("Verwaltungsstand wurde geändert. Bitte neu laden.");
+        var proposed = propose(current);
+        if (MessageBox.Show(this,
+            description + "\n\nDie Schlüsselbibliothek wird für den neuen Stand frisch verschlüsselt und zentral bestätigt. Historische Kopien und bereits bekannte Schlüsselwerte werden nicht rückwirkend gesperrt.\n\nZentral übernehmen?",
+            Title, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        try
+        {
+            error.Text = "";
+            policySyncing = true; IsEnabled = false;
+            status.Text = "Berechtigungsänderung wird vorbereitet und zentral bestätigt …";
+            var head = await CentralGroupPolicyWorkflow.SaveAsync(id, store!, OwnTrust(id),
+                proposed, endpoint, expectedPolicy: current.Checkpoint);
+            dirty = false;
+            LoadAdministration(id, synchronizeOwnRegistration: false);
+            lastSignedAccessReduction = true;
+            status.Text = $"Berechtigungsstand {head.Policy.Revision} zentral bestätigt. Schlüsselbibliothek neu verschlüsselt. Bestehende Projekt-Vaults separat abgleichen; historische Kopien bleiben gegebenenfalls zugänglich.";
+        }
+        catch (Exception exception) { ShowError(exception); RefreshPolicyRecoveryStatus(); }
+        finally { policySyncing = false; IsEnabled = true; }
+    }
+
+    private Button AsyncPolicyAction(string label, Func<Task> action)
+    {
+        var button = new Button { Content = label };
+        button.Click += async (_, _) =>
+        {
+            if (policySyncing) return;
+            try { error.Text = ""; await action(); }
+            catch (Exception exception) { ShowError(exception); RefreshPolicyRecoveryStatus(); }
+        };
+        return button;
     }
 
     private async Task ResumePolicyAsync()
