@@ -111,6 +111,69 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
     }
 
+    /// <summary>
+    /// Prepare a policy-only central transition from the exact previously
+    /// accepted encrypted snapshot. The administrator's newer policy may
+    /// already be signed locally, but the caller's trust stays on the previous
+    /// policy until central acceptance. No local Vault or trust file is written.
+    /// </summary>
+    public SignedKeyLibraryPolicyTransition PrepareKeyLibraryPolicyTransition(
+        OfflineGroupTrustStore trust, CentralKeyLibraryHead expected,
+        SignedKeyLibrarySync previousTransfer,
+        System.Security.Cryptography.X509Certificates.X509Certificate2 retainedIdentity,
+        DateTimeOffset now, bool confirmed)
+    {
+        if (!confirmed)
+            throw new InvalidOperationException("Richtlinienwechsel muss ausdrücklich bestätigt werden.");
+        ArgumentNullException.ThrowIfNull(trust);
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentNullException.ThrowIfNull(retainedIdentity);
+        var previous = trust.ExportPublic();
+        if (expected.LibraryId != libraryId || previous.LibraryId != libraryId)
+            throw new CryptographicException("Zentrale und lokale Bibliothek stimmen nicht überein.");
+        var oldPolicy = GroupEnrollmentPackages.Validate(previous);
+        var priorClaim = KeyLibrarySyncTransport.Verify(previousTransfer, previous);
+        if (priorClaim.Policy != expected.Policy || priorClaim.GroupId != expected.GroupId ||
+            priorClaim.ExpectedCentralRevision + 1 != expected.CentralRevision ||
+            priorClaim.CatalogRevision != expected.CatalogRevision ||
+            priorClaim.NextCiphertextSha256 != expected.CiphertextSha256)
+            throw new CryptographicException("Vorheriger signierter Vault entspricht nicht der bestätigten Zentralrevision.");
+
+        var (state, revision) = Load();
+        try
+        {
+            using var administrator = OpenKey(state);
+            var next = PublicPackage(administrator, state.Policy);
+            var nextPolicy = KeyLibraryPolicyTransition.VerifyNextPolicy(previous, next, expected);
+            // The same retained member must be able to open both epochs.
+            // Recovery is deliberately not an implicit fallback.
+            var oldDocument = GroupVaultService.Read(previousTransfer.EncryptedVault);
+            var payload = KeyLibraryVault.Unprotect(oldDocument, oldPolicy,
+                expected.GroupId, [retainedIdentity]);
+            if (payload.Catalog.Revision != expected.CatalogRevision)
+                throw new CryptographicException("Entschlüsselter Katalog passt nicht zur zentralen Katalogrevision.");
+            var newDocument = KeyLibraryVault.Protect(payload, nextPolicy, expected.GroupId, now);
+            var verified = KeyLibraryVault.Unprotect(newDocument, nextPolicy,
+                expected.GroupId, [retainedIdentity]);
+            if (!KeyLibraryAutomaticSync.LogicallyEquivalent(payload, verified))
+                throw new CryptographicException("Neu verschlüsselter Katalog ist nicht inhaltsgleich.");
+            var encrypted = GroupVaultService.Write(newDocument);
+            var claim = KeyLibrarySyncTransport.Prepare(next, expected.GroupId,
+                expected.CentralRevision, expected.CiphertextSha256,
+                expected.CatalogRevision, encrypted);
+            var result = new SignedKeyLibraryPolicyTransition(next,
+                KeyLibrarySyncTransport.Sign(claim, encrypted, administrator));
+            _ = KeyLibraryPolicyTransition.Verify(result, previous, expected);
+            var latest = trust.ExportPublic();
+            if (ConcurrentFileWriter.Capture(path) != revision ||
+                GroupEnrollmentPackages.Validate(latest).Checkpoint != oldPolicy.Checkpoint ||
+                !latest.AdministratorPublicKey.SequenceEqual(previous.AdministratorPublicKey))
+                throw new ConcurrentFileChangeException(path);
+            return result;
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     public GroupEnrollmentPackage ExportPublic()
     {
         var (state, _) = Load();
