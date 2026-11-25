@@ -1,4 +1,5 @@
 using System.IO;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using RFiDGear.Builder.Core;
@@ -65,7 +66,7 @@ internal static class CentralGroupPolicyWorkflow
     // must not use the private administrator store or submit policy changes.
     internal static async Task<string> RefreshMemberAsync(Guid id, string group,
         OfflineGroupTrustStore trust, IEnumerable<X509Certificate2> identities,
-        CancellationToken cancellationToken = default)
+        bool allowPolicyAdoption = true, CancellationToken cancellationToken = default)
     {
         var pending = Pending(id);
         if (pending is not null && (!pending.IsReceiveOnly ||
@@ -89,7 +90,7 @@ internal static class CentralGroupPolicyWorkflow
                 endpoint.ServerCertificateSha256, certificate);
             var result = await KeyLibraryAutomaticSync.SynchronizeMemberAsync(transport,
                 KeyLibraryVaultStore.DefaultPath(id, group), trust, Cursor(id),
-                Journal(id, group), group, certificate, cancellationToken);
+                Journal(id, group), group, certificate, cancellationToken, allowPolicyAdoption);
             if (result.Outcome is not (KeyLibrarySyncOutcome.InSync or KeyLibrarySyncOutcome.Downloaded or
                 KeyLibrarySyncOutcome.PolicyDownloaded))
                 throw new InvalidOperationException("Zentraler Schlüsselbestand nicht abgeglichen: " + result.Outcome);
