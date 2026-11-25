@@ -46,6 +46,8 @@ public sealed class CentralKeyLibraryCursorStore(
 
     // Observed central heads and successfully reconciled local snapshots are
     // deliberately separate. Observing a conflict must never establish a new base.
+    public CentralKeyLibraryHead? ReadReconciledHead() => Read().State?.ReconciledHead;
+
     public bool HasUploadBase(CentralKeyLibraryHead remote)
     {
         RequireNotRolledBack(remote);
