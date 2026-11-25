@@ -71,6 +71,32 @@ public sealed class CentralKeyLibraryCursorStore(
         SaveObservation(confirmed, local.Sha256);
     }
 
+    /// <summary>Advance across a policy epoch only for the exact signed
+    /// transition and installed ciphertext. Normal observations remain strict.</summary>
+    internal void RememberPolicyTransition(GroupEnrollmentPackage previous,
+        CentralKeyLibraryHead expected, SignedKeyLibraryPolicyTransition transition,
+        CentralKeyLibraryHead confirmed, FileRevision installed)
+    {
+        Validate(expected);
+        Validate(confirmed);
+        var claim = KeyLibraryPolicyTransition.Verify(transition, previous, expected);
+        if (confirmed != new CentralKeyLibraryHead(libraryId, expected.CentralRevision + 1,
+                claim.NextCiphertextSha256, expected.GroupId, claim.Policy, expected.CatalogRevision) ||
+            !installed.Exists || installed.Sha256 != confirmed.CiphertextSha256)
+            throw new CryptographicException("Installierter Richtlinienwechsel stimmt nicht mit der bestätigten Zentrale überein.");
+
+        var (old, revision) = Read();
+        if (old?.Head == confirmed && old.ReconciledHead == confirmed &&
+            old.ReconciledLocalSha256 == installed.Sha256) return; // restart after cursor commit
+        if (old?.Head != expected || old.ReconciledHead != expected)
+            throw new CryptographicException("Richtlinienwechsel besitzt keine exakt abgeglichene Vorgängerrevision.");
+        SaveCursor(new Cursor(Format, 1, libraryId, confirmed, DateTimeOffset.UtcNow)
+        {
+            ReconciledHead = confirmed,
+            ReconciledLocalSha256 = installed.Sha256
+        }, revision);
+    }
+
     private void SaveObservation(CentralKeyLibraryHead confirmed, string? reconciledLocal)
     {
         Validate(confirmed);
@@ -82,6 +108,11 @@ public sealed class CentralKeyLibraryCursorStore(
             ReconciledHead = reconciledLocal is null ? old?.ReconciledHead : confirmed,
             ReconciledLocalSha256 = reconciledLocal ?? old?.ReconciledLocalSha256
         };
+        SaveCursor(updated, expected);
+    }
+
+    private void SaveCursor(Cursor updated, FileRevision expected)
+    {
         var raw = JsonSerializer.SerializeToUtf8Bytes(updated, Options);
         try
         {
