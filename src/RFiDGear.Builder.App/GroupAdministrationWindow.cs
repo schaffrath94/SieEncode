@@ -185,7 +185,10 @@ internal sealed partial class GroupAdministrationWindow : Window
         RefreshMemberLabels();
         RefreshDelegations(verified.Policy);
         RefreshRecovery(verified.Policy);
-        status.Text = $"Gruppenstand {checkpoint.Revision} geladen.\nAls Nächstes: Personen und Gruppen prüfen bzw. bearbeiten. Änderungen signiert speichern und danach den öffentlichen Stand exportieren.\nBibliothek: {id:D}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}\n{registrationStatus}";
+        var nextStep = pending
+            ? "Ausstehenden Berechtigungswechsel fortsetzen."
+            : "Personen und Gruppen prüfen bzw. bearbeiten. Änderungen signiert speichern und danach den öffentlichen Stand exportieren.";
+        status.Text = $"Gruppenstand {checkpoint.Revision} geladen.\nAls Nächstes: {nextStep}\nBibliothek: {id:D}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}\n{registrationStatus}";
     }
 
     private void AddGroup()
@@ -300,7 +303,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         {
             error.Text = "";
             policySyncing = true; IsEnabled = false;
-            var head = await CentralGroupPolicyWorkflow.ResumeAsync(id, store, OwnTrust(id));
+            var head = await CentralGroupPolicyWorkflow.ResumeAsync(id, store!, OwnTrust(id));
             dirty = false;
             LoadAdministration(id, synchronizeOwnRegistration: false);
             lastSignedAccessReduction = true; // preserve conservative offline-revocation notice on export
