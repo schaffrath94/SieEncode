@@ -165,11 +165,12 @@ public static class KeyLibraryAutomaticSync
         KeyLibraryHttpsTransport transport, string localVaultPath,
         OfflineGroupTrustStore trust, CentralKeyLibraryCursorStore cursor,
         KeyLibraryPolicyTransitionJournal journal, string groupId,
-        X509Certificate2 personalIdentity, CancellationToken cancellationToken = default)
+        X509Certificate2 personalIdentity, CancellationToken cancellationToken = default,
+        bool allowPolicyAdoption = true)
     {
         if (journal.HasPending)
         {
-            if (!journal.IsReceiveOnly || journal.PendingExpected?.GroupId != groupId)
+            if (!allowPolicyAdoption || !journal.IsReceiveOnly || journal.PendingExpected?.GroupId != groupId)
                 throw new InvalidOperationException("Ausstehenden Verwaltungsauftrag zuerst in der Hauptverwaltung abschließen.");
             var resumed = await journal.ResumeAsync(transport, trust, cursor, personalIdentity,
                 cancellationToken).ConfigureAwait(false);
@@ -185,6 +186,8 @@ public static class KeyLibraryAutomaticSync
             return await SynchronizeOnceAsync(transport, localVaultPath, trust, cursor, groupId,
                 personalIdentity, null, cancellationToken).ConfigureAwait(false);
 
+        if (!allowPolicyAdoption)
+            throw new InvalidOperationException("Dieser Arbeitsplatz besitzt eine Hauptverwaltung. Richtlinienwechsel dort kontrolliert übernehmen.");
         var baseline = cursor.ReadReconciledHead() ??
             throw new InvalidOperationException("Kein bestätigter lokaler Ausgangsstand für automatische Richtlinienübernahme.");
         if (baseline.GroupId != groupId || baseline.Policy != policy.Checkpoint ||
