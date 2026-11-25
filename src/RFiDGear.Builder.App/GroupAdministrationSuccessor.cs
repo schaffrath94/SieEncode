@@ -10,6 +10,8 @@ internal sealed partial class GroupAdministrationWindow
     internal void ExportSuccessorAuthorization(AdministratorTransitionRequest request, string independentFingerprint, bool confirmed, string destination)
     {
         RequireSavedAdministration();
+        using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary.Value);
         var candidate = GroupAdministratorTransition.ReadRequest(GroupAdministratorTransition.WriteRequest(request));
         var normalized = string.Concat(independentFingerprint.Where(c => !char.IsWhiteSpace(c))).ToUpperInvariant();
         var trust = OwnTrust(currentLibrary!.Value);
