@@ -32,6 +32,7 @@ internal sealed partial class GroupAdministrationWindow : Window
     private bool lastSignedAccessReduction;
     private bool loading;
     private bool policySyncing;
+    private readonly Button savePolicy = new() { Content = "Änderungen signiert speichern" };
     private readonly Button resumePolicy = new() { Content = "Ausstehenden Berechtigungswechsel fortsetzen", Visibility = Visibility.Collapsed };
     private Guid? currentLibrary;
 
@@ -114,9 +115,8 @@ internal sealed partial class GroupAdministrationWindow : Window
         root.Children.Add(new Expander { Header = "Schlüsselverwaltung · Kunden, Schlüssel und Versionen",
             Content = keyManagement, IsExpanded = false, Margin = new Thickness(0, 9, 0, 5) });
         var actions = new WrapPanel();
-        var saveGroups = new Button { Content = "Änderungen signiert speichern" };
-        saveGroups.Click += async (_, _) => await ConfirmAndSaveGroupsAsync();
-        actions.Children.Add(saveGroups);
+        savePolicy.Click += async (_, _) => await ConfirmAndSaveGroupsAsync();
+        actions.Children.Add(savePolicy);
         resumePolicy.Click += async (_, _) => await ResumePolicyAsync();
         actions.Children.Add(resumePolicy);
         actions.Children.Add(Action("Aktuellen Gruppenstand für Kollegen exportieren", ExportPublic));
@@ -156,15 +156,20 @@ internal sealed partial class GroupAdministrationWindow : Window
         var verified = GroupEnrollmentPackages.Validate(package);
         // Merely opening this window must never silently replace the local trust registration.
         var pending = CentralGroupPolicyWorkflow.Pending(id) is not null;
-        var endpoint = CentralGroupPolicyWorkflow.Endpoint(id);
+        KeyLibrarySyncEndpoint? endpoint = null;
+        string? endpointError = null;
+        try { endpoint = CentralGroupPolicyWorkflow.Endpoint(id); }
+        catch (Exception exception) { endpointError = exception.Message; }
         var registrationStatus = pending
             ? "Zentraler Berechtigungswechsel ausstehend. Bitte fortsetzen; noch keine weitere Änderung oder Veröffentlichung."
-            : endpoint is not null
+            : endpointError is not null
+                ? "Zentralverbindung ungültig. Gruppenänderungen bleiben gesperrt, bis sie korrigiert ist. " + endpointError
+                : endpoint is not null
                 ? "Zentrale eingerichtet. Richtlinienänderungen werden über den zentralen Abgleich bestätigt."
                 : synchronizeOwnRegistration
                     ? SynchronizeOwnRegistration(package)
                     : "Lokale Registrierung beim automatischen Öffnen nicht verändert; Änderungen erst ausdrücklich signiert speichern.";
-        resumePolicy.Visibility = pending ? Visibility.Visible : Visibility.Collapsed;
+        ApplyPolicyPendingState(pending);
         LoadPeople(verified.Policy);
         groups.Clear();
         foreach (var group in verified.Policy.Groups)
@@ -311,11 +316,21 @@ internal sealed partial class GroupAdministrationWindow : Window
         {
             if (CentralGroupPolicyWorkflow.Pending(id) is not null)
             {
-                resumePolicy.Visibility = Visibility.Visible;
+                ApplyPolicyPendingState(true);
+                dirty = false; // durable intent now contains the prepared draft
                 status.Text = "Berechtigungswechsel ausstehend. Keine weiteren Änderungen speichern oder exportieren. Bei erreichbarer Zentrale denselben Auftrag fortsetzen.";
             }
         }
         catch (Exception exception) { ShowError(exception); }
+    }
+
+    private void ApplyPolicyPendingState(bool pending)
+    {
+        resumePolicy.Visibility = pending ? Visibility.Visible : Visibility.Collapsed;
+        savePolicy.IsEnabled = !pending;
+        grid.IsReadOnly = pending;
+        peopleGrid.IsReadOnly = pending;
+        deviceGrid.IsReadOnly = pending;
     }
 
     internal void SaveGroups()
@@ -396,7 +411,12 @@ internal sealed partial class GroupAdministrationWindow : Window
             .Select(path => Path.GetFileName(path).Replace(".admin.bin", "", StringComparison.Ordinal)).Where(name => Guid.TryParseExact(name, "N", out _)).Select(Guid.Parse).ToArray() : [];
         loading = false;
     }
-    private void RequireStore() { if (store is null || checkpoint is null) throw new InvalidOperationException("Bitte eine Verwaltung auswählen oder erstellen."); }
+    private void RequireStore()
+    {
+        if (store is null || checkpoint is null || currentLibrary is not Guid id)
+            throw new InvalidOperationException("Bitte eine Verwaltung auswählen oder erstellen.");
+        CentralGroupPolicyWorkflow.RequireNoPending(id);
+    }
     private bool ConfirmDiscard() => !dirty || MessageBox.Show(this, "Ungespeicherte Gruppenänderungen verwerfen?", Title, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
     private void ShowError(Exception exception)
     {
