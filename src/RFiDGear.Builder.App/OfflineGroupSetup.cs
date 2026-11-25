@@ -9,6 +9,12 @@ public partial class MainWindow
 {
     private readonly string localGroupTrustDirectory;
 
+    private void OpenKeyLibraryBrowse_Click(object sender, RoutedEventArgs e)
+    {
+        try { new KeyLibraryBrowseWindow(this, localGroupTrustDirectory).ShowDialog(); }
+        catch (Exception exception) { ShowError(exception); }
+    }
+
     private void OpenGroupSuccessorSetup_Click(object sender, RoutedEventArgs e)
     {
         try { new GroupSuccessorSetupWindow(this, localGroupTrustDirectory).ShowDialog(); }
