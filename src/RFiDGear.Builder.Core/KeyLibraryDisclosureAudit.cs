@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace RFiDGear.Builder.Core;
 
@@ -39,5 +40,80 @@ public static class KeyLibraryDisclosureAudit
             });
         }
         finally { CryptographicOperations.ZeroMemory(raw); }
+    }
+
+    public static void RecordSigned(string directory, ILocalGroupTrustProtection protection,
+        KeyLibraryDisclosureEvent entry, X509Certificate2 identity)
+    {
+        var signed = KeyLibraryAuditSync.Sign(entry, identity);
+        var raw = KeyLibrarySyncWire.Write(signed);
+        try
+        {
+            var bytes = protection.Protect(raw);
+            if (bytes.Length is <= 0 or > 64 * 1024)
+                throw new InvalidDataException("Geschützter Audit-Nachweis ist zu groß.");
+            var path = Path.Combine(Path.GetFullPath(directory), entry.EventId.ToString("N") + ".signed-audit.bin");
+            ConcurrentFileWriter.Write(path, FileRevision.Missing, temporary =>
+            {
+                using var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                stream.Write(bytes); stream.Flush(true);
+            });
+        }
+        finally { CryptographicOperations.ZeroMemory(raw); }
+    }
+
+    /// <summary>Drain a bounded number of this device's pending reports. Keep
+    /// the original protected report until a matching acknowledgement arrives.
+    /// Caller serializes with the existing library lease.</summary>
+    public static async Task<int> FlushAsync(string directory, ILocalGroupTrustProtection protection,
+        X509Certificate2 identity, Func<SignedKeyLibraryAudit, CancellationToken, Task<KeyLibraryAuditReceipt>> send,
+        CancellationToken cancellationToken = default)
+    {
+        if (!Directory.Exists(directory)) return 0;
+        var count = 0;
+        var fingerprint = CertificateVaultService.Fingerprint(identity);
+        foreach (var path in Directory.EnumerateFiles(directory, "*.signed-audit.bin").OrderBy(p => p, StringComparer.Ordinal))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (count >= 20) break;
+            var expected = ConcurrentFileWriter.Capture(path);
+            byte[] protectedBytes;
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                if (stream.Length is <= 0 or > 64 * 1024)
+                    throw new InvalidDataException("Lokaler Audit-Nachweis hat ungültige Größe.");
+                protectedBytes = new byte[(int)stream.Length];
+                stream.ReadExactly(protectedBytes);
+            }
+            var raw = protection.Unprotect(protectedBytes);
+            SignedKeyLibraryAudit report;
+            try { report = KeyLibrarySyncWire.Read<SignedKeyLibraryAudit>(raw, KeyLibraryAuditSync.MaximumBytes); }
+            finally { CryptographicOperations.ZeroMemory(raw); }
+            var entry = KeyLibraryAuditSync.Parse(report);
+            if (entry.DeviceFingerprint != fingerprint) continue;
+            _ = KeyLibraryAuditSync.Verify(report, identity);
+            if (Path.GetFileName(path) != entry.EventId.ToString("N") + ".signed-audit.bin" ||
+                ConcurrentFileWriter.Capture(path) != expected)
+                throw new ConcurrentFileChangeException(path);
+            var receipt = await send(report, cancellationToken).ConfigureAwait(false);
+            if (receipt.EventId != entry.EventId || receipt.PayloadSha256 != KeyLibraryAuditSync.Digest(report) ||
+                receipt.AcceptedAt == default)
+                throw new CryptographicException("Audit-Empfangsbestätigung passt nicht zur Meldung.");
+            // Keep a protected local copy; a lost reply is retried with exactly
+            // the same signed report. No server acknowledgement, no archive.
+            var archived = Path.Combine(directory, "Sent", Path.GetFileName(path));
+            var archivedRevision = ConcurrentFileWriter.Capture(archived);
+            if (!archivedRevision.Exists)
+                ConcurrentFileWriter.Write(archived, FileRevision.Missing, temporary =>
+                {
+                    using var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                    stream.Write(protectedBytes); stream.Flush(true);
+                });
+            else if (archivedRevision != expected)
+                throw new ConcurrentFileChangeException(archived);
+            ConcurrentFileWriter.Delete(path, expected);
+            count++;
+        }
+        return count;
     }
 }
