@@ -7,7 +7,15 @@ namespace RFiDGear.Builder.Core;
 
 public sealed record OfflineVaultGroup(string Id, string Name, string[] Members);
 public sealed record OfflineVaultDevice(string Name, string Fingerprint, string Certificate, bool Enabled);
-public sealed record OfflineVaultPerson(string Id, string Name, bool Enabled, OfflineVaultDevice[] Devices);
+public sealed record OfflineVaultPerson(string Id, string Name, bool Enabled, OfflineVaultDevice[] Devices)
+{
+    // Explicit UI disclosure permissions, signed with the directory.
+    // These do not prevent extraction by an already authorized decryptor.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool AllowKeyLibraryView { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool AllowKeyLibraryCopy { get; init; }
+}
 public sealed record OfflineGroupPolicy(string Format, int Version, Guid LibraryId, long Revision, OfflineVaultGroup[] Groups)
 {
     public OfflineVaultPerson[] People { get; init; } = [];
