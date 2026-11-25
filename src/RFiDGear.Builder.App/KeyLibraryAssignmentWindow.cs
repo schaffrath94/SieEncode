@@ -140,7 +140,9 @@ internal sealed class KeyLibraryAssignmentWindow : Window
             try
             {
                 syncStatus = await CentralGroupPolicyWorkflow.RefreshMemberAsync(choice.LibraryId,
-                    choice.GroupId, trust, identities.Select(identity => identity.Certificate));
+                    choice.GroupId, trust, identities.Select(identity => identity.Certificate),
+                    allowPolicyAdoption: !File.Exists(Path.Combine(trustDirectory, "Administrations",
+                        choice.LibraryId.ToString("N") + ".admin.bin")));
                 syncInfo.Text = syncStatus;
                 // Decrypt only on explicit selection. Do not retain the secret payload
                 // in this dialog or pass it back to the editor.
