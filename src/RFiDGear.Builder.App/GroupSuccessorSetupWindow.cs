@@ -145,6 +145,8 @@ internal sealed class GroupSuccessorSetupWindow : Window
         if (selected is not Guid id || preparation is null) throw new InvalidOperationException("Zuerst die vorbereitete Bibliothek auswählen.");
         var path = Path.Combine(directory, "Administrations", id.ToString("N") + ".admin.bin");
         var active = new OfflineGroupAdministrationStore(path, id, new WindowsGroupTrustProtection(id, true));
+        using var lease = CentralGroupPolicyWorkflow.Acquire(id);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(id);
         active.ActivateSuccessor(preparation, Trust(id), expected, confirmed);
         status.Text = "Neue Hauptverwaltung lokal aktiv. Diesen Dialog schließen und die Gruppenverwaltung öffnen. Vorbereitung und gegebenenfalls geschütztes Vorgängerarchiv bleiben erhalten. Andere Arbeitsplätze müssen die öffentliche Übergabe weiterhin selbst importieren.";
     }
