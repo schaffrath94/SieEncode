@@ -89,7 +89,12 @@ internal static class CentralGroupPolicyWorkflow
             if (head != baseline || head.LibraryId != id || head.Policy != current.Checkpoint ||
                 head.CentralRevision < 1)
                 throw new InvalidOperationException("Zentrale hat nicht den zuletzt abgeglichenen Gruppenstand. Bitte zuerst die Schlüsselbibliothek abgleichen.");
-            var local = ConcurrentFileWriter.Capture(KeyLibraryVaultStore.DefaultPath(id, head.GroupId));
+            var vaultPath = KeyLibraryVaultStore.DefaultPath(id, head.GroupId);
+            if (Directory.Exists(DirectoryFor(id)) &&
+                Directory.EnumerateFiles(DirectoryFor(id), "*.key-library.vault.json")
+                    .Any(p => !string.Equals(Path.GetFullPath(p), vaultPath, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("Weitere lokale Gruppenbibliotheken vorhanden. Ein gemeinsamer Empfängerwechsel für mehrere Vaults ist noch nicht freigegeben.");
+            var local = ConcurrentFileWriter.Capture(vaultPath);
             if (!cursor.HasUploadBase(head) || !cursor.HasUnchangedLocalBase(local) ||
                 local.Sha256 != head.CiphertextSha256)
                 throw new InvalidOperationException("Bitte Schlüsselbibliothek zuerst mit der Zentrale vollständig abgleichen. Keine Offline-Änderung wird überschrieben.");
