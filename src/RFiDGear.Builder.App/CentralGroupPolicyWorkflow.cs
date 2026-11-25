@@ -61,6 +61,52 @@ internal static class CentralGroupPolicyWorkflow
             throw new InvalidOperationException("Bei eingerichteter Zentrale ist diese spezielle Änderung noch nicht freigegeben. Personen und Gruppen über ‚Änderungen signiert speichern‘ zentral ändern.");
     }
 
+    // Caller holds the library lease through catalog loading. Member sync
+    // must not use the private administrator store or submit policy changes.
+    internal static async Task<string> RefreshMemberAsync(Guid id, string group,
+        OfflineGroupTrustStore trust, IEnumerable<X509Certificate2> identities,
+        CancellationToken cancellationToken = default)
+    {
+        var pending = Pending(id);
+        if (pending is not null && (!pending.IsReceiveOnly ||
+            pending.PendingExpected?.GroupId != group))
+            throw new InvalidOperationException("Ausstehenden Verwaltungsauftrag zuerst in der Hauptverwaltung abschließen.");
+        var endpoint = Endpoint(id);
+        if (endpoint is null)
+        {
+            RequireNoPending(id);
+            return "Offline · keine Zentrale konfiguriert";
+        }
+        var current = trust.LoadOffline().Policy;
+        var certificate = pending is null
+            ? SelectRetained(identities, current, current, group)
+            : SelectRetained(identities,
+                GroupEnrollmentPackages.Validate(pending.PendingPreviousEnrollment!).Policy,
+                GroupEnrollmentPackages.Validate(pending.PendingEnrollment!).Policy, group);
+        try
+        {
+            using var transport = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), id,
+                endpoint.ServerCertificateSha256, certificate);
+            var result = await KeyLibraryAutomaticSync.SynchronizeMemberAsync(transport,
+                KeyLibraryVaultStore.DefaultPath(id, group), trust, Cursor(id),
+                Journal(id, group), group, certificate, cancellationToken);
+            if (result.Outcome is not (KeyLibrarySyncOutcome.InSync or KeyLibrarySyncOutcome.Downloaded or
+                KeyLibrarySyncOutcome.PolicyDownloaded))
+                throw new InvalidOperationException("Zentraler Schlüsselbestand nicht abgeglichen: " + result.Outcome);
+            return $"Zentral bestätigt · Katalog {result.Central.CatalogRevision} · Gruppenstand {result.Central.Policy.Revision}";
+        }
+        catch (HttpRequestException)
+        {
+            RequireNoPending(id);
+            return "Offline · Verbindung oder TLS-Anmeldung nicht bestätigt; nur bisheriger Offline-Stand";
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            RequireNoPending(id);
+            return "Offline · zentraler Abgleich nicht abgeschlossen; nur bisheriger Offline-Stand";
+        }
+    }
+
     internal static async Task<CentralKeyLibraryHead> SaveAsync(Guid id,
         OfflineGroupAdministrationStore administration, OfflineGroupTrustStore trust,
         OfflineGroupPolicy proposed, KeyLibrarySyncEndpoint endpoint,
