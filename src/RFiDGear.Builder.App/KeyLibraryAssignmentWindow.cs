@@ -59,7 +59,7 @@ internal sealed class KeyLibraryAssignmentWindow : Window
 
         var root = new StackPanel { Margin = new Thickness(18) };
         root.Children.Add(Note("Projekt-Schlüssel werden über feste Schlüssel-ID und Version zugeordnet. Die verschlüsselte Offline-Bibliothek wird nur nach erfolgreicher Windows-/Gruppenfreigabe geöffnet. In der Projektdatei stehen keine Schlüsselwerte."));
-        root.Children.Add(Note("1 · Bereits bereitgestellte, berechtigte Offline-Bibliothek wählen"));
+        root.Children.Add(Note("1 · Berechtigte Schlüsselbibliothek wählen (lokal oder zentral)"));
         root.Children.Add(vaults);
         root.Children.Add(syncInfo);
         configureCentral.Click += async (_, _) => await ConfigureCentralAsync();
@@ -83,14 +83,53 @@ internal sealed class KeyLibraryAssignmentWindow : Window
 
         Closing += (_, e) => { if (syncing) e.Cancel = true; };
         vaults.SelectionChanged += async (_, _) => await LoadSelectedVaultAsync();
-        vaults.ItemsSource = DiscoverLocalVaults();
+        vaults.ItemsSource = DiscoverAvailableVaults(trustDirectory);
         if (vaults.Items.Count == 1) vaults.SelectedIndex = 0;
         else status.Text = vaults.Items.Count == 0
             ? "Keine vorbereitete verschlüsselte Schlüsselbibliothek auf diesem Arbeitsplatz. Die Bibliothek muss zunächst von einer berechtigten SieEncode-Verwaltung eingerichtet und bereitgestellt werden."
             : "Bitte die richtige Bibliothek und deren freigegebene Gruppe auswählen.";
     }
 
-    internal static bool HasLocalVaults() => DiscoverLocalVaults().Length > 0;
+    internal static bool HasLocalVaults(string? localTrustDirectory = null) =>
+        (localTrustDirectory is null ? DiscoverLocalVaults() :
+            DiscoverAvailableVaults(localTrustDirectory)).Length > 0;
+
+    private static VaultChoice[] DiscoverAvailableVaults(string localTrustDirectory)
+    {
+        var choices = DiscoverLocalVaults().ToList();
+        if (!Directory.Exists(localTrustDirectory)) return choices.ToArray();
+        var identities = WindowsVaultIdentityService.List();
+        try
+        {
+            var fingerprints = identities.Select(i => i.Fingerprint).ToHashSet(StringComparer.Ordinal);
+            foreach (var file in Directory.EnumerateFiles(localTrustDirectory, "*.trust.bin"))
+            {
+                var name = Path.GetFileName(file)[..^".trust.bin".Length];
+                if (!Guid.TryParseExact(name, "N", out var id)) continue;
+                try
+                {
+                    if (CentralGroupPolicyWorkflow.Endpoint(id) is null) continue;
+                    var policy = new OfflineGroupTrustStore(file, id,
+                        new WindowsGroupTrustProtection(id)).LoadOffline().Policy;
+                    if (policy.Version != 2) continue;
+                    foreach (var group in policy.Groups)
+                    {
+                        if (!policy.People.Any(p => p.Enabled && group.Members.Contains(p.Id, StringComparer.Ordinal) &&
+                            p.Devices.Any(d => d.Enabled && fingerprints.Contains(d.Fingerprint)))) continue;
+                        if (!choices.Any(v => v.LibraryId == id && v.GroupId == group.Id))
+                            choices.Add(new(id, group.Id, KeyLibraryVaultStore.DefaultPath(id, group.Id)));
+                    }
+                }
+                catch (Exception exception) when (exception is IOException or CryptographicException or InvalidDataException or ArgumentException or UnauthorizedAccessException)
+                {
+                    // An invalid optional registration is not a selectable
+                    // central source. Existing offline choices are unaffected.
+                }
+            }
+        }
+        finally { foreach (var identity in identities) identity.Certificate.Dispose(); }
+        return choices.OrderBy(c => c.LibraryId).ThenBy(c => c.GroupId, StringComparer.Ordinal).ToArray();
+    }
 
     private static VaultChoice[] DiscoverLocalVaults()
     {
