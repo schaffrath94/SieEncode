@@ -127,10 +127,56 @@ internal static class KeyLibraryDisclosureTests
                 !File.Exists(Path.Combine(outbox, "Sent", Path.GetFileName(pendingPath))) ||
                 Directory.GetFiles(Path.Combine(directory, "central-audit"), "*.json").Length != 2)
                 throw new Exception("Retry did not archive exactly once after central confirmation.");
+            // Read access to the entire audit is a separate administrator-signed
+            // capability, bound to a current policy and exact TLS identity.
+            var enrollment = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1, id, publicKey, signed);
+            var query = new KeyLibraryAuditQuery(KeyLibraryAuditReview.Format, id, verified.Checkpoint,
+                copyAccess.DeviceFingerprint, "", 1, now);
+            var signedQuery = KeyLibraryAuditReview.Sign(query, authority);
+            if (KeyLibraryAuditReview.Verify(signedQuery, enrollment, copy, now) != query)
+                throw new Exception("Valid audit query failed.");
+            Reject<CryptographicException>(() => KeyLibraryAuditReview.Verify(
+                KeyLibraryAuditReview.Sign(query, copyKey), enrollment, copy, now));
+            Reject<CryptographicException>(() => KeyLibraryAuditReview.Verify(signedQuery, enrollment, view, now));
+            Reject<CryptographicException>(() => KeyLibraryAuditReview.Verify(signedQuery, enrollment, copy, now.AddMinutes(3)));
+            Reject<InvalidDataException>(() => KeyLibraryAuditReview.Sign(query with { AfterId = "../bad" }, authority));
+            Reject<InvalidDataException>(() => KeyLibraryAuditReview.Sign(query with { Limit = 33 }, authority));
+            var centralState = new CentralKeyLibraryStore(Path.Combine(directory, "central-state.json"), id);
+            var empty = centralState.Register(enrollment, OfflineGroupTrustStore.AdministratorFingerprint(publicKey));
+            var encrypted = File.ReadAllBytes(path);
+            var uploadClaim = KeyLibrarySyncTransport.Prepare(enrollment, "keys", empty.CentralRevision,
+                empty.CiphertextSha256, 1, encrypted);
+            centralState.Accept(KeyLibrarySyncTransport.Sign(uploadClaim, encrypted, authority));
+            centralState.AcceptAudit(signedAudit, copy, now);
+            centralState.AcceptAudit(KeyLibraryAuditSync.Sign(queued, copy), copy, now);
+            Reject<CryptographicException>(() => centralState.ReadAuditPage(
+                KeyLibraryAuditReview.Sign(query, copyKey), copy, now));
+            Reject<CryptographicException>(() => centralState.ReadAuditPage(signedQuery, recovery, now));
+            var page1 = centralState.ReadAuditPage(signedQuery, copy, now);
+            KeyLibraryAuditReview.ValidatePage(query, page1);
+            if (page1.Records.Length != 1 || page1.NextAfterId is null)
+                throw new Exception("Audit pagination failed.");
+            var following = query with { AfterId = page1.NextAfterId };
+            var page2 = centralState.ReadAuditPage(KeyLibraryAuditReview.Sign(following, authority), copy, now);
+            KeyLibraryAuditReview.ValidatePage(following, page2);
+            if (page2.Records.Length != 1 || page2.NextAfterId is not null ||
+                page1.Records[0].Receipt.EventId == page2.Records[0].Receipt.EventId)
+                throw new Exception("Audit pagination returned duplicates or missing events.");
+            Reject<CryptographicException>(() => KeyLibraryAuditReview.ValidateRecord(
+                page1.Records[0] with { Receipt = page1.Records[0].Receipt with { PayloadSha256 = new string('F', 64) } }, id));
+            var localReview = KeyLibraryDisclosureAudit.ReadLocal(outbox, protector, verified);
+            if (localReview.Records.Length != 1 || !localReview.Records[0].Archived ||
+                !localReview.Records[0].SignatureVerified || localReview.InvalidCount != 0)
+                throw new Exception("Local archived review failed.");
+            KeyLibraryDisclosureAudit.RecordSigned(outbox, protector, audit with { EventId = Guid.NewGuid() }, copy);
+            var limited = KeyLibraryDisclosureAudit.ReadLocal(outbox, protector, verified, 1);
+            if (!limited.Truncated || limited.Records.Length != 1)
+                throw new Exception("Local audit review limit was ignored.");
             // A signed permission reduction must prevent further application reads.
             var next = policy with { Revision = 2, People = [viewer, copier with { AllowKeyLibraryCopy = false }, plain] };
             var updated = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1, id,
                 publicKey, OfflineGroupPolicyService.Sign(next, authority));
+            Reject<CryptographicException>(() => KeyLibraryAuditReview.Verify(signedQuery, updated, copy, now));
             trust.AcceptPackageUpdate(updated, verified.Checkpoint);
             Reject<CryptographicException>(() => Read(copy, true));
             Reject<ConcurrentFileChangeException>(() => Read(copy, false));
