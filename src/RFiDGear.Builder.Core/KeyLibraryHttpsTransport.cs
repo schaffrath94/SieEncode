@@ -90,6 +90,11 @@ public sealed class KeyLibraryHttpsTransport : IDisposable, IKeyLibraryPolicyTra
         SendAsync<CentralKeyLibrarySnapshot>(HttpMethod.Post, "snapshot", proof,
             KeyLibrarySyncWire.MaximumEncryptedBytes, cancellationToken);
 
+    public Task<KeyLibraryAuditReceipt> SubmitAuditAsync(SignedKeyLibraryAudit report,
+        CancellationToken cancellationToken = default) =>
+        SendAsync<KeyLibraryAuditReceipt>(HttpMethod.Post, "audit", report,
+            KeyLibrarySyncWire.MaximumMetadataBytes, cancellationToken);
+
     private async Task<T> SendAsync<T>(HttpMethod method, string action,
         object? body, int maxResponse, CancellationToken cancellationToken) where T : class
     {
@@ -101,7 +106,8 @@ public sealed class KeyLibraryHttpsTransport : IDisposable, IKeyLibraryPolicyTra
         if (body is not null)
         {
             var bytes = KeyLibrarySyncWire.Write(body);
-            var maxRequest = action is "download" or "snapshot" ? KeyLibrarySyncWire.MaximumDownloadRequestBytes
+            var maxRequest = action == "audit" ? KeyLibraryAuditSync.MaximumBytes
+                : action is "download" or "snapshot" ? KeyLibrarySyncWire.MaximumDownloadRequestBytes
                 : KeyLibrarySyncWire.MaximumEncryptedBytes;
             if (bytes.Length > maxRequest)
                 throw new InvalidDataException("Synchronisationsanfrage ist zu groß.");
