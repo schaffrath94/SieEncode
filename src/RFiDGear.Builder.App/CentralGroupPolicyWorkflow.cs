@@ -78,27 +78,21 @@ internal static class CentralGroupPolicyWorkflow
         var identities = WindowsVaultIdentityService.List().ToArray();
         try
         {
-            // Discover the group using any active current identity, then select
-            // an exact retained identity for the actual change. No recovery fallback.
-            var initial = identities.Select(i => i.Certificate)
-                .FirstOrDefault(c => c.HasPrivateKey && current.Policy.Groups.Any(g =>
-                    IsMember(current.Policy, g.Id, c)));
-            if (initial is null)
-                throw new CryptographicException("Kein aktives persönliches Gruppenzertifikat vorhanden.");
-            using var probe = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), id,
-                endpoint.ServerCertificateSha256, initial);
-            var head = await probe.ReadHeadAsync(cancellationToken);
-            if (head.LibraryId != id || head.Policy != current.Checkpoint || head.CentralRevision < 1)
-                throw new InvalidOperationException("Zentrale muss zuerst einen vollständig abgeglichenen Schlüsselbestand besitzen.");
-            var identity = SelectRetained(identities.Select(i => i.Certificate), current.Policy,
-                proposed, head.GroupId);
             var cursor = Cursor(id);
+            var baseline = cursor.ReadReconciledHead() ??
+                throw new InvalidOperationException("Bitte die Schlüsselbibliothek zuerst vollständig zentral abgleichen.");
+            var identity = SelectRetained(identities.Select(i => i.Certificate), current.Policy,
+                proposed, baseline.GroupId);
+            using var transport = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), id,
+                endpoint.ServerCertificateSha256, identity);
+            var head = await transport.ReadHeadAsync(cancellationToken);
+            if (head != baseline || head.LibraryId != id || head.Policy != current.Checkpoint ||
+                head.CentralRevision < 1)
+                throw new InvalidOperationException("Zentrale hat nicht den zuletzt abgeglichenen Gruppenstand. Bitte zuerst die Schlüsselbibliothek abgleichen.");
             var local = ConcurrentFileWriter.Capture(KeyLibraryVaultStore.DefaultPath(id, head.GroupId));
             if (!cursor.HasUploadBase(head) || !cursor.HasUnchangedLocalBase(local) ||
                 local.Sha256 != head.CiphertextSha256)
                 throw new InvalidOperationException("Bitte Schlüsselbibliothek zuerst mit der Zentrale vollständig abgleichen. Keine Offline-Änderung wird überschrieben.");
-            using var transport = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), id,
-                endpoint.ServerCertificateSha256, identity);
             var prior = await transport.DownloadAsync(KeyLibraryDownloadAuthorization.Sign(
                 head, identity, DateTimeOffset.UtcNow), cancellationToken);
             var transition = administration.PrepareKeyLibraryPolicyTransition(trust, head,
