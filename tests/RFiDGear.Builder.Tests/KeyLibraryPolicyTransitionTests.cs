@@ -64,21 +64,27 @@ internal static class KeyLibraryPolicyTransitionTests
             var first = KeyLibrarySyncClient.PrepareUpload(localPath, trust,
                 administration, "keys", empty, [retained]);
             var before = center.Accept(first);
-            var next = administration.UpdateDirectory([member, addedPerson],
-                [new OfflineVaultGroup("keys", "Keys", ["retained", "added"])],
-                oldPolicy.Checkpoint);
-            var nextPolicy = GroupEnrollmentPackages.Validate(next);
+            var proposed = oldPolicy.Policy with
+            {
+                Revision = checked(oldPolicy.Policy.Revision + 1),
+                People = [member, addedPerson],
+                Groups = [new OfflineVaultGroup("keys", "Keys", ["retained", "added"])]
+            };
 
             Reject<InvalidOperationException>(() => administration.PrepareKeyLibraryPolicyTransition(
-                trust, before, first, retained, now, false));
+                trust, before, first, retained, now, false, proposed));
             Reject<CryptographicException>(() => administration.PrepareKeyLibraryPolicyTransition(
-                trust, before, first, removed, now, true));
+                trust, before, first, removed, now, true, proposed));
             Reject<CryptographicException>(() => administration.PrepareKeyLibraryPolicyTransition(
-                trust, before, first, added, now, true));
+                trust, before, first, added, now, true, proposed));
             Reject<CryptographicException>(() => administration.PrepareKeyLibraryPolicyTransition(
-                trust, before with { CiphertextSha256 = new string('B', 64) }, first, retained, now, true));
+                trust, before with { CiphertextSha256 = new string('B', 64) }, first, retained, now, true, proposed));
             var transition = administration.PrepareKeyLibraryPolicyTransition(trust, before,
-                first, retained, now, true);
+                first, retained, now, true, proposed);
+            var next = transition.Enrollment;
+            var nextPolicy = GroupEnrollmentPackages.Validate(next);
+            if (GroupEnrollmentPackages.Validate(administration.ExportPublic()).Checkpoint != oldPolicy.Checkpoint)
+                throw new Exception("Staging prematurely changed administrator state.");
             if (trust.LoadOffline().Checkpoint != oldPolicy.Checkpoint ||
                 ConcurrentFileWriter.Capture(localPath) != originalFile ||
                 center.ReadHead() != before)
@@ -130,19 +136,19 @@ internal static class KeyLibraryPolicyTransitionTests
             var transport = new LostReplyTransport(center, retained, now);
             transport.HeadOverride = before with { CentralRevision = before.CentralRevision + 1,
                 CatalogRevision = before.CatalogRevision + 1 };
-            Reject<ConcurrentFileChangeException>(() => journal.ResumeAsync(transport, trust, cursor, retained)
+            Reject<ConcurrentFileChangeException>(() => journal.ResumeAsync(transport, trust, cursor, retained, administration: administration)
                 .GetAwaiter().GetResult());
             if (!journal.HasPending || transport.Submissions != 0)
                 throw new Exception("Competing central head caused a new submission.");
             transport.HeadOverride = null;
             var originalBytes = File.ReadAllBytes(localPath);
             File.WriteAllBytes(localPath, [1, 2, 3]);
-            Reject<ConcurrentFileChangeException>(() => journal.ResumeAsync(transport, trust, cursor, retained)
+            Reject<ConcurrentFileChangeException>(() => journal.ResumeAsync(transport, trust, cursor, retained, administration: administration)
                 .GetAwaiter().GetResult());
             if (!journal.HasPending || transport.Submissions != 0)
                 throw new Exception("Independent local edit was overwritten or uploaded.");
             File.WriteAllBytes(localPath, originalBytes);
-            Reject<IOException>(() => journal.ResumeAsync(transport, trust, cursor, retained)
+            Reject<IOException>(() => journal.ResumeAsync(transport, trust, cursor, retained, administration: administration)
                 .GetAwaiter().GetResult());
             if (!journal.HasPending || trust.LoadOffline().Checkpoint != oldPolicy.Checkpoint ||
                 ConcurrentFileWriter.Capture(localPath) != originalFile || transport.Submissions != 1)
@@ -151,8 +157,9 @@ internal static class KeyLibraryPolicyTransitionTests
             // but before the vault/cursor updates, then reconstruct the journal.
             trust.AcceptPackageUpdate(next, oldPolicy.Checkpoint);
             var reopened = new KeyLibraryPolicyTransitionJournal(journalPath, id, localPath, journalProtection);
-            var after = reopened.ResumeAsync(transport, trust, cursor, retained).GetAwaiter().GetResult();
+            var after = reopened.ResumeAsync(transport, trust, cursor, retained, administration: administration).GetAwaiter().GetResult();
             if (reopened.HasPending || transport.Submissions != 1 ||
+                administration.RequireLocalAuthority(trust) != nextPolicy.Checkpoint ||
                 trust.LoadOffline().Checkpoint != nextPolicy.Checkpoint ||
                 ConcurrentFileWriter.Capture(localPath).Sha256 != after.CiphertextSha256 ||
                 !cursor.HasUploadBase(after) ||
