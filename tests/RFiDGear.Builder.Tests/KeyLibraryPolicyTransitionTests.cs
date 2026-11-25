@@ -238,6 +238,32 @@ internal static class KeyLibraryPolicyTransitionTests
                 throw new Exception("Policy change reused the previous encryption generation.");
             _ = KeyLibraryVault.Unprotect(rewrapped, nextPolicy, "keys", [recovery], recovery: true);
             Reject<CryptographicException>(() => KeyLibraryVault.Unprotect(rewrapped, nextPolicy, "keys", [removed]));
+            // A workstation may miss the policy change AND subsequent catalog
+            // changes. The latest snapshot must retain the original history.
+            var laggingTrust = new OfflineGroupTrustStore(Path.Combine(directory, "lagging-trust.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            laggingTrust.Enroll(old.AdministratorPublicKey, fingerprint, old.Policy);
+            var laggingPath = Path.Combine(directory, "lagging-vault.json");
+            var laggingFile = KeyLibrarySyncClient.InstallDownloadedSnapshot(laggingPath,
+                laggingTrust, "keys", before, first, [retained], FileRevision.Missing);
+            var laggingCursor = new CentralKeyLibraryCursorStore(Path.Combine(directory, "lagging-cursor.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            laggingCursor.RememberReconciled(before, laggingFile);
+            var newerCatalog = KeyLibraryEditing.AddCustomer(payload, "Another synthetic customer").Next;
+            var encryptedNewer = GroupVaultService.Write(KeyLibraryVault.Protect(newerCatalog, nextPolicy, "keys", now));
+            var newerTransfer = administration.SignEncryptedCentralSync(trust, "keys", after,
+                newerCatalog.Catalog.Revision, encryptedNewer);
+            var newest = restarted.Accept(newerTransfer);
+            var latestSnapshot = restarted.ReadAuthorizedSnapshot(KeyLibraryDownloadAuthorization.Sign(
+                newest, retained, now), retained, now);
+            var laggingJournal = new KeyLibraryPolicyTransitionJournal(Path.Combine(directory, "lagging-transition.bin"),
+                id, laggingPath, new OfflineGroupTrustTests.TestProtection());
+            laggingJournal.StageReceived(laggingTrust, laggingCursor, before, latestSnapshot, retained);
+            var laggingTransport = new LostReplyTransport(restarted, retained, now);
+            if (laggingJournal.ResumeAsync(laggingTransport, laggingTrust, laggingCursor, retained)
+                    .GetAwaiter().GetResult() != newest || laggingTransport.Submissions != 0 ||
+                KeyLibraryVaultStore.Load(laggingPath, laggingTrust, "keys", [retained]).Catalog.Customers.Length != 2)
+                throw new Exception("Lagging member did not receive the latest signed catalog without writing centrally.");
             // Document the unavoidable offline limitation: an already retained
             // historical ciphertext and matching old policy are still usable.
             _ = KeyLibraryVault.Unprotect(GroupVaultService.Read(first.EncryptedVault), oldPolicy, "keys", [removed]);
