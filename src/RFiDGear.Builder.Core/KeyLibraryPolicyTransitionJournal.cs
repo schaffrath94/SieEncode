@@ -28,11 +28,15 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
     private readonly string vaultPath = Path.GetFullPath(localVaultPath);
 
     private sealed record Pending(GroupEnrollmentPackage Previous,
-        CentralKeyLibraryHead Expected, SignedKeyLibraryPolicyTransition Transition);
+        CentralKeyLibraryHead Expected, SignedKeyLibraryPolicyTransition Transition)
+    {
+        public CentralKeyLibraryHead? ReceivedHead { get; init; }
+    }
     private sealed record State(string Format, int Version, Guid LibraryId, string VaultPath,
         Pending? Intent, CentralKeyLibraryHead? Completed);
 
     public bool HasPending => Read().State?.Intent is not null;
+    public bool IsReceiveOnly => Read().State?.Intent?.ReceivedHead is not null;
 
     // Only public enrollment data is returned; private identity selection
     // must still prove access to both recipient sets.
@@ -70,6 +74,39 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
         Save(new(Format, 1, libraryId, vaultPath, pending, null), revision);
     }
 
+    /// <summary>Stage a signed snapshot already accepted by the central
+    /// service. This journal can never send a policy change on this path.</summary>
+    public void StageReceived(OfflineGroupTrustStore trust, CentralKeyLibraryCursorStore cursor,
+        CentralKeyLibraryHead baseline, CentralKeyLibrarySnapshot snapshot,
+        X509Certificate2 personalIdentity)
+    {
+        var (old, revision) = Read();
+        if (old?.Intent is not null)
+            throw new InvalidOperationException("Ein ausstehender Richtlinienwechsel muss zuerst abgeschlossen werden.");
+        var previous = trust.ExportPublic();
+        var frozen = KeyLibrarySyncWire.Read<CentralKeyLibrarySnapshot>(
+            KeyLibrarySyncWire.Write(snapshot), KeyLibrarySyncWire.MaximumEncryptedBytes);
+        var pending = new Pending(previous, baseline, new(frozen.Enrollment, frozen.Transfer))
+            { ReceivedHead = frozen.Head };
+        var target = ExpectedResult(pending);
+        cursor.RequirePolicyTransitionBase(baseline, target);
+        var local = ConcurrentFileWriter.Capture(vaultPath);
+        if (!local.Exists || local.Sha256 != baseline.CiphertextSha256 ||
+            !cursor.HasUploadBase(baseline) || !cursor.HasUnchangedLocalBase(local))
+            throw new ConcurrentFileChangeException(vaultPath);
+        var current = KeyLibraryVaultStore.Load(vaultPath, trust, baseline.GroupId, [personalIdentity]);
+        var next = OpenTarget(pending, personalIdentity);
+        if (current.Catalog.Revision != baseline.CatalogRevision ||
+            ConcurrentFileWriter.Capture(vaultPath) != local ||
+            trust.LoadOffline().Checkpoint != baseline.Policy)
+            throw new CryptographicException("Lokaler Bestand ist nicht exakt abgeglichen.");
+        KeyLibraryVaultStore.ValidateImmutableHistory(current, next);
+        if (next.Catalog.Revision == current.Catalog.Revision &&
+            !KeyLibraryAutomaticSync.LogicallyEquivalent(current, next))
+            throw new CryptographicException("Empfangener Richtlinienwechsel verändert den Katalog ohne neue Revision.");
+        Save(new(Format, 1, libraryId, vaultPath, pending, null), revision);
+    }
+
     /// <summary>
     /// First inspect the remote head. Submit only while it is exactly the
     /// original base; after an ambiguous network failure, resume from the
@@ -98,7 +135,7 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
         cursor.RequirePolicyTransitionBase(pending.Expected, target);
         var local = RequireLocalState(pending, target, trust);
         var remote = await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false);
-        if (remote == pending.Expected)
+        if (remote == pending.Expected && pending.ReceivedHead is null)
         {
             // A partial local installation is only legal AFTER the remote commit.
             if (local.Sha256 != pending.Expected.CiphertextSha256 ||
@@ -146,8 +183,12 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
             throw new CryptographicException("Lokaler Vault und Richtlinie wurden nicht vollständig übernommen.");
         administration?.AcceptCommittedPolicyTransition(pending.Previous,
             pending.Transition.Enrollment, trust);
-        cursor.RememberPolicyTransition(pending.Previous, pending.Expected,
-            pending.Transition, target, verified);
+        if (pending.ReceivedHead is not null)
+            cursor.RememberReceivedPolicy(pending.Previous, pending.Expected,
+                new(target, pending.Transition.Enrollment, pending.Transition.Rewrapped), verified);
+        else
+            cursor.RememberPolicyTransition(pending.Previous, pending.Expected,
+                pending.Transition, target, verified);
         // Drop the bulky intent only after all three local stores agree.
         Save(new(Format, 1, libraryId, vaultPath, null, target), revision);
         return target;
@@ -157,6 +198,12 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
     {
         if (pending.Expected.LibraryId != libraryId || libraryId == Guid.Empty)
             throw new CryptographicException("Richtlinienwechsel gehört zu einer anderen Bibliothek.");
+        if (pending.ReceivedHead is { } received)
+        {
+            _ = KeyLibraryPolicyTransition.VerifyReceivedSnapshot(pending.Previous,
+                pending.Expected, new(received, pending.Transition.Enrollment, pending.Transition.Rewrapped));
+            return received;
+        }
         var claim = KeyLibraryPolicyTransition.Verify(pending.Transition, pending.Previous, pending.Expected);
         return new(libraryId, checked(pending.Expected.CentralRevision + 1),
             claim.NextCiphertextSha256, pending.Expected.GroupId, claim.Policy, pending.Expected.CatalogRevision);
@@ -166,7 +213,7 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
     {
         var payload = KeyLibraryVault.Unprotect(GroupVaultService.Read(pending.Transition.Rewrapped.EncryptedVault),
             GroupEnrollmentPackages.Validate(pending.Transition.Enrollment), pending.Expected.GroupId, [identity]);
-        if (payload.Catalog.Revision != pending.Expected.CatalogRevision)
+        if (payload.Catalog.Revision != (pending.ReceivedHead ?? pending.Expected).CatalogRevision)
             throw new CryptographicException("Neu verschlüsselter Katalog besitzt eine falsche Revision.");
         return payload;
     }
