@@ -47,11 +47,7 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         return signed.Checkpoint;
     }
 
-    /// <summary>
-    /// Explicitly sign a single encrypted-catalog change. The signature binds
-    /// the expected Vault file revision, exact next catalog contents and current
-    /// trusted signed group policy. No raw key or private authority leaves here.
-    /// </summary>
+    /// <summary>Sign one bounded audit read with the current protected main authority.</summary>
     public SignedKeyLibraryAuditQuery SignAuditQuery(OfflineGroupTrustStore trust,
         string afterId, int limit, X509Certificate2 identity, DateTimeOffset now)
     {
@@ -72,6 +68,11 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
     }
 
+    /// <summary>
+    /// Explicitly sign a single encrypted-catalog change. The signature binds
+    /// the expected Vault file revision, exact next catalog contents and current
+    /// trusted signed group policy. No raw key or private authority leaves here.
+    /// </summary>
     public SignedKeyLibraryMutation SignKeyLibraryMutation(OfflineGroupTrustStore trust,
         string operation, string groupId, FileRevision previousVault,
         KeyLibraryVaultPayload next)
