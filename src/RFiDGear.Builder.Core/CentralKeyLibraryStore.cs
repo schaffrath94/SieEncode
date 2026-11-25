@@ -123,6 +123,35 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
     }
 
     /// <summary>
+    /// Commit a newer signed directory and its freshly encrypted library in
+    /// one atomic CAS. There is never an intermediate state in which the
+    /// accepted ciphertext and authorized recipient policy disagree.
+    /// Ordinary uploads cannot advance a policy or reuse a catalog revision.
+    /// </summary>
+    public CentralKeyLibraryHead AcceptPolicyTransition(SignedKeyLibraryPolicyTransition transition)
+    {
+        ArgumentNullException.ThrowIfNull(transition);
+        var (state, captured) = Read();
+        var current = Head(state);
+        var enrollment = GroupEnrollmentPackages.Read(
+            GroupEnrollmentPackages.Write(transition.Enrollment));
+        var transfer = transition.Rewrapped;
+        ArgumentNullException.ThrowIfNull(transfer);
+        var frozen = new SignedKeyLibrarySync(transfer.Claim.ToArray(),
+            transfer.Signature.ToArray(), transfer.EncryptedVault.ToArray());
+        _ = KeyLibraryPolicyTransition.Verify(new(enrollment, frozen),
+            state.Enrollment, current);
+        var updated = state with
+        {
+            Enrollment = enrollment,
+            CentralRevision = checked(state.CentralRevision + 1),
+            Accepted = frozen
+        };
+        Save(updated, captured);
+        return Head(updated);
+    }
+
+    /// <summary>
     /// Return an encrypted snapshot only after proving private member-key
     /// possession against the pinned active group directory. A network server
     /// must additionally require authenticated TLS and replay protection.
