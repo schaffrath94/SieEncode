@@ -95,6 +95,11 @@ public sealed class KeyLibraryHttpsTransport : IDisposable, IKeyLibraryPolicyTra
         SendAsync<KeyLibraryAuditReceipt>(HttpMethod.Post, "audit", report,
             KeyLibrarySyncWire.MaximumMetadataBytes, cancellationToken);
 
+    public Task<KeyLibraryAuditPage> ReadAuditPageAsync(SignedKeyLibraryAuditQuery query,
+        CancellationToken cancellationToken = default) =>
+        SendAsync<KeyLibraryAuditPage>(HttpMethod.Post, "audit-review", query,
+            KeyLibraryAuditReview.MaximumPageBytes, cancellationToken);
+
     private async Task<T> SendAsync<T>(HttpMethod method, string action,
         object? body, int maxResponse, CancellationToken cancellationToken) where T : class
     {
@@ -106,7 +111,8 @@ public sealed class KeyLibraryHttpsTransport : IDisposable, IKeyLibraryPolicyTra
         if (body is not null)
         {
             var bytes = KeyLibrarySyncWire.Write(body);
-            var maxRequest = action == "audit" ? KeyLibraryAuditSync.MaximumBytes
+            var maxRequest = action == "audit-review" ? KeyLibraryAuditReview.MaximumQueryBytes
+                : action == "audit" ? KeyLibraryAuditSync.MaximumBytes
                 : action is "download" or "snapshot" ? KeyLibrarySyncWire.MaximumDownloadRequestBytes
                 : KeyLibrarySyncWire.MaximumEncryptedBytes;
             if (bytes.Length > maxRequest)
