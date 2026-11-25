@@ -113,6 +113,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         var keyManagement = new StackPanel();
         keyManagement.Children.Add(Note("Kunden und Schlüsselversionen werden im selben verschlüsselten Offline-Bestand verwaltet. Nur die bestätigte Hauptverwaltung mit separatem, berechtigtem persönlichen Gruppenzertifikat darf hier Werte anlegen, bearbeiten und bewusst einsehen. Änderungen sind lokal noch nicht zentral bestätigt."));
         keyManagement.Children.Add(Action("Schlüsselbibliothek verwalten", OpenKeyLibraryManagement));
+        keyManagement.Children.Add(Action("Aktivitätsprotokoll ansehen", OpenAuditReview));
         root.Children.Add(new Expander { Header = "Schlüsselverwaltung · Kunden, Schlüssel und Versionen",
             Content = keyManagement, IsExpanded = false, Margin = new Thickness(0, 9, 0, 5) });
         var actions = new WrapPanel();
@@ -393,6 +394,19 @@ internal sealed partial class GroupAdministrationWindow : Window
         var fingerprint = CertificateVaultService.Fingerprint(certificate);
         if (MessageBox.Show(this, $"{invitation.DisplayName}\n{fingerprint}\n\nFingerabdruck unabhängig mit der Person abgeglichen?", Title, MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         if (!group.Members.Contains(fingerprint)) { group.Members.Add(fingerprint); dirty = true; RefreshMemberLabels(); }
+    }
+
+    private void OpenAuditReview()
+    {
+        RequireStore();
+        if (dirty) throw new InvalidOperationException("Gruppenänderungen zuerst speichern oder verwerfen.");
+        var id = currentLibrary!.Value;
+        using var lease = CentralGroupPolicyWorkflow.Acquire(id);
+        CentralGroupPolicyWorkflow.RequireNoPending(id);
+        var trust = OwnTrust(id);
+        var authority = Store(id);
+        authority.RequireLocalAuthority(trust);
+        new KeyLibraryAuditReviewWindow(this, id, authority, trust).ShowDialog();
     }
 
     private void OpenKeyLibraryManagement()
