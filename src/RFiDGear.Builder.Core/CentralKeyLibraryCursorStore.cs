@@ -71,6 +71,20 @@ public sealed class CentralKeyLibraryCursorStore(
         SaveObservation(confirmed, local.Sha256);
     }
 
+    internal void RequirePolicyTransitionBase(CentralKeyLibraryHead expected,
+        CentralKeyLibraryHead confirmed)
+    {
+        Validate(expected);
+        Validate(confirmed);
+        var state = Read().State;
+        if (state is null ||
+            !(state.Head == expected && state.ReconciledHead == expected &&
+                state.ReconciledLocalSha256 == expected.CiphertextSha256 ||
+              state.Head == confirmed && state.ReconciledHead == confirmed &&
+                state.ReconciledLocalSha256 == confirmed.CiphertextSha256))
+            throw new CryptographicException("Lokaler Abgleichmerker passt nicht zum vorbereiteten Richtlinienwechsel.");
+    }
+
     /// <summary>Advance across a policy epoch only for the exact signed
     /// transition and installed ciphertext. Normal observations remain strict.</summary>
     internal void RememberPolicyTransition(GroupEnrollmentPackage previous,
@@ -88,7 +102,8 @@ public sealed class CentralKeyLibraryCursorStore(
         var (old, revision) = Read();
         if (old?.Head == confirmed && old.ReconciledHead == confirmed &&
             old.ReconciledLocalSha256 == installed.Sha256) return; // restart after cursor commit
-        if (old?.Head != expected || old.ReconciledHead != expected)
+        if (old?.Head != expected || old.ReconciledHead != expected ||
+            old.ReconciledLocalSha256 != expected.CiphertextSha256)
             throw new CryptographicException("Richtlinienwechsel besitzt keine exakt abgeglichene Vorgängerrevision.");
         SaveCursor(new Cursor(Format, 1, libraryId, confirmed, DateTimeOffset.UtcNow)
         {
