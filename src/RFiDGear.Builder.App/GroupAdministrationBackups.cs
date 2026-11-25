@@ -24,6 +24,8 @@ internal sealed partial class GroupAdministrationWindow
                 return new GroupPrivateBackupTarget($"Registrierte Bibliothek · {id:D}", null, (bytes, password) =>
                 {
                     var trust = new OfflineGroupTrustStore(Path.Combine(trustDirectory, n + ".trust.bin"), id, new WindowsGroupTrustProtection(id));
+                    using var lease = CentralGroupPolicyWorkflow.Acquire(id);
+                    CentralGroupPolicyWorkflow.RequireNoPending(id);
                     Store(id).RestorePrivateBackup(bytes, password, trust);
                     dirty = false; RefreshLibraries(); LoadAdministration(id);
                 });
