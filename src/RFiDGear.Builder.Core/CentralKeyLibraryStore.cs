@@ -217,6 +217,17 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
             accepted.EncryptedVault.ToArray()));
     }
 
+    public KeyLibraryAuditReceipt AcceptAudit(SignedKeyLibraryAudit report,
+        X509Certificate2 authenticatedMember, DateTimeOffset now)
+    {
+        var state = Read().State;
+        if (state.Accepted is null || !IsAuthorizedTlsMember(state, authenticatedMember, now))
+            throw new CryptographicException("Audit-Anmeldung nicht bestätigt.");
+        return new CentralKeyLibraryAuditStore(path + ".audit").Accept(report,
+            authenticatedMember, expectedLibraryId, state.GroupId,
+            GroupEnrollmentPackages.Validate(state.Enrollment), now);
+    }
+
     private (State State, FileRevision Revision) Read()
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
