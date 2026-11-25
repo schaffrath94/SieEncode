@@ -132,7 +132,10 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         if (expected.LibraryId != libraryId || previous.LibraryId != libraryId)
             throw new CryptographicException("Zentrale und lokale Bibliothek stimmen nicht überein.");
         var oldPolicy = GroupEnrollmentPackages.Validate(previous);
-        var priorClaim = KeyLibrarySyncTransport.Verify(previousTransfer, previous);
+        ArgumentNullException.ThrowIfNull(previousTransfer);
+        var prior = new SignedKeyLibrarySync(previousTransfer.Claim.ToArray(),
+            previousTransfer.Signature.ToArray(), previousTransfer.EncryptedVault.ToArray());
+        var priorClaim = KeyLibrarySyncTransport.Verify(prior, previous);
         if (priorClaim.Policy != expected.Policy || priorClaim.GroupId != expected.GroupId ||
             priorClaim.ExpectedCentralRevision + 1 != expected.CentralRevision ||
             priorClaim.CatalogRevision != expected.CatalogRevision ||
@@ -147,7 +150,7 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
             var nextPolicy = KeyLibraryPolicyTransition.VerifyNextPolicy(previous, next, expected);
             // The same retained member must be able to open both epochs.
             // Recovery is deliberately not an implicit fallback.
-            var oldDocument = GroupVaultService.Read(previousTransfer.EncryptedVault);
+            var oldDocument = GroupVaultService.Read(prior.EncryptedVault);
             var payload = KeyLibraryVault.Unprotect(oldDocument, oldPolicy,
                 expected.GroupId, [retainedIdentity]);
             if (payload.Catalog.Revision != expected.CatalogRevision)
