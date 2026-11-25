@@ -130,6 +130,16 @@ app.MapPost("/v1/libraries/{id:guid}/snapshot", async (Guid id, HttpRequest requ
         certificate, DateTimeOffset.UtcNow)));
 }).WithMetadata(new RequestSizeLimitAttribute(KeyLibrarySyncWire.MaximumDownloadRequestBytes));
 
+app.MapPost("/v1/libraries/{id:guid}/audit", async (Guid id, HttpRequest request) =>
+{
+    if (id != libraryId) return Results.NotFound();
+    var certificate = request.HttpContext.Connection.ClientCertificate;
+    if (certificate is null) return Results.Unauthorized();
+    var report = await ReadPayload<SignedKeyLibraryAudit>(request, KeyLibraryAuditSync.MaximumBytes);
+    if (report is null) return Results.BadRequest();
+    return Run(() => WireResponse(store.AcceptAudit(report, certificate, DateTimeOffset.UtcNow)));
+}).WithMetadata(new RequestSizeLimitAttribute(KeyLibraryAuditSync.MaximumBytes));
+
 app.Run();
 
 static IResult Run(Func<IResult> handler)
