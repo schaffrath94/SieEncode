@@ -132,7 +132,10 @@ internal sealed class KeyLibraryAuditReviewWindow : Window
             if (administration.RequireLocalAuthority(trust) != current.Checkpoint)
                 throw new CryptographicException("Verwaltungsstand wurde geändert.");
             if (!reset && policy?.Checkpoint != current.Checkpoint)
+            {
+                local.Clear(); remote.Clear(); next = null;
                 throw new InvalidOperationException("Gruppenstand geändert. Bitte vollständig aktualisieren.");
+            }
             policy = current;
             identities = WindowsVaultIdentityService.List().ToArray();
             var cursor = new CentralKeyLibraryCursorStore(CentralKeyLibraryCursorStore.DefaultPath(libraryId),
@@ -170,7 +173,8 @@ internal sealed class KeyLibraryAuditReviewWindow : Window
             }
 
             var endpoint = CentralGroupPolicyWorkflow.Endpoint(libraryId);
-            if (endpoint is null || string.IsNullOrEmpty(group))
+            var selectedGroup = group;
+            if (endpoint is null || string.IsNullOrEmpty(selectedGroup))
             {
                 status.Text = "Nur lokale Nachweise · Zentralverbindung oder abgeglichener Gruppenstand fehlt" + localNotice;
                 return;
@@ -178,7 +182,7 @@ internal sealed class KeyLibraryAuditReviewWindow : Window
             X509Certificate2? identity = null;
             foreach (var item in identities)
             {
-                try { _ = KeyLibraryDisclosure.RequireMember(current, group, item.Certificate, DateTimeOffset.UtcNow); identity = item.Certificate; break; }
+                try { _ = KeyLibraryDisclosure.RequireMember(current, selectedGroup, item.Certificate, DateTimeOffset.UtcNow); identity = item.Certificate; break; }
                 catch (CryptographicException) { }
             }
             if (identity is null) throw new CryptographicException("Aktiver persönlicher Zentralzugang fehlt.");
