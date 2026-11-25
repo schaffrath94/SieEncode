@@ -16,6 +16,8 @@ public static class OfflineGroupDirectory
         {
             if (person is null || !Id(person.Id) || !people.Add(person.Id) || !Name(person.Name) || person.Devices is null || person.Devices.Length > 100)
                 throw new InvalidDataException("Person ist ungültig oder doppelt vorhanden.");
+            if (person.AllowKeyLibraryCopy && !person.AllowKeyLibraryView)
+                throw new InvalidDataException("Kopierfreigabe benötigt eine ausdrückliche Anzeigefreigabe.");
             foreach (var device in person.Devices)
             {
                 if (device is null || !Name(device.Name) || device.Fingerprint is not { Length: 64 } ||
