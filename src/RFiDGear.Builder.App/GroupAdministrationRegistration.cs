@@ -34,7 +34,7 @@ internal sealed partial class GroupAdministrationWindow
         if (!confirmed) throw new InvalidDataException("Lokale Registrierung muss bestätigt werden.");
         RequireSavedAdministration();
         using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
-        CentralGroupPolicyWorkflow.RequireNoPending(currentLibrary.Value);
+        CentralGroupPolicyWorkflow.RequireNoPending(currentLibrary!.Value);
         status.Text = SynchronizeOwnRegistration(store!.ExportPublic(), allowInitialEnrollment: true);
     }
 
