@@ -31,6 +31,8 @@ internal sealed partial class GroupAdministrationWindow : Window
     private bool dirty;
     private bool lastSignedAccessReduction;
     private bool loading;
+    private bool policySyncing;
+    private readonly Button resumePolicy = new() { Content = "Ausstehenden Berechtigungswechsel fortsetzen", Visibility = Visibility.Collapsed };
     private Guid? currentLibrary;
 
     public GroupAdministrationWindow(Window owner, string localTrustDirectory)
@@ -112,7 +114,11 @@ internal sealed partial class GroupAdministrationWindow : Window
         root.Children.Add(new Expander { Header = "Schlüsselverwaltung · Kunden, Schlüssel und Versionen",
             Content = keyManagement, IsExpanded = false, Margin = new Thickness(0, 9, 0, 5) });
         var actions = new WrapPanel();
-        actions.Children.Add(Action("Änderungen signiert speichern", ConfirmAndSaveGroups));
+        var saveGroups = new Button { Content = "Änderungen signiert speichern" };
+        saveGroups.Click += async (_, _) => await ConfirmAndSaveGroupsAsync();
+        actions.Children.Add(saveGroups);
+        resumePolicy.Click += async (_, _) => await ResumePolicyAsync();
+        actions.Children.Add(resumePolicy);
         actions.Children.Add(Action("Aktuellen Gruppenstand für Kollegen exportieren", ExportPublic));
         root.Children.Add(actions);
         root.Children.Add(Action("Schließen", Close));
@@ -122,7 +128,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         layout.Children.Add(error);
         layout.Children.Add(new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
         Content = layout;
-        Closing += (_, e) => { if (!ConfirmDiscard()) e.Cancel = true; };
+        Closing += (_, e) => { if (policySyncing || !ConfirmDiscard()) e.Cancel = true; };
         RefreshLibraries();
         // Only the single pre-existing administration is loaded; never create a new key implicitly.
         if (libraries.Items.Count == 1 && libraries.Items[0] is Guid onlyLibrary)
@@ -149,9 +155,16 @@ internal sealed partial class GroupAdministrationWindow : Window
         var package = candidate.ExportPublic();
         var verified = GroupEnrollmentPackages.Validate(package);
         // Merely opening this window must never silently replace the local trust registration.
-        var registrationStatus = synchronizeOwnRegistration
-            ? SynchronizeOwnRegistration(package)
-            : "Lokale Registrierung beim automatischen Öffnen nicht verändert; Änderungen erst ausdrücklich signiert speichern.";
+        var pending = CentralGroupPolicyWorkflow.Pending(id) is not null;
+        var endpoint = CentralGroupPolicyWorkflow.Endpoint(id);
+        var registrationStatus = pending
+            ? "Zentraler Berechtigungswechsel ausstehend. Bitte fortsetzen; noch keine weitere Änderung oder Veröffentlichung."
+            : endpoint is not null
+                ? "Zentrale eingerichtet. Richtlinienänderungen werden über den zentralen Abgleich bestätigt."
+                : synchronizeOwnRegistration
+                    ? SynchronizeOwnRegistration(package)
+                    : "Lokale Registrierung beim automatischen Öffnen nicht verändert; Änderungen erst ausdrücklich signiert speichern.";
+        resumePolicy.Visibility = pending ? Visibility.Visible : Visibility.Collapsed;
         LoadPeople(verified.Policy);
         groups.Clear();
         foreach (var group in verified.Policy.Groups)
@@ -220,10 +233,15 @@ internal sealed partial class GroupAdministrationWindow : Window
         });
     }
 
-    private void ConfirmAndSaveGroups()
+    private async Task ConfirmAndSaveGroupsAsync()
     {
-        RequireStore();
-        CommitEdits();
+        if (policySyncing) return;
+        try
+        {
+        error.Text = "";
+        RequireStore(); CommitEdits();
+        var id = currentLibrary!.Value;
+        CentralGroupPolicyWorkflow.RequireNoPending(id);
         if (ReducesPreviouslySignedAccess() &&
             MessageBox.Show(this,
                 "ACHTUNG: Sie entfernen oder deaktivieren bestehende Zugänge.\n\n" +
@@ -234,12 +252,77 @@ internal sealed partial class GroupAdministrationWindow : Window
                 "Offline-Entzug ist keine sofortige Schlüsselsperre",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
             return;
-        SaveGroups();
+        var endpoint = CentralGroupPolicyWorkflow.Endpoint(id);
+        if (endpoint is null)
+        {
+            SaveGroups();
+            return;
+        }
+        if (!dirty) return;
+        if (!personMode)
+            throw new InvalidOperationException("Zentrale benötigt personenbasierte Gruppen.");
+        var current = GroupEnrollmentPackages.Validate(store!.ExportPublic());
+        if (current.Checkpoint != checkpoint)
+            throw new InvalidOperationException("Verwaltungsstand wurde verändert. Bitte neu laden.");
+        var proposed = current.Policy with
+        {
+            Revision = checked(current.Policy.Revision + 1),
+            People = PersonRows(),
+            Groups = groups.Select(g => new OfflineVaultGroup(g.Id, g.Name, g.Members.ToArray())).ToArray()
+        };
+        var reduced = ReducesPreviouslySignedAccess();
+        policySyncing = true; IsEnabled = false;
+        status.Text = "Berechtigungsänderung wird vorbereitet und zentral bestätigt …";
+        var head = await CentralGroupPolicyWorkflow.SaveAsync(id, store, OwnTrust(id), proposed, endpoint);
+        dirty = false;
+        LoadAdministration(id, synchronizeOwnRegistration: false);
+        lastSignedAccessReduction = reduced;
+        status.Text = $"Berechtigungsstand {head.Policy.Revision} zentral bestätigt. Lokale Schlüsselbibliothek aktualisiert. Alte Offline-Kopien bleiben gegebenenfalls zugänglich. Öffentlichen Stand für Kollegen exportieren.";
+        }
+        catch (Exception exception)
+        {
+            ShowError(exception);
+            RefreshPolicyRecoveryStatus();
+        }
+        finally { policySyncing = false; IsEnabled = true; }
+    }
+
+    private async Task ResumePolicyAsync()
+    {
+        if (policySyncing || currentLibrary is not Guid id || store is null) return;
+        try
+        {
+            error.Text = "";
+            policySyncing = true; IsEnabled = false;
+            var head = await CentralGroupPolicyWorkflow.ResumeAsync(id, store, OwnTrust(id));
+            dirty = false;
+            LoadAdministration(id, synchronizeOwnRegistration: false);
+            lastSignedAccessReduction = true; // preserve conservative offline-revocation notice on export
+            status.Text = $"Berechtigungsstand {head.Policy.Revision} zentral bestätigt und lokal übernommen. Öffentlichen Stand für Kollegen exportieren; historische Offline-Kopien bleiben gegebenenfalls zugänglich.";
+        }
+        catch (Exception exception) { ShowError(exception); RefreshPolicyRecoveryStatus(); }
+        finally { policySyncing = false; IsEnabled = true; }
+    }
+
+    private void RefreshPolicyRecoveryStatus()
+    {
+        if (currentLibrary is not Guid id) return;
+        try
+        {
+            if (CentralGroupPolicyWorkflow.Pending(id) is not null)
+            {
+                resumePolicy.Visibility = Visibility.Visible;
+                status.Text = "Berechtigungswechsel ausstehend. Keine weiteren Änderungen speichern oder exportieren. Bei erreichbarer Zentrale denselben Auftrag fortsetzen.";
+            }
+        }
+        catch (Exception exception) { ShowError(exception); }
     }
 
     internal void SaveGroups()
     {
         RequireStore(); CommitEdits();
+        using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary.Value);
         var accessReduced = ReducesPreviouslySignedAccess();
         var groupRows = groups.Select(g => new OfflineVaultGroup(g.Id, g.Name, g.Members.ToArray())).ToArray();
         if (!personMode && people.Count > 0) throw new InvalidOperationException("Bitte zuerst die bisherigen Gruppen auf Personen umstellen.");
@@ -263,6 +346,7 @@ internal sealed partial class GroupAdministrationWindow : Window
     {
         RequireStore();
         CommitEdits();
+        CentralGroupPolicyWorkflow.RequireNoPending(currentLibrary!.Value);
         if (dirty) throw new InvalidOperationException("Bitte Änderungen zuerst signiert speichern oder den Dialog neu laden.");
         var package = store!.ExportPublic();
         var bytes = GroupEnrollmentPackages.Write(package);
@@ -295,6 +379,8 @@ internal sealed partial class GroupAdministrationWindow : Window
         if (dirty)
             throw new InvalidOperationException("Gruppen-/Personenänderungen erst signiert speichern, bevor die Schlüsselbibliothek bearbeitet wird.");
         var id = currentLibrary ?? throw new InvalidOperationException("Bibliotheks-ID fehlt.");
+        using var lease = CentralGroupPolicyWorkflow.Acquire(id);
+        CentralGroupPolicyWorkflow.RequireNoPending(id);
         var trust = new OfflineGroupTrustStore(
             Path.Combine(localTrustDirectory, id.ToString("N") + ".trust.bin"),
             id, new WindowsGroupTrustProtection(id));
