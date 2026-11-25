@@ -71,7 +71,7 @@ internal sealed class GroupEnrollmentWindow : Window
                 }
                 DialogResult = true;
             }
-            catch (Exception exception) when (exception is IOException or InvalidDataException or CryptographicException or ArgumentException or UnauthorizedAccessException)
+            catch (Exception exception) when (exception is IOException or InvalidDataException or CryptographicException or ArgumentException or UnauthorizedAccessException or InvalidOperationException)
             { error.Text = exception.Message; }
         };
         footer.Children.Add(cancel); footer.Children.Add(save); root.Children.Add(footer);
