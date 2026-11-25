@@ -128,6 +128,20 @@ internal static class KeyLibraryPolicyTransitionTests
             Reject<CryptographicException>(() => _ = new KeyLibraryPolicyTransitionJournal(
                 journalPath, id, localPath, new OfflineGroupTrustTests.TestProtection()).HasPending);
             var transport = new LostReplyTransport(center, retained, now);
+            transport.HeadOverride = before with { CentralRevision = before.CentralRevision + 1,
+                CatalogRevision = before.CatalogRevision + 1 };
+            Reject<ConcurrentFileChangeException>(() => journal.ResumeAsync(transport, trust, cursor, retained)
+                .GetAwaiter().GetResult());
+            if (!journal.HasPending || transport.Submissions != 0)
+                throw new Exception("Competing central head caused a new submission.");
+            transport.HeadOverride = null;
+            var originalBytes = File.ReadAllBytes(localPath);
+            File.WriteAllBytes(localPath, [1, 2, 3]);
+            Reject<ConcurrentFileChangeException>(() => journal.ResumeAsync(transport, trust, cursor, retained)
+                .GetAwaiter().GetResult());
+            if (!journal.HasPending || transport.Submissions != 0)
+                throw new Exception("Independent local edit was overwritten or uploaded.");
+            File.WriteAllBytes(localPath, originalBytes);
             Reject<IOException>(() => journal.ResumeAsync(transport, trust, cursor, retained)
                 .GetAwaiter().GetResult());
             if (!journal.HasPending || trust.LoadOffline().Checkpoint != oldPolicy.Checkpoint ||
@@ -182,8 +196,9 @@ internal static class KeyLibraryPolicyTransitionTests
         X509Certificate2 member, DateTimeOffset now) : IKeyLibraryPolicyTransitionTransport
     {
         public int Submissions { get; private set; }
+        public CentralKeyLibraryHead? HeadOverride { get; set; }
         public Task<CentralKeyLibraryHead> ReadHeadAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(center.ReadHead());
+            => Task.FromResult(HeadOverride ?? center.ReadHead());
 
         public Task<CentralKeyLibraryHead> ChangePolicyAsync(SignedKeyLibraryPolicyTransition transition,
             CancellationToken cancellationToken = default)
