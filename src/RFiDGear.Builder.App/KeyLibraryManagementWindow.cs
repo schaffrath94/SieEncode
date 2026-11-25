@@ -153,7 +153,7 @@ internal sealed class KeyLibraryManagementWindow : Window
         versionImport.Click += async (_, _) => await ExecuteAndSyncAsync(() => AddVersion(generateValue: false));
         retire.Click += async (_, _) => await ExecuteAndSyncAsync(() => SetStatus(KeyLibraryContracts.Retired));
         compromise.Click += async (_, _) => await ExecuteAndSyncAsync(() => SetStatus(KeyLibraryContracts.Compromised));
-        reveal.Click += (_, _) => Execute(Reveal);
+        reveal.Click += async (_, _) => await RevealAsync();
         try
         {
             var savedEndpoint = endpointStore.Load();
@@ -346,19 +346,78 @@ internal sealed class KeyLibraryManagementWindow : Window
             new KeyLibraryAddress(selected.KeyId, selected.Version), nextStatus));
     }
 
-    private void Reveal()
+    private async Task RevealAsync()
     {
-        var selected = SelectedKey();
-        if (MessageBox.Show(this,
-            $"Schlüsselwert für {selected.Name} v{selected.Version} bewusst im Klartext anzeigen? Nur die angemeldete Hauptverwaltung mit persönlicher Gruppenzulassung erhält Zugriff. Die Anzeige und Zwischenablage sind sensible Bereiche.",
-            Title, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
-        var current = OpenCurrent();
-        var metadata = current.Catalog.Keys.Single(k => k.KeyId == selected.KeyId && k.Version == selected.Version);
-        if (metadata.CustomerId != selected.CustomerId || metadata.KeyType != selected.KeyType)
-            throw new InvalidDataException("Schlüsselmetadaten haben sich geändert.");
-        var value = current.Secrets.Single(k => k.Key.KeyId == selected.KeyId && k.Key.Version == selected.Version).HexValue;
-        var view = new KeyLibrarySecretViewWindow(this, metadata, value);
-        view.ShowDialog();
+        if (syncing) return;
+        syncing = true; groupSelection.IsEnabled = false; RefreshActions();
+        var identities = Array.Empty<WindowsVaultIdentity>();
+        try
+        {
+            RequireAuthority();
+            var selected = SelectedKey();
+            var group = CurrentGroup().Id;
+            var path = CurrentPath();
+            var policy = trust.LoadOffline();
+            var file = ConcurrentFileWriter.Capture(path);
+            identities = WindowsVaultIdentityService.List().ToArray();
+            X509Certificate2? identity = null;
+            KeyLibraryDisclosureAccess? actor = null;
+            KeyLibraryVaultPayload? current = null;
+            foreach (var candidate in identities)
+            {
+                try
+                {
+                    var access = KeyLibraryDisclosure.RequireMember(policy, group, candidate.Certificate, DateTimeOffset.UtcNow);
+                    current = KeyLibraryVaultStore.Load(path, trust, group, [candidate.Certificate]);
+                    identity = candidate.Certificate; actor = access; break;
+                }
+                catch (CryptographicException) { }
+            }
+            if (identity is null || actor is null || current is null)
+                throw new CryptographicException("Aktiver persönlicher Zugang zur Hauptverwaltung fehlt.");
+            if (ConcurrentFileWriter.Capture(path) != file || trust.LoadOffline().Checkpoint != policy.Checkpoint ||
+                current.Catalog.Keys.SingleOrDefault(k => k.KeyId == selected.KeyId && k.Version == selected.Version) != selected)
+                throw new ConcurrentFileChangeException(path);
+            var revision = current.Catalog.Revision;
+            current = null;
+            var warning = selected.Status == KeyLibraryContracts.Active ? "" :
+                "\n\nHistorische oder kompromittierte Version: nicht für neue produktive Konfigurationen verwenden.";
+            if (MessageBox.Show(this,
+                $"Schlüsselwert für {selected.Name} v{selected.Version} bewusst im Klartext anzeigen? Die Anforderung wird lokal protokolliert. Kopien bleiben außerhalb des Vaults verfügbar." + warning,
+                Title, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+            string ReadAndRecord(bool copying)
+            {
+                // Main authority must remain locally available in addition to
+                // the exact enrolled personal decryption identity.
+                RequireAuthority();
+                var now = DateTimeOffset.UtcNow;
+                var verified = trust.LoadOffline();
+                var active = KeyLibraryDisclosure.RequireMember(verified, group, identity, now);
+                if (active.PersonId != actor.PersonId || active.DeviceFingerprint != actor.DeviceFingerprint ||
+                    verified.Checkpoint != policy.Checkpoint || ConcurrentFileWriter.Capture(path) != file)
+                    throw new ConcurrentFileChangeException(path);
+                var opened = KeyLibraryVaultStore.Load(path, trust, group, [identity]);
+                if (opened.Catalog.Revision != revision ||
+                    opened.Catalog.Keys.SingleOrDefault(k => k.KeyId == selected.KeyId && k.Version == selected.Version) != selected ||
+                    trust.LoadOffline().Checkpoint != policy.Checkpoint || ConcurrentFileWriter.Capture(path) != file)
+                    throw new ConcurrentFileChangeException(path);
+                RequireAuthority();
+                KeyLibraryAuditWorkflow.Record(libraryId,
+                    new(Guid.NewGuid(), now, libraryId, group, active.PersonId,
+                        active.DeviceFingerprint, selected.CustomerId, selected.KeyId, selected.Version,
+                        revision, policy.Checkpoint, copying ? "copy-requested" : "view-requested"), identity);
+                return opened.Secrets.Single(k => k.Key.KeyId == selected.KeyId && k.Key.Version == selected.Version).HexValue;
+            }
+            var value = ReadAndRecord(false);
+            new KeyLibrarySecretViewWindow(this, selected, value, true, () => ReadAndRecord(true)).ShowDialog();
+            status.Text = await KeyLibraryAuditWorkflow.TryFlushAsync(libraryId, identity);
+        }
+        catch (Exception exception) { error.Text = "Klartextanforderung nicht abgeschlossen: " + exception.Message; }
+        finally
+        {
+            foreach (var item in identities) item.Certificate.Dispose();
+            syncing = false; groupSelection.IsEnabled = true; RefreshActions();
+        }
     }
 
     private async Task ExecuteAndSyncAsync(Action action)
@@ -433,6 +492,7 @@ internal sealed class KeyLibraryManagementWindow : Window
                     "Zentraler Konflikt: Unterschiedliche Bibliotheksstände. Kein Schlüssel wurde automatisch überschrieben.",
                 _ => "Zentraler Abgleich liefert keinen eindeutigen Status."
             };
+            centralStatus.Text += await KeyLibraryAuditWorkflow.FlushAsync(libraryId, transport, certificate);
             if (result.Outcome == KeyLibrarySyncOutcome.Downloaded) Refresh();
         }
         catch (HttpRequestException)
