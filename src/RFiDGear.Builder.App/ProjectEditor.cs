@@ -267,7 +267,7 @@ public partial class MainWindow
         EditorProductivePiccPanel.Visibility = extension ? Visibility.Collapsed : Visibility.Visible;
         EditorGenerateKeysButton.Content = editorProject.Project.KeyLibrary is not null
             ? "Bibliotheksschlüssel zuordnen"
-            : KeyLibraryAssignmentWindow.HasLocalVaults()
+            : KeyLibraryAssignmentWindow.HasLocalVaults(localGroupTrustDirectory)
                 ? "Schlüssel aus Bibliothek wählen"
                 : extension ? "Schlüssel für neue Applications erzeugen" : "Neue Schlüssel erzeugen";
     }
@@ -820,7 +820,7 @@ public partial class MainWindow
         try
         {
             if (editorProject is null) throw new InvalidOperationException("Kein Projekt im Editor geöffnet.");
-            if (editorProject.Project.KeyLibrary is not null || KeyLibraryAssignmentWindow.HasLocalVaults())
+            if (editorProject.Project.KeyLibrary is not null || KeyLibraryAssignmentWindow.HasLocalVaults(localGroupTrustDirectory))
             {
                 AssignEditorKeyLibrary();
                 return;
