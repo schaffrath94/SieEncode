@@ -59,6 +59,7 @@ var tests = new (string Name, Action Run)[]
     ("User-protected central sync cursor prevents server revision rollback and divergent epochs", CentralKeyLibraryCursorTests.Verify),
     ("Shared strict bounded central HTTP sync wire format", KeyLibrarySyncWireTests.Verify),
     ("Atomic signed key library policy and recipient transition", KeyLibraryPolicyTransitionTests.Verify),
+    ("Explicit member disclosure rights, exact selection and protected audit", KeyLibraryDisclosureTests.Verify),
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
