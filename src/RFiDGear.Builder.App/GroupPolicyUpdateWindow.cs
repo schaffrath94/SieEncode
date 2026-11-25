@@ -45,6 +45,8 @@ internal sealed class GroupPolicyUpdateWindow : Window
     internal void Accept(bool confirmed)
     {
         if (!confirmed) throw new InvalidOperationException("Bitte die Übernahme des geprüften Standes bestätigen.");
+        using var lease = CentralGroupPolicyWorkflow.Acquire(candidate.LibraryId);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(candidate.LibraryId);
         store.AcceptPackageUpdate(candidate, checkpoint);
     }
 
