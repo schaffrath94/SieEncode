@@ -54,7 +54,7 @@ builder.Logging.AddConsole();
 builder.WebHost.ConfigureKestrel(server =>
 {
     server.AddServerHeader = false;
-    server.Limits.MaxRequestBodySize = 32 * 1024 * 1024;
+    server.Limits.MaxRequestBodySize = KeyLibrarySyncWire.MaximumEncryptedBytes;
     server.ListenAnyIP(port, endpoint =>
         endpoint.UseHttps(https =>
         {
@@ -87,25 +87,25 @@ app.Use(async (context, next) =>
 app.MapGet("/v1/libraries/{id:guid}/head", (Guid id) =>
 {
     if (id != libraryId) return Results.NotFound();
-    return Run(() => Results.Ok(store.ReadHead()));
+    return Run(() => WireResponse(store.ReadHead()));
 });
 
 app.MapPost("/v1/libraries/{id:guid}/upload", async (Guid id, HttpRequest request) =>
 {
     if (id != libraryId) return Results.NotFound();
-    var transfer = await ReadPayload<SignedKeyLibrarySync>(request);
+    var transfer = await ReadPayload<SignedKeyLibrarySync>(request, KeyLibrarySyncWire.MaximumEncryptedBytes);
     if (transfer is null) return Results.BadRequest();
-    return Run(() => Results.Ok(store.Accept(transfer)));
+    return Run(() => WireResponse(store.Accept(transfer)));
 });
 
 app.MapPost("/v1/libraries/{id:guid}/download", async (Guid id, HttpRequest request) =>
 {
     if (id != libraryId) return Results.NotFound();
-    var claim = await ReadPayload<SignedKeyLibraryDownload>(request);
+    var claim = await ReadPayload<SignedKeyLibraryDownload>(request, KeyLibrarySyncWire.MaximumDownloadRequestBytes);
     if (claim is null) return Results.BadRequest();
-    return Run(() => Results.Ok(store.ReadEncryptedSnapshot(claim,
+    return Run(() => WireResponse(store.ReadEncryptedSnapshot(claim,
         DateTimeOffset.UtcNow)));
-}).WithMetadata(new RequestSizeLimitAttribute(64 * 1024));
+}).WithMetadata(new RequestSizeLimitAttribute(KeyLibrarySyncWire.MaximumDownloadRequestBytes));
 
 app.Run();
 
@@ -133,16 +133,18 @@ static IResult Run(Func<IResult> handler)
     }
 }
 
-static async Task<T?> ReadPayload<T>(HttpRequest request)
+static IResult WireResponse<T>(T value) where T : class =>
+    Results.Bytes(KeyLibrarySyncWire.Write(value), "application/json");
+
+static async Task<T?> ReadPayload<T>(HttpRequest request, int limit) where T : class
 {
-    if (!request.HasJsonContentType()) return default;
-    // Kestrel caps the encrypted body; System.Text.Json does not need secrets
-    // and rejects invalid envelopes before any central persistence.
+    if (!request.HasJsonContentType() || request.ContentLength is long length && length > limit)
+        return null;
     try
     {
-        return await JsonSerializer.DeserializeAsync<T>(request.Body,
-            new JsonSerializerOptions { MaxDepth = 32 },
+        return await KeyLibrarySyncWire.ReadAsync<T>(request.Body, limit,
             request.HttpContext.RequestAborted);
     }
-    catch (JsonException) { return default; }
+    catch (JsonException) { return null; }
+    catch (InvalidDataException) { return null; }
 }
