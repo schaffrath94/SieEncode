@@ -44,7 +44,7 @@ internal sealed partial class GroupAdministrationWindow
     {
         RequireSavedAdministration();
         using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
-        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary.Value);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
         store!.GrantDelegation(invitation, fingerprint, "vollmacht-" + Guid.NewGuid().ToString("N"), groupIds, checkpoint!);
         LoadAdministration(currentLibrary!.Value);
     }
@@ -75,7 +75,7 @@ internal sealed partial class GroupAdministrationWindow
         if (MessageBox.Show(this, $"{selected.Label}\n\nVollmacht für zukünftige Änderungen entziehen? Den neuen Stand anschließend weitergeben. Offline-Kopien erfahren den Entzug erst nach Aktualisierung.", Title, MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         var current = GroupEnrollmentPackages.Validate(store!.ExportPublic());
         using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
-        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary.Value);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
         store.UpdateDelegations(current.Policy.Delegations.Select(d => d.Id == selected.Id ? d with { Enabled = false } : d).ToArray(), checkpoint!);
         LoadAdministration(currentLibrary!.Value);
     }
@@ -93,7 +93,7 @@ internal sealed partial class GroupAdministrationWindow
         if (preview.Length == 0) throw new InvalidOperationException("Der Antrag enthält keine Änderungen an Gruppennamen oder Mitgliedschaften.");
         if (MessageBox.Show(this, preview + "\n\nDiese geprüften Änderungen signiert übernehmen?", Title, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
         using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
-        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary.Value);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
         store.ApplyDelegatedChange(change, checkpoint!);
         LoadAdministration(currentLibrary!.Value);
     }
