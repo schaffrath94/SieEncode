@@ -79,6 +79,13 @@ internal static class CentralGroupPolicyWorkflow
             return "Offline · keine Zentrale konfiguriert";
         }
         var current = trust.LoadOffline().Policy;
+        var vaultPath = KeyLibraryVaultStore.DefaultPath(id, group);
+        // One trust checkpoint covers the entire local library. Do not
+        // advance it while another local group Vault has not been coordinated.
+        if (Directory.Exists(DirectoryFor(id)) &&
+            Directory.EnumerateFiles(DirectoryFor(id), "*.key-library.vault.json")
+                .Any(p => !string.Equals(Path.GetFullPath(p), vaultPath, StringComparison.OrdinalIgnoreCase)))
+            allowPolicyAdoption = false;
         var certificate = pending is null
             ? SelectRetained(identities, current, current, group)
             : SelectRetained(identities,
@@ -89,7 +96,7 @@ internal static class CentralGroupPolicyWorkflow
             using var transport = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), id,
                 endpoint.ServerCertificateSha256, certificate);
             var result = await KeyLibraryAutomaticSync.SynchronizeMemberAsync(transport,
-                KeyLibraryVaultStore.DefaultPath(id, group), trust, Cursor(id),
+                vaultPath, trust, Cursor(id),
                 Journal(id, group), group, certificate, cancellationToken, allowPolicyAdoption);
             if (result.Outcome is not (KeyLibrarySyncOutcome.InSync or KeyLibrarySyncOutcome.Downloaded or
                 KeyLibrarySyncOutcome.PolicyDownloaded))
