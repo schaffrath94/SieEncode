@@ -98,6 +98,18 @@ app.MapPost("/v1/libraries/{id:guid}/upload", async (Guid id, HttpRequest reques
     return Run(() => WireResponse(store.Accept(transfer)));
 });
 
+app.MapPost("/v1/libraries/{id:guid}/policy-transition", async (Guid id, HttpRequest request) =>
+{
+    if (id != libraryId) return Results.NotFound();
+    var certificate = request.HttpContext.Connection.ClientCertificate;
+    if (certificate is null) return Results.Unauthorized();
+    var transition = await ReadPayload<SignedKeyLibraryPolicyTransition>(request,
+        KeyLibrarySyncWire.MaximumEncryptedBytes);
+    if (transition is null) return Results.BadRequest();
+    return Run(() => WireResponse(store.AcceptPolicyTransition(transition,
+        certificate, DateTimeOffset.UtcNow)));
+});
+
 app.MapPost("/v1/libraries/{id:guid}/download", async (Guid id, HttpRequest request) =>
 {
     if (id != libraryId) return Results.NotFound();
