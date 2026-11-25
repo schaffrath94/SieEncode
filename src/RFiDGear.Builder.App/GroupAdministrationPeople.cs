@@ -13,6 +13,8 @@ internal sealed class PersonAdministrationDraft
     public string Id { get; init; } = "person-" + Guid.NewGuid().ToString("N");
     public string Name { get; set; } = "Neue Person";
     public bool Enabled { get; set; } = true;
+    public bool AllowKeyLibraryView { get; set; }
+    public bool AllowKeyLibraryCopy { get; set; }
     public ObservableCollection<DeviceAdministrationDraft> Devices { get; } = [];
 }
 internal sealed class DeviceAdministrationDraft
@@ -37,7 +39,10 @@ internal sealed partial class GroupAdministrationWindow
         panel.Children.Add(Note("Person auswählen, Geräte-Einladungen hinzufügen und darunter Gruppen zuordnen. Deaktivierung wirkt auf neue Freigaben; alte Vaultkopien bleiben zugänglich."));
         peopleGrid.Columns.Add(new DataGridTextColumn { Header = "Person", Binding = new Binding(nameof(PersonAdministrationDraft.Name)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
         peopleGrid.Columns.Add(new DataGridCheckBoxColumn { Header = "Aktiv", Binding = new Binding(nameof(PersonAdministrationDraft.Enabled)) });
+        peopleGrid.Columns.Add(new DataGridCheckBoxColumn { Header = "Klartext anzeigen", Binding = new Binding(nameof(PersonAdministrationDraft.AllowKeyLibraryView)) });
+        peopleGrid.Columns.Add(new DataGridCheckBoxColumn { Header = "Klartext kopieren", Binding = new Binding(nameof(PersonAdministrationDraft.AllowKeyLibraryCopy)) });
         peopleGrid.ItemsSource = people;
+        panel.Children.Add(Note("Klartextanzeige und Kopieren separat freigeben. Kopieren setzt Anzeige voraus. Diese Bedienrechte gelten innerhalb der bereits entschlüsselbaren Bibliothek, nicht als kryptografische Kundentrennung."));
         peopleGrid.SelectionChanged += (_, _) => deviceGrid.ItemsSource = (peopleGrid.SelectedItem as PersonAdministrationDraft)?.Devices;
         peopleGrid.CellEditEnding += (_, e) => { if (!loading && e.EditAction == DataGridEditAction.Commit) dirty = true; };
         deviceGrid.Columns.Add(new DataGridTextColumn { Header = "Gerät", Binding = new Binding(nameof(DeviceAdministrationDraft.Name)), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
@@ -125,12 +130,13 @@ internal sealed partial class GroupAdministrationWindow
         people.Clear(); personMode = policy.Version == 2 || policy.Groups.All(g => g.Members.Length == 0);
         foreach (var person in policy.People)
         {
-            var row = new PersonAdministrationDraft { Id = person.Id, Name = person.Name, Enabled = person.Enabled };
+            var row = new PersonAdministrationDraft { Id = person.Id, Name = person.Name, Enabled = person.Enabled, AllowKeyLibraryView = person.AllowKeyLibraryView, AllowKeyLibraryCopy = person.AllowKeyLibraryCopy };
             foreach (var device in person.Devices) row.Devices.Add(new DeviceAdministrationDraft { Name = device.Name, Fingerprint = device.Fingerprint, Certificate = device.Certificate, Enabled = device.Enabled });
             people.Add(row);
         }
     }
-    private OfflineVaultPerson[] PersonRows() => people.Select(p => new OfflineVaultPerson(p.Id, p.Name, p.Enabled, p.Devices.Select(d => new OfflineVaultDevice(d.Name, d.Fingerprint, d.Certificate, d.Enabled)).ToArray())).ToArray();
+    private OfflineVaultPerson[] PersonRows() => people.Select(p => new OfflineVaultPerson(p.Id, p.Name, p.Enabled, p.Devices.Select(d => new OfflineVaultDevice(d.Name, d.Fingerprint, d.Certificate, d.Enabled)).ToArray())
+        { AllowKeyLibraryView = p.AllowKeyLibraryView, AllowKeyLibraryCopy = p.AllowKeyLibraryCopy }).ToArray();
     private void RefreshMemberLabels() => members.ItemsSource = (grid.SelectedItem as GroupAdministrationDraft)?.Members.Select(id => new GroupMemberLabel(id, people.FirstOrDefault(p => p.Id == id) is { } p ? p.Name + (p.Enabled ? "" : " · inaktiv") + " · " + p.Id : id)).ToArray();
     private void CommitEdits()
     {
