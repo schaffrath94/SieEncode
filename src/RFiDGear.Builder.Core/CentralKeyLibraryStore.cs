@@ -76,7 +76,12 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
     public bool IsAuthorizedTlsMember(X509Certificate2 certificate, DateTimeOffset now)
     {
         if (certificate is null) return false;
-        var state = Read().State;
+        return IsAuthorizedTlsMember(Read().State, certificate, now);
+    }
+
+    private static bool IsAuthorizedTlsMember(State state, X509Certificate2 certificate,
+        DateTimeOffset now)
+    {
         var policy = GroupEnrollmentPackages.Validate(state.Enrollment).Policy;
         if (policy.Version != 2 || policy.People is null) return false;
         var groupIds = state.CentralRevision == 0
@@ -128,7 +133,20 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
     /// accepted ciphertext and authorized recipient policy disagree.
     /// Ordinary uploads cannot advance a policy or reuse a catalog revision.
     /// </summary>
-    public CentralKeyLibraryHead AcceptPolicyTransition(SignedKeyLibraryPolicyTransition transition)
+    public CentralKeyLibraryHead AcceptPolicyTransition(SignedKeyLibraryPolicyTransition transition) =>
+        AcceptPolicyTransitionCore(transition, null, default);
+
+    // The network caller must retain membership across the exact CAS; the
+    // middleware check alone is not sufficient if the directory changes.
+    public CentralKeyLibraryHead AcceptPolicyTransition(SignedKeyLibraryPolicyTransition transition,
+        X509Certificate2 authenticatedMember, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(authenticatedMember);
+        return AcceptPolicyTransitionCore(transition, authenticatedMember, now);
+    }
+
+    private CentralKeyLibraryHead AcceptPolicyTransitionCore(SignedKeyLibraryPolicyTransition transition,
+        X509Certificate2? authenticatedMember, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(transition);
         var (state, captured) = Read();
@@ -147,6 +165,10 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
             CentralRevision = checked(state.CentralRevision + 1),
             Accepted = frozen
         };
+        if (authenticatedMember is not null &&
+            (!IsAuthorizedTlsMember(state, authenticatedMember, now) ||
+             !IsAuthorizedTlsMember(updated, authenticatedMember, now)))
+            throw new CryptographicException("Der authentifizierte Arbeitsplatz muss in beiden Richtlinien berechtigt sein.");
         Save(updated, captured);
         return Head(updated);
     }
