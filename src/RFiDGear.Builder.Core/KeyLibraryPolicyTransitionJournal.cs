@@ -34,6 +34,10 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
 
     public bool HasPending => Read().State?.Intent is not null;
 
+    // Only public enrollment data is returned; private identity selection
+    // must still prove access to both recipient sets.
+    public GroupEnrollmentPackage? PendingEnrollment => Read().State?.Intent?.Transition.Enrollment;
+
     public void Stage(OfflineGroupTrustStore trust, CentralKeyLibraryCursorStore cursor,
         CentralKeyLibraryHead expected, SignedKeyLibraryPolicyTransition transition,
         X509Certificate2 retainedIdentity, bool confirmed)
@@ -72,13 +76,22 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
     public async Task<CentralKeyLibraryHead> ResumeAsync(
         IKeyLibraryPolicyTransitionTransport transport, OfflineGroupTrustStore trust,
         CentralKeyLibraryCursorStore cursor, X509Certificate2 retainedIdentity,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        OfflineGroupAdministrationStore? administration = null)
     {
         ArgumentNullException.ThrowIfNull(transport);
         var (state, revision) = Read();
         var pending = state?.Intent ??
             throw new InvalidOperationException("Kein vorbereiteter Richtlinienwechsel vorhanden.");
         var target = ExpectedResult(pending);
+        if (administration is not null)
+        {
+            var own = administration.ExportPublic();
+            var ownPolicy = GroupEnrollmentPackages.Validate(own).Checkpoint;
+            if (!own.AdministratorPublicKey.SequenceEqual(pending.Previous.AdministratorPublicKey) ||
+                (ownPolicy != pending.Expected.Policy && ownPolicy != target.Policy))
+                throw new CryptographicException("Lokale Hauptverwaltung passt nicht zum vorbereiteten Wechsel.");
+        }
         _ = OpenTarget(pending, retainedIdentity);
         cursor.RequirePolicyTransitionBase(pending.Expected, target);
         var local = RequireLocalState(pending, target, trust);
@@ -129,6 +142,8 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
         if (verified != local || verified.Sha256 != target.CiphertextSha256 ||
             trust.LoadOffline().Checkpoint != target.Policy)
             throw new CryptographicException("Lokaler Vault und Richtlinie wurden nicht vollständig übernommen.");
+        administration?.AcceptCommittedPolicyTransition(pending.Previous,
+            pending.Transition.Enrollment, trust);
         cursor.RememberPolicyTransition(pending.Previous, pending.Expected,
             pending.Transition, target, verified);
         // Drop the bulky intent only after all three local stores agree.
