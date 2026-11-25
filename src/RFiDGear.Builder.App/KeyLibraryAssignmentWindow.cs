@@ -35,6 +35,9 @@ internal sealed class KeyLibraryAssignmentWindow : Window
     private readonly Button accept = new() { Content = "Schlüsselzuordnung übernehmen", IsEnabled = false };
     private readonly List<SlotPicker> pickers = [];
     private KeyLibrarySnapshot? catalog;
+    private bool syncing;
+    private string syncStatus = "";
+    private readonly TextBlock syncInfo = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DimGray };
 
     internal KeyLibrarySnapshot? SelectedCatalog { get; private set; }
     internal Guid SelectedCustomerId { get; private set; }
@@ -57,6 +60,7 @@ internal sealed class KeyLibraryAssignmentWindow : Window
         root.Children.Add(Note("Projekt-Schlüssel werden über feste Schlüssel-ID und Version zugeordnet. Die verschlüsselte Offline-Bibliothek wird nur nach erfolgreicher Windows-/Gruppenfreigabe geöffnet. In der Projektdatei stehen keine Schlüsselwerte."));
         root.Children.Add(Note("1 · Bereits bereitgestellte, berechtigte Offline-Bibliothek wählen"));
         root.Children.Add(vaults);
+        root.Children.Add(syncInfo);
         root.Children.Add(Note("2 · Für jeden benötigten Karten-Schlüsselplatz eine ausdrückliche Zuordnung wählen"));
         root.Children.Add(slotsPanel);
         root.Children.Add(status);
@@ -73,7 +77,8 @@ internal sealed class KeyLibraryAssignmentWindow : Window
         root.Children.Add(buttons);
         Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
 
-        vaults.SelectionChanged += (_, _) => LoadSelectedVault();
+        Closing += (_, e) => { if (syncing) e.Cancel = true; };
+        vaults.SelectionChanged += async (_, _) => await LoadSelectedVaultAsync();
         vaults.ItemsSource = DiscoverLocalVaults();
         if (vaults.Items.Count == 1) vaults.SelectedIndex = 0;
         else status.Text = vaults.Items.Count == 0
@@ -109,21 +114,29 @@ internal sealed class KeyLibraryAssignmentWindow : Window
         return choices.OrderBy(choice => choice.LibraryId).ThenBy(choice => choice.GroupId, StringComparer.Ordinal).ToArray();
     }
 
-    private void LoadSelectedVault()
+    private async Task LoadSelectedVaultAsync()
     {
+        if (syncing) return;
         catalog = null;
         pickers.Clear();
         slotsPanel.Children.Clear();
         accept.IsEnabled = false;
         if (vaults.SelectedItem is not VaultChoice choice) return;
+        syncing = true;
+        vaults.IsEnabled = false;
+        syncInfo.Text = "Schlüsselbibliothek wird geprüft …";
         try
         {
             var trust = new OfflineGroupTrustStore(
                 Path.Combine(trustDirectory, choice.LibraryId.ToString("N") + ".trust.bin"),
                 choice.LibraryId, new WindowsGroupTrustProtection(choice.LibraryId));
+            using var lease = CentralGroupPolicyWorkflow.Acquire(choice.LibraryId);
             var identities = WindowsVaultIdentityService.List();
             try
             {
+                syncStatus = await CentralGroupPolicyWorkflow.RefreshMemberAsync(choice.LibraryId,
+                    choice.GroupId, trust, identities.Select(identity => identity.Certificate));
+                syncInfo.Text = syncStatus;
                 // Decrypt only on explicit selection. Do not retain the secret payload
                 // in this dialog or pass it back to the editor.
                 var unlocked = KeyLibraryVaultStore.Load(choice.Path, trust, choice.GroupId,
@@ -173,14 +186,21 @@ internal sealed class KeyLibraryAssignmentWindow : Window
             catalog = null;
             pickers.Clear();
             slotsPanel.Children.Clear();
+            syncInfo.Text = "Kein neuer Zentralstand bestätigt.";
             ShowError(ex);
         }
+        finally { syncing = false; vaults.IsEnabled = true; RefreshReadyStateAfterSuccess(); }
+    }
+
+    private void RefreshReadyStateAfterSuccess()
+    {
+        if (catalog is not null) RefreshReadyState();
     }
 
     private void RefreshReadyState()
     {
         var missing = pickers.Count(picker => picker.Selection.SelectedItem is not KeyChoice);
-        accept.IsEnabled = catalog is not null && pickers.Count > 0 && missing == 0;
+        accept.IsEnabled = !syncing && catalog is not null && pickers.Count > 0 && missing == 0;
         status.Foreground = Brushes.DimGray;
         status.Text = catalog is null ? "Bibliothek nicht freigegeben."
             : missing > 0 ? $"{missing} Schlüsselplatz/-plätze müssen noch ausdrücklich zugeordnet werden."
@@ -189,6 +209,11 @@ internal sealed class KeyLibraryAssignmentWindow : Window
 
     private void CommitAssignment()
     {
+        if (syncing) throw new InvalidOperationException("Schlüsselbibliothek wird noch geprüft.");
+        if (vaults.SelectedItem is not VaultChoice choice)
+            throw new InvalidOperationException("Keine Schlüsselbibliothek ausgewählt.");
+        using var lease = CentralGroupPolicyWorkflow.Acquire(choice.LibraryId);
+        CentralGroupPolicyWorkflow.RequireNoPending(choice.LibraryId);
         if (catalog is null || pickers.Count == 0 ||
             pickers.Any(item => item.Selection.SelectedItem is not KeyChoice))
             throw new InvalidOperationException("Bitte alle Schlüsselplätze ausdrücklich zuordnen.");
