@@ -109,7 +109,42 @@ internal static class KeyLibraryPolicyTransitionTests
                 center.IsAuthorizedTlsMember(added, now))
                 throw new Exception("Rejected transition changed membership or central revision.");
 
-            var after = center.AcceptPolicyTransition(transition);
+            Reject<CryptographicException>(() => center.AcceptPolicyTransition(transition, removed, now));
+            Reject<CryptographicException>(() => center.AcceptPolicyTransition(transition, added, now));
+            var cursor = new CentralKeyLibraryCursorStore(Path.Combine(directory, "cursor.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            cursor.RememberReconciled(before, originalFile);
+            var journalPath = Path.Combine(directory, "transition.bin");
+            var journalProtection = new OfflineGroupTrustTests.TestProtection();
+            var journal = new KeyLibraryPolicyTransitionJournal(journalPath, id, localPath, journalProtection);
+            Reject<InvalidOperationException>(() => journal.Stage(trust, cursor, before,
+                transition, retained, false));
+            journal.Stage(trust, cursor, before, transition, retained, true);
+            if (!journal.HasPending || center.ReadHead() != before ||
+                ConcurrentFileWriter.Capture(localPath) != originalFile)
+                throw new Exception("Staged intent modified live data before central acknowledgement.");
+            Reject<InvalidOperationException>(() => journal.Stage(trust, cursor, before,
+                transition, retained, true));
+            Reject<CryptographicException>(() => _ = new KeyLibraryPolicyTransitionJournal(
+                journalPath, id, localPath, new OfflineGroupTrustTests.TestProtection()).HasPending);
+            var transport = new LostReplyTransport(center, retained, now);
+            Reject<IOException>(() => journal.ResumeAsync(transport, trust, cursor, retained)
+                .GetAwaiter().GetResult());
+            if (!journal.HasPending || trust.LoadOffline().Checkpoint != oldPolicy.Checkpoint ||
+                ConcurrentFileWriter.Capture(localPath) != originalFile || transport.Submissions != 1)
+                throw new Exception("Lost response discarded pending intent or changed local state.");
+            // Simulate a second interruption after local trust installation
+            // but before the vault/cursor updates, then reconstruct the journal.
+            trust.AcceptPackageUpdate(next, oldPolicy.Checkpoint);
+            var reopened = new KeyLibraryPolicyTransitionJournal(journalPath, id, localPath, journalProtection);
+            var after = reopened.ResumeAsync(transport, trust, cursor, retained).GetAwaiter().GetResult();
+            if (reopened.HasPending || transport.Submissions != 1 ||
+                trust.LoadOffline().Checkpoint != nextPolicy.Checkpoint ||
+                ConcurrentFileWriter.Capture(localPath).Sha256 != after.CiphertextSha256 ||
+                !cursor.HasUploadBase(after) ||
+                !cursor.HasUnchangedLocalBase(ConcurrentFileWriter.Capture(localPath)))
+                throw new Exception("Restart did not complete the exact prepared operation once.");
+            Reject<CryptographicException>(() => cursor.RequireNotRolledBack(before));
             var restarted = new CentralKeyLibraryStore(centralPath, id);
             if (after.CentralRevision != before.CentralRevision + 1 ||
                 after.CatalogRevision != before.CatalogRevision ||
@@ -141,6 +176,22 @@ internal static class KeyLibraryPolicyTransitionTests
             _ = KeyLibraryVault.Unprotect(GroupVaultService.Read(first.EncryptedVault), oldPolicy, "keys", [removed]);
         }
         finally { Directory.Delete(directory, recursive: true); }
+    }
+
+    private sealed class LostReplyTransport(CentralKeyLibraryStore center,
+        X509Certificate2 member, DateTimeOffset now) : IKeyLibraryPolicyTransitionTransport
+    {
+        public int Submissions { get; private set; }
+        public Task<CentralKeyLibraryHead> ReadHeadAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(center.ReadHead());
+
+        public Task<CentralKeyLibraryHead> ChangePolicyAsync(SignedKeyLibraryPolicyTransition transition,
+            CancellationToken cancellationToken = default)
+        {
+            Submissions++;
+            _ = center.AcceptPolicyTransition(transition, member, now);
+            throw new IOException("Synthetic connection interruption after durable central commit.");
+        }
     }
 
     private static void Reject<T>(Action operation) where T : Exception
