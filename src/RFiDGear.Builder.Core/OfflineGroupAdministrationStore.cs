@@ -358,19 +358,34 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
             RecoveryDevices = devices ?? throw new ArgumentNullException(nameof(devices)) });
 
     public GroupEnrollmentPackage GrantRecovery(VaultRecipientInvitation invitation, string confirmedFingerprint, GroupPolicyCheckpoint expectedPolicy)
+        => Transform(expectedPolicy, current => ProposeRecoveryGrant(current, invitation, confirmedFingerprint));
+
+    public static OfflineGroupPolicy ProposeRecoveryGrant(VerifiedGroupPolicy current,
+        VaultRecipientInvitation invitation, string confirmedFingerprint)
     {
         var imported = CertificateVaultService.ImportInvitation(invitation);
         using var certificate = imported.Certificate;
         var fingerprint = CertificateVaultService.Fingerprint(certificate);
         if (fingerprint != confirmedFingerprint) throw new CryptographicException("Recovery-Fingerabdruck stimmt nicht mit der unabhängigen Bestätigung überein.");
+        if (current.Policy.Version != 2) throw new InvalidOperationException("Bitte zuerst das Personen-/Gruppenverzeichnis signiert speichern.");
+        if (current.Policy.RecoveryDevices.Any(d => d.Fingerprint == fingerprint))
+            throw new InvalidOperationException("Recovery-Zugang ist bereits vorhanden. Den vorhandenen Eintrag verwenden.");
         var device = new OfflineVaultDevice(imported.DisplayName, fingerprint, Convert.ToBase64String(certificate.RawData), true);
-        return Transform(expectedPolicy, current =>
-        {
-            if (current.Policy.Version != 2) throw new InvalidOperationException("Bitte zuerst das Personen-/Gruppenverzeichnis signiert speichern.");
-            if (current.Policy.RecoveryDevices.Any(d => d.Fingerprint == fingerprint))
-                throw new InvalidOperationException("Recovery-Zugang ist bereits vorhanden. Den vorhandenen Eintrag verwenden.");
-            return current.Policy with { Revision = checked(current.Policy.Revision + 1), RecoveryDevices = [.. current.Policy.RecoveryDevices, device] };
-        });
+        var proposed = current.Policy with { Revision = checked(current.Policy.Revision + 1),
+            RecoveryDevices = [.. current.Policy.RecoveryDevices, device] };
+        OfflineGroupPolicyService.Validate(proposed);
+        return proposed;
+    }
+
+    public static OfflineGroupPolicy ProposeRecoveryEnabled(VerifiedGroupPolicy current,
+        string fingerprint, bool enabled)
+    {
+        if (!current.Policy.RecoveryDevices.Any(d => d.Fingerprint == fingerprint))
+            throw new InvalidOperationException("Recovery-Zugang fehlt.");
+        var proposed = current.Policy with { Revision = checked(current.Policy.Revision + 1),
+            RecoveryDevices = current.Policy.RecoveryDevices.Select(d => d.Fingerprint == fingerprint ? d with { Enabled = enabled } : d).ToArray() };
+        OfflineGroupPolicyService.Validate(proposed);
+        return proposed;
     }
 
     /// <summary>Produces only a public transition. Does not activate the successor or alter local trust.</summary>
@@ -405,21 +420,33 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
 
     public GroupEnrollmentPackage GrantDelegation(GroupDelegateInvitation invitation, string confirmedFingerprint,
         string delegationId, string[] groupIds, GroupPolicyCheckpoint expectedPolicy)
+        => Transform(expectedPolicy, current => ProposeDelegationGrant(current, invitation,
+            confirmedFingerprint, delegationId, groupIds));
+
+    public static OfflineGroupPolicy ProposeDelegationGrant(VerifiedGroupPolicy current,
+        GroupDelegateInvitation invitation, string confirmedFingerprint, string delegationId, string[] groupIds)
     {
-        // Freeze the candidate before the trust check and the eventual policy write.
         var candidate = GroupDelegationTransport.ReadInvitation(GroupDelegationTransport.WriteInvitation(invitation));
-        if (candidate.LibraryId != libraryId || GroupDelegationTransport.InvitationFingerprint(candidate) != confirmedFingerprint)
+        if (candidate.LibraryId != current.Policy.LibraryId || GroupDelegationTransport.InvitationFingerprint(candidate) != confirmedFingerprint)
             throw new CryptographicException("Einladung passt nicht zur Bibliothek oder zum unabhängig bestätigten Fingerabdruck.");
-        var scope = groupIds.ToArray();
-        return Transform(expectedPolicy, current =>
-        {
-            if (!current.Policy.People.Any(p => p.Id == candidate.PersonId && p.Enabled))
-                throw new CryptographicException("Aktive Person für die Vollmacht fehlt.");
-            if (current.Policy.Delegations.Any(g => g.Id == delegationId))
-                throw new InvalidDataException("Vorhandene Vollmacht darf durch einen Einladungsimport nicht ersetzt werden.");
-            return current.Policy with { Revision = checked(current.Policy.Revision + 1), Delegations =
-                [.. current.Policy.Delegations, new(delegationId, candidate.PersonId, candidate.SigningPublicKey, scope, true)] };
-        });
+        if (!current.Policy.People.Any(p => p.Id == candidate.PersonId && p.Enabled))
+            throw new CryptographicException("Aktive Person für die Vollmacht fehlt.");
+        if (current.Policy.Delegations.Any(g => g.Id == delegationId))
+            throw new InvalidDataException("Vorhandene Vollmacht darf durch einen Einladungsimport nicht ersetzt werden.");
+        var proposed = current.Policy with { Revision = checked(current.Policy.Revision + 1), Delegations =
+            [.. current.Policy.Delegations, new(delegationId, candidate.PersonId, candidate.SigningPublicKey, groupIds.ToArray(), true)] };
+        OfflineGroupPolicyService.Validate(proposed);
+        return proposed;
+    }
+
+    public static OfflineGroupPolicy ProposeDelegationRevocation(VerifiedGroupPolicy current, string delegationId)
+    {
+        if (!current.Policy.Delegations.Any(d => d.Id == delegationId && d.Enabled))
+            throw new InvalidOperationException("Aktive Vollmacht fehlt.");
+        var proposed = current.Policy with { Revision = checked(current.Policy.Revision + 1),
+            Delegations = current.Policy.Delegations.Select(d => d.Id == delegationId ? d with { Enabled = false } : d).ToArray() };
+        OfflineGroupPolicyService.Validate(proposed);
+        return proposed;
     }
 
     private GroupEnrollmentPackage Transform(GroupPolicyCheckpoint expectedPolicy, Func<VerifiedGroupPolicy, OfflineGroupPolicy> transform)
