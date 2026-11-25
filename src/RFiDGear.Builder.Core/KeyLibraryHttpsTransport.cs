@@ -75,6 +75,11 @@ public sealed class KeyLibraryHttpsTransport : IDisposable
         SendAsync<CentralKeyLibraryHead>(HttpMethod.Post, "upload", transfer,
             KeyLibrarySyncWire.MaximumMetadataBytes, cancellationToken);
 
+    public Task<CentralKeyLibraryHead> ChangePolicyAsync(SignedKeyLibraryPolicyTransition transition,
+        CancellationToken cancellationToken = default) =>
+        SendAsync<CentralKeyLibraryHead>(HttpMethod.Post, "policy-transition", transition,
+            KeyLibrarySyncWire.MaximumMetadataBytes, cancellationToken);
+
     public Task<SignedKeyLibrarySync> DownloadAsync(SignedKeyLibraryDownload proof,
         CancellationToken cancellationToken = default) =>
         SendAsync<SignedKeyLibrarySync>(HttpMethod.Post, "download", proof,
