@@ -70,7 +70,9 @@ internal sealed class KeyLibraryManagementWindow : Window
         MaxHeight = 870;
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        CentralGroupPolicyWorkflow.RequireNoPending(libraryId);
         administration.RequireLocalAuthority(trust);
+        Closing += (_, e) => { if (syncing) e.Cancel = true; };
 
         var root = new StackPanel { Margin = new Thickness(18) };
         root.Children.Add(Note("Eine verschlüsselte Offline-Bibliothek für alle Kunden. Lokale Änderungen gelten erst nach bestätigt erfolgreichem Abgleich als zentral übernommen."));
@@ -118,6 +120,7 @@ internal sealed class KeyLibraryManagementWindow : Window
                     $"Bitte den folgenden vollständigen Fingerabdruck über einen unabhängigen vertrauenswürdigen Kanal prüfen:\n\n{proposed.ServerCertificateSha256}\n\nIst er unabhängig bestätigt und ist die HTTPS-Adresse die richtige Zentrale?",
                     Title, MessageBoxButton.YesNo, MessageBoxImage.Warning,
                     MessageBoxResult.No) != MessageBoxResult.Yes) return;
+                CentralGroupPolicyWorkflow.RequireNoPending(libraryId);
                 endpointStore.Save(proposed);
                 centralStatus.Text = "HTTPS-Zentrale lokal hinterlegt. Kryptografischer Abgleich wird versucht.";
                 await SynchronizeCurrentAsync();
@@ -183,6 +186,7 @@ internal sealed class KeyLibraryManagementWindow : Window
 
     private void RequireAuthority()
     {
+        CentralGroupPolicyWorkflow.RequireNoPending(libraryId);
         administration.RequireLocalAuthority(trust);
     }
 
@@ -370,6 +374,8 @@ internal sealed class KeyLibraryManagementWindow : Window
     private async Task SynchronizeCurrentAsync()
     {
         if (syncing || groupSelection.SelectedItem is not GroupChoice group) return;
+        try { CentralGroupPolicyWorkflow.RequireNoPending(libraryId); }
+        catch (Exception exception) { centralStatus.Text = exception.Message; return; }
         KeyLibrarySyncEndpoint? endpoint;
         try { endpoint = endpointStore.Load(); }
         catch (Exception exception)
