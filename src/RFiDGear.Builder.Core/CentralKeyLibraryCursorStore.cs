@@ -13,7 +13,11 @@ public sealed class CentralKeyLibraryCursorStore(
     string filePath, Guid libraryId, ILocalGroupTrustProtection protection)
 {
     private sealed record Cursor(string Format, int Version, Guid LibraryId,
-        CentralKeyLibraryHead Head, DateTimeOffset ObservedAt);
+        CentralKeyLibraryHead Head, DateTimeOffset ObservedAt)
+    {
+        public CentralKeyLibraryHead? ReconciledHead { get; init; }
+        public string? ReconciledLocalSha256 { get; init; }
+    }
     private const string Format = "SieEncode-Client-Sync-Cursor";
     private const int MaximumBytes = 8192;
     private readonly string path = Path.GetFullPath(filePath);
@@ -40,13 +44,44 @@ public sealed class CentralKeyLibraryCursorStore(
         if (stored is not null) CheckTransition(stored.Head, observed);
     }
 
-    public void Remember(CentralKeyLibraryHead confirmed)
+    // Observed central heads and successfully reconciled local snapshots are
+    // deliberately separate. Observing a conflict must never establish a new base.
+    public bool HasUploadBase(CentralKeyLibraryHead remote)
+    {
+        RequireNotRolledBack(remote);
+        return Read().State?.ReconciledHead == remote;
+    }
+
+    public bool HasUnchangedLocalBase(FileRevision local)
+    {
+        ArgumentNullException.ThrowIfNull(local);
+        var state = Read().State;
+        return local.Exists && state?.ReconciledHead is not null &&
+            local.Sha256 == state.ReconciledLocalSha256;
+    }
+
+    public void Remember(CentralKeyLibraryHead confirmed) =>
+        SaveObservation(confirmed, null);
+
+    public void RememberReconciled(CentralKeyLibraryHead confirmed, FileRevision local)
+    {
+        ArgumentNullException.ThrowIfNull(local);
+        if (confirmed.CentralRevision <= 0 || !local.Exists || !IsSha(local.Sha256))
+            throw new InvalidDataException("Bestätigter gemeinsamer Bibliotheksstand fehlt.");
+        SaveObservation(confirmed, local.Sha256);
+    }
+
+    private void SaveObservation(CentralKeyLibraryHead confirmed, string? reconciledLocal)
     {
         Validate(confirmed);
         var (old, expected) = Read();
         if (old is not null) CheckTransition(old.Head, confirmed);
         var updated = new Cursor(Format, 1, libraryId, confirmed,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow)
+        {
+            ReconciledHead = reconciledLocal is null ? old?.ReconciledHead : confirmed,
+            ReconciledLocalSha256 = reconciledLocal ?? old?.ReconciledLocalSha256
+        };
         var raw = JsonSerializer.SerializeToUtf8Bytes(updated, Options);
         try
         {
@@ -87,6 +122,15 @@ public sealed class CentralKeyLibraryCursorStore(
                 value.LibraryId != libraryId || value.Head is null)
                 throw new CryptographicException("Zentralmerker gehört zu einer anderen Bibliothek.");
             Validate(value.Head);
+            if (value.ReconciledHead is not null)
+            {
+                Validate(value.ReconciledHead);
+                if (value.ReconciledHead.CentralRevision <= 0 || !IsSha(value.ReconciledLocalSha256))
+                    throw new InvalidDataException("Gemeinsamer Abgleichstand ist ungültig.");
+                CheckTransition(value.ReconciledHead, value.Head);
+            }
+            else if (value.ReconciledLocalSha256 is not null)
+                throw new InvalidDataException("Lokaler Abgleichhash ohne bestätigten zentralen Stand.");
             return (value, revision);
         }
         finally { CryptographicOperations.ZeroMemory(raw); }
