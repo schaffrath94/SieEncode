@@ -11,7 +11,7 @@ internal sealed partial class GroupAdministrationWindow
     {
         RequireSavedAdministration();
         using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
-        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary.Value);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
         var candidate = GroupAdministratorTransition.ReadRequest(GroupAdministratorTransition.WriteRequest(request));
         var normalized = string.Concat(independentFingerprint.Where(c => !char.IsWhiteSpace(c))).ToUpperInvariant();
         var trust = OwnTrust(currentLibrary!.Value);
