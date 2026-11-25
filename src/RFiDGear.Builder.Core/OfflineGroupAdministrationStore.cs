@@ -52,6 +52,26 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
     /// the expected Vault file revision, exact next catalog contents and current
     /// trusted signed group policy. No raw key or private authority leaves here.
     /// </summary>
+    public SignedKeyLibraryAuditQuery SignAuditQuery(OfflineGroupTrustStore trust,
+        string afterId, int limit, X509Certificate2 identity, DateTimeOffset now)
+    {
+        var checkpoint = RequireLocalAuthority(trust);
+        var (state, revision) = Load();
+        try
+        {
+            using var administrator = OpenKey(state);
+            if (OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId).Checkpoint != checkpoint ||
+                trust.LoadOffline().Checkpoint != checkpoint || ConcurrentFileWriter.Capture(path) != revision)
+                throw new ConcurrentFileChangeException(path);
+            var signed = KeyLibraryAuditReview.Sign(new(KeyLibraryAuditReview.Format, libraryId,
+                checkpoint, CertificateVaultService.Fingerprint(identity), afterId, limit, now), administrator);
+            if (ConcurrentFileWriter.Capture(path) != revision || trust.LoadOffline().Checkpoint != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            return signed;
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     public SignedKeyLibraryMutation SignKeyLibraryMutation(OfflineGroupTrustStore trust,
         string operation, string groupId, FileRevision previousVault,
         KeyLibraryVaultPayload next)
