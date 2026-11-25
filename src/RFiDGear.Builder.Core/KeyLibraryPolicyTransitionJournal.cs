@@ -37,6 +37,8 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
     // Only public enrollment data is returned; private identity selection
     // must still prove access to both recipient sets.
     public GroupEnrollmentPackage? PendingEnrollment => Read().State?.Intent?.Transition.Enrollment;
+    public GroupEnrollmentPackage? PendingPreviousEnrollment => Read().State?.Intent?.Previous;
+    public CentralKeyLibraryHead? PendingExpected => Read().State?.Intent?.Expected;
 
     public void Stage(OfflineGroupTrustStore trust, CentralKeyLibraryCursorStore cursor,
         CentralKeyLibraryHead expected, SignedKeyLibraryPolicyTransition transition,
