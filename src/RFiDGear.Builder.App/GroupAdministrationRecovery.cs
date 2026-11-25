@@ -27,12 +27,16 @@ internal sealed partial class GroupAdministrationWindow
     internal void GrantRecoveryInvitation(VaultRecipientInvitation invitation, string fingerprint)
     {
         RequireSavedAdministration();
+        using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary.Value);
         store!.GrantRecovery(invitation, fingerprint, checkpoint!);
         LoadAdministration(currentLibrary!.Value);
     }
     internal void SetRecoveryEnabled(string fingerprint, bool enabled)
     {
         RequireSavedAdministration();
+        using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary.Value);
         var current = GroupEnrollmentPackages.Validate(store!.ExportPublic());
         if (!current.Policy.RecoveryDevices.Any(d => d.Fingerprint == fingerprint)) throw new InvalidOperationException("Recovery-Zugang fehlt.");
         store.UpdateRecoveryDevices(current.Policy.RecoveryDevices.Select(d => d.Fingerprint == fingerprint ? d with { Enabled = enabled } : d).ToArray(), checkpoint!);
