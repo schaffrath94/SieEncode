@@ -179,6 +179,52 @@ internal static class KeyLibraryPolicyTransitionTests
                 KeyLibraryDownloadAuthorization.Sign(after, removed, now), now));
             Reject<CryptographicException>(() => restarted.ReadEncryptedSnapshot(
                 KeyLibraryDownloadAuthorization.Sign(before, retained, now), now));
+            // A second workstation has only a personal certificate and pinned
+            // public trust. No administrator private store is used.
+            var memberTrust = new OfflineGroupTrustStore(Path.Combine(directory, "member-trust.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            memberTrust.Enroll(old.AdministratorPublicKey, fingerprint, old.Policy);
+            var memberPath = Path.Combine(directory, "member-vault.json");
+            var memberFile = KeyLibrarySyncClient.InstallDownloadedSnapshot(memberPath,
+                memberTrust, "keys", before, first, [retained], FileRevision.Missing);
+            var memberCursor = new CentralKeyLibraryCursorStore(Path.Combine(directory, "member-cursor.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            memberCursor.RememberReconciled(before, memberFile);
+            var memberProof = KeyLibraryDownloadAuthorization.Sign(after, retained, now);
+            Reject<CryptographicException>(() => restarted.ReadAuthorizedSnapshot(memberProof, added, now));
+            Reject<CryptographicException>(() => restarted.ReadAuthorizedSnapshot(
+                KeyLibraryDownloadAuthorization.Sign(after, removed, now), removed, now));
+            var snapshot = restarted.ReadAuthorizedSnapshot(memberProof, retained, now);
+            Reject<CryptographicException>(() => restarted.ReadAuthorizedSnapshot(memberProof, retained, now));
+            var memberJournalPath = Path.Combine(directory, "member-transition.bin");
+            var memberProtection = new OfflineGroupTrustTests.TestProtection();
+            var memberJournal = new KeyLibraryPolicyTransitionJournal(memberJournalPath, id, memberPath, memberProtection);
+            Reject<CryptographicException>(() => memberJournal.StageReceived(memberTrust, memberCursor,
+                before, snapshot with { Head = after with { CatalogRevision = after.CatalogRevision + 1 } }, retained));
+            Reject<CryptographicException>(() => memberJournal.StageReceived(memberTrust, memberCursor,
+                before, snapshot, removed));
+            memberJournal.StageReceived(memberTrust, memberCursor, before, snapshot, retained);
+            if (!memberJournal.HasPending || !memberJournal.IsReceiveOnly ||
+                memberTrust.LoadOffline().Checkpoint != oldPolicy.Checkpoint)
+                throw new Exception("Member adoption was not staged read-only.");
+            var memberTransport = new LostReplyTransport(restarted, retained, now);
+            memberTransport.HeadOverride = before;
+            Reject<ConcurrentFileChangeException>(() => memberJournal.ResumeAsync(memberTransport,
+                memberTrust, memberCursor, retained).GetAwaiter().GetResult());
+            if (memberTransport.Submissions != 0)
+                throw new Exception("Receive-only member tried to submit a policy write.");
+            memberTransport.HeadOverride = null;
+            memberTrust.AcceptPackageUpdate(next, oldPolicy.Checkpoint);
+            var reopenedMember = new KeyLibraryPolicyTransitionJournal(memberJournalPath, id,
+                memberPath, memberProtection);
+            var memberResult = reopenedMember.ResumeAsync(memberTransport, memberTrust, memberCursor,
+                retained).GetAwaiter().GetResult();
+            if (memberResult != after || memberTransport.Submissions != 0 ||
+                reopenedMember.HasPending || !memberCursor.HasUploadBase(after) ||
+                KeyLibraryVaultStore.Load(memberPath, memberTrust, "keys", [retained]).Secrets.Single() != payload.Secrets.Single())
+                throw new Exception("Member without private administrator could not resume signed read-only policy adoption.");
+            Reject<CryptographicException>(() => memberCursor.RequireNotRolledBack(before));
+
             var downloaded = restarted.ReadEncryptedSnapshot(
                 KeyLibraryDownloadAuthorization.Sign(after, added, now), now);
             var rewrapped = GroupVaultService.Read(downloaded.EncryptedVault);
