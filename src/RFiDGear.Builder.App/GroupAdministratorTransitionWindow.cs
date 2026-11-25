@@ -79,6 +79,9 @@ internal sealed class GroupAdministratorTransitionWindow : Window
     {
         if (store is null || checkpoint is null) throw new InvalidOperationException("Zuerst eine passende registrierte Bibliothek auswählen.");
         var normalized = string.Concat(independentlyConfirmedFingerprint.Where(c => !char.IsWhiteSpace(c))).ToUpperInvariant();
+        var id = store.LoadOffline().Policy.LibraryId;
+        using var lease = CentralGroupPolicyWorkflow.Acquire(id);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(id);
         store.AcceptAdministratorTransition(candidate, checkpoint, normalized, confirmed);
     }
 
