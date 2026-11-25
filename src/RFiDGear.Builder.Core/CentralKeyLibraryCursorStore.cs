@@ -101,6 +101,23 @@ public sealed class CentralKeyLibraryCursorStore(
             !installed.Exists || installed.Sha256 != confirmed.CiphertextSha256)
             throw new CryptographicException("Installierter Richtlinienwechsel stimmt nicht mit der bestätigten Zentrale überein.");
 
+        SavePolicyEpoch(expected, confirmed, installed);
+    }
+
+    internal void RememberReceivedPolicy(GroupEnrollmentPackage previous,
+        CentralKeyLibraryHead expected, CentralKeyLibrarySnapshot snapshot, FileRevision installed)
+    {
+        Validate(expected);
+        Validate(snapshot.Head);
+        _ = KeyLibraryPolicyTransition.VerifyReceivedSnapshot(previous, expected, snapshot);
+        if (!installed.Exists || installed.Sha256 != snapshot.Head.CiphertextSha256)
+            throw new CryptographicException("Empfangener Vault stimmt nicht mit dem installierten Bestand überein.");
+        SavePolicyEpoch(expected, snapshot.Head, installed);
+    }
+
+    private void SavePolicyEpoch(CentralKeyLibraryHead expected,
+        CentralKeyLibraryHead confirmed, FileRevision installed)
+    {
         var (old, revision) = Read();
         if (old?.Head == confirmed && old.ReconciledHead == confirmed &&
             old.ReconciledLocalSha256 == installed.Sha256) return; // restart after cursor commit
