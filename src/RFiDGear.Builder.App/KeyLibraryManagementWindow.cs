@@ -545,23 +545,33 @@ internal sealed class KeyLibraryEntryPrompt : Window
 
 internal sealed class KeyLibrarySecretViewWindow : Window
 {
-    internal KeyLibrarySecretViewWindow(Window owner, KeyLibraryEntry key, string value)
+    internal KeyLibrarySecretViewWindow(Window owner, KeyLibraryEntry key, string value,
+        bool allowCopy = true, Func<string>? verifyCopy = null)
     {
         Owner = owner;
         Title = $"Schlüsselwert · {key.Name} · v{key.Version}";
         Width = 580; SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var panel = new StackPanel { Margin = new Thickness(18) };
-        panel.Children.Add(new TextBlock { Text = "Sichtbarer Geheimwert – nur für berechtigte Verwaltung. Eine Kopie in der Zwischenablage bleibt möglicherweise auch nach dem Schließen erhalten.", TextWrapping = TextWrapping.Wrap });
-        var display = new TextBox { IsReadOnly = true, Text = value, FontFamily = new FontFamily("Consolas"), Margin = new Thickness(0, 12, 0, 12) };
+        panel.Children.Add(new TextBlock { Text = "Sichtbarer Geheimwert – nur für berechtigte Personen. Eine Kopie in der Zwischenablage bleibt möglicherweise auch nach dem Schließen erhalten. Keine automatische Änderung an Karten, Lesern oder SIPORT.", TextWrapping = TextWrapping.Wrap });
+        var display = new TextBlock { Text = value, FontFamily = new FontFamily("Consolas"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 12) };
         panel.Children.Add(display);
         var actions = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Right };
         var copy = new Button { Content = "Für Hostkonfiguration kopieren" };
-        copy.Click += (_, _) => Clipboard.SetText(value);
+        copy.IsEnabled = allowCopy;
+        copy.Click += (_, _) =>
+        {
+            try { Clipboard.SetText(verifyCopy is null ? value : verifyCopy()); }
+            catch (Exception exception)
+            {
+                MessageBox.Show(this, "Kopieren nicht abgeschlossen: " + exception.Message,
+                    Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        };
         var close = new Button { Content = "Schließen" };
         close.Click += (_, _) => Close();
         actions.Children.Add(copy); actions.Children.Add(close); panel.Children.Add(actions);
-        Closed += (_, _) => display.Clear();
+        Closed += (_, _) => display.Text = "";
         Content = panel;
     }
 }
