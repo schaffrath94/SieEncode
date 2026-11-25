@@ -121,7 +121,7 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         OfflineGroupTrustStore trust, CentralKeyLibraryHead expected,
         SignedKeyLibrarySync previousTransfer,
         System.Security.Cryptography.X509Certificates.X509Certificate2 retainedIdentity,
-        DateTimeOffset now, bool confirmed)
+        DateTimeOffset now, bool confirmed, OfflineGroupPolicy? proposedPolicy = null)
     {
         if (!confirmed)
             throw new InvalidOperationException("Richtlinienwechsel muss ausdrücklich bestätigt werden.");
@@ -146,7 +146,12 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         try
         {
             using var administrator = OpenKey(state);
-            var next = PublicPackage(administrator, state.Policy);
+            var current = OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId);
+            if (proposedPolicy is not null && (current.Checkpoint != oldPolicy.Checkpoint ||
+                proposedPolicy.Revision != checked(oldPolicy.Checkpoint.Revision + 1)))
+                throw new ConcurrentFileChangeException(path);
+            var next = PublicPackage(administrator, proposedPolicy is null ? state.Policy :
+                OfflineGroupPolicyService.Sign(proposedPolicy, administrator));
             var nextPolicy = KeyLibraryPolicyTransition.VerifyNextPolicy(previous, next, expected);
             // The same retained member must be able to open both epochs.
             // Recovery is deliberately not an implicit fallback.
@@ -173,6 +178,39 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
                 !latest.AdministratorPublicKey.SequenceEqual(previous.AdministratorPublicKey))
                 throw new ConcurrentFileChangeException(path);
             return result;
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
+    /// <summary>Install the already accepted same-root signed administration
+    /// state, without generating a second policy revision. Safe to resume.</summary>
+    internal void AcceptCommittedPolicyTransition(GroupEnrollmentPackage previous,
+        GroupEnrollmentPackage next, OfflineGroupTrustStore trust)
+    {
+        var old = GroupEnrollmentPackages.Validate(previous);
+        var candidate = GroupEnrollmentPackages.Validate(next);
+        var registered = trust.ExportPublic();
+        if (previous.LibraryId != libraryId || next.LibraryId != libraryId ||
+            candidate.Checkpoint.Revision <= old.Checkpoint.Revision ||
+            !previous.AdministratorPublicKey.SequenceEqual(next.AdministratorPublicKey) ||
+            !registered.AdministratorPublicKey.SequenceEqual(next.AdministratorPublicKey) ||
+            GroupEnrollmentPackages.Validate(registered).Checkpoint != candidate.Checkpoint)
+            throw new CryptographicException("Verwaltungsübernahme passt nicht zur bestätigten neuen Richtlinie.");
+        var (state, revision) = Load();
+        try
+        {
+            using var administrator = OpenKey(state);
+            var current = OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId);
+            if (!administrator.ExportSubjectPublicKeyInfo().SequenceEqual(next.AdministratorPublicKey))
+                throw new CryptographicException("Verwaltungsschlüssel stimmt nicht überein.");
+            if (current.Checkpoint == candidate.Checkpoint) return;
+            if (current.Checkpoint != old.Checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            Save(state with { Policy = next.Policy }, revision, () =>
+            {
+                if (trust.LoadOffline().Checkpoint != candidate.Checkpoint)
+                    throw new ConcurrentFileChangeException(path);
+            });
         }
         finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
     }
