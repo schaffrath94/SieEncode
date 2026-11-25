@@ -119,7 +119,7 @@ internal static class CentralGroupPolicyWorkflow
     internal static async Task<CentralKeyLibraryHead> SaveAsync(Guid id,
         OfflineGroupAdministrationStore administration, OfflineGroupTrustStore trust,
         OfflineGroupPolicy proposed, KeyLibrarySyncEndpoint endpoint,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, GroupPolicyCheckpoint? expectedPolicy = null)
     {
         using var lease = Acquire(id);
         RequireNoPending(id);
@@ -127,6 +127,8 @@ internal static class CentralGroupPolicyWorkflow
             throw new InvalidOperationException("Zentralverbindung wurde geändert.");
         var current = trust.LoadOffline();
         administration.RequireLocalAuthority(trust);
+        if (expectedPolicy is not null && current.Checkpoint != expectedPolicy)
+            throw new InvalidOperationException("Verwaltungsstand wurde seit der Vorschau geändert. Bitte neu laden.");
         if (current.Policy.Version != 2 || proposed.Version != 2 ||
             proposed.LibraryId != id || proposed.Revision != checked(current.Policy.Revision + 1))
             throw new InvalidOperationException("Zentraler Wechsel benötigt einen aktuellen personenbasierten Gruppenstand.");
