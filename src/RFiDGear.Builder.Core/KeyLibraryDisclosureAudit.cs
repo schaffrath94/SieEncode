@@ -116,4 +116,56 @@ public static class KeyLibraryDisclosureAudit
         }
         return count;
     }
+
+    public sealed record LocalRow(KeyLibraryDisclosureEvent Entry, string PayloadSha256,
+        bool Archived, bool SignatureVerified);
+    public sealed record LocalReview(LocalRow[] Records, int InvalidCount, bool Truncated);
+
+    /// <summary>Read only local signed reports, never decrypt a key Vault.
+    /// A removed certificate may no longer be present in the current directory;
+    /// such a report is explicitly marked unverified rather than discarded.</summary>
+    public static LocalReview ReadLocal(string directory, ILocalGroupTrustProtection protection,
+        VerifiedGroupPolicy policy, int limit = 1000)
+    {
+        if (limit is < 1 or > 1000) throw new ArgumentOutOfRangeException(nameof(limit));
+        var rows = new List<LocalRow>();
+        var invalid = 0;
+        var examined = 0;
+        foreach (var (folder, archived) in new[] { (directory, false), (Path.Combine(directory, "Sent"), true) })
+        {
+            if (!Directory.Exists(folder)) continue;
+            foreach (var path in Directory.EnumerateFiles(folder, "*.signed-audit.bin"))
+            {
+                if (examined++ >= limit) return new(rows.ToArray(), invalid, true);
+                try
+                {
+                    using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    if (stream.Length is <= 0 or > 64 * 1024) throw new InvalidDataException("Audit-Dateigröße.");
+                    var bytes = new byte[(int)stream.Length]; stream.ReadExactly(bytes);
+                    var raw = protection.Unprotect(bytes);
+                    try
+                    {
+                        var report = KeyLibrarySyncWire.Read<SignedKeyLibraryAudit>(raw, KeyLibraryAuditSync.MaximumBytes);
+                        var entry = KeyLibraryAuditSync.Parse(report);
+                        if (entry.LibraryId != policy.Policy.LibraryId ||
+                            Path.GetFileName(path) != entry.EventId.ToString("N") + ".signed-audit.bin")
+                            throw new InvalidDataException("Audit-Datei gehört nicht zur Bibliothek.");
+                        var device = policy.Policy.People.SelectMany(p => p.Devices)
+                            .SingleOrDefault(d => d.Fingerprint == entry.DeviceFingerprint);
+                        if (device is not null)
+                        {
+                            using var cert = OfflineGroupDirectory.ReadPublicCertificate(device.Certificate);
+                            _ = KeyLibraryAuditSync.Verify(report, cert);
+                        }
+                        rows.Add(new(entry, KeyLibraryAuditSync.Digest(report), archived, device is not null));
+                    }
+                    finally { CryptographicOperations.ZeroMemory(raw); }
+                }
+                catch (Exception ex) when (ex is IOException or CryptographicException or
+                    System.Text.Json.JsonException or ArgumentException or FormatException or UnauthorizedAccessException)
+                { invalid++; }
+            }
+        }
+        return new(rows.ToArray(), invalid, false);
+    }
 }
