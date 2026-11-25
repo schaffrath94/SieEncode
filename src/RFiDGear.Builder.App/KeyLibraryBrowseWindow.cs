@@ -78,7 +78,7 @@ internal sealed class KeyLibraryBrowseWindow : Window
         keys.SelectionChanged += (_, _) => UpdateActions();
         sources.SelectionChanged += async (_, _) => await LoadAsync();
         refresh.Click += async (_, _) => await LoadAsync();
-        reveal.Click += (_, _) => Reveal();
+        reveal.Click += async (_, _) => await RevealAsync();
         Closing += (_, e) => { if (busy) e.Cancel = true; };
         sources.ItemsSource = KeyLibraryAssignmentWindow.DiscoverAvailableVaults(trustDirectory);
         if (sources.Items.Count == 1) sources.SelectedIndex = 0;
@@ -163,10 +163,11 @@ internal sealed class KeyLibraryBrowseWindow : Window
 
     private void UpdateActions() => reveal.IsEnabled = !busy && access?.CanView == true && keys.SelectedItem is Row;
 
-    private void Reveal()
+    private async Task RevealAsync()
     {
         if (busy || sources.SelectedItem is not Choice choice || keys.SelectedItem is not Row row ||
             catalog is null || checkpoint is null || file is null || access?.CanView != true) return;
+        busy = true; sources.IsEnabled = false; refresh.IsEnabled = false; UpdateActions();
         try
         {
             var selected = row.Entry;
@@ -196,19 +197,20 @@ internal sealed class KeyLibraryBrowseWindow : Window
                         throw new CryptographicException("Persönlicher Zugang wurde geändert.");
                     var secret = KeyLibraryDisclosure.ReadSelected(choice.Path, trust, choice.GroupId,
                         identity, expectedPolicy, revision, expectedFile, selected, copying, now);
-                    KeyLibraryDisclosureAudit.Record(Path.Combine(Path.GetDirectoryName(choice.Path)!, "DisclosureAudit"),
-                        new WindowsGroupTrustProtection(choice.LibraryId, disclosureAudit: true),
+                    KeyLibraryAuditWorkflow.Record(choice.LibraryId,
                         new(Guid.NewGuid(), now, choice.LibraryId, choice.GroupId, current.PersonId,
                             current.DeviceFingerprint, selected.CustomerId, selected.KeyId, selected.Version,
-                            revision, expectedPolicy, copying ? "copy-requested" : "view-requested"));
+                            revision, expectedPolicy, copying ? "copy-requested" : "view-requested"), identity);
                     return secret;
                 }
                 var value = ReadAndRecord(false);
                 new KeyLibrarySecretViewWindow(this, selected, value, actor.CanCopy,
                     () => ReadAndRecord(true)).ShowDialog();
+                status.Text = await KeyLibraryAuditWorkflow.TryFlushAsync(choice.LibraryId, identity);
             }
             finally { foreach (var identity in identities) identity.Certificate.Dispose(); }
         }
         catch (Exception ex) { status.Text = "Klartext nicht freigegeben: " + ex.Message; }
+        finally { busy = false; sources.IsEnabled = true; refresh.IsEnabled = true; UpdateActions(); }
     }
 }
