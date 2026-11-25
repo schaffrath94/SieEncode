@@ -19,6 +19,7 @@
           <Border Height="1" Background="#47656B" Margin="6,18,6,14"/>
           <Button x:Name="NavHomeButton" Style="{StaticResource NavButton}" Tag="Home" Click="Navigate_Click" Content="Übersicht"/>
           <Button x:Name="NavHelpButton" Style="{StaticResource NavButton}" Tag="Help" Click="Navigate_Click" Content="Hilfe"/>
+          <Button Style="{StaticResource NavButton}" Click="OpenKeyLibraryBrowse_Click" Content="Schlüsselbibliothek"/>
           <Button x:Name="NavSettingsButton" Style="{StaticResource NavButton}" Tag="Settings" Click="Navigate_Click" Content="Einstellungen"/>
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="18,12,18,20">
