@@ -21,7 +21,11 @@ internal sealed partial class GroupAdministrationWindow
         }
         var current = trust.LoadOffline();
         var next = trust.PreviewPackageUpdate(package, current.Checkpoint); // Checks pinned key even for an unchanged revision.
-        if (next.Checkpoint != current.Checkpoint) trust.AcceptPackageUpdate(package, current.Checkpoint);
+        if (next.Checkpoint != current.Checkpoint)
+        {
+            CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(package.LibraryId);
+            trust.AcceptPackageUpdate(package, current.Checkpoint);
+        }
         return "Eigener signierter Stand ist auf diesem Windows-Benutzer aktiv. Änderungen für andere Benutzer weiterhin öffentlich exportieren und dort importieren.";
     }
 
@@ -29,6 +33,8 @@ internal sealed partial class GroupAdministrationWindow
     {
         if (!confirmed) throw new InvalidDataException("Lokale Registrierung muss bestätigt werden.");
         RequireSavedAdministration();
+        using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
+        CentralGroupPolicyWorkflow.RequireNoPending(currentLibrary.Value);
         status.Text = SynchronizeOwnRegistration(store!.ExportPublic(), allowInitialEnrollment: true);
     }
 
