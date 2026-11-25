@@ -88,6 +88,45 @@ internal static class KeyLibraryDisclosureTests
             Reject<ConcurrentFileChangeException>(() => KeyLibraryDisclosureAudit.Record(auditDirectory, protector, audit));
             Reject<InvalidDataException>(() => KeyLibraryDisclosureAudit.Record(auditDirectory, protector,
                 audit with { EventId = Guid.NewGuid(), Operation = "unknown" }));
+            // Signed outbox and central storage: a lost response must not
+            // duplicate events or discard the pending report.
+            var outbox = Path.Combine(directory, "outbox");
+            var central = new CentralKeyLibraryAuditStore(Path.Combine(directory, "central-audit"));
+            var signedAudit = KeyLibraryAuditSync.Sign(audit, copy);
+            Reject<CryptographicException>(() => KeyLibraryAuditSync.Verify(signedAudit, view));
+            Reject<CryptographicException>(() => central.Accept(signedAudit, view, id, "keys", verified, now));
+            var damaged = signedAudit with { Signature = new byte[signedAudit.Signature.Length] };
+            Reject<CryptographicException>(() => central.Accept(damaged, copy, id, "keys", verified, now));
+            var receipt = central.Accept(signedAudit, copy, id, "keys", verified, now);
+            var restarted = new CentralKeyLibraryAuditStore(Path.Combine(directory, "central-audit"));
+            if (restarted.Accept(signedAudit, copy, id, "keys", verified, now.AddSeconds(1)) != receipt)
+                throw new Exception("Duplicate event did not return original durable receipt.");
+            Reject<ConcurrentFileChangeException>(() => central.Accept(
+                KeyLibraryAuditSync.Sign(audit with { Operation = "view-requested" }, copy),
+                copy, id, "keys", verified, now));
+            Reject<CryptographicException>(() => central.Accept(
+                KeyLibraryAuditSync.Sign(audit with { EventId = Guid.NewGuid(), PersonId = viewer.Id }, copy),
+                copy, id, "keys", verified, now));
+            var queued = audit with { EventId = Guid.NewGuid() };
+            KeyLibraryDisclosureAudit.RecordSigned(outbox, protector, queued, copy);
+            var pendingPath = Path.Combine(outbox, queued.EventId.ToString("N") + ".signed-audit.bin");
+            if (KeyLibraryDisclosureAudit.FlushAsync(outbox, protector, view,
+                (_, _) => throw new Exception("Other device sent audit")).GetAwaiter().GetResult() != 0)
+                throw new Exception("Wrong device drained audit.");
+            Reject<IOException>(() => KeyLibraryDisclosureAudit.FlushAsync(outbox, protector, copy,
+                (report, token) => { _ = central.Accept(report, copy, id, "keys", verified, now);
+                    throw new IOException("Synthetic lost reply"); }).GetAwaiter().GetResult());
+            if (!File.Exists(pendingPath)) throw new Exception("Lost response removed pending report.");
+            Reject<CryptographicException>(() => KeyLibraryDisclosureAudit.FlushAsync(outbox, protector, copy,
+                (_, _) => Task.FromResult(receipt)).GetAwaiter().GetResult());
+            if (!File.Exists(pendingPath)) throw new Exception("Wrong acknowledgement removed pending report.");
+            var sent = KeyLibraryDisclosureAudit.FlushAsync(outbox, protector, copy,
+                (report, _) => Task.FromResult(restarted.Accept(report, copy, id, "keys", verified, now)))
+                .GetAwaiter().GetResult();
+            if (sent != 1 || File.Exists(pendingPath) ||
+                !File.Exists(Path.Combine(outbox, "Sent", Path.GetFileName(pendingPath))) ||
+                Directory.GetFiles(Path.Combine(directory, "central-audit"), "*.json").Length != 2)
+                throw new Exception("Retry did not archive exactly once after central confirmation.");
             // A signed permission reduction must prevent further application reads.
             var next = policy with { Revision = 2, People = [viewer, copier with { AllowKeyLibraryCopy = false }, plain] };
             var updated = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1, id,
