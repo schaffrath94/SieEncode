@@ -228,6 +228,19 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
             GroupEnrollmentPackages.Validate(state.Enrollment), now);
     }
 
+    public KeyLibraryAuditPage ReadAuditPage(SignedKeyLibraryAuditQuery signed,
+        X509Certificate2 authenticatedMember, DateTimeOffset now)
+    {
+        var (state, revision) = Read();
+        if (state.Accepted is null || !IsAuthorizedTlsMember(state, authenticatedMember, now))
+            throw new CryptographicException("Audit-Anmeldung nicht bestätigt.");
+        var query = KeyLibraryAuditReview.Verify(signed, state.Enrollment, authenticatedMember, now);
+        var page = new CentralKeyLibraryAuditStore(path + ".audit").ReadPage(query);
+        if (ConcurrentFileWriter.Capture(path) != revision)
+            throw new ConcurrentFileChangeException(path);
+        return page;
+    }
+
     private (State State, FileRevision Revision) Read()
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
