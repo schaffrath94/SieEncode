@@ -236,7 +236,9 @@ internal sealed partial class GroupAdministrationWindow : Window
         return prior.People.Any(person =>
         {
             if (!person.Enabled) return false;
-            if (!personRows.TryGetValue(person.Id, out var updated) || !updated.Enabled) return true;
+            if (!personRows.TryGetValue(person.Id, out var updated) || !updated.Enabled ||
+                person.AllowKeyLibraryView && !updated.AllowKeyLibraryView ||
+                person.AllowKeyLibraryCopy && !updated.AllowKeyLibraryCopy) return true;
             return person.Devices.Any(device => device.Enabled && !updated.Devices.Any(current =>
                 current.Fingerprint == device.Fingerprint && current.Enabled));
         });
