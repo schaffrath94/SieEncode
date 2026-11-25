@@ -101,7 +101,8 @@ internal static class CentralGroupPolicyWorkflow
             if (result.Outcome is not (KeyLibrarySyncOutcome.InSync or KeyLibrarySyncOutcome.Downloaded or
                 KeyLibrarySyncOutcome.PolicyDownloaded))
                 throw new InvalidOperationException("Zentraler Schlüsselbestand nicht abgeglichen: " + result.Outcome);
-            return $"Zentral bestätigt · Katalog {result.Central.CatalogRevision} · Gruppenstand {result.Central.Policy.Revision}";
+            var audit = await KeyLibraryAuditWorkflow.FlushAsync(id, transport, certificate, cancellationToken);
+            return $"Zentral bestätigt · Katalog {result.Central.CatalogRevision} · Gruppenstand {result.Central.Policy.Revision}" + audit;
         }
         catch (HttpRequestException)
         {
