@@ -100,6 +100,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         memberActions.Children.Add(Action("Öffentliche Einladung hinzufügen", ImportMember));
         memberActions.Children.Add(Action("Mitglied aus Gruppe entfernen", () =>
         {
+            RequireStore();
             if (grid.SelectedItem is GroupAdministrationDraft group && members.SelectedItem is GroupMemberLabel selected &&
                 MessageBox.Show(this,
                     "Person aus dieser Gruppe entfernen?\n\nWICHTIG: Dies entzieht noch keinen Zugang zu bereits kopierten Offline-Vaults oder schon bekannten Kartenschlüsseln. Nach dem Signieren den neuen Stand verteilen, alle betroffenen aktuellen Projekt-Vaults durch eine berechtigte Person neu verschlüsseln und bei ernstem Sicherheitsentzug die Kartenschlüssel samt betroffenen Lesern/SAMs kontrolliert rotieren.",
@@ -278,7 +279,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         var reduced = ReducesPreviouslySignedAccess();
         policySyncing = true; IsEnabled = false;
         status.Text = "Berechtigungsänderung wird vorbereitet und zentral bestätigt …";
-        var head = await CentralGroupPolicyWorkflow.SaveAsync(id, store, OwnTrust(id), proposed, endpoint);
+        var head = await CentralGroupPolicyWorkflow.SaveAsync(id, store!, OwnTrust(id), proposed, endpoint);
         dirty = false;
         LoadAdministration(id, synchronizeOwnRegistration: false);
         lastSignedAccessReduction = reduced;
@@ -337,7 +338,7 @@ internal sealed partial class GroupAdministrationWindow : Window
     {
         RequireStore(); CommitEdits();
         using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
-        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary.Value);
+        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
         var accessReduced = ReducesPreviouslySignedAccess();
         var groupRows = groups.Select(g => new OfflineVaultGroup(g.Id, g.Name, g.Members.ToArray())).ToArray();
         if (!personMode && people.Count > 0) throw new InvalidOperationException("Bitte zuerst die bisherigen Gruppen auf Personen umstellen.");
@@ -361,6 +362,7 @@ internal sealed partial class GroupAdministrationWindow : Window
     {
         RequireStore();
         CommitEdits();
+        using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
         CentralGroupPolicyWorkflow.RequireNoPending(currentLibrary!.Value);
         if (dirty) throw new InvalidOperationException("Bitte Änderungen zuerst signiert speichern oder den Dialog neu laden.");
         var package = store!.ExportPublic();
