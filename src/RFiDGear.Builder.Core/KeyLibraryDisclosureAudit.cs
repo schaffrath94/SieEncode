@@ -161,7 +161,7 @@ public static class KeyLibraryDisclosureAudit
                     }
                     finally { CryptographicOperations.ZeroMemory(raw); }
                 }
-                catch (Exception ex) when (ex is IOException or CryptographicException or
+                catch (Exception ex) when (ex is IOException or InvalidDataException or CryptographicException or
                     System.Text.Json.JsonException or ArgumentException or FormatException or UnauthorizedAccessException)
                 { invalid++; }
             }
