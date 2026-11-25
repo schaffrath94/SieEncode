@@ -62,7 +62,7 @@ internal sealed class GroupPolicyUpdateWindow : Window
                 lines.Add($"Gruppe {group.Name} ({group.Id}): " + string.Join(", ", group.Members.Select(id => policy.People.FirstOrDefault(p => p.Id == id)?.Name + " (" + id + ")")));
             foreach (var person in policy.People)
             {
-                lines.Add($"Person {person.Name} ({person.Id}): {(person.Enabled ? "aktiv" : "inaktiv")}");
+                lines.Add($"Person {person.Name} ({person.Id}): {(person.Enabled ? "aktiv" : "inaktiv")} · Klartextanzeige: {(person.AllowKeyLibraryView ? "freigegeben" : "gesperrt")} · Kopieren: {(person.AllowKeyLibraryCopy ? "freigegeben" : "gesperrt")}");
                 foreach (var device in person.Devices) lines.Add($"  Gerät {device.Name}: {(device.Enabled ? "aktiv" : "inaktiv")} · {device.Fingerprint}");
             }
             foreach (var grant in policy.Delegations) lines.Add($"Vollmacht {grant.Id}: {grant.PersonId} · {(grant.Enabled ? "aktiv" : "entzogen")} · {string.Join(", ", grant.GroupIds)} · Schlüssel {OfflineGroupTrustStore.AdministratorFingerprint(grant.SigningPublicKey)}");
