@@ -179,12 +179,28 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
     /// must additionally require authenticated TLS and replay protection.
     /// </summary>
     public SignedKeyLibrarySync ReadEncryptedSnapshot(
-        SignedKeyLibraryDownload request, DateTimeOffset now)
+        SignedKeyLibraryDownload request, DateTimeOffset now) =>
+        ReadSnapshotCore(request, now, null).Transfer;
+
+    public CentralKeyLibrarySnapshot ReadAuthorizedSnapshot(SignedKeyLibraryDownload request,
+        X509Certificate2 authenticatedMember, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(authenticatedMember);
+        return ReadSnapshotCore(request, now, authenticatedMember);
+    }
+
+    private CentralKeyLibrarySnapshot ReadSnapshotCore(SignedKeyLibraryDownload request,
+        DateTimeOffset now, X509Certificate2? authenticatedMember)
     {
         var (state, fileRevision) = Read();
         if (state.Accepted is null)
             throw new FileNotFoundException("Noch kein zentral freigegebener verschlüsselter Bibliotheksstand.");
-        var claim = KeyLibraryDownloadAuthorization.Verify(request, Head(state), state.Enrollment, now);
+        var head = Head(state);
+        var claim = KeyLibraryDownloadAuthorization.Verify(request, head, state.Enrollment, now);
+        if (authenticatedMember is not null &&
+            (!IsAuthorizedTlsMember(state, authenticatedMember, now) ||
+             claim.DeviceFingerprint != CertificateVaultService.Fingerprint(authenticatedMember)))
+            throw new CryptographicException("Download-Signatur und TLS-Mitglied müssen denselben aktuell berechtigten Zugang verwenden.");
         var active = state.RecentReadNonces
             .Where(n => n.AcceptedAt > now - ReadNonceRetention &&
                 n.AcceptedAt <= now + ReadNonceRetention).ToArray();
@@ -197,8 +213,8 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
         Save(state with { RecentReadNonces = [.. active, new(claim.RequestId, now)] },
             fileRevision);
         var accepted = state.Accepted;
-        return new(accepted.Claim.ToArray(), accepted.Signature.ToArray(),
-            accepted.EncryptedVault.ToArray());
+        return new(head, state.Enrollment, new(accepted.Claim.ToArray(), accepted.Signature.ToArray(),
+            accepted.EncryptedVault.ToArray()));
     }
 
     private (State State, FileRevision Revision) Read()
