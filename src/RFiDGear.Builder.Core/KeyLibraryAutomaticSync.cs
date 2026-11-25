@@ -178,7 +178,7 @@ public static class KeyLibraryAutomaticSync
         return transfer;
     }
 
-    private static bool LogicallyEquivalent(
+    internal static bool LogicallyEquivalent(
         KeyLibraryVaultPayload local, KeyLibraryVaultPayload remote)
     {
         KeyLibraryVault.Validate(local);
