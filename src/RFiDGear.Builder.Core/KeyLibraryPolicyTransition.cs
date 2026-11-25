@@ -11,6 +11,11 @@ namespace RFiDGear.Builder.Core;
 public sealed record SignedKeyLibraryPolicyTransition(
     GroupEnrollmentPackage Enrollment, SignedKeyLibrarySync Rewrapped);
 
+/// <summary>Current directory and encrypted snapshot read from one authorized
+/// server state. The existing download proof binds the requested head.</summary>
+public sealed record CentralKeyLibrarySnapshot(CentralKeyLibraryHead Head,
+    GroupEnrollmentPackage Enrollment, SignedKeyLibrarySync Transfer);
+
 public static class KeyLibraryPolicyTransition
 {
     /// <summary>
@@ -51,6 +56,30 @@ public static class KeyLibraryPolicyTransition
         // verify the unchanged payload before constructing this operation.
         if (claim.NextCiphertextSha256 == expected.CiphertextSha256)
             throw new CryptographicException("Richtlinienwechsel benötigt neu verschlüsselte Vault-Daten.");
+        return claim;
+    }
+    /// <summary>Read-only catch-up may skip intermediate epochs. The pinned
+    /// server supplies the current head; the original administrator must sign
+    /// both the current directory and exact encrypted catalog. This is not
+    /// an independently anchored proof of every intermediate revision.</summary>
+    public static KeyLibrarySyncClaim VerifyReceivedSnapshot(GroupEnrollmentPackage previous,
+        CentralKeyLibraryHead baseline, CentralKeyLibrarySnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        var head = snapshot.Head;
+        var next = VerifyNextPolicy(previous, snapshot.Enrollment, baseline);
+        var claim = KeyLibrarySyncTransport.Verify(snapshot.Transfer, snapshot.Enrollment);
+        if (head.LibraryId != baseline.LibraryId || head.GroupId != baseline.GroupId ||
+            head.Policy != next.Checkpoint || head.CentralRevision <= baseline.CentralRevision ||
+            head.CatalogRevision < baseline.CatalogRevision ||
+            head.CentralRevision != claim.ExpectedCentralRevision + 1 ||
+            head.CatalogRevision != claim.CatalogRevision ||
+            head.GroupId != claim.GroupId || head.CiphertextSha256 != claim.NextCiphertextSha256 ||
+            head.CiphertextSha256 == baseline.CiphertextSha256 ||
+            (head.CentralRevision == baseline.CentralRevision + 1 &&
+                (claim.ExpectedCentralCiphertextSha256 != baseline.CiphertextSha256 ||
+                 head.CatalogRevision != baseline.CatalogRevision)))
+            throw new CryptographicException("Empfangener Richtlinienstand passt nicht zum abgeglichenen Vorgänger oder signierten aktuellen Vault.");
         return claim;
     }
 }
