@@ -135,6 +135,29 @@ internal static class ScopedKeyLibraryVaultTests
             if (ConcurrentFileWriter.Capture(localPath) != file2)
                 throw new Exception("Rejected hidden-customer deletion changed the local file.");
 
+            // Independent encrypted archive: full member creates; separate recovery
+            // identity verifies every customer, including an empty customer.
+            var backupPath = Path.Combine(directory, "library.backup.json");
+            var reference = KeyLibraryBackupService.Create(localPath, backupPath, trust, "keys", fullCert, now);
+            var result = KeyLibraryBackupService.VerifyRecovery(backupPath, reference, recoveryCert, now);
+            if (result.LibraryId != id || result.CatalogRevision != nextPayload.Catalog.Revision ||
+                result.CustomerCount != 4 || result.KeyVersionCount != 2)
+                throw new Exception("Independent library recovery did not cover the full snapshot.");
+            Reject<CryptographicException>(() => KeyLibraryBackupService.Create(localPath,
+                Path.Combine(directory, "partial.backup.json"), trust, "keys", limitedCert, now));
+            Reject<CryptographicException>(() => KeyLibraryBackupService.VerifyRecovery(backupPath, reference, fullCert, now));
+            Reject<CryptographicException>(() => KeyLibraryBackupService.VerifyRecovery(backupPath,
+                reference with { CatalogRevision = reference.CatalogRevision + 1 }, recoveryCert, now));
+            Reject<CryptographicException>(() => KeyLibraryBackupService.VerifyRecovery(backupPath,
+                reference with { AdministratorFingerprint = new string('0', 64) }, recoveryCert, now));
+            var damaged = File.ReadAllBytes(backupPath);
+            damaged[damaged.Length / 2] ^= 1;
+            var damagedPath = Path.Combine(directory, "damaged.backup.json");
+            File.WriteAllBytes(damagedPath, damaged);
+            Reject<CryptographicException>(() => KeyLibraryBackupService.VerifyRecovery(damagedPath, reference, recoveryCert, now));
+            if (ConcurrentFileWriter.Capture(localPath) != file2)
+                throw new Exception("Backup or recovery verification changed the active vault.");
+
             var next = Enrollment(policy with { Revision = 2, People = [fullPerson, limited with { KeyLibraryCustomers = [customerB] }, none] });
             var rotated = ScopedKeyLibraryVault.Protect(payload, next, authority, "keys", now);
             trust.AcceptPackageUpdate(next, verified.Checkpoint);
