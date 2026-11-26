@@ -1,3 +1,4 @@
+using RFiDGear.Builder.SyncServer;
 using System.Net;
 using System.Security.Authentication;
 using System.Security.Cryptography;
@@ -16,7 +17,6 @@ static string Required(string name) =>
 
 var libraryId = Guid.Parse(Required("SIEENCODE_SYNC_LIBRARY_ID"));
 var stateFile = Path.GetFullPath(Required("SIEENCODE_SYNC_STATE_FILE"));
-var tlsPath = Path.GetFullPath(Required("SIEENCODE_SYNC_TLS_PFX"));
 var tlsPassword = Required("SIEENCODE_SYNC_TLS_PASSWORD");
 var portText = Required("SIEENCODE_SYNC_PORT");
 if (!int.TryParse(portText, out var port) || port is < 1024 or > 65535)
@@ -26,8 +26,8 @@ if (!int.TryParse(portText, out var port) || port is < 1024 or > 65535)
 var mode = Environment.GetEnvironmentVariable("SIEENCODE_SYNC_START_MODE") ?? "existing";
 if (mode is not ("existing" or "bootstrap" or "restore"))
     throw new InvalidOperationException("Unbekannter Startmodus der Zentrale.");
-using var serverCertificate = new X509Certificate2(tlsPath, tlsPassword,
-    X509KeyStorageFlags.EphemeralKeySet);
+FargateHosting.Validate(Environment.GetEnvironmentVariable("SIEENCODE_SYNC_HOSTING"), stateFile, mode);
+using var serverCertificate = LoadTlsCertificate(tlsPassword);
 if (!serverCertificate.HasPrivateKey ||
     DateTime.UtcNow < serverCertificate.NotBefore.ToUniversalTime() ||
     DateTime.UtcNow >= serverCertificate.NotAfter.ToUniversalTime())
@@ -172,6 +172,28 @@ app.MapPost("/v1/libraries/{id:guid}/audit-review", async (Guid id, HttpRequest 
 }).WithMetadata(new RequestSizeLimitAttribute(KeyLibraryAuditReview.MaximumQueryBytes));
 
 app.Run();
+
+// ECS secret injection is optional. No private TLS key in the image or state volume.
+static X509Certificate2 LoadTlsCertificate(string password)
+{
+    var file = Environment.GetEnvironmentVariable("SIEENCODE_SYNC_TLS_PFX");
+    var encoded = Environment.GetEnvironmentVariable("SIEENCODE_SYNC_TLS_PFX_BASE64");
+    if (string.IsNullOrWhiteSpace(file) == string.IsNullOrWhiteSpace(encoded))
+        throw new InvalidOperationException("Genau eine TLS-Zertifikatsquelle konfigurieren.");
+    if (!string.IsNullOrWhiteSpace(file))
+        return new X509Certificate2(Path.GetFullPath(file), password, X509KeyStorageFlags.EphemeralKeySet);
+    if (encoded is null || encoded.Length > 65536)
+        throw new InvalidDataException("TLS-Zertifikatsmaterial ist ungültig oder zu groß.");
+    byte[] bytes;
+    try { bytes = Convert.FromBase64String(encoded); }
+    catch (FormatException) { throw new InvalidDataException("TLS-Zertifikatsmaterial ist ungültig."); }
+    try
+    {
+        if (bytes.Length == 0) throw new InvalidDataException("TLS-Zertifikatsmaterial fehlt.");
+        return new X509Certificate2(bytes, password, X509KeyStorageFlags.EphemeralKeySet);
+    }
+    finally { CryptographicOperations.ZeroMemory(bytes); }
+}
 
 static IResult Run(Func<IResult> handler)
 {

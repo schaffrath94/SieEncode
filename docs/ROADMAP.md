@@ -1,5 +1,7 @@
 # Development after RC15
 
+> **Hostingentscheidung 26.11.2026:** Die zentrale Schlüsselverwaltung muss vor dem ersten Release auf der vorhandenen SieTask AWS Fargate-Plattform integrierbar sein. Siehe [Hostingvertrag](design/SIETASK-FARGATE-HOSTING-1.0.md). Kein eigener Windows-Server als Produktvoraussetzung.
+
 > **Aktuelle Priorität, 21.11.2026:** Erst das bestehende SieEncode als klar bedienbares, geprüftes erstes Release fertigstellen; **keine Runtime-/Upstream-Bridge-Migration vor dem Release**. Die aktuelle Arbeitsreihenfolge und die UX-/Abnahmekriterien stehen in [RELEASE-FIRST-UX-2026-11-21.md](design/RELEASE-FIRST-UX-2026-11-21.md). Der nachstehende RC15-Fahrplan ist historischer Ausgangspunkt und keine alternative Prioritätenliste.
 
 1. Preserve RC15, establish independent private repositories and software CI.

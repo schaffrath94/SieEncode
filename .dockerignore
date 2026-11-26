@@ -1,0 +1,13 @@
+# Only server and portable Core sources enter the Docker build context.
+**
+!global.json
+!Directory.Build.props
+!NuGet.Config
+!src/
+!src/RFiDGear.Builder.Core/
+!src/RFiDGear.Builder.Core/*.cs
+!src/RFiDGear.Builder.Core/*.csproj
+!src/RFiDGear.Builder.SyncServer/
+!src/RFiDGear.Builder.SyncServer/*.cs
+!src/RFiDGear.Builder.SyncServer/*.csproj
+!src/RFiDGear.Builder.SyncServer/Dockerfile
