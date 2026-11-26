@@ -18,6 +18,11 @@ public static class OfflineGroupDirectory
                 throw new InvalidDataException("Person ist ungültig oder doppelt vorhanden.");
             if (person.AllowKeyLibraryCopy && !person.AllowKeyLibraryView)
                 throw new InvalidDataException("Kopierfreigabe benötigt eine ausdrückliche Anzeigefreigabe.");
+            if (person.KeyLibraryCustomers is null || person.KeyLibraryCustomers.Length > 10000 ||
+                person.KeyLibraryCustomers.Any(id => id == Guid.Empty) ||
+                person.KeyLibraryCustomers.Distinct().Count() != person.KeyLibraryCustomers.Length ||
+                person.AllKeyLibraryCustomers && person.KeyLibraryCustomers.Length != 0)
+                throw new InvalidDataException("Ungültige oder widersprüchliche Kundenfreigabe.");
             foreach (var device in person.Devices)
             {
                 if (device is null || !Name(device.Name) || device.Fingerprint is not { Length: 64 } ||
@@ -40,7 +45,7 @@ public static class OfflineGroupDirectory
     }
 
     /// <summary>Requires signature verification at the call site; validates structure again. No implicit all-groups fallback.</summary>
-    public static VaultRecipientInvitation[] ResolveRecipients(OfflineGroupPolicy policy, string groupId, DateTimeOffset now)
+    public static VaultRecipientInvitation[] ResolveRecipients(OfflineGroupPolicy policy, string groupId, DateTimeOffset now, Guid? customerId = null)
     {
         if (policy.Version != 2) throw new InvalidDataException("Personenbasierte Richtlinie erforderlich.");
         Validate(policy);
@@ -54,7 +59,7 @@ public static class OfflineGroupDirectory
         foreach (var personId in group.Members)
         {
             var person = policy.People.SingleOrDefault(p => p.Id == personId) ?? throw new InvalidDataException("Unbekannte Person in Gruppe.");
-            if (!person.Enabled) continue;
+            if (!person.Enabled || customerId is Guid customer && !CanDecryptCustomer(policy, person, customer)) continue;
             foreach (var device in person.Devices.Where(d => d.Enabled))
             {
                 using var certificate = ReadPublicCertificate(device.Certificate);
@@ -66,6 +71,10 @@ public static class OfflineGroupDirectory
         if (result.Count == 0) throw new InvalidDataException("Gruppe hat keinen aktiven Gerätezugang.");
         return result.ToArray();
     }
+
+    internal static bool CanDecryptCustomer(OfflineGroupPolicy policy, OfflineVaultPerson person, Guid customer) =>
+        policy.CustomerScopesEnabled && customer != Guid.Empty &&
+        (person.AllKeyLibraryCustomers || person.KeyLibraryCustomers.Contains(customer));
 
     private static bool Id(string? value) => !string.IsNullOrWhiteSpace(value) && value.Length <= 128 && value.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-');
     internal static X509Certificate2 ReadPublicCertificate(string value)
