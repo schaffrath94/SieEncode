@@ -16,9 +16,9 @@ internal sealed partial class GroupAdministrationWindow
         var panel = new StackPanel();
         panel.Children.Add(Note("Wählen Sie oben die Gruppen aus, die diese Person verwalten darf. Für mehrere Gruppen halten Sie Strg gedrückt. Beim Freigeben wird die Vollmacht signiert und gespeichert."));
         panel.Children.Add(delegationList);
-        panel.Children.Add(Action("Verwaltungseinladung für ausgewählte Gruppen freigeben", ImportDelegation));
-        panel.Children.Add(Action("Ausgewählte Vollmacht entziehen", RevokeSelectedDelegation));
-        panel.Children.Add(Action("Signierte Gruppenänderung prüfen und übernehmen", ImportDelegatedChange));
+        panel.Children.Add(AsyncPolicyAction("Verwaltungseinladung für ausgewählte Gruppen freigeben", ImportDelegationAsync));
+        panel.Children.Add(AsyncPolicyAction("Ausgewählte Vollmacht entziehen", RevokeSelectedDelegationAsync));
+        panel.Children.Add(AsyncPolicyAction("Signierte Gruppenänderung prüfen und übernehmen", ImportDelegatedChangeAsync));
         root.Children.Add(new Expander { Header = "Gruppenverwalter und Vollmachten", Content = panel });
     }
 
@@ -49,7 +49,7 @@ internal sealed partial class GroupAdministrationWindow
         LoadAdministration(currentLibrary!.Value);
     }
 
-    private void ImportDelegation()
+    private async Task ImportDelegationAsync()
     {
         RequireSavedAdministration();
         var selected = grid.SelectedItems.Cast<GroupAdministrationDraft>().ToArray();
@@ -63,24 +63,36 @@ internal sealed partial class GroupAdministrationWindow
         var fingerprint = TextEntryPrompt.Show(this, "Verwaltungsvollmacht bestätigen",
             $"Person: {person.Name}\nGruppen: {scope}\nDen unabhängig erhaltenen SHA-256-Verwaltungsfingerabdruck eingeben:", "");
         if (fingerprint is null) return;
-        GrantInvitation(invitation, fingerprint.Trim().ToUpperInvariant(), selected.Select(g => g.Id).ToArray());
-        status.Text += $"\n{person.Name} darf folgende Gruppen verwalten: {scope}. Für andere Arbeitsplätze wählen Sie „Gespeicherten Stand öffentlich exportieren“. Dort muss der neue Stand importiert werden.";
+        var confirmed = fingerprint.Trim().ToUpperInvariant();
+        var groupIds = selected.Select(g => g.Id).ToArray();
+        var delegationId = "vollmacht-" + Guid.NewGuid().ToString("N");
+        await ApplySpecialPolicyAsync(
+            current => OfflineGroupAdministrationStore.ProposeDelegationGrant(current, invitation, confirmed, delegationId, groupIds),
+            () => GrantInvitation(invitation, confirmed, groupIds),
+            $"Verwaltungsvollmacht für {person.Name} in folgenden Gruppen freigeben: {scope}. Keine automatische Klartext- oder Hauptverwaltungsfreigabe.");
         status.BringIntoView();
     }
 
-    private void RevokeSelectedDelegation()
+    private async Task RevokeSelectedDelegationAsync()
     {
         RequireSavedAdministration();
         if (delegationList.SelectedItem is not DelegationLabel selected) throw new InvalidOperationException("Bitte eine Vollmacht auswählen.");
         if (MessageBox.Show(this, $"{selected.Label}\n\nVollmacht für zukünftige Änderungen entziehen? Den neuen Stand anschließend weitergeben. Offline-Kopien erfahren den Entzug erst nach Aktualisierung.", Title, MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        var current = GroupEnrollmentPackages.Validate(store!.ExportPublic());
-        using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
-        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
-        store.UpdateDelegations(current.Policy.Delegations.Select(d => d.Id == selected.Id ? d with { Enabled = false } : d).ToArray(), checkpoint!);
-        LoadAdministration(currentLibrary!.Value);
+        await ApplySpecialPolicyAsync(
+            current => OfflineGroupAdministrationStore.ProposeDelegationRevocation(current, selected.Id),
+            () =>
+            {
+                using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
+                CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
+                var current = GroupEnrollmentPackages.Validate(store!.ExportPublic());
+                var next = OfflineGroupAdministrationStore.ProposeDelegationRevocation(current, selected.Id);
+                store.UpdateDelegations(next.Delegations, checkpoint!);
+                LoadAdministration(currentLibrary!.Value);
+            },
+            "Vollmacht für zukünftige Gruppenänderungen entziehen.");
     }
 
-    private void ImportDelegatedChange()
+    private async Task ImportDelegatedChangeAsync()
     {
         RequireSavedAdministration();
         var dialog = new OpenFileDialog { Filter = "Signierte Gruppenänderung (*.group-change.json)|*.group-change.json" };
@@ -92,10 +104,16 @@ internal sealed partial class GroupAdministrationWindow
         var preview = DescribeDelegatedChanges(current.Policy, next);
         if (preview.Length == 0) throw new InvalidOperationException("Der Antrag enthält keine Änderungen an Gruppennamen oder Mitgliedschaften.");
         if (MessageBox.Show(this, preview + "\n\nDiese geprüften Änderungen signiert übernehmen?", Title, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
-        using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
-        CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
-        store.ApplyDelegatedChange(change, checkpoint!);
-        LoadAdministration(currentLibrary!.Value);
+        await ApplySpecialPolicyAsync(
+            verified => OfflineGroupDelegationService.Apply(change, verified),
+            () =>
+            {
+                using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
+                CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
+                store.ApplyDelegatedChange(change, checkpoint!);
+                LoadAdministration(currentLibrary!.Value);
+            },
+            "Geprüften delegierten Gruppenänderungsantrag übernehmen.\n\n" + preview);
     }
 
     internal static string DescribeDelegatedChanges(OfflineGroupPolicy current, OfflineGroupPolicy next)
