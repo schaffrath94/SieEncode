@@ -35,6 +35,9 @@ internal sealed class KeyLibraryAssignmentWindow : Window
     private readonly Button accept = new() { Content = "Schlüsselzuordnung übernehmen", IsEnabled = false };
     private readonly List<SlotPicker> pickers = [];
     private KeyLibrarySnapshot? catalog;
+    private FileRevision? catalogFile;
+    private GroupPolicyCheckpoint? catalogPolicy;
+    private string? catalogDevice;
     private bool syncing;
     private string syncStatus = "";
     private readonly Button configureCentral = new() { Content = "Zentralverbindung einmalig einrichten", Margin = new Thickness(0, 4, 0, 4) };
@@ -161,6 +164,7 @@ internal sealed class KeyLibraryAssignmentWindow : Window
     {
         if (syncing) return;
         catalog = null;
+        catalogFile = null; catalogPolicy = null; catalogDevice = null;
         pickers.Clear();
         slotsPanel.Children.Clear();
         accept.IsEnabled = false;
@@ -185,10 +189,25 @@ internal sealed class KeyLibraryAssignmentWindow : Window
                 syncInfo.Text = syncStatus;
                 // Decrypt only on explicit selection. Do not retain the secret payload
                 // in this dialog or pass it back to the editor.
-                var unlocked = KeyLibraryVaultStore.Load(choice.Path, trust, choice.GroupId,
-                    identities.Select(identity => identity.Certificate));
-                KeyLibraryVault.Validate(unlocked);
-                catalog = unlocked.Catalog;
+                var policy = trust.LoadOffline();
+                var file = ConcurrentFileWriter.Capture(choice.Path);
+                foreach (var identity in identities)
+                {
+                    try
+                    {
+                        _ = KeyLibraryDisclosure.RequireMember(policy, choice.GroupId, identity.Certificate, DateTimeOffset.UtcNow);
+                        var unlocked = KeyLibraryVaultStore.Load(choice.Path, trust, choice.GroupId, [identity.Certificate]);
+                        KeyLibraryVault.Validate(unlocked);
+                        if (ConcurrentFileWriter.Capture(choice.Path) != file || trust.LoadOffline().Checkpoint != policy.Checkpoint)
+                            throw new ConcurrentFileChangeException(choice.Path);
+                        catalog = unlocked.Catalog; catalogFile = file; catalogPolicy = policy.Checkpoint;
+                        catalogDevice = identity.Fingerprint;
+                        break;
+                    }
+                    catch (CryptographicException) { }
+                }
+                if (catalog is null)
+                    throw new CryptographicException("Kein persönliches Gerät kann diese Bibliothek öffnen.");
             }
             finally
             {
@@ -300,7 +319,25 @@ internal sealed class KeyLibraryAssignmentWindow : Window
 
         // The same strict core check used at build time rejects type, version,
         // status, customer ownership and incomplete or ambiguous slot maps.
-        _ = ProjectKeyLibraryResolution.Bind(project, profiles, catalog, defaultCustomer, bindings);
+        var bound = ProjectKeyLibraryResolution.Bind(project, profiles, catalog, defaultCustomer, bindings);
+        var trust = new OfflineGroupTrustStore(
+            Path.Combine(trustDirectory, choice.LibraryId.ToString("N") + ".trust.bin"),
+            choice.LibraryId, new WindowsGroupTrustProtection(choice.LibraryId));
+        if (catalogFile is null || catalogPolicy is null || catalogDevice is null ||
+            ConcurrentFileWriter.Capture(choice.Path) != catalogFile || trust.LoadOffline().Checkpoint != catalogPolicy)
+            throw new InvalidOperationException("Bibliothek seit der Auswahl geändert. Bitte erneut auswählen.");
+        var identities = WindowsVaultIdentityService.List();
+        try
+        {
+            var identity = identities.SingleOrDefault(i => i.Fingerprint == catalogDevice)
+                ?? throw new CryptographicException("Persönlicher Zugang der Auswahl fehlt.");
+            var resolved = ProjectKeyLibrarySession.Resolve(bound, profiles, choice.Path, trust, choice.GroupId,
+                identity.Certificate, DateTimeOffset.UtcNow);
+            if (resolved.Basis.VaultFile != catalogFile || resolved.Basis.Policy != catalogPolicy ||
+                resolved.Basis.CatalogRevision != catalog.Revision)
+                throw new ConcurrentFileChangeException(choice.Path);
+        }
+        finally { foreach (var identity in identities) identity.Certificate.Dispose(); }
         SelectedCatalog = catalog;
         SelectedCustomerId = defaultCustomer;
         SelectedBindings = bindings;
