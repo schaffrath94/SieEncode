@@ -36,6 +36,7 @@ internal sealed class KeyLibraryManagementWindow : Window
     private readonly TextBox serverPin = new() { MinWidth = 420, CharacterCasing = CharacterCasing.Upper };
     private readonly TextBlock centralStatus = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DarkSlateGray };
     private bool syncing;
+    private readonly Button resumeMerge = ActionButton("Zusammenführung fortsetzen");
     private readonly ComboBox groupSelection = new() { DisplayMemberPath = nameof(GroupChoice.Name), MinWidth = 350 };
     private readonly ComboBox customerSelection = new() { DisplayMemberPath = nameof(KeyLibraryCustomer.Name), MinWidth = 260 };
     private readonly DataGrid keys = new() { AutoGenerateColumns = false, IsReadOnly = true,
@@ -70,7 +71,7 @@ internal sealed class KeyLibraryManagementWindow : Window
         MaxHeight = 870;
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        CentralGroupPolicyWorkflow.RequireNoPending(libraryId);
+        CentralGroupPolicyWorkflow.RequireNoPolicyPending(libraryId);
         administration.RequireLocalAuthority(trust);
         Closing += (_, e) => { if (syncing) e.Cancel = true; };
 
@@ -132,6 +133,9 @@ internal sealed class KeyLibraryManagementWindow : Window
             Content = syncSettings, IsExpanded = false, Margin = new Thickness(0, 8, 0, 4) });
         root.Children.Add(status);
         root.Children.Add(centralStatus);
+        resumeMerge.Visibility = Visibility.Collapsed;
+        resumeMerge.Click += async (_, _) => await SynchronizeCurrentAsync();
+        root.Children.Add(resumeMerge);
         root.Children.Add(error);
         var close = ActionButton("Schließen");
         close.HorizontalAlignment = HorizontalAlignment.Right;
@@ -174,7 +178,10 @@ internal sealed class KeyLibraryManagementWindow : Window
         }
         var policy = trust.LoadOffline();
         groupSelection.ItemsSource = policy.Policy.Groups.Select(g => new GroupChoice(g.Id, g.Name)).ToArray();
-        if (groupSelection.Items.Count == 1) groupSelection.SelectedIndex = 0;
+        var pendingGroup = CentralGroupPolicyWorkflow.PendingMerge(libraryId)?.PendingExpected?.GroupId;
+        if (pendingGroup is not null)
+            groupSelection.SelectedItem = groupSelection.Items.OfType<GroupChoice>().SingleOrDefault(g => g.Id == pendingGroup);
+        else if (groupSelection.Items.Count == 1) groupSelection.SelectedIndex = 0;
         RefreshActions();
     }
 
@@ -199,7 +206,8 @@ internal sealed class KeyLibraryManagementWindow : Window
 
     private KeyLibraryVaultPayload OpenCurrent()
     {
-        RequireAuthority();
+        CentralGroupPolicyWorkflow.RequireNoPolicyPending(libraryId);
+        administration.RequireLocalAuthority(trust);
         var path = CurrentPath();
         return WithIdentities(ids => KeyLibraryVaultStore.Load(path, trust, CurrentGroup().Id, ids, requireFull: true));
     }
@@ -253,15 +261,21 @@ internal sealed class KeyLibraryManagementWindow : Window
         var group = groupSelection.SelectedItem is GroupChoice;
         var exists = group && File.Exists(CurrentPath());
         var entry = (keys.SelectedItem as KeyRow)?.Entry;
-        create.IsEnabled = !syncing && group && !exists;
-        addCustomer.IsEnabled = !syncing && exists;
-        generate.IsEnabled = import.IsEnabled = !syncing && exists &&
+        bool pending;
+        try { pending = CentralGroupPolicyWorkflow.PendingMerge(libraryId) is not null; }
+        catch (Exception exception) { pending = true; error.Text = exception.Message; }
+        resumeMerge.Visibility = pending ? Visibility.Visible : Visibility.Collapsed;
+        resumeMerge.IsEnabled = pending && !syncing && group;
+        var editable = !syncing && !pending;
+        create.IsEnabled = editable && group && !exists;
+        addCustomer.IsEnabled = editable && exists;
+        generate.IsEnabled = import.IsEnabled = editable && exists &&
             customerSelection.SelectedItem is KeyLibraryCustomer;
-        versionGenerate.IsEnabled = versionImport.IsEnabled = !syncing && exists && entry is not null;
-        retire.IsEnabled = !syncing && exists && entry is { Status: KeyLibraryContracts.Active };
-        compromise.IsEnabled = !syncing && exists && entry is not null &&
+        versionGenerate.IsEnabled = versionImport.IsEnabled = editable && exists && entry is not null;
+        retire.IsEnabled = editable && exists && entry is { Status: KeyLibraryContracts.Active };
+        compromise.IsEnabled = editable && exists && entry is not null &&
             entry.Status != KeyLibraryContracts.Compromised;
-        reveal.IsEnabled = !syncing && exists && entry is not null;
+        reveal.IsEnabled = editable && exists && entry is not null;
     }
 
     private void CreateEmpty()
@@ -433,7 +447,12 @@ internal sealed class KeyLibraryManagementWindow : Window
     private async Task SynchronizeCurrentAsync()
     {
         if (syncing || groupSelection.SelectedItem is not GroupChoice group) return;
-        try { CentralGroupPolicyWorkflow.RequireNoPending(libraryId); }
+        bool mergePending;
+        try
+        {
+            CentralGroupPolicyWorkflow.RequireNoPolicyPending(libraryId);
+            mergePending = CentralGroupPolicyWorkflow.PendingMerge(libraryId) is not null;
+        }
         catch (Exception exception) { centralStatus.Text = exception.Message; return; }
         KeyLibrarySyncEndpoint? endpoint;
         try { endpoint = endpointStore.Load(); }
@@ -444,7 +463,9 @@ internal sealed class KeyLibraryManagementWindow : Window
         }
         if (endpoint is null)
         {
-            centralStatus.Text = "Offline-Betrieb: Keine bestätigte HTTPS-Zentrale eingerichtet.";
+            centralStatus.Text = mergePending
+                ? "Zusammenführung ausstehend. Bestätigte HTTPS-Zentrale erforderlich; keine weitere Änderung."
+                : "Offline-Betrieb: Keine bestätigte HTTPS-Zentrale eingerichtet.";
             return;
         }
 
@@ -455,6 +476,16 @@ internal sealed class KeyLibraryManagementWindow : Window
         try
         {
             identities = WindowsVaultIdentityService.List().ToArray();
+            if (mergePending)
+            {
+                centralStatus.Text = "Ausstehende Zusammenführung wird geprüft und fortgesetzt.";
+                var head = await CentralGroupPolicyWorkflow.ResumeMergeUnderLeaseAsync(libraryId,
+                    group.Id, trust, administration, identities.Select(i => i.Certificate));
+                centralStatus.Text = $"Zusammenführung zentral bestätigt · Katalogrevision {head.CatalogRevision}, Serverrevision {head.CentralRevision}";
+                Refresh();
+                return; // Do not run normal upload/download in the same pass.
+            }
+            CentralGroupPolicyWorkflow.RequireNoPending(libraryId);
             var policy = trust.LoadOffline().Policy;
             var allowedGroup = policy.Groups.SingleOrDefault(g => g.Id == group.Id)
                 ?? throw new CryptographicException("Signierte Schlüsselgruppe fehlt.");
@@ -498,7 +529,9 @@ internal sealed class KeyLibraryManagementWindow : Window
         }
         catch (HttpRequestException)
         {
-            centralStatus.Text = "Zentrale nicht erreichbar oder HTTPS-Vertrauen fehlgeschlagen. Lokale Schlüsselbibliothek bleibt offline verfügbar; kein Upload bestätigt.";
+            centralStatus.Text = mergePending
+                ? "Zusammenführung weiterhin ausstehend. Zentralen Stand erneut prüfen; keine weitere Änderung freigegeben."
+                : "Zentrale nicht erreichbar oder HTTPS-Vertrauen fehlgeschlagen. Lokale Schlüsselbibliothek bleibt offline verfügbar; kein Upload bestätigt.";
         }
         catch (TaskCanceledException)
         {

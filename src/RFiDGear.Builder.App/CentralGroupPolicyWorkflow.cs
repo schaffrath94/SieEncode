@@ -11,6 +11,7 @@ namespace RFiDGear.Builder.App;
 internal static class CentralGroupPolicyWorkflow
 {
     private const string JournalSuffix = ".policy-transition.bin";
+    private const string MergeSuffix = ".merge-intent.bin";
     private static string DirectoryFor(Guid id) =>
         Path.GetDirectoryName(KeyLibraryVaultStore.DefaultPath(id, "keys"))!;
     internal static WorkspaceLease Acquire(Guid id) =>
@@ -47,7 +48,71 @@ internal static class CentralGroupPolicyWorkflow
         return pending;
     }
 
+    private static KeyLibraryMergeJournal MergeJournal(Guid id, string group)
+    {
+        var vault = KeyLibraryVaultStore.DefaultPath(id, group);
+        return new(Path.Combine(DirectoryFor(id), group + MergeSuffix), id, vault,
+            new WindowsGroupTrustProtection(id, mergeJournal: true));
+    }
+
+    internal static KeyLibraryMergeJournal? PendingMerge(Guid id)
+    {
+        var directory = DirectoryFor(id);
+        if (!Directory.Exists(directory)) return null;
+        KeyLibraryMergeJournal? pending = null;
+        foreach (var path in Directory.EnumerateFiles(directory, "*" + MergeSuffix))
+        {
+            var group = Path.GetFileName(path)[..^MergeSuffix.Length];
+            var journal = MergeJournal(id, group);
+            if (!journal.HasPending) continue;
+            if (pending is not null || journal.PendingExpected?.GroupId != group)
+                throw new InvalidDataException("Mehrdeutiger Zusammenführungsauftrag; keine automatische Übernahme.");
+            pending = journal;
+        }
+        return pending;
+    }
+
+    // Only the existing administration window may call these with the common
+    // library lease held. Endpoint and exact personal device remain pinned.
+    internal static void StageMergeUnderLease(Guid id, OfflineGroupTrustStore trust,
+        OfflineGroupAdministrationStore administration, X509Certificate2 member,
+        IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead expected,
+        Guid baseSourceId, string previewHash, bool confirmed)
+    {
+        RequireNoPending(id);
+        var endpoint = Endpoint(id) ?? throw new InvalidOperationException("Bestätigte Zentralverbindung fehlt.");
+        MergeJournal(id, expected.GroupId).Stage(trust, administration, Cursor(id),
+            Journal(id, expected.GroupId), expected.GroupId, member, DateTimeOffset.UtcNow,
+            sources, expected, baseSourceId, previewHash, confirmed, endpoint);
+    }
+
+    internal static async Task<CentralKeyLibraryHead> ResumeMergeUnderLeaseAsync(Guid id, string group,
+        OfflineGroupTrustStore trust, OfflineGroupAdministrationStore administration,
+        IEnumerable<X509Certificate2> identities, CancellationToken cancellationToken = default)
+    {
+        RequireNoPolicyPending(id);
+        var journal = PendingMerge(id) ?? throw new InvalidOperationException("Kein ausstehender Zusammenführungsauftrag.");
+        if (journal.PendingExpected?.GroupId != group)
+            throw new InvalidOperationException("Bitte die Gruppe des ausstehenden Zusammenführungsauftrags wählen.");
+        var endpoint = Endpoint(id) ?? throw new InvalidOperationException("Bestätigte Zentralverbindung fehlt.");
+        var fingerprint = journal.PendingDeviceFingerprint;
+        var certificate = identities.FirstOrDefault(c => c.HasPrivateKey &&
+            CertificateVaultService.Fingerprint(c) == fingerprint)
+            ?? throw new CryptographicException("Ursprünglich bestätigter persönlicher Zugang fehlt.");
+        using var transport = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), id,
+            endpoint.ServerCertificateSha256, certificate);
+        return await journal.ResumeAsync(transport, trust, administration, Cursor(id),
+            Journal(id, group), certificate, cancellationToken, endpoint);
+    }
+
     internal static void RequireNoPending(Guid id)
+    {
+        RequireNoPolicyPending(id);
+        if (PendingMerge(id) is not null)
+            throw new InvalidOperationException("Ein Zusammenführungsauftrag ist ausstehend. Bitte in der Schlüsselverwaltung zuerst fortsetzen.");
+    }
+
+    internal static void RequireNoPolicyPending(Guid id)
     {
         if (Pending(id) is not null)
             throw new InvalidOperationException("Ein zentraler Berechtigungswechsel ist ausstehend. Bitte in der Hauptverwaltung zuerst fortsetzen.");
@@ -68,6 +133,8 @@ internal static class CentralGroupPolicyWorkflow
         OfflineGroupTrustStore trust, IEnumerable<X509Certificate2> identities,
         bool allowPolicyAdoption = true, CancellationToken cancellationToken = default)
     {
+        if (PendingMerge(id) is not null)
+            throw new InvalidOperationException("Ausstehenden Zusammenführungsauftrag zuerst in der Schlüsselverwaltung abschließen.");
         var pending = Pending(id);
         if (pending is not null && (!pending.IsReceiveOnly ||
             pending.PendingExpected?.GroupId != group))
@@ -167,6 +234,8 @@ internal static class CentralGroupPolicyWorkflow
         CancellationToken cancellationToken = default)
     {
         using var lease = Acquire(id);
+        if (PendingMerge(id) is not null)
+            throw new InvalidOperationException("Zusammenführung und Richtlinienwechsel dürfen nicht parallel fortgesetzt werden.");
         var journal = Pending(id) ?? throw new InvalidOperationException("Kein ausstehender Berechtigungswechsel.");
         var endpoint = Endpoint(id) ?? throw new InvalidOperationException("Bestätigte Zentralverbindung fehlt.");
         var previous = GroupEnrollmentPackages.Validate(journal.PendingPreviousEnrollment!).Policy;

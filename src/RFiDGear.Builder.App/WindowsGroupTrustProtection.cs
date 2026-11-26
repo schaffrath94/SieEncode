@@ -5,10 +5,10 @@ using RFiDGear.Builder.Core;
 namespace RFiDGear.Builder.App;
 
 /// <summary>Authenticates the local trust cache for this Windows user. Does not protect against that user's own code.</summary>
-internal sealed class WindowsGroupTrustProtection(Guid libraryId, bool signingAuthority = false, bool syncState = false, bool policyTransition = false, bool disclosureAudit = false) : ILocalGroupTrustProtection
+internal sealed class WindowsGroupTrustProtection(Guid libraryId, bool signingAuthority = false, bool syncState = false, bool policyTransition = false, bool disclosureAudit = false, bool mergeJournal = false) : ILocalGroupTrustProtection
 {
     private readonly byte[] entropy = libraryId != Guid.Empty
-        ? Encoding.UTF8.GetBytes((disclosureAudit ? "SieEncode.KeyDisclosureAudit.v1:" : policyTransition ? "SieEncode.CentralPolicyTransition.v1:" : syncState ? "SieEncode.CentralSyncState.v1:" : signingAuthority ? "SieEncode.OfflineGroupAdministrator.v1:" : "SieEncode.OfflineGroupTrust.v1:") + libraryId.ToString("D"))
+        ? Encoding.UTF8.GetBytes((mergeJournal ? "SieEncode.CentralMergeJournal.v1:" : disclosureAudit ? "SieEncode.KeyDisclosureAudit.v1:" : policyTransition ? "SieEncode.CentralPolicyTransition.v1:" : syncState ? "SieEncode.CentralSyncState.v1:" : signingAuthority ? "SieEncode.OfflineGroupAdministrator.v1:" : "SieEncode.OfflineGroupTrust.v1:") + libraryId.ToString("D"))
         : throw new ArgumentException("Bibliotheks-ID fehlt.", nameof(libraryId));
 
     public byte[] Protect(byte[] plaintext)

@@ -158,12 +158,15 @@ internal sealed partial class GroupAdministrationWindow : Window
         var verified = GroupEnrollmentPackages.Validate(package);
         // Merely opening this window must never silently replace the local trust registration.
         var pending = CentralGroupPolicyWorkflow.Pending(id) is not null;
+        var mergePending = CentralGroupPolicyWorkflow.PendingMerge(id) is not null;
         KeyLibrarySyncEndpoint? endpoint = null;
         string? endpointError = null;
         try { endpoint = CentralGroupPolicyWorkflow.Endpoint(id); }
         catch (Exception exception) { endpointError = exception.Message; }
         var registrationStatus = pending
             ? "Zentraler Berechtigungswechsel ausstehend. Bitte fortsetzen; noch keine weitere Änderung oder Veröffentlichung."
+            : mergePending
+                ? "Zusammenführung ausstehend. In der Schlüsselbibliothek fortsetzen; weitere Verwaltungsänderungen gesperrt."
             : endpointError is not null
                 ? "Zentralverbindung ungültig. Gruppenänderungen bleiben gesperrt, bis sie korrigiert ist. " + endpointError
                 : endpoint is not null
@@ -171,7 +174,8 @@ internal sealed partial class GroupAdministrationWindow : Window
                 : synchronizeOwnRegistration
                     ? SynchronizeOwnRegistration(package)
                     : "Lokale Registrierung beim automatischen Öffnen nicht verändert; Änderungen erst ausdrücklich signiert speichern.";
-        ApplyPolicyPendingState(pending);
+        ApplyPolicyPendingState(pending || mergePending);
+        if (mergePending && !pending) resumePolicy.Visibility = Visibility.Collapsed;
         LoadPeople(verified.Policy);
         groups.Clear();
         foreach (var group in verified.Policy.Groups)
@@ -188,6 +192,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         RefreshRecovery(verified.Policy);
         var nextStep = pending
             ? "Ausstehenden Berechtigungswechsel fortsetzen."
+            : mergePending ? "Ausstehende Zusammenführung in der Schlüsselbibliothek fortsetzen."
             : "Personen und Gruppen prüfen bzw. bearbeiten. Änderungen signiert speichern und danach den öffentlichen Stand exportieren.";
         status.Text = $"Gruppenstand {checkpoint.Revision} geladen.\nAls Nächstes: {nextStep}\nBibliothek: {id:D}\nVerwaltungsfingerabdruck: {OfflineGroupTrustStore.AdministratorFingerprint(package.AdministratorPublicKey)}\n{registrationStatus}";
     }
@@ -483,17 +488,19 @@ internal sealed partial class GroupAdministrationWindow : Window
 
     private void OpenKeyLibraryManagement()
     {
-        RequireStore();
+        if (store is null || checkpoint is null || currentLibrary is null)
+            throw new InvalidOperationException("Bitte eine Verwaltung auswählen oder erstellen.");
         if (dirty)
             throw new InvalidOperationException("Gruppen-/Personenänderungen erst signiert speichern, bevor die Schlüsselbibliothek bearbeitet wird.");
         var id = currentLibrary ?? throw new InvalidOperationException("Bibliotheks-ID fehlt.");
         using var lease = CentralGroupPolicyWorkflow.Acquire(id);
-        CentralGroupPolicyWorkflow.RequireNoPending(id);
+        CentralGroupPolicyWorkflow.RequireNoPolicyPending(id);
         var trust = new OfflineGroupTrustStore(
             Path.Combine(localTrustDirectory, id.ToString("N") + ".trust.bin"),
             id, new WindowsGroupTrustProtection(id));
         Store(id).RequireLocalAuthority(trust);
         new KeyLibraryManagementWindow(this, Store(id), trust, id).ShowDialog();
+        LoadAdministration(id, synchronizeOwnRegistration: false);
     }
 
     private OfflineGroupAdministrationStore Store(Guid id) => new(Path.Combine(localDirectory, id.ToString("N") + ".admin.bin"), id, new WindowsGroupTrustProtection(id, signingAuthority: true));

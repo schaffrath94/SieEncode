@@ -14,12 +14,14 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
     private readonly string path = Path.GetFullPath(journalPath);
     private readonly string vault = Path.GetFullPath(localVaultPath);
     private sealed record Pending(KeyLibraryPreparedMerge Merge, FileRevision Local,
-        string AdministratorFingerprint, string DeviceFingerprint);
+        string AdministratorFingerprint, string DeviceFingerprint, KeyLibrarySyncEndpoint? Endpoint);
     private sealed record State(string Format, int Version, Guid LibraryId, string VaultPath,
         Pending? Intent, CentralKeyLibraryHead? Completed, string PreviewSha256);
 
     public bool HasPending => Read().State?.Intent is not null;
     public CentralKeyLibraryHead? CompletedHead => Read().State?.Completed;
+    public CentralKeyLibraryHead? PendingExpected => Read().State?.Intent?.Merge.ExpectedHead;
+    public string? PendingDeviceFingerprint => Read().State?.Intent?.DeviceFingerprint;
 
     // Prepare inside Stage, rather than accepting an arbitrary supplied transfer
     // whose provenance is not independently bound to the approved preview.
@@ -27,7 +29,8 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         CentralKeyLibraryCursorStore cursor, KeyLibraryPolicyTransitionJournal policyJournal,
         string groupId, X509Certificate2 fullMember, DateTimeOffset now,
         IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead expected,
-        Guid baseSourceId, string approvedPreviewSha256, bool explicitlyApproved)
+        Guid baseSourceId, string approvedPreviewSha256, bool explicitlyApproved,
+        KeyLibrarySyncEndpoint? endpoint = null)
     {
         if (policyJournal.HasPending) throw new InvalidOperationException("Richtlinienauftrag ist noch offen.");
         var (old, revision) = Read();
@@ -37,7 +40,9 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         var merge = KeyLibraryDisasterAnalysis.PrepareApprovedMerge(trust, administration,
             groupId, fullMember, now, sources, expected, baseSourceId, approvedPreviewSha256, explicitlyApproved);
         var root = OfflineGroupTrustStore.AdministratorFingerprint(trust.ExportPublic().AdministratorPublicKey);
-        var pending = new Pending(merge, local, root, CertificateVaultService.Fingerprint(fullMember));
+        if (endpoint is not null && (endpoint.LibraryId != libraryId || KeyLibrarySyncEndpointStore.Validate(endpoint) != endpoint))
+            throw new CryptographicException("Zentralverbindung passt nicht zur Zusammenführung.");
+        var pending = new Pending(merge, local, root, CertificateVaultService.Fingerprint(fullMember), endpoint);
         var target = Validate(pending, trust, administration, fullMember);
         cursor.RequireMergeBase(expected, target, allowCompleted: false);
         RequireLocal(pending, target, trust, fullMember, allowTarget: false);
@@ -48,10 +53,13 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
     public async Task<CentralKeyLibraryHead> ResumeAsync(IKeyLibrarySyncTransport transport,
         OfflineGroupTrustStore trust, OfflineGroupAdministrationStore administration,
         CentralKeyLibraryCursorStore cursor, KeyLibraryPolicyTransitionJournal policyJournal,
-        X509Certificate2 fullMember, CancellationToken cancellationToken = default)
+        X509Certificate2 fullMember, CancellationToken cancellationToken = default,
+        KeyLibrarySyncEndpoint? endpoint = null)
     {
         var (state, revision) = Read();
         var pending = state?.Intent ?? throw new InvalidOperationException("Kein offener Zusammenführungsauftrag.");
+        if (pending.Endpoint != endpoint)
+            throw new CryptographicException("Bestätigte Zentralverbindung wurde seit der Zusammenführung geändert.");
         var expected = pending.Merge.ExpectedHead;
         var target = Validate(pending, trust, administration, fullMember);
         void Check()
