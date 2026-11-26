@@ -28,6 +28,8 @@ public static class KeyLibraryPolicyTransition
         ArgumentNullException.ThrowIfNull(expected);
         var old = GroupEnrollmentPackages.Validate(previous);
         var candidate = GroupEnrollmentPackages.Validate(next);
+        if (old.Policy.CustomerScopesEnabled || candidate.Policy.CustomerScopesEnabled)
+            throw new InvalidOperationException("Kundenbereichswechsel benötigen den noch nicht freigegebenen koordinierten Richtlinienwechsel.");
         if (expected.CentralRevision < 1 || expected.CentralRevision == long.MaxValue ||
             expected.CatalogRevision < 1 || string.IsNullOrEmpty(expected.GroupId) ||
             expected.LibraryId != previous.LibraryId ||
