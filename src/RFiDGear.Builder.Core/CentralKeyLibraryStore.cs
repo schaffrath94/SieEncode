@@ -167,10 +167,19 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
         };
         if (authenticatedMember is not null &&
             (!IsAuthorizedTlsMember(state, authenticatedMember, now) ||
-             !IsAuthorizedTlsMember(updated, authenticatedMember, now)))
+             !IsAuthorizedTlsMember(updated, authenticatedMember, now) ||
+             !HasFullScope(state.Enrollment, authenticatedMember) ||
+             !HasFullScope(updated.Enrollment, authenticatedMember)))
             throw new CryptographicException("Der authentifizierte Arbeitsplatz muss in beiden Richtlinien berechtigt sein.");
         Save(updated, captured);
         return Head(updated);
+    }
+
+    private static bool HasFullScope(GroupEnrollmentPackage enrollment, X509Certificate2 certificate)
+    {
+        var policy = GroupEnrollmentPackages.Validate(enrollment).Policy;
+        return !policy.CustomerScopesEnabled || policy.People.Any(p => p.Enabled && p.AllKeyLibraryCustomers &&
+            p.Devices.Any(d => d.Enabled && d.Fingerprint == CertificateVaultService.Fingerprint(certificate)));
     }
 
     /// <summary>
