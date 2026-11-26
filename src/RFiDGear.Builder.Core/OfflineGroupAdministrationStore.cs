@@ -48,6 +48,35 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         return signed.Checkpoint;
     }
 
+    // Internal only: the package service constructs this claim after full
+    // reconstruction and confirmation. Never expose a general signing API.
+    internal byte[] SignDisasterPackageClaim(OfflineGroupTrustStore trust,
+        KeyLibraryDisasterPackageClaim claim, byte[] claimBytes)
+    {
+        var checkpoint = RequireLocalAuthority(trust);
+        var bytes = claimBytes.ToArray();
+        if (claim.Format != KeyLibraryDisasterPackage.Format || !claim.LostServerHistoryAcknowledged ||
+            claim.Preview.Inventory.LibraryId != libraryId ||
+            claim.Preview.Inventory.CurrentPolicy != checkpoint ||
+            claim.Preview.AdministratorFingerprint != OfflineGroupTrustStore.AdministratorFingerprint(
+                trust.ExportPublic().AdministratorPublicKey) ||
+            !bytes.SequenceEqual(KeyLibrarySyncWire.Write(claim)))
+            throw new CryptographicException("Rekonstruktionsnachweis passt nicht zur Hauptverwaltung.");
+        var (state, revision) = Load();
+        try
+        {
+            using var authority = OpenKey(state);
+            if (OfflineGroupPolicyService.Verify(state.Policy, authority, libraryId).Checkpoint != checkpoint ||
+                ConcurrentFileWriter.Capture(path) != revision || RequireLocalAuthority(trust) != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            var signature = authority.SignData(bytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
+            if (ConcurrentFileWriter.Capture(path) != revision || RequireLocalAuthority(trust) != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            return signature;
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     /// <summary>Explicit approval after independent head confirmation and external
     /// fencing of the old central server. Does not contact or activate any server.</summary>
     public SignedCentralKeyLibraryActivation SignCentralRecoveryActivation(OfflineGroupTrustStore trust,

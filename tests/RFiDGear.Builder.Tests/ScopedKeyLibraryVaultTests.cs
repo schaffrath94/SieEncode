@@ -376,6 +376,33 @@ internal static class ScopedKeyLibraryVaultTests
                 trust.LoadOffline().Checkpoint != verified.Checkpoint)
                 throw new Exception("Disaster reconstruction did not remain isolated or lost historical keys.");
 
+            var packagePath = Path.Combine(directory, "isolated-disaster-package.json");
+            var packageReference = KeyLibraryDisasterPackage.Create(packagePath, trust, mergeAdministration,
+                "keys", recoveryCert, fullCert, now, disasterSources, idHistory, head2, disasterHash, true, true);
+            var packageRevision = ConcurrentFileWriter.Capture(packagePath);
+            var packageCheck = KeyLibraryDisasterPackage.Verify(packagePath, packageReference, recoveryCert, now);
+            if (packageCheck.Reference != packageReference || packageCheck.LastKnownHead != head2 ||
+                packageCheck.ApprovedPreviewSha256 != disasterHash || packageCheck.SourceCount != 2 ||
+                packageCheck.CustomerCount != 4 || packageCheck.KeyVersionCount != 3 ||
+                packageReference.PackageSha256 != packageRevision.Sha256)
+                throw new Exception("Portable disaster package lost signed reconstruction evidence.");
+            Reject<CryptographicException>(() => KeyLibraryDisasterPackage.Verify(packagePath,
+                packageReference, fullCert, now));
+            Reject<CryptographicException>(() => KeyLibraryDisasterPackage.Verify(packagePath,
+                packageReference with { AdministratorFingerprint = new string('0', 64) }, recoveryCert, now));
+            Reject<ConcurrentFileChangeException>(() => KeyLibraryDisasterPackage.Create(packagePath,
+                trust, mergeAdministration, "keys", recoveryCert, fullCert, now, disasterSources,
+                idHistory, head2, disasterHash, true, true));
+            var tamperedPackage = File.ReadAllBytes(packagePath);
+            tamperedPackage[tamperedPackage.Length / 2] ^= 1;
+            var tamperedPackagePath = Path.Combine(directory, "damaged-disaster-package.json");
+            File.WriteAllBytes(tamperedPackagePath, tamperedPackage);
+            Reject<CryptographicException>(() => KeyLibraryDisasterPackage.Verify(tamperedPackagePath,
+                packageReference, recoveryCert, now));
+            if (ConcurrentFileWriter.Capture(packagePath) != packageRevision ||
+                ConcurrentFileWriter.Capture(localPath) != file2 || central.ReadHead() != head2)
+                throw new Exception("Package verification or rejected overwrite changed operational data.");
+
             var previewHash = preview.ApprovalSha256(head2);
             KeyLibraryPreparedMerge Prepare(IEnumerable<KeyLibraryDisasterSource> input, string hash, bool approved,
                 X509Certificate2 device) => KeyLibraryDisasterAnalysis.PrepareApprovedMerge(trust,
