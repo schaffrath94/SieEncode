@@ -201,7 +201,7 @@ internal sealed class KeyLibraryManagementWindow : Window
     {
         RequireAuthority();
         var path = CurrentPath();
-        return WithIdentities(ids => KeyLibraryVaultStore.Load(path, trust, CurrentGroup().Id, ids));
+        return WithIdentities(ids => KeyLibraryVaultStore.Load(path, trust, CurrentGroup().Id, ids, requireFull: true));
     }
 
     private void Refresh()
@@ -279,7 +279,7 @@ internal sealed class KeyLibraryManagementWindow : Window
         var authorization = administration.SignKeyLibraryMutation(trust, "create",
             group.Id, FileRevision.Missing, empty);
         WithIdentities(ids => KeyLibraryVaultStore.Create(path, empty, trust,
-            group.Id, ids, DateTimeOffset.UtcNow, authorization));
+            group.Id, ids, DateTimeOffset.UtcNow, authorization, administration));
         Refresh();
     }
 
@@ -292,13 +292,13 @@ internal sealed class KeyLibraryManagementWindow : Window
         if (!expected.Exists) throw new FileNotFoundException("Schlüsselbibliothek fehlt.", path);
         WithIdentities(ids =>
         {
-            var original = KeyLibraryVaultStore.Load(path, trust, group.Id, ids);
+            var original = KeyLibraryVaultStore.Load(path, trust, group.Id, ids, requireFull: true);
             var next = edit(original);
             var authorization = administration.SignKeyLibraryMutation(trust,
                 "update", group.Id, expected, next);
             KeyLibraryVaultStore.Update(path, next, trust, group.Id, ids,
-                expected, DateTimeOffset.UtcNow, authorization);
-            var verified = KeyLibraryVaultStore.Load(path, trust, group.Id, ids);
+                expected, DateTimeOffset.UtcNow, authorization, administration);
+            var verified = KeyLibraryVaultStore.Load(path, trust, group.Id, ids, requireFull: true);
             if (verified.Catalog.Revision != next.Catalog.Revision)
                 throw new InvalidDataException("Gespeicherte Bibliotheksrevision stimmt nicht mit der Änderung überein.");
             return true;
@@ -368,7 +368,7 @@ internal sealed class KeyLibraryManagementWindow : Window
                 try
                 {
                     var access = KeyLibraryDisclosure.RequireMember(policy, group, candidate.Certificate, DateTimeOffset.UtcNow);
-                    current = KeyLibraryVaultStore.Load(path, trust, group, [candidate.Certificate]);
+                    current = KeyLibraryVaultStore.Load(path, trust, group, [candidate.Certificate], requireFull: true);
                     identity = candidate.Certificate; actor = access; break;
                 }
                 catch (CryptographicException) { }
@@ -396,7 +396,7 @@ internal sealed class KeyLibraryManagementWindow : Window
                 if (active.PersonId != actor.PersonId || active.DeviceFingerprint != actor.DeviceFingerprint ||
                     verified.Checkpoint != policy.Checkpoint || ConcurrentFileWriter.Capture(path) != file)
                     throw new ConcurrentFileChangeException(path);
-                var opened = KeyLibraryVaultStore.Load(path, trust, group, [identity]);
+                var opened = KeyLibraryVaultStore.Load(path, trust, group, [identity], requireFull: true);
                 if (opened.Catalog.Revision != revision ||
                     opened.Catalog.Keys.SingleOrDefault(k => k.KeyId == selected.KeyId && k.Version == selected.Version) != selected ||
                     trust.LoadOffline().Checkpoint != policy.Checkpoint || ConcurrentFileWriter.Capture(path) != file)
