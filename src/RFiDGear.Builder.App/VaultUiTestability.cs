@@ -48,6 +48,28 @@ public partial class MainWindow
             throw new InvalidOperationException("Löschen einer bisherigen Gruppe nicht als Entzug erkannt.");
         if (!GroupAdministrationWindow.ReducesSignedAccess(prior, [group], []))
             throw new InvalidOperationException("Löschen einer bisher aktiven Person nicht als Entzug erkannt.");
+        var customerA = Guid.NewGuid();
+        var customerB = Guid.NewGuid();
+        var scoped = prior with { CustomerScopesEnabled = true,
+            People = prior.People.Select(p => p with { AllKeyLibraryCustomers = true }).ToArray() };
+        bool ScopeReduced(OfflineGroupPolicy policy) => GroupAdministrationWindow.ReducesSignedAccess(policy, [group], [person]);
+        person.AllKeyLibraryCustomers = true;
+        if (ScopeReduced(scoped)) throw new InvalidOperationException("Unveränderte Vollfreigabe fälschlich als Entzug bewertet.");
+        person.AllKeyLibraryCustomers = false;
+        person.KeyLibraryCustomers = [customerA];
+        if (!ScopeReduced(scoped)) throw new InvalidOperationException("Wechsel von Voll- auf Teilfreigabe nicht als Entzug erkannt.");
+        var partial = scoped with { People = scoped.People.Select(p => p with
+            { AllKeyLibraryCustomers = false, KeyLibraryCustomers = [customerA] }).ToArray() };
+        if (ScopeReduced(partial)) throw new InvalidOperationException("Unveränderte Kundenfreigabe fälschlich als Entzug bewertet.");
+        person.KeyLibraryCustomers = [customerA, customerB];
+        if (ScopeReduced(partial)) throw new InvalidOperationException("Ergänzte Kundenfreigabe fälschlich als Entzug bewertet.");
+        person.KeyLibraryCustomers = [customerB];
+        if (!ScopeReduced(partial)) throw new InvalidOperationException("Ausgetauschte Kundenfreigabe nicht als Entzug erkannt.");
+        person.KeyLibraryCustomers = [];
+        if (!ScopeReduced(partial)) throw new InvalidOperationException("Vollständiger Kundenentzug nicht erkannt.");
+        person.AllKeyLibraryCustomers = true;
+        if (ScopeReduced(partial)) throw new InvalidOperationException("Erweiterung auf alle Kunden fälschlich als Entzug bewertet.");
+        checks.Add("Kundenfreigaben: synthetische Entzugsmatrix für Voll-/Teilfreigabe, Erweiterung, Austausch und vollständigen Entzug.");
         checks.Add("Entzugshinweis: synthetische Reduktionsmatrix für Gruppenentfernung, Personen-/Gerätedeaktivierung und Löschung; unveränderte oder nur ergänzte Mitgliedschaften lösen keinen falschen Entzug aus.");
     }
 
