@@ -158,7 +158,7 @@ public static class ProjectKeyLibraryResolution
         var used = new HashSet<string>(StringComparer.Ordinal);
         foreach (var binding in bindings)
         {
-            if (binding is null || !required.TryGetValue(binding.Slot ?? "", out var expectedType) ||
+            if (binding is null || binding.Slot is null || !required.TryGetValue(binding.Slot, out var expectedType) ||
                 !used.Add(binding.Slot) || binding.Key is null ||
                 !index.TryGetValue(binding.Key, out var entry))
                 throw new InvalidDataException("Unbekannter, mehrfacher oder fehlender Bibliotheks-Schlüsselplatz.");

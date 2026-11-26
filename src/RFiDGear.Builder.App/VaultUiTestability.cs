@@ -129,7 +129,7 @@ public partial class MainWindow
                 if (choice.SelectedItem is not null || export.IsEnabled || create.IsEnabled)
                     throw new InvalidOperationException("Bei zwei gleichnamigen Vault-Identitäten wurde ein Zugang ungefragt vorausgewählt.");
                 choice.SelectedIndex = 1;
-                var originalFingerprint = ((WindowsVaultIdentity)choice.SelectedItem).Fingerprint;
+                var originalFingerprint = (choice.SelectedItem as WindowsVaultIdentity)?.Fingerprint ?? throw new InvalidOperationException("Erwartete Testidentität fehlt.");
                 multiple.ReloadIdentities();
                 if (choice.SelectedItem is not WindowsVaultIdentity reloaded ||
                     !string.Equals(originalFingerprint, reloaded.Fingerprint, StringComparison.OrdinalIgnoreCase) ||
@@ -154,7 +154,7 @@ public partial class MainWindow
                 if (identityChoice.SelectedItem is not null || addOwn.IsEnabled || exportOwn.IsEnabled || createOwn.IsEnabled)
                     throw new InvalidOperationException("Projekt-Vault wählt einen von mehreren privaten Zertifikatsschlüsseln automatisch aus.");
                 identityChoice.SelectedIndex = 1;
-                var selectedFingerprint = ((WindowsVaultIdentity)identityChoice.SelectedItem).Fingerprint;
+                var selectedFingerprint = (identityChoice.SelectedItem as WindowsVaultIdentity)?.Fingerprint ?? throw new InvalidOperationException("Erwartete Projekt-Testidentität fehlt.");
                 projectRecipients.ReloadIdentities();
                 if (identityChoice.SelectedItem is not WindowsVaultIdentity selectedAgain ||
                     !string.Equals(selectedFingerprint, selectedAgain.Fingerprint, StringComparison.OrdinalIgnoreCase) ||
@@ -254,8 +254,8 @@ public partial class MainWindow
                 Recipients = [new KeyVaultRecipient { Certificate = invitation.Certificate, DisplayName = invitation.DisplayName }] };
             foreach (var state in new[] { "existing", "new", "legacy" })
             {
-                var existing = state == "existing" ? existingVault : state == "legacy" ? new KeyVaultDocument { Version = 2 } : null;
-                var selection = new VaultAccessWindow(this, existing, [invitation, removedInvitation], () => []);
+                var initialVault = state == "existing" ? existingVault : state == "legacy" ? new KeyVaultDocument { Version = 2 } : null;
+                var selection = new VaultAccessWindow(this, initialVault, [invitation, removedInvitation], () => []);
                 try
                 {
                     var rows = DescendantsAndSelf(selection).OfType<ListBox>().Single().Items.Cast<VaultRecipientChoice>().ToArray();

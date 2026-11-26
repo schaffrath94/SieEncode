@@ -83,7 +83,7 @@ public static class KeyLibraryContracts
         {
             if (key is null || key.CustomerId == Guid.Empty || key.KeyId == Guid.Empty || key.Version < 1 ||
                 string.IsNullOrWhiteSpace(key.Name) || key.Name.Length > 200 ||
-                !SupportedKeyTypes.Contains(key.KeyType ?? "") ||
+                key.KeyType is null || !SupportedKeyTypes.Contains(key.KeyType) ||
                 key.Purpose is null || key.Purpose.Length > 200 ||
                 key.HostSystem is null || key.HostSystem.Length > 200 ||
                 key.Status is not (Active or Retired or Compromised))

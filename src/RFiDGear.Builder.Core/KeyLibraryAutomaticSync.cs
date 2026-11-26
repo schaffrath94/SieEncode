@@ -136,7 +136,7 @@ public static class KeyLibraryAutomaticSync
         {
             var transfer = await DownloadVerifiedAsync(transport, trust, remote,
                 personalIdentity, groupId, cancellationToken).ConfigureAwait(false);
-            var central = KeyLibraryVaultStore.OpenEncrypted(transfer.EncryptedVault, trust, groupId, [personalIdentity], requireFull: administration is not null);
+            var central = KeyLibraryVaultStore.OpenEncrypted(transfer.EncryptedVault, trust, groupId, [personalIdentity], requireFull: true);
             try { KeyLibraryVaultStore.ValidateImmutableHistory(central, local); }
             catch (InvalidDataException)
             {
