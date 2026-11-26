@@ -139,7 +139,7 @@ internal static class CentralGroupPolicyWorkflow
             var baseline = cursor.ReadReconciledHead() ??
                 throw new InvalidOperationException("Bitte die Schlüsselbibliothek zuerst vollständig zentral abgleichen.");
             var identity = SelectRetained(identities.Select(i => i.Certificate), current.Policy,
-                proposed, baseline.GroupId);
+                proposed, baseline.GroupId, requireFull: true);
             using var transport = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), id,
                 endpoint.ServerCertificateSha256, identity);
             var head = await transport.ReadHeadAsync(cancellationToken);
@@ -180,7 +180,7 @@ internal static class CentralGroupPolicyWorkflow
         var identities = WindowsVaultIdentityService.List().ToArray();
         try
         {
-            var identity = SelectRetained(identities.Select(i => i.Certificate), previous, next, group);
+            var identity = SelectRetained(identities.Select(i => i.Certificate), previous, next, group, requireFull: !journal.IsReceiveOnly);
             using var transport = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), id,
                 endpoint.ServerCertificateSha256, identity);
             return await journal.ResumeAsync(transport, trust, Cursor(id), identity,
@@ -190,10 +190,15 @@ internal static class CentralGroupPolicyWorkflow
     }
 
     private static X509Certificate2 SelectRetained(IEnumerable<X509Certificate2> identities,
-        OfflineGroupPolicy previous, OfflineGroupPolicy next, string group) =>
+        OfflineGroupPolicy previous, OfflineGroupPolicy next, string group, bool requireFull = false) =>
         identities.FirstOrDefault(c => c.HasPrivateKey && IsMember(previous, group, c) &&
-            IsMember(next, group, c)) ??
+            IsMember(next, group, c) && (!requireFull ||
+                (HasFullScope(previous, c) && HasFullScope(next, c)))) ??
         throw new CryptographicException("Ein auf diesem Arbeitsplatz verfügbarer persönlicher Zugang muss in beiden Gruppenständen berechtigt bleiben.");
+
+    private static bool HasFullScope(OfflineGroupPolicy policy, X509Certificate2 cert) =>
+        !policy.CustomerScopesEnabled || policy.People.Any(p => p.Enabled && p.AllKeyLibraryCustomers &&
+            p.Devices.Any(d => d.Enabled && d.Fingerprint == CertificateVaultService.Fingerprint(cert)));
 
     private static bool IsMember(OfflineGroupPolicy policy, string group, X509Certificate2 cert)
     {
