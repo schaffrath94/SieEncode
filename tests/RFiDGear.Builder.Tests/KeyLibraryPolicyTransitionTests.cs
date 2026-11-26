@@ -264,6 +264,88 @@ internal static class KeyLibraryPolicyTransitionTests
                     .GetAwaiter().GetResult() != newest || laggingTransport.Submissions != 0 ||
                 KeyLibraryVaultStore.Load(laggingPath, laggingTrust, "keys", [retained]).Catalog.Customers.Length != 2)
                 throw new Exception("Lagging member did not receive the latest signed catalog without writing centrally.");
+            // Special actions use the same immutable preparation and
+            // journal, not an earlier local policy write.
+            var reconciledFile = KeyLibrarySyncClient.InstallDownloadedSnapshot(localPath, trust,
+                "keys", newest, newerTransfer, [retained], ConcurrentFileWriter.Capture(localPath));
+            cursor.RememberReconciled(newest, reconciledFile);
+            var liveHead = newest;
+            var liveTransfer = newerTransfer;
+            using var nextRecoveryKey = RSA.Create(3072);
+            using var nextRecovery = MakeCert("New synthetic recovery", nextRecoveryKey);
+            var invitation = CertificateVaultService.ExportInvitation(nextRecovery, "Separate recovery");
+            var newFingerprint = CertificateVaultService.Fingerprint(nextRecovery);
+            var oldFingerprint = CertificateVaultService.Fingerprint(recovery);
+            using var delegateKey = RSA.Create(3072);
+            var delegateInvitation = new GroupDelegateInvitation(id, member.Id, delegateKey.ExportSubjectPublicKeyInfo());
+            var delegateFingerprint = GroupDelegationTransport.InvitationFingerprint(delegateInvitation);
+            var recoveryBase = trust.LoadOffline();
+            Reject<CryptographicException>(() => OfflineGroupAdministrationStore.ProposeRecoveryGrant(
+                recoveryBase, invitation, new string('0', 64)));
+            var noRecovery = OfflineGroupAdministrationStore.ProposeRecoveryEnabled(recoveryBase, oldFingerprint, false);
+            Reject<InvalidOperationException>(() => administration.PrepareKeyLibraryPolicyTransition(
+                trust, liveHead, liveTransfer, retained, now, true, noRecovery));
+            Reject<CryptographicException>(() => OfflineGroupAdministrationStore.ProposeDelegationGrant(
+                recoveryBase, delegateInvitation, new string('0', 64), "delegate", ["keys"]));
+
+            void ApplySpecial(OfflineGroupPolicy draft)
+            {
+                var oldCheckpoint = trust.LoadOffline().Checkpoint;
+                var oldFile = ConcurrentFileWriter.Capture(localPath);
+                var prepared = administration.PrepareKeyLibraryPolicyTransition(trust,
+                    liveHead, liveTransfer, retained, now, true, draft);
+                if (administration.RequireLocalAuthority(trust) != oldCheckpoint ||
+                    ConcurrentFileWriter.Capture(localPath) != oldFile || restarted.ReadHead() != liveHead)
+                    throw new Exception("Special proposal mutated live state before central acceptance.");
+                reopened.Stage(trust, cursor, liveHead, prepared, retained, true);
+                var unreliable = new LostReplyTransport(restarted, retained, now);
+                Reject<IOException>(() => reopened.ResumeAsync(unreliable, trust, cursor, retained,
+                    administration: administration).GetAwaiter().GetResult());
+                if (!reopened.HasPending || administration.RequireLocalAuthority(trust) != oldCheckpoint)
+                    throw new Exception("Special action did not retain recoverable intent.");
+                var result = reopened.ResumeAsync(unreliable, trust, cursor, retained,
+                    administration: administration).GetAwaiter().GetResult();
+                if (unreliable.Submissions != 1 || result.CatalogRevision != liveHead.CatalogRevision ||
+                    result.CentralRevision != liveHead.CentralRevision + 1 ||
+                    result.CiphertextSha256 == liveHead.CiphertextSha256 ||
+                    administration.RequireLocalAuthority(trust) != result.Policy || reopened.HasPending)
+                    throw new Exception("Special action did not complete exactly once.");
+                liveHead = result; liveTransfer = prepared.Rewrapped;
+            }
+
+            ApplySpecial(OfflineGroupAdministrationStore.ProposeRecoveryGrant(recoveryBase,
+                invitation, newFingerprint));
+            var both = trust.LoadOffline();
+            var bothVault = GroupVaultService.Read(liveTransfer.EncryptedVault);
+            _ = KeyLibraryVault.Unprotect(bothVault, both, "keys", [recovery], recovery: true);
+            _ = KeyLibraryVault.Unprotect(bothVault, both, "keys", [nextRecovery], recovery: true);
+            ApplySpecial(OfflineGroupAdministrationStore.ProposeRecoveryEnabled(both, oldFingerprint, false));
+            var rotated = trust.LoadOffline();
+            var rotatedVault = GroupVaultService.Read(liveTransfer.EncryptedVault);
+            Reject<CryptographicException>(() => KeyLibraryVault.Unprotect(rotatedVault, rotated, "keys", [recovery], recovery: true));
+            Reject<CryptographicException>(() => KeyLibraryVault.Unprotect(rotatedVault, rotated, "keys", [nextRecovery]));
+            if (restarted.IsAuthorizedTlsMember(nextRecovery, now) ||
+                KeyLibraryVault.Unprotect(rotatedVault, rotated, "keys", [nextRecovery], recovery: true).Secrets.Single() != payload.Secrets.Single())
+                throw new Exception("Recovery change confused recovery with personal membership or changed keys.");
+            _ = KeyLibraryVault.Unprotect(bothVault, both, "keys", [recovery], recovery: true);
+
+            ApplySpecial(OfflineGroupAdministrationStore.ProposeDelegationGrant(rotated,
+                delegateInvitation, delegateFingerprint, "delegate", ["keys"]));
+            var delegated = trust.LoadOffline();
+            var request = OfflineGroupDelegationService.Sign(new OfflineGroupChange(
+                OfflineGroupDelegationService.Format, 1, id, "delegate", delegated.Checkpoint,
+                [new("keys", "Renamed by delegate", ["retained", "added"])]), delegateKey);
+            ApplySpecial(OfflineGroupDelegationService.Apply(request, delegated));
+            var acceptedDelegation = trust.LoadOffline();
+            if (acceptedDelegation.Policy.Groups.Single().Name != "Renamed by delegate")
+                throw new Exception("Approved delegated change was not centrally installed.");
+            Reject<CryptographicException>(() => OfflineGroupDelegationService.Apply(request, acceptedDelegation));
+            ApplySpecial(OfflineGroupAdministrationStore.ProposeDelegationRevocation(acceptedDelegation, "delegate"));
+            var revoked = trust.LoadOffline();
+            var freshRequest = OfflineGroupDelegationService.Sign(new OfflineGroupChange(
+                OfflineGroupDelegationService.Format, 1, id, "delegate", revoked.Checkpoint,
+                [new("keys", "Unauthorized rename", ["retained", "added"])]), delegateKey);
+            Reject<CryptographicException>(() => OfflineGroupDelegationService.Apply(freshRequest, revoked));
             // Document the unavoidable offline limitation: an already retained
             // historical ciphertext and matching old policy are still usable.
             _ = KeyLibraryVault.Unprotect(GroupVaultService.Read(first.EncryptedVault), oldPolicy, "keys", [removed]);
