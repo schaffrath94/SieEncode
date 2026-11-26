@@ -16,12 +16,13 @@ public sealed record ProjectCatalogEntry(
     bool HasOperationalBuild = false,
     bool HasRecognition = false,
     int VaultVersion = 0,
-    bool HasCoding = false)
+    bool HasCoding = false,
+    bool HasLibraryBinding = false)
 {
-    public bool SecureOnDemand => !ArtifactOnly && VaultVersion >= KeyVaultService.CurrentVersion;
+    public bool SecureOnDemand => !ArtifactOnly && (HasLibraryBinding || VaultVersion >= KeyVaultService.CurrentVersion);
     public bool CanOpenStation => HasCoding && (SecureOnDemand || HasOperationalBuild);
     public string Kind => ArtifactOnly ? "Nur gebaut" : SecureOnDemand ? "Sicher bereitstellbar" : !HasOperationalBuild ? "Neu bauen" : HasRecognition ? "Einsatzbereit" : "Altbuild nutzbar";
-    public string KeyState => ArtifactOnly ? "Schlüssel im Build" : VaultVersion == KeyVaultService.CurrentVersion ? "Vault mit Passphrase" : SecureOnDemand ? "Persönlich freigegebener Vault" : HasVault ? "Neubau mit Vault" : "Neubau gesperrt";
+    public string KeyState => ArtifactOnly ? "Schlüssel im Build" : HasLibraryBinding ? "Versionsgebundene Schlüsselbibliothek" : VaultVersion == KeyVaultService.CurrentVersion ? "Vault mit Passphrase" : SecureOnDemand ? "Persönlich freigegebener Vault" : HasVault ? "Neubau mit Vault" : "Neubau gesperrt";
 }
 
 public sealed class ProjectCatalog
@@ -54,7 +55,8 @@ public sealed class ProjectCatalog
                 var builtDirectory = ProjectPaths.ResolveBuiltProject(project, root);
                 editableDirectories.Add(builtDirectory.TrimEnd(Path.DirectorySeparatorChar));
                 // A bound group project must never fall back to an old plaintext build when its vault is missing or damaged.
-                var vaultVersion = project.Project.GroupVault is not null ? ProjectGroupVault.ProtectionLevel : GetVaultVersion(path);
+                var libraryBound = project.Project.KeyLibrary is not null;
+                var vaultVersion = libraryBound ? 0 : project.Project.GroupVault is not null ? ProjectGroupVault.ProtectionLevel : GetVaultVersion(path);
                 entries.Add(new ProjectCatalogEntry(
                     project.Project.Name,
                     string.Join(" + ", project.Project.Build),
@@ -66,10 +68,10 @@ public sealed class ProjectCatalog
                     builtDirectory,
                     false,
                     vaultVersion > 0,
-                    HasCoreOperationalBuild(project, builtDirectory),
-                    HasRecognitionBuild(project.Project.Name, builtDirectory),
+                    !libraryBound && HasCoreOperationalBuild(project, builtDirectory),
+                    !libraryBound && HasRecognitionBuild(project.Project.Name, builtDirectory),
                     vaultVersion,
-                    project.Project.Build.Contains("Coding", StringComparer.OrdinalIgnoreCase)));
+                    project.Project.Build.Contains("Coding", StringComparer.OrdinalIgnoreCase), libraryBound));
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or InvalidDataException) { }
         }
