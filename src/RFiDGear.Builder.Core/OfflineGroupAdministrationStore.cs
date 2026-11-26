@@ -102,6 +102,28 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
     /// Sign the precise encrypted Vault bytes for an offline or future HTTPS
     /// central transfer. This does not upload or accept anything centrally.
     /// </summary>
+    internal byte[] ProtectScopedCatalog(OfflineGroupTrustStore trust, string groupId,
+        KeyLibraryVaultPayload payload, DateTimeOffset now)
+    {
+        var checkpoint = RequireLocalAuthority(trust);
+        var (state, revision) = Load();
+        try
+        {
+            using var authority = OpenKey(state);
+            var enrolled = PublicPackage(authority, state.Policy);
+            if (GroupEnrollmentPackages.Validate(enrolled).Checkpoint != checkpoint ||
+                trust.LoadOffline().Checkpoint != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            var signed = ScopedKeyLibraryVault.Protect(payload, enrolled, authority, groupId, now);
+            if (ConcurrentFileWriter.Capture(path) != revision || RequireLocalAuthority(trust) != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            var bytes = KeyLibrarySyncWire.Write(signed);
+            _ = KeyLibrarySyncTransport.CiphertextSha256(bytes);
+            return bytes;
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     public SignedKeyLibrarySync SignEncryptedCentralSync(OfflineGroupTrustStore trust,
         string groupId, CentralKeyLibraryHead expected, long catalogRevision,
         byte[] encryptedVault)
