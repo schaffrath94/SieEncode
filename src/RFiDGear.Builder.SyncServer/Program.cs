@@ -112,7 +112,9 @@ app.MapPost("/v1/libraries/{id:guid}/upload", async (Guid id, HttpRequest reques
     if (id != libraryId) return Results.NotFound();
     var transfer = await ReadPayload<SignedKeyLibrarySync>(request, KeyLibrarySyncWire.MaximumEncryptedBytes);
     if (transfer is null) return Results.BadRequest();
-    return Run(() => WireResponse(store.Accept(transfer)));
+    var certificate = request.HttpContext.Connection.ClientCertificate;
+    if (certificate is null) return Results.Unauthorized();
+    return Run(() => WireResponse(store.Accept(transfer, certificate, DateTimeOffset.UtcNow)));
 });
 
 app.MapPost("/v1/libraries/{id:guid}/policy-transition", async (Guid id, HttpRequest request) =>
@@ -132,8 +134,10 @@ app.MapPost("/v1/libraries/{id:guid}/download", async (Guid id, HttpRequest requ
     if (id != libraryId) return Results.NotFound();
     var claim = await ReadPayload<SignedKeyLibraryDownload>(request, KeyLibrarySyncWire.MaximumDownloadRequestBytes);
     if (claim is null) return Results.BadRequest();
-    return Run(() => WireResponse(store.ReadEncryptedSnapshot(claim,
-        DateTimeOffset.UtcNow)));
+    var certificate = request.HttpContext.Connection.ClientCertificate;
+    if (certificate is null) return Results.Unauthorized();
+    return Run(() => WireResponse(store.ReadAuthorizedSnapshot(claim,
+        certificate, DateTimeOffset.UtcNow).Transfer));
 }).WithMetadata(new RequestSizeLimitAttribute(KeyLibrarySyncWire.MaximumDownloadRequestBytes));
 
 app.MapPost("/v1/libraries/{id:guid}/snapshot", async (Guid id, HttpRequest request) =>

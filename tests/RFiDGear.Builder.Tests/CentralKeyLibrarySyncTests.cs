@@ -19,6 +19,7 @@ internal static class CentralKeyLibrarySyncTests
             "CN=" + name, key, HashAlgorithmName.SHA256,
             RSASignaturePadding.Pkcs1).CreateSelfSigned(now.AddDays(-2), now.AddDays(2));
         using var member = MakeCert("Synthetic central member", memberKey);
+        using var otherMember = MakeCert("Other group member", stranger);
         using var recovery = MakeCert("Synthetic central recovery", recoveryKey);
         OfflineVaultDevice Device(X509Certificate2 cert) => new(cert.Subject,
             CertificateVaultService.Fingerprint(cert),
@@ -33,9 +34,10 @@ internal static class CentralKeyLibrarySyncTests
                 "DF_KEY_AES", "PICC", "SIPORT", KeyLibraryContracts.Active)]),
             [new(new KeyLibraryAddress(key, 1), secret)]);
         var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 2,
-            library, 1, [new OfflineVaultGroup("keys", "Keys", ["member"])])
+            library, 1, [new OfflineVaultGroup("keys", "Keys", ["member"]), new("other", "Other", ["otherMember"])])
         {
-            People = [new("member", "Synthetic Member", true, [Device(member)])],
+            People = [new("member", "Synthetic Member", true, [Device(member)]),
+                new("otherMember", "Other Member", true, [Device(otherMember)])],
             RecoveryDevices = [Device(recovery)]
         };
         var enrolled = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1,
@@ -109,7 +111,11 @@ internal static class CentralKeyLibrarySyncTests
             Reject<CryptographicException>(() =>
                 KeyLibrarySyncTransport.Prepare(enrolled, "keys", 0, "", 1, altered));
 
-            var written = center.Accept(signed);
+            if (!center.IsAuthorizedTlsMember(otherMember, now)) throw new Exception("Other group fixture must pass initial TLS membership.");
+            Reject<CryptographicException>(() => center.Accept(signed, otherMember, now));
+            Reject<CryptographicException>(() => center.Accept(signed, recovery, now));
+            if (center.ReadHead() != before) throw new Exception("Denied upload changed the central revision.");
+            var written = center.Accept(signed, member, now);
             if (written.CentralRevision != 1 || written.CatalogRevision != 1 ||
                 written.CiphertextSha256 != KeyLibrarySyncTransport.CiphertextSha256(encrypted))
                 throw new Exception("Central store failed to accept authenticated encrypted Vault.");
@@ -135,9 +141,15 @@ internal static class CentralKeyLibrarySyncTests
                 library, new OfflineGroupTrustTests.TestProtection());
             trust.Enroll(enrolled.AdministratorPublicKey, root, enrolled.Policy);
             var offlineCopyPath = Path.Combine(directory, "offline-key-library.json");
+            var borrowed = memberDownload with { EncryptedVault = memberDownload.EncryptedVault.ToArray() };
+            IEnumerable<X509Certificate2> ReleaseTransportBuffer()
+            {
+                Array.Clear(borrowed.EncryptedVault);
+                yield return member;
+            }
             var offlineRevision = KeyLibrarySyncClient.InstallDownloadedSnapshot(
-                offlineCopyPath, trust, "keys", written, memberDownload,
-                [member], FileRevision.Missing);
+                offlineCopyPath, trust, "keys", written, borrowed,
+                ReleaseTransportBuffer(), FileRevision.Missing);
             if (KeyLibraryVaultStore.Load(offlineCopyPath, trust, "keys", [member])
                 .Secrets.Single().HexValue != secret)
                 throw new Exception("First signed central download did not become a usable offline library.");

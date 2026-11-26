@@ -124,6 +124,12 @@ public static class CentralKeyLibraryBackupService
         var source = Path.GetFullPath(isolatedDirectory);
         RequireDirectory(source);
         RequireRegularFile(Path.Combine(source, "NOT-ACTIVATED.json"));
+        ArgumentNullException.ThrowIfNull(authorization);
+        if (authorization.Payload is not { Length: > 0 and <= CentralKeyLibraryActivation.MaximumBytes } ||
+            authorization.Signature is not { Length: >= 384 and <= 2048 })
+            throw new InvalidDataException("Ungültiger Aktivierungsauftrag.");
+        // Verify and persist exactly the same request, even when the caller reuses its buffers.
+        authorization = new(authorization.Payload.ToArray(), authorization.Signature.ToArray());
         var untrusted = CentralKeyLibraryActivation.ReadClaim(authorization);
         var center = new CentralKeyLibraryStore(Path.Combine(source, StateName),
             untrusted.Reference.Head.LibraryId);

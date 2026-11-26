@@ -32,6 +32,16 @@ public static class KeyLibrarySyncTransport
         MaxDepth = 12
     };
 
+    internal static SignedKeyLibrarySync Capture(SignedKeyLibrarySync transfer)
+    {
+        ArgumentNullException.ThrowIfNull(transfer);
+        if (transfer.Claim is not { Length: > 0 and <= MaximumClaimBytes } ||
+            transfer.Signature is not { Length: >= 384 and <= 1024 } ||
+            transfer.EncryptedVault is not { Length: > 0 and <= GroupVaultService.MaximumBytes })
+            throw new CryptographicException("Ungültige signierte Bibliotheksübertragung.");
+        return new(transfer.Claim.ToArray(), transfer.Signature.ToArray(), transfer.EncryptedVault.ToArray());
+    }
+
     public static string CiphertextSha256(byte[] encrypted)
     {
         if (encrypted is null || encrypted.Length is <= 0 or > GroupVaultService.MaximumBytes)

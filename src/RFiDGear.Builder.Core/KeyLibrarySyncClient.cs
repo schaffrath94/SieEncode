@@ -58,6 +58,7 @@ public static class KeyLibrarySyncClient
         ArgumentNullException.ThrowIfNull(trust);
         ArgumentNullException.ThrowIfNull(verifiedRemoteHead);
         ArgumentNullException.ThrowIfNull(expectedLocalFile);
+        transfer = KeyLibrarySyncTransport.Capture(transfer);
         var registered = trust.ExportPublic();
         var claim = KeyLibrarySyncTransport.Verify(transfer, registered);
         var policy = trust.LoadOffline();

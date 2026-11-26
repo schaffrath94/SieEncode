@@ -92,14 +92,14 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
     }
 
     private static bool IsAuthorizedTlsMember(State state, X509Certificate2 certificate,
-        DateTimeOffset now)
+        DateTimeOffset now, string? targetGroup = null)
     {
         var policy = GroupEnrollmentPackages.Validate(state.Enrollment).Policy;
         if (policy.Version != 2 || policy.People is null) return false;
         var groupIds = state.CentralRevision == 0
             ? policy.Groups.Select(g => g.Id).ToHashSet(StringComparer.Ordinal)
             : new HashSet<string>([state.GroupId], StringComparer.Ordinal);
-        var activeIds = policy.Groups.Where(g => groupIds.Contains(g.Id))
+        var activeIds = policy.Groups.Where(g => groupIds.Contains(g.Id) && (targetGroup is null || targetGroup == g.Id))
             .SelectMany(g => g.Members).ToHashSet(StringComparer.Ordinal);
         var fingerprint = CertificateVaultService.Fingerprint(certificate);
         return policy.People.Where(p => p.Enabled && activeIds.Contains(p.Id))
@@ -114,10 +114,22 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
     /// Accept one authenticated encrypted snapshot if and only if its signed
     /// expected server revision+hash match the persisted state. No silent merges.
     /// </summary>
-    public CentralKeyLibraryHead Accept(SignedKeyLibrarySync transfer)
+    public CentralKeyLibraryHead Accept(SignedKeyLibrarySync transfer) =>
+        AcceptCore(transfer, null, default);
+
+    public CentralKeyLibraryHead Accept(SignedKeyLibrarySync transfer, X509Certificate2 authenticatedMember, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(authenticatedMember);
+        return AcceptCore(transfer, authenticatedMember, now);
+    }
+
+    private CentralKeyLibraryHead AcceptCore(SignedKeyLibrarySync transfer, X509Certificate2? authenticatedMember, DateTimeOffset now)
     {
         var (state, captured) = Read();
-        var claim = KeyLibrarySyncTransport.Verify(transfer, state.Enrollment);
+        var frozen = KeyLibrarySyncTransport.Capture(transfer);
+        var claim = KeyLibrarySyncTransport.Verify(frozen, state.Enrollment);
+        if (authenticatedMember is not null && !IsAuthorizedTlsMember(state, authenticatedMember, now, claim.GroupId))
+            throw new CryptographicException("Arbeitsplatz hat keine aktuelle Berechtigung für die Zielgruppe.");
         var current = Head(state);
         if (claim.ExpectedCentralRevision != state.CentralRevision ||
             claim.ExpectedCentralCiphertextSha256 != current.CiphertextSha256 ||
@@ -126,9 +138,6 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
             claim.CatalogRevision <= current.CatalogRevision)
             throw new ConcurrentFileChangeException(path);
 
-        // Detach arrays owned by the transport caller before durable acceptance.
-        var frozen = new SignedKeyLibrarySync(transfer.Claim.ToArray(),
-            transfer.Signature.ToArray(), transfer.EncryptedVault.ToArray());
         var updated = state with
         {
             CentralRevision = state.CentralRevision + 1,
