@@ -86,7 +86,7 @@ internal sealed partial class GroupAdministrationWindow
                 CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
                 var current = GroupEnrollmentPackages.Validate(store!.ExportPublic());
                 var next = OfflineGroupAdministrationStore.ProposeDelegationRevocation(current, selected.Id);
-                store.UpdateDelegations(next.Delegations, checkpoint!);
+                store!.UpdateDelegations(next.Delegations, checkpoint!);
                 LoadAdministration(currentLibrary!.Value);
             },
             "Vollmacht für zukünftige Gruppenänderungen entziehen.");
@@ -110,7 +110,7 @@ internal sealed partial class GroupAdministrationWindow
             {
                 using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
                 CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
-                store.ApplyDelegatedChange(change, checkpoint!);
+                store!.ApplyDelegatedChange(change, checkpoint!);
                 LoadAdministration(currentLibrary!.Value);
             },
             "Geprüften delegierten Gruppenänderungsantrag übernehmen.\n\n" + preview);
