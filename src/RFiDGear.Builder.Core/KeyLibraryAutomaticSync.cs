@@ -59,7 +59,7 @@ public static class KeyLibraryAutomaticSync
 
         var expectedLocal = ConcurrentFileWriter.Capture(localVaultPath);
         KeyLibraryVaultPayload? local = expectedLocal.Exists
-            ? KeyLibraryVaultStore.Load(localVaultPath, trust, groupId, [personalIdentity])
+            ? KeyLibraryVaultStore.Load(localVaultPath, trust, groupId, [personalIdentity], requireFull: administration is not null)
             : null;
         if (ConcurrentFileWriter.Capture(localVaultPath) != expectedLocal)
             throw new ConcurrentFileChangeException(localVaultPath);
@@ -104,10 +104,11 @@ public static class KeyLibraryAutomaticSync
 
             var transfer = await DownloadVerifiedAsync(transport, trust, remote,
                 personalIdentity, groupId, cancellationToken).ConfigureAwait(false);
-            var central = KeyLibraryVault.Unprotect(GroupVaultService.Read(
-                transfer.EncryptedVault), policy, groupId, [personalIdentity]);
+            var central = KeyLibraryVaultStore.OpenEncrypted(transfer.EncryptedVault, trust, groupId, [personalIdentity], requireFull: administration is not null);
             if (ConcurrentFileWriter.Capture(localVaultPath) != expectedLocal)
                 throw new ConcurrentFileChangeException(localVaultPath);
+            if (policy.Policy.CustomerScopesEnabled)
+                return Record(KeyLibrarySyncOutcome.Conflict, remote); // partial equality cannot prove identical complete history
             return LogicallyEquivalent(local, central)
                 ? Reconciled(KeyLibrarySyncOutcome.InSync, remote, expectedLocal)
                 : Record(KeyLibrarySyncOutcome.Conflict, remote);
@@ -130,8 +131,7 @@ public static class KeyLibraryAutomaticSync
         {
             var transfer = await DownloadVerifiedAsync(transport, trust, remote,
                 personalIdentity, groupId, cancellationToken).ConfigureAwait(false);
-            var central = KeyLibraryVault.Unprotect(GroupVaultService.Read(
-                transfer.EncryptedVault), policy, groupId, [personalIdentity]);
+            var central = KeyLibraryVaultStore.OpenEncrypted(transfer.EncryptedVault, trust, groupId, [personalIdentity], requireFull: administration is not null);
             try { KeyLibraryVaultStore.ValidateImmutableHistory(central, local); }
             catch (InvalidDataException)
             {
@@ -230,8 +230,13 @@ public static class KeyLibraryAutomaticSync
     {
         KeyLibraryVault.Validate(local);
         KeyLibraryVault.Validate(remote);
-        var first = JsonSerializer.SerializeToUtf8Bytes(local);
-        var second = JsonSerializer.SerializeToUtf8Bytes(remote);
+        // Customer blocks have canonical ordering; compare logical records independently of array order.
+        KeyLibraryVaultPayload Canonical(KeyLibraryVaultPayload value) => new(
+            value.Catalog with { Customers = value.Catalog.Customers.OrderBy(c => c.CustomerId).ToArray(),
+                Keys = value.Catalog.Keys.OrderBy(k => k.KeyId).ThenBy(k => k.Version).ToArray() },
+            value.Secrets.OrderBy(s => s.Key.KeyId).ThenBy(s => s.Key.Version).ToArray());
+        var first = JsonSerializer.SerializeToUtf8Bytes(Canonical(local));
+        var second = JsonSerializer.SerializeToUtf8Bytes(Canonical(remote));
         try
         {
             var one = SHA256.HashData(first);
