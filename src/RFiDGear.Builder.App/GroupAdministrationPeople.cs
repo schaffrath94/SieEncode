@@ -15,6 +15,10 @@ internal sealed class PersonAdministrationDraft
     public bool Enabled { get; set; } = true;
     public bool AllowKeyLibraryView { get; set; }
     public bool AllowKeyLibraryCopy { get; set; }
+    public bool AllKeyLibraryCustomers { get; set; }
+    public Guid[] KeyLibraryCustomers { get; set; } = [];
+    public string CustomerScopeLabel => AllKeyLibraryCustomers ? "Alle (auch neue)" :
+        KeyLibraryCustomers.Length == 0 ? "Keine" : $"{KeyLibraryCustomers.Length} ausgewählt";
     public ObservableCollection<DeviceAdministrationDraft> Devices { get; } = [];
 }
 internal sealed class DeviceAdministrationDraft
@@ -32,6 +36,9 @@ internal sealed partial class GroupAdministrationWindow
     private readonly DataGrid peopleGrid = new() { AutoGenerateColumns = false, CanUserAddRows = false, CanUserDeleteRows = false, MinHeight = 90, MaxHeight = 160 };
     private readonly DataGrid deviceGrid = new() { AutoGenerateColumns = false, CanUserAddRows = false, CanUserDeleteRows = false, MinHeight = 70, MaxHeight = 140 };
     private bool personMode;
+    private bool customerScopeDraft;
+    private readonly TextBlock customerScopeStatus = new() { TextWrapping = TextWrapping.Wrap };
+    private readonly DataGridTextColumn customerScopeColumn = new() { Header = "Kundenfreigabe", Binding = new Binding(nameof(PersonAdministrationDraft.CustomerScopeLabel)), IsReadOnly = true };
 
     private void AddPeopleControls(StackPanel root)
     {
@@ -41,6 +48,7 @@ internal sealed partial class GroupAdministrationWindow
         peopleGrid.Columns.Add(new DataGridCheckBoxColumn { Header = "Aktiv", Binding = new Binding(nameof(PersonAdministrationDraft.Enabled)) });
         peopleGrid.Columns.Add(new DataGridCheckBoxColumn { Header = "Klartext anzeigen", Binding = new Binding(nameof(PersonAdministrationDraft.AllowKeyLibraryView)) });
         peopleGrid.Columns.Add(new DataGridCheckBoxColumn { Header = "Klartext kopieren", Binding = new Binding(nameof(PersonAdministrationDraft.AllowKeyLibraryCopy)) });
+        peopleGrid.Columns.Add(customerScopeColumn);
         peopleGrid.ItemsSource = people;
         panel.Children.Add(Note("Klartextanzeige und Kopieren separat freigeben. Kopieren setzt Anzeige voraus. Diese Bedienrechte gelten innerhalb der bereits entschlüsselbaren Bibliothek, nicht als kryptografische Kundentrennung."));
         peopleGrid.SelectionChanged += (_, _) => deviceGrid.ItemsSource = (peopleGrid.SelectedItem as PersonAdministrationDraft)?.Devices;
@@ -56,6 +64,11 @@ internal sealed partial class GroupAdministrationWindow
             var name = TextEntryPrompt.Show(this, "Person hinzufügen", "Anzeigename der Person", "");
             if (name is not null) peopleGrid.SelectedItem = AddPerson(name);
         }));
+        panel.Children.Add(customerScopeStatus);
+        var scopeActions = new WrapPanel();
+        scopeActions.Children.Add(Action("Kundentrennung vorbereiten", PrepareCustomerScopes));
+        scopeActions.Children.Add(Action("Kundenfreigabe der Person bearbeiten", EditSelectedCustomerScope));
+        panel.Children.Add(scopeActions);
         panel.Children.Add(deviceGrid);
         panel.Children.Add(Action("Geräteeinladung zur Person hinzufügen", ImportPersonDevice));
         panel.Children.Add(Action("Bisherige Gruppen auf Personen umstellen", () =>
@@ -127,16 +140,19 @@ internal sealed partial class GroupAdministrationWindow
 
     private void LoadPeople(OfflineGroupPolicy policy)
     {
-        people.Clear(); personMode = policy.Version == 2 || policy.Groups.All(g => g.Members.Length == 0);
+        people.Clear(); customerScopeDraft = policy.CustomerScopesEnabled; personMode = policy.Version == 2 || policy.Groups.All(g => g.Members.Length == 0);
         foreach (var person in policy.People)
         {
-            var row = new PersonAdministrationDraft { Id = person.Id, Name = person.Name, Enabled = person.Enabled, AllowKeyLibraryView = person.AllowKeyLibraryView, AllowKeyLibraryCopy = person.AllowKeyLibraryCopy };
+            var row = new PersonAdministrationDraft { Id = person.Id, Name = person.Name, Enabled = person.Enabled, AllowKeyLibraryView = person.AllowKeyLibraryView, AllowKeyLibraryCopy = person.AllowKeyLibraryCopy,
+                AllKeyLibraryCustomers = person.AllKeyLibraryCustomers, KeyLibraryCustomers = person.KeyLibraryCustomers.ToArray() };
             foreach (var device in person.Devices) row.Devices.Add(new DeviceAdministrationDraft { Name = device.Name, Fingerprint = device.Fingerprint, Certificate = device.Certificate, Enabled = device.Enabled });
             people.Add(row);
         }
+        RefreshCustomerScopeStatus();
     }
     private OfflineVaultPerson[] PersonRows() => people.Select(p => new OfflineVaultPerson(p.Id, p.Name, p.Enabled, p.Devices.Select(d => new OfflineVaultDevice(d.Name, d.Fingerprint, d.Certificate, d.Enabled)).ToArray())
-        { AllowKeyLibraryView = p.AllowKeyLibraryView, AllowKeyLibraryCopy = p.AllowKeyLibraryCopy }).ToArray();
+        { AllowKeyLibraryView = p.AllowKeyLibraryView, AllowKeyLibraryCopy = p.AllowKeyLibraryCopy,
+            AllKeyLibraryCustomers = p.AllKeyLibraryCustomers, KeyLibraryCustomers = p.KeyLibraryCustomers.ToArray() }).ToArray();
     private void RefreshMemberLabels() => members.ItemsSource = (grid.SelectedItem as GroupAdministrationDraft)?.Members.Select(id => new GroupMemberLabel(id, people.FirstOrDefault(p => p.Id == id) is { } p ? p.Name + (p.Enabled ? "" : " · inaktiv") + " · " + p.Id : id)).ToArray();
     private void CommitEdits()
     {
