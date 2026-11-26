@@ -289,6 +289,42 @@ internal static class ScopedKeyLibraryVaultTests
                 throw new Exception("Independent additions did not form one safe candidate preview.");
             Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.PreviewMerge(trust,
                 "keys", fullCert, false, now, compatible, head2, idHistory));
+            // Restore the synthetic test authority into the normal protected
+            // administration store, so preparation uses the production signer.
+            var mergeAdministration = new OfflineGroupAdministrationStore(Path.Combine(directory, "merge-admin.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            const string syntheticPassphrase = "Synthetic merge fixture password 2026!";
+            var syntheticBackup = GroupPrivateKeyBackups.Protect(authority,
+                new GroupPrivateKeyContext(id, GroupPrivateKeyBackups.Administrator), syntheticPassphrase);
+            mergeAdministration.RestorePrivateBackup(syntheticBackup, syntheticPassphrase, trust);
+            var previewHash = preview.ApprovalSha256(head2);
+            KeyLibraryPreparedMerge Prepare(IEnumerable<KeyLibraryDisasterSource> input, string hash, bool approved,
+                X509Certificate2 device) => KeyLibraryDisasterAnalysis.PrepareApprovedMerge(trust,
+                    mergeAdministration, "keys", device, now, input, head2, idCentral, hash, approved);
+            Reject<InvalidOperationException>(() => Prepare(compatible, previewHash, false, fullCert));
+            Reject<CryptographicException>(() => Prepare(compatible, new string('0', 64), true, fullCert));
+            Reject<CryptographicException>(() => Prepare(compatible, previewHash, true, limitedCert));
+            Reject<CryptographicException>(() => Prepare(compatible, previewHash, true, recoveryCert));
+            Reject<CryptographicException>(() => Prepare(candidates, blockedMerge.ApprovalSha256(head2), true, fullCert));
+            var originalIndependentBytes = File.ReadAllBytes(independentPath);
+            // Even logically identical re-encryption is a different approved source.
+            File.WriteAllBytes(independentPath, KeyLibrarySyncWire.Write(
+                ScopedKeyLibraryVault.Protect(independent, enrolled, authority, "keys", now)));
+            Reject<CryptographicException>(() => Prepare(compatible, previewHash, true, fullCert));
+            File.WriteAllBytes(independentPath, originalIndependentBytes);
+            var prepared = Prepare(compatible, previewHash, true, fullCert);
+            var mergedClaim = KeyLibrarySyncTransport.Verify(prepared.Transfer, enrolled);
+            var merged = ScopedKeyLibraryVault.Open(KeyLibrarySyncWire.Read<SignedScopedKeyLibraryBundle>(
+                prepared.Transfer.EncryptedVault, GroupVaultService.MaximumBytes), trust, "keys", fullCert, now, requireFull: true);
+            if (prepared.PreviewSha256 != previewHash || prepared.ExpectedHead != head2 ||
+                mergedClaim.ExpectedCentralRevision != head2.CentralRevision ||
+                mergedClaim.ExpectedCentralCiphertextSha256 != head2.CiphertextSha256 ||
+                merged.Catalog.Revision != preview.ProposedRevision || merged.Secrets.Length != 4 ||
+                !merged.Secrets.Any(s => s.Key.KeyId == keyA.KeyId && s.Key.Version == 2 && s.HexValue == new string('C', 32)) ||
+                !merged.Secrets.Any(s => s.Key.KeyId == keyB.KeyId && s.Key.Version == 2 && s.HexValue == new string('E', 32)) ||
+                central.ReadHead() != head2 || ConcurrentFileWriter.Capture(localPath) != file2)
+                throw new Exception("Approved merge did not produce the exact encrypted candidate, or changed operational state.");
+
             var noChanges = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert, false, now,
                 [candidates[0], candidates[0] with { SourceId = Guid.NewGuid() }], head2, idCentral);
             if (noChanges.CanPrepareCandidate || noChanges.Issues.Length != 0 || noChanges.ProposedRevision is not null)

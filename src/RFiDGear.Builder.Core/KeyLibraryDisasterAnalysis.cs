@@ -53,15 +53,60 @@ public static class KeyLibraryDisasterAnalysis
     {
         ArgumentNullException.ThrowIfNull(independentlyKnownHead);
         return WithVerifiedSources(trust, groupId, identity, recovery, now, sources,
+            independentlyKnownHead, (report, opened) => BuildMerge(report, opened, baseSourceId).Preview);
+    }
+
+    /// <summary>Explicit approval of the exact key-free preview. Reopen every
+    /// source and produce only a signed encrypted CAS proposal, never upload,
+    /// overwrite a local Vault, change a cursor or authorize a card operation.
+    /// The caller must serialize this operation with the Studio administration.</summary>
+    public static KeyLibraryPreparedMerge PrepareApprovedMerge(OfflineGroupTrustStore trust,
+        OfflineGroupAdministrationStore administration, string groupId,
+        X509Certificate2 fullMember, DateTimeOffset now,
+        IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead independentlyKnownHead,
+        Guid baseSourceId, string approvedPreviewSha256, bool explicitlyApproved)
+    {
+        ArgumentNullException.ThrowIfNull(administration);
+        ArgumentNullException.ThrowIfNull(independentlyKnownHead);
+        if (!explicitlyApproved)
+            throw new InvalidOperationException("Zusammenführung muss ausdrücklich bestätigt werden.");
+        var checkpoint = administration.RequireLocalAuthority(trust);
+        return WithVerifiedSources(trust, groupId, fullMember, false, now, sources,
             independentlyKnownHead, (report, opened) =>
             {
-                if (opened.Count < 2 || opened.Any(s => !s.Inventory.CurrentPolicy) ||
-                    opened.SingleOrDefault(s => s.Inventory.SourceId == baseSourceId)?.Inventory.CentralRelation
-                        != KeyLibraryDisasterCentralRelation.ExactKnownCiphertext)
-                    throw new CryptographicException("Zusammenführung erfordert einen exakt bestätigten gemeinsamen Ausgangsstand und aktuelle Richtlinien.");
-                return KeyLibraryMergePlanner.Build(report, baseSourceId,
-                    opened.ToDictionary(s => s.Inventory.SourceId, s => s.Payload)).Preview;
+                var result = BuildMerge(report, opened, baseSourceId);
+                if (report.CurrentPolicy != checkpoint || !result.Preview.CanPrepareCandidate ||
+                    result.Candidate is null || result.Preview.ApprovalSha256(independentlyKnownHead) != approvedPreviewSha256)
+                    throw new CryptographicException("Zusammenführung ist nicht konfliktfrei oder entspricht nicht der bestätigten Vorschau.");
+                var bytes = administration.ProtectScopedCatalog(trust, groupId, result.Candidate, now);
+                var reopened = ScopedKeyLibraryVault.OpenVerified(
+                    KeyLibrarySyncWire.Read<SignedScopedKeyLibraryBundle>(bytes, GroupVaultService.MaximumBytes),
+                    trust.ExportPublic(), groupId, fullMember, now, requireFull: true);
+                if (!KeyLibraryAutomaticSync.LogicallyEquivalent(result.Candidate, reopened))
+                    throw new CryptographicException("Verschlüsselter Kandidat stimmt nicht mit der geprüften Zusammenführung überein.");
+                var transfer = administration.SignEncryptedCentralSync(trust, groupId,
+                    independentlyKnownHead, reopened.Catalog.Revision, bytes);
+                var claim = KeyLibrarySyncTransport.Verify(transfer, trust.ExportPublic());
+                if (claim.ExpectedCentralRevision != independentlyKnownHead.CentralRevision ||
+                    claim.ExpectedCentralCiphertextSha256 != independentlyKnownHead.CiphertextSha256 ||
+                    claim.CatalogRevision != result.Preview.ProposedRevision ||
+                    claim.NextCiphertextSha256 != KeyLibrarySyncTransport.CiphertextSha256(bytes) ||
+                    administration.RequireLocalAuthority(trust) != checkpoint)
+                    throw new CryptographicException("Signierter Zusammenführungsauftrag stimmt nicht mit der bestätigten Basis überein.");
+                return new KeyLibraryPreparedMerge(result.Preview, approvedPreviewSha256,
+                    independentlyKnownHead, transfer);
             });
+    }
+
+    private static KeyLibraryMergePlanner.Result BuildMerge(KeyLibraryDisasterReport report,
+        List<Opened> opened, Guid baseSourceId)
+    {
+        if (opened.Count < 2 || opened.Any(s => !s.Inventory.CurrentPolicy) ||
+            opened.SingleOrDefault(s => s.Inventory.SourceId == baseSourceId)?.Inventory.CentralRelation
+                != KeyLibraryDisasterCentralRelation.ExactKnownCiphertext)
+            throw new CryptographicException("Zusammenführung erfordert einen exakt bestätigten gemeinsamen Ausgangsstand und aktuelle Richtlinien.");
+        return KeyLibraryMergePlanner.Build(report, baseSourceId,
+            opened.ToDictionary(s => s.Inventory.SourceId, s => s.Payload));
     }
 
     private static T WithVerifiedSources<T>(OfflineGroupTrustStore trust,

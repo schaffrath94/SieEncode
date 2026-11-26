@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace RFiDGear.Builder.Core;
 
 public enum KeyLibraryMergeIssueKind
@@ -17,7 +19,23 @@ public sealed record KeyLibraryMergePreview(KeyLibraryDisasterReport Inventory, 
     long? ProposedRevision)
 {
     public bool CanPrepareCandidate => Issues.Length == 0 && ProposedRevision.HasValue;
+
+    // Hash only public, key-free preview data and the exact central CAS base.
+    // The preview order is intentionally bound too. This is a local approval
+    // fingerprint, not a secret hash or independent authority signature.
+    public string ApprovalSha256(CentralKeyLibraryHead expectedHead) =>
+        Convert.ToHexString(SHA256.HashData(KeyLibrarySyncWire.Write(new
+        {
+            Format = "SieEncode-Merge-Preview-Approval-v1",
+            Head = expectedHead,
+            Preview = this
+        })));
 }
+
+// The only externally returned candidate is an already signed encrypted CAS
+// transfer. PreviewSha256 is local evidence, not a signed provenance receipt.
+public sealed record KeyLibraryPreparedMerge(KeyLibraryMergePreview Preview,
+    string PreviewSha256, CentralKeyLibraryHead ExpectedHead, SignedKeyLibrarySync Transfer);
 
 // The in-memory candidate never leaves the internal domain boundary. A later
 // operation must reverify the sources, obtain approval and encrypt/sign it.
