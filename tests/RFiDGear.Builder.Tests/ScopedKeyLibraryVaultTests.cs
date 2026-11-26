@@ -190,6 +190,44 @@ internal static class ScopedKeyLibraryVaultTests
             if (ConcurrentFileWriter.Capture(localPath) != file2)
                 throw new Exception("Backup or recovery verification changed the active vault.");
 
+            // The independent library archive and central cold backup must
+            // describe exactly the same encrypted bytes, not just revision numbers.
+            var pairWorkspace = Path.Combine(directory, "pair-cold");
+            Directory.CreateDirectory(pairWorkspace);
+            var pairCentralPath = Path.Combine(directory, "central.json");
+            var pairCentralRevision = ConcurrentFileWriter.Capture(pairCentralPath);
+            var rootPin = OfflineGroupTrustStore.AdministratorFingerprint(publicKey);
+            var pairCold = CentralKeyLibraryBackupService.CreateCold(pairCentralPath, pairWorkspace, head2, rootPin);
+            var pairArchiveRevision = ConcurrentFileWriter.Capture(backupPath);
+            var pair = KeyLibraryRecoveryReadiness.VerifyCurrentPair(pairCold.Directory, pairCold.Reference,
+                backupPath, reference, head2, rootPin, recoveryCert, now);
+            if (pair.ConfirmedHead != head2 || pair.CustomerCount != 4 ||
+                pair.KeyVersionCount != 2 || pair.ArchivedAuditCount != pairCold.AuditCount ||
+                pair.VerifiedAt != now)
+                throw new Exception("Recovery pair did not verify the exact complete central library.");
+            Reject<CryptographicException>(() => KeyLibraryRecoveryReadiness.VerifyCurrentPair(pairCold.Directory,
+                pairCold.Reference, backupPath, reference, head2 with { CentralRevision = head2.CentralRevision + 1 },
+                rootPin, recoveryCert, now));
+            Reject<CryptographicException>(() => KeyLibraryRecoveryReadiness.VerifyCurrentPair(pairCold.Directory,
+                pairCold.Reference, backupPath, reference, head2, new string('F', 64), recoveryCert, now));
+            Reject<CryptographicException>(() => KeyLibraryRecoveryReadiness.VerifyCurrentPair(pairCold.Directory,
+                pairCold.Reference, backupPath, reference, head2, rootPin, limitedCert, now));
+            var reencryptedPath = Path.Combine(directory, "pair-reencrypted.json");
+            File.WriteAllBytes(reencryptedPath, KeyLibrarySyncWire.Write(
+                ScopedKeyLibraryVault.Protect(nextPayload, enrolled, authority, "keys", now)));
+            var reencryptedArchive = Path.Combine(directory, "pair-reencrypted-backup.json");
+            var reencryptedReference = KeyLibraryBackupService.Create(reencryptedPath, reencryptedArchive,
+                trust, "keys", fullCert, now);
+            // Authentically encrypted, same logical catalog/revision, but not
+            // the central ciphertext. It must not pass the matched-pair check.
+            Reject<CryptographicException>(() => KeyLibraryRecoveryReadiness.VerifyCurrentPair(pairCold.Directory,
+                pairCold.Reference, reencryptedArchive, reencryptedReference, head2, rootPin, recoveryCert, now));
+            if (ConcurrentFileWriter.Capture(pairCentralPath) != pairCentralRevision ||
+                ConcurrentFileWriter.Capture(backupPath) != pairArchiveRevision ||
+                ConcurrentFileWriter.Capture(localPath) != file2 ||
+                Directory.GetDirectories(pairWorkspace).Length != 1)
+                throw new Exception("Read-only pair verification changed operational state or published a restore.");
+
             // Separate workspace, no installed registration, member key or central server
             // is needed for the recovery exercise. Exercise a historical key version too.
             var historical = KeyLibraryEditing.AddVersion(nextPayload, keyA.KeyId, new string('C', 32)).Next;

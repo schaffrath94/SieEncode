@@ -74,18 +74,7 @@ public static class CentralKeyLibraryBackupService
         if (independentlyConfirmed.Head != independentlyConfirmedCurrentHead)
             throw new CryptographicException("Historischer Zentralstand darf nicht automatisch wieder in Betrieb gehen.");
         var source = Path.GetFullPath(backupDirectory);
-        RequireDirectory(source);
-        var bytes = ReadBounded(Path.Combine(source, ManifestName), MaximumManifestBytes);
-        if (Hash(bytes) != independentlyConfirmed.ManifestSha256)
-            throw new CryptographicException("Zentrales Sicherungsverzeichnis wurde verändert.");
-        var manifest = KeyLibrarySyncWire.Read<Manifest>(bytes, MaximumManifestBytes);
-        if (manifest.Format != Format || manifest.Version != 1 ||
-            manifest.Head != independentlyConfirmed.Head ||
-            manifest.AdministratorFingerprint != independentlyConfirmed.AdministratorFingerprint ||
-            manifest.Audit is null || manifest.Audit.Length > MaximumAuditRecords ||
-            manifest.Audit.Any(a => a is null || !KeyLibraryAuditReview.IsCursor(a.Id)))
-            throw new InvalidDataException("Ungültiges zentrales Sicherungsverzeichnis.");
-        RequireManifest(Inspect(source, manifest.Head, manifest.AdministratorFingerprint), manifest);
+        var (manifest, bytes) = ReadConfirmedManifest(source, independentlyConfirmed);
         return Publish(recoveryWorkspace, "central-recovery-not-activated-", staging =>
         {
             var state = Path.Combine(staging, StateName);
@@ -106,6 +95,34 @@ public static class CentralKeyLibraryBackupService
             }));
             return (independentlyConfirmed, manifest.Audit.Length);
         });
+    }
+
+    /// <summary>Read-only integrity check of a separately pinned cold archive.
+    /// The caller must keep the archive stationary during verification. The
+    /// result is evidence of the supplied snapshot, not an activation permit.</summary>
+    public static int VerifyCold(string backupDirectory,
+        CentralKeyLibraryBackupReference independentlyConfirmed)
+    {
+        ArgumentNullException.ThrowIfNull(independentlyConfirmed);
+        return ReadConfirmedManifest(Path.GetFullPath(backupDirectory), independentlyConfirmed).Manifest.Audit.Length;
+    }
+
+    private static (Manifest Manifest, byte[] Bytes) ReadConfirmedManifest(string source,
+        CentralKeyLibraryBackupReference independentlyConfirmed)
+    {
+        RequireDirectory(source);
+        var bytes = ReadBounded(Path.Combine(source, ManifestName), MaximumManifestBytes);
+        if (Hash(bytes) != independentlyConfirmed.ManifestSha256)
+            throw new CryptographicException("Zentrales Sicherungsverzeichnis wurde verändert.");
+        var manifest = KeyLibrarySyncWire.Read<Manifest>(bytes, MaximumManifestBytes);
+        if (manifest.Format != Format || manifest.Version != 1 ||
+            manifest.Head != independentlyConfirmed.Head ||
+            manifest.AdministratorFingerprint != independentlyConfirmed.AdministratorFingerprint ||
+            manifest.Audit is null || manifest.Audit.Length > MaximumAuditRecords ||
+            manifest.Audit.Any(a => a is null || !KeyLibraryAuditReview.IsCursor(a.Id)))
+            throw new InvalidDataException("Ungültiges zentrales Sicherungsverzeichnis.");
+        RequireManifest(Inspect(source, manifest.Head, manifest.AdministratorFingerprint), manifest);
+        return (manifest, bytes);
     }
 
     /// <summary>Prepare a new operational directory after an independently

@@ -69,6 +69,28 @@ public static class KeyLibraryBackupService
         return ReadVerified(backupPath, independentlyConfirmed, recovery, now).Verification;
     }
 
+    /// <summary>Independently decrypt the archived customer library and bind
+    /// it to the exact ciphertext of the separately confirmed central head.
+    /// A matching catalog revision alone is insufficient.</summary>
+    public static KeyLibraryBackupVerification VerifyRecoveryAgainstHead(string backupPath,
+        KeyLibraryBackupReference independentlyConfirmed, CentralKeyLibraryHead independentlyConfirmedHead,
+        string independentlyConfirmedAdministratorFingerprint, X509Certificate2 recovery, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(independentlyConfirmed);
+        ArgumentNullException.ThrowIfNull(independentlyConfirmedHead);
+        if (independentlyConfirmedHead.CentralRevision <= 0 ||
+            independentlyConfirmed.LibraryId != independentlyConfirmedHead.LibraryId ||
+            independentlyConfirmed.GroupId != independentlyConfirmedHead.GroupId ||
+            independentlyConfirmed.Policy != independentlyConfirmedHead.Policy ||
+            independentlyConfirmed.CatalogRevision != independentlyConfirmedHead.CatalogRevision ||
+            independentlyConfirmed.AdministratorFingerprint != independentlyConfirmedAdministratorFingerprint)
+            throw new CryptographicException("Bibliothekssicherung entspricht nicht dem unabhängig bestätigten Zentralstand.");
+        var (archive, verification) = ReadVerified(backupPath, independentlyConfirmed, recovery, now);
+        if (KeyLibrarySyncTransport.CiphertextSha256(archive.EncryptedVault) != independentlyConfirmedHead.CiphertextSha256)
+            throw new CryptographicException("Bibliothekssicherung besitzt nicht den exakten zentral bestätigten Ciphertext.");
+        return verification;
+    }
+
     /// <summary>Reconstruct the exact encrypted vault and public registration in
     /// a new, non-operational directory. Never enroll or replace a live store.
     /// The caller selects an existing, access-controlled recovery workspace.</summary>

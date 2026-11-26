@@ -179,6 +179,11 @@ internal static class KeyLibraryDisclosureTests
                 centralHead, OfflineGroupTrustStore.AdministratorFingerprint(publicKey));
             Reject<CryptographicException>(() => CentralKeyLibraryBackupService.RestoreIsolated(
                 cold.Directory, coldRecovery, cold.Reference, centralHead with { CentralRevision = centralHead.CentralRevision + 1 }));
+            if (CentralKeyLibraryBackupService.VerifyCold(cold.Directory, cold.Reference) != 2 ||
+                Directory.EnumerateFileSystemEntries(coldRecovery).Any())
+                throw new Exception("Read-only cold verification missed audit records or created a restore.");
+            Reject<CryptographicException>(() => CentralKeyLibraryBackupService.VerifyCold(cold.Directory,
+                cold.Reference with { ManifestSha256 = new string('0', 64) }));
             var restoredCold = CentralKeyLibraryBackupService.RestoreIsolated(cold.Directory, coldRecovery,
                 cold.Reference, centralHead);
             var restoredState = Path.Combine(restoredCold.Directory, "central-state.json");
@@ -238,6 +243,7 @@ internal static class KeyLibraryDisclosureTests
 
             var backupAudit = Directory.GetFiles(Path.Combine(cold.Directory, "central-state.json.audit"), "*.json").First();
             File.Delete(backupAudit);
+            Reject<CryptographicException>(() => CentralKeyLibraryBackupService.VerifyCold(cold.Directory, cold.Reference));
             Reject<CryptographicException>(() => CentralKeyLibraryBackupService.RestoreIsolated(
                 cold.Directory, coldRecovery, cold.Reference, centralHead));
             if (ConcurrentFileWriter.Capture(centralSource) != sourceRevision ||
