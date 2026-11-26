@@ -109,7 +109,9 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         if (RequireLocal(pending, target, trust, fullMember, allowTarget: true) != local ||
             local.Sha256 != target.CiphertextSha256)
             throw new ConcurrentFileChangeException(vault);
+        KeyLibraryMergeReferenceStore.Stage(vault, cursor, target, pending.Merge.Transfer.EncryptedVault);
         cursor.RememberMerged(expected, target, local, pending.Merge.Preview.HistoricalBase);
+        KeyLibraryMergeReferenceStore.Finish(vault, cursor, target);
         Save(new(Format, 1, libraryId, vault, null, target, pending.Merge.PreviewSha256), revision);
         return target;
     }

@@ -314,6 +314,10 @@ internal sealed class KeyLibraryManagementWindow : Window
         WithIdentities(ids =>
         {
             var original = KeyLibraryVaultStore.Load(path, trust, group.Id, ids, requireFull: true);
+            var reconciled = cursorStore.ReadReconciledHead();
+            if (trust.LoadOffline().Policy.CustomerScopesEnabled && reconciled is not null &&
+                reconciled.GroupId == group.Id && reconciled.Policy == trust.LoadOffline().Checkpoint)
+                KeyLibraryMergeReferenceStore.PreserveExistingBase(path, cursorStore, reconciled, expected);
             var next = edit(original);
             var authorization = administration.SignKeyLibraryMutation(trust,
                 "update", group.Id, expected, next);
@@ -492,6 +496,9 @@ internal sealed class KeyLibraryManagementWindow : Window
             string? historicalPath = null;
             if (historicalBase is not null)
             {
+                historicalPath = KeyLibraryMergeReferenceStore.Find(localPath, historicalBase);
+                if (historicalPath is null)
+                {
                 if (MessageBox.Show(this, $"Die Zentrale wurde seit dem letzten Abgleich weiterentwickelt.\n" +
                     $"Gemeinsame Basis: Katalog {basis.CatalogRevision}, Serverrevision {basis.CentralRevision}\n" +
                     $"Aktuelle Zentrale: Katalog {head.CatalogRevision}, Serverrevision {head.CentralRevision}\n\n" +
@@ -504,6 +511,7 @@ internal sealed class KeyLibraryManagementWindow : Window
                 historicalPath = Path.GetFullPath(old.FileName);
                 if (ConcurrentFileWriter.Capture(historicalPath).Sha256 != basis.CiphertextSha256)
                     throw new CryptographicException("Ausgewählte Basisdatei entspricht nicht dem gespeicherten Abgleichhash.");
+                }
             }
             else if (!cursorStore.HasUploadBase(basis))
                 throw new InvalidOperationException("Gemeinsamer Abgleichstand fehlt.");

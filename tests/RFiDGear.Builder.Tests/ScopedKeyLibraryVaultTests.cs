@@ -511,6 +511,44 @@ internal static class ScopedKeyLibraryVaultTests
                 central.ReadHead() != head2 || ConcurrentFileWriter.Capture(localPath) != file2)
                 throw new Exception("Advanced-head merge did not preserve both branches.");
 
+            // The common encrypted reference is selected only by the durable
+            // reconciled head, not an observed conflict or a newer local edit.
+            var refPath = KeyLibraryMergeReferenceStore.Find(multiLocal, multiResult)
+                ?? throw new Exception("Merge did not preserve the new reference.");
+            if (KeyLibraryMergeReferenceStore.Find(multiLocal, head2) is not null ||
+                ConcurrentFileWriter.Capture(refPath).Sha256 != multiResult.CiphertextSha256)
+                throw new Exception("Completed merge left the wrong reference.");
+            var referenceLocal = Path.Combine(directory, "reference-local.json");
+            File.Copy(localPath, referenceLocal);
+            var refCursor = new CentralKeyLibraryCursorStore(Path.Combine(directory, "reference-cursor.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            refCursor.RememberReconciled(head2, file2);
+            KeyLibraryMergeReferenceStore.PreserveExistingBase(referenceLocal, refCursor, head2, file2);
+            var oldReference = KeyLibraryMergeReferenceStore.Find(referenceLocal, head2)
+                ?? throw new Exception("Existing exact base was not preserved.");
+            File.WriteAllBytes(referenceLocal, File.ReadAllBytes(independentPath));
+            KeyLibraryMergeReferenceStore.PreserveExistingBase(referenceLocal, refCursor, head2,
+                ConcurrentFileWriter.Capture(referenceLocal));
+            if (ConcurrentFileWriter.Capture(oldReference).Sha256 != head2.CiphertextSha256)
+                throw new Exception("Offline edit replaced the reconciled reference.");
+            var newReferenceBytes = File.ReadAllBytes(multiLocal);
+            Reject<CryptographicException>(() => KeyLibraryMergeReferenceStore.Stage(referenceLocal,
+                refCursor, multiResult, File.ReadAllBytes(referenceLocal)));
+            KeyLibraryMergeReferenceStore.Stage(referenceLocal, refCursor, multiResult, newReferenceBytes);
+            Reject<CryptographicException>(() => KeyLibraryMergeReferenceStore.Finish(referenceLocal, refCursor, multiResult));
+            if (KeyLibraryMergeReferenceStore.Find(referenceLocal, head2) != oldReference ||
+                KeyLibraryMergeReferenceStore.Find(referenceLocal, multiResult) is null)
+                throw new Exception("Staging lost old base before cursor commit.");
+            refCursor.Remember(multiResult);
+            if (refCursor.ReadReconciledHead() != head2)
+                throw new Exception("Head observation replaced the reconciled base.");
+            KeyLibraryMergeReferenceStore.Stage(referenceLocal, refCursor, multiResult, newReferenceBytes);
+            refCursor.RememberReconciled(multiResult, ConcurrentFileWriter.Capture(multiLocal));
+            KeyLibraryMergeReferenceStore.Finish(referenceLocal, refCursor, multiResult);
+            if (KeyLibraryMergeReferenceStore.Find(referenceLocal, head2) is not null ||
+                KeyLibraryMergeReferenceStore.Find(referenceLocal, multiResult) is null)
+                throw new Exception("Reference cleanup did not retain only the committed base.");
+
             var next = Enrollment(policy with { Revision = 2, People = [fullPerson, limited with { KeyLibraryCustomers = [customerB] }, none] });
             var rotated = ScopedKeyLibraryVault.Protect(payload, next, authority, "keys", now);
             trust.AcceptPackageUpdate(next, verified.Checkpoint);

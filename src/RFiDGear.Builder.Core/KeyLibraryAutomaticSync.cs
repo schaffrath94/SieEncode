@@ -48,13 +48,20 @@ public static class KeyLibraryAutomaticSync
             cursor.Remember(head);
             return new(outcome, head);
         }
+        var policy = trust.LoadOffline();
         KeyLibrarySyncResult Reconciled(KeyLibrarySyncOutcome outcome,
-            CentralKeyLibraryHead head, FileRevision file)
+            CentralKeyLibraryHead head, FileRevision file, byte[]? exact = null)
         {
+            var preserve = policy.Policy.CustomerScopesEnabled && file.Sha256 == head.CiphertextSha256;
+            if (preserve)
+                KeyLibraryMergeReferenceStore.Stage(localVaultPath, cursor, head,
+                    exact ?? KeyLibraryVaultStore.ReadBytes(localVaultPath));
+            if (trust.LoadOffline().Checkpoint != policy.Checkpoint)
+                throw new CryptographicException("Richtlinie während des Abgleichs geändert.");
             cursor.RememberReconciled(head, file);
+            if (preserve) KeyLibraryMergeReferenceStore.Finish(localVaultPath, cursor, head);
             return new(outcome, head);
         }
-        var policy = trust.LoadOffline();
         var remote = await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false);
         if (remote.LibraryId != policy.Policy.LibraryId ||
             remote.Policy != policy.Checkpoint ||
@@ -89,7 +96,7 @@ public static class KeyLibraryAutomaticSync
             {
                 var installed = KeyLibrarySyncClient.InstallDownloadedSnapshot(localVaultPath, trust,
                     groupId, remote, transfer, [personalIdentity], expectedLocal);
-                return Reconciled(KeyLibrarySyncOutcome.Downloaded, remote, installed);
+                return Reconciled(KeyLibrarySyncOutcome.Downloaded, remote, installed, transfer.EncryptedVault);
             }
             catch (InvalidDataException)
             {
@@ -161,7 +168,7 @@ public static class KeyLibraryAutomaticSync
             throw new CryptographicException("Zentrale hat die signierte Bibliotheksänderung nicht eindeutig bestätigt.");
         // Record the exact submitted file, not a newer local edit made while
         // the request was in flight. Such an edit remains an offline change.
-        return Reconciled(KeyLibrarySyncOutcome.Uploaded, acknowledged, expectedLocal);
+        return Reconciled(KeyLibrarySyncOutcome.Uploaded, acknowledged, expectedLocal, signed.EncryptedVault);
     }
 
     /// <summary>Read-only workstation sync. The member never submits a
@@ -276,7 +283,9 @@ public static class KeyLibraryAutomaticSync
             ConcurrentFileWriter.Capture(localVaultPath) != installed ||
             trust.LoadOffline().Checkpoint != policy.Checkpoint || journal.HasPending)
             throw new ConcurrentFileChangeException(localVaultPath);
+        KeyLibraryMergeReferenceStore.Stage(localVaultPath, cursor, remote, transfer.EncryptedVault);
         cursor.RememberReconciled(remote, installed);
+        KeyLibraryMergeReferenceStore.Finish(localVaultPath, cursor, remote);
         return new(KeyLibrarySyncOutcome.Downloaded, remote);
     }
 

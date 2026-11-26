@@ -184,12 +184,16 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
             throw new CryptographicException("Lokaler Vault und Richtlinie wurden nicht vollständig übernommen.");
         administration?.AcceptCommittedPolicyTransition(pending.Previous,
             pending.Transition.Enrollment, trust);
+        var preserveReference = GroupEnrollmentPackages.Validate(pending.Transition.Enrollment).Policy.CustomerScopesEnabled;
+        if (preserveReference)
+            KeyLibraryMergeReferenceStore.Stage(vaultPath, cursor, target, pending.Transition.Rewrapped.EncryptedVault);
         if (pending.ReceivedHead is not null)
             cursor.RememberReceivedPolicy(pending.Previous, pending.Expected,
                 new(target, pending.Transition.Enrollment, pending.Transition.Rewrapped), verified);
         else
             cursor.RememberPolicyTransition(pending.Previous, pending.Expected,
                 pending.Transition, target, verified);
+        if (preserveReference) KeyLibraryMergeReferenceStore.Finish(vaultPath, cursor, target);
         // Drop the bulky intent only after all three local stores agree.
         Save(new(Format, 1, libraryId, vaultPath, null, target), revision);
         return target;
