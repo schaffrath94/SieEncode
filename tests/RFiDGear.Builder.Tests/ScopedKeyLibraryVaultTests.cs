@@ -345,6 +345,54 @@ internal static class ScopedKeyLibraryVaultTests
                 ConcurrentFileWriter.Capture(localPath) != file2 || central.ReadHead() != centralBefore)
                 throw new Exception("Read-only disaster inventory changed operational data.");
 
+            // Durable merge on a separate synthetic server and local offline branch.
+            var mergeServerPath = Path.Combine(directory, "merge-server.json");
+            var mergeServer = new CentralKeyLibraryStore(mergeServerPath, id);
+            var mergeEmpty = mergeServer.Register(enrolled, OfflineGroupTrustStore.AdministratorFingerprint(publicKey));
+            var mergeFirstBytes = KeyLibrarySyncWire.Write(signed);
+            var mergeFirst = mergeServer.Accept(KeyLibrarySyncTransport.Sign(
+                KeyLibrarySyncTransport.Prepare(enrolled, "keys", mergeEmpty.CentralRevision,
+                    mergeEmpty.CiphertextSha256, payload.Catalog.Revision, mergeFirstBytes), mergeFirstBytes, authority));
+            var mergeBaseBytes = File.ReadAllBytes(localPath);
+            var mergeBase = mergeServer.Accept(KeyLibrarySyncTransport.Sign(
+                KeyLibrarySyncTransport.Prepare(enrolled, "keys", mergeFirst.CentralRevision,
+                    mergeFirst.CiphertextSha256, nextPayload.Catalog.Revision, mergeBaseBytes), mergeBaseBytes, authority));
+            if (mergeBase != head2) throw new Exception("Synthetic merge base differs.");
+            var mergeLocal = Path.Combine(directory, "merge-local.json");
+            File.Copy(independentPath, mergeLocal);
+            var mergeCursor = new CentralKeyLibraryCursorStore(Path.Combine(directory, "merge-cursor.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            mergeCursor.RememberReconciled(head2, file2);
+            var mergeProtection = new OfflineGroupTrustTests.TestProtection();
+            var journalPath = Path.Combine(directory, "merge-intent.bin");
+            var mergeJournal = new KeyLibraryMergeJournal(journalPath, id, mergeLocal, mergeProtection);
+            var mergePolicyJournal = new KeyLibraryPolicyTransitionJournal(Path.Combine(directory, "merge-policy.bin"),
+                id, mergeLocal, mergeProtection);
+            void StageMerge() => mergeJournal.Stage(trust, mergeAdministration, mergeCursor, mergePolicyJournal,
+                "keys", fullCert, now, compatible, head2, idCentral, previewHash, true);
+            StageMerge();
+            Reject<InvalidOperationException>(StageMerge);
+            var mergeTransport = new ReplacementTransport(mergeServer, fullCert) { AllowUpload = true, LoseUploadReply = true };
+            CentralKeyLibraryHead ResumeMerge(KeyLibraryMergeJournal j) => j.ResumeAsync(mergeTransport,
+                trust, mergeAdministration, mergeCursor, mergePolicyJournal, fullCert).GetAwaiter().GetResult();
+            File.WriteAllBytes(mergeLocal, File.ReadAllBytes(branchPath));
+            Reject<ConcurrentFileChangeException>(() => ResumeMerge(mergeJournal));
+            if (mergeTransport.UploadCount != 0 || !mergeJournal.HasPending)
+                throw new Exception("Changed local branch allowed merge upload.");
+            File.WriteAllBytes(mergeLocal, originalIndependentBytes);
+            Reject<IOException>(() => ResumeMerge(mergeJournal));
+            if (!mergeJournal.HasPending || mergeTransport.UploadCount != 1 ||
+                mergeServer.ReadHead().CentralRevision != head2.CentralRevision + 1)
+                throw new Exception("Lost reply did not retain the durable merge intent.");
+            var restartedMerge = new KeyLibraryMergeJournal(journalPath, id, mergeLocal, mergeProtection);
+            var mergedHead = ResumeMerge(restartedMerge);
+            if (mergeTransport.UploadCount != 1 || restartedMerge.HasPending ||
+                restartedMerge.CompletedHead != mergedHead || mergeCursor.ReadReconciledHead() != mergedHead ||
+                ConcurrentFileWriter.Capture(mergeLocal).Sha256 != mergedHead.CiphertextSha256 ||
+                mergeServer.ReadHead() != mergedHead ||
+                central.ReadHead() != head2 || ConcurrentFileWriter.Capture(localPath) != file2)
+                throw new Exception("Restarted merge did not reconcile exactly once.");
+
             var next = Enrollment(policy with { Revision = 2, People = [fullPerson, limited with { KeyLibraryCustomers = [customerB] }, none] });
             var rotated = ScopedKeyLibraryVault.Protect(payload, next, authority, "keys", now);
             trust.AcceptPackageUpdate(next, verified.Checkpoint);
@@ -389,8 +437,22 @@ internal static class ScopedKeyLibraryVaultTests
 
         public Task<CentralKeyLibrarySnapshot> DownloadSnapshotAsync(SignedKeyLibraryDownload proof,
             CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public bool AllowUpload { get; set; }
+        public bool LoseUploadReply { get; set; }
+        public int UploadCount { get; private set; }
         public Task<CentralKeyLibraryHead> UploadAsync(SignedKeyLibrarySync transfer,
-            CancellationToken cancellationToken = default) => throw new Exception("Recovery attempted an upload.");
+            CancellationToken cancellationToken = default)
+        {
+            if (!AllowUpload) throw new Exception("Recovery attempted an upload.");
+            UploadCount++;
+            var result = central.Accept(transfer);
+            if (LoseUploadReply)
+            {
+                LoseUploadReply = false;
+                throw new IOException("Synthetic lost merge reply.");
+            }
+            return Task.FromResult(result);
+        }
         public Task<CentralKeyLibraryHead> ChangePolicyAsync(SignedKeyLibraryPolicyTransition transition,
             CancellationToken cancellationToken = default) => throw new Exception("Recovery attempted a policy change.");
         public Task<KeyLibraryAuditReceipt> SubmitAuditAsync(SignedKeyLibraryAudit report,
