@@ -395,7 +395,7 @@ public partial class MainWindow
             ProjectJson.Save(path, ProjectJson.WithoutAllSecrets(project));
             LoadEditor(project, path);
             Navigate("Editor", false);
-            void ClickWithPassphrase(Button button, string title, bool cancel = false)
+            void ClickWithPassphrase(Button button, string title, bool cancel = false, bool chooseRecipient = false)
             {
                 var answered = false;
                 var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
@@ -404,6 +404,14 @@ public partial class MainWindow
                     var prompt = OwnedWindows.Cast<Window>().FirstOrDefault(window => window.Title == title);
                     if (prompt is null) return;
                     timer.Stop();
+                    if (chooseRecipient)
+                    {
+                        var recipients = DescendantsAndSelf(prompt).OfType<ListBox>().Single();
+                        if (recipients.Items.Count != 0) throw new InvalidOperationException("Unerwartete automatische Empfängerfreigabe.");
+                        DescendantsAndSelf(prompt).OfType<Button>().Single(b => Equals(b.Content, "Zur Empfängerliste hinzufügen"))
+                            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        if (recipients.Items.Count != 1) throw new InvalidOperationException("Ausgewählter Testempfänger fehlt.");
+                    }
                     foreach (var box in DescendantsAndSelf(prompt).OfType<PasswordBox>()) box.Password = passphrase;
                     answered = true;
                     DescendantsAndSelf(prompt).OfType<Button>().Single(candidate => cancel ? candidate.IsCancel : candidate.IsDefault)
@@ -501,7 +509,7 @@ public partial class MainWindow
                 .CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
             loadEditorVaultIdentities = () => [new("Synthetic Editor Identity", CertificateVaultService.Fingerprint(identityCertificate), new X509Certificate2(identityCertificate))];
             new TeamVaultRecipientStore(projectsDirectory).Save([CertificateVaultService.ExportInvitation(identityCertificate, "Synthetic Editor Identity")]);
-            ClickWithPassphrase(EditorManageVaultAccessButton, "Vault-Zugriff für mehrere Benutzer");
+            ClickWithPassphrase(EditorManageVaultAccessButton, "Vault-Zugriff für mehrere Benutzer", chooseRecipient: true);
             if (editorVaultVersion != KeyVaultService.CertificateVersion || !editorVaultVerified ||
                 ProjectKeyVault.LoadWithCertificates(vault, [identityCertificate]).ProductivePicc.Value != project.Productive.PiccKey.Value)
                 throw new InvalidOperationException("Editor-Freigabe migriert den v2-Vault nicht verlustfrei zum Identitätszugriff.");

@@ -34,10 +34,10 @@ internal static class CentralKeyLibrarySyncTests
                 "DF_KEY_AES", "PICC", "SIPORT", KeyLibraryContracts.Active)]),
             [new(new KeyLibraryAddress(key, 1), secret)]);
         var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 2,
-            library, 1, [new OfflineVaultGroup("keys", "Keys", ["member"]), new("other", "Other", ["otherMember"])])
+            library, 1, [new OfflineVaultGroup("keys", "Keys", ["member"]), new("other", "Other", ["other-member"])])
         {
             People = [new("member", "Synthetic Member", true, [Device(member)]),
-                new("otherMember", "Other Member", true, [Device(otherMember)])],
+                new("other-member", "Other Member", true, [Device(otherMember)])],
             RecoveryDevices = [Device(recovery)]
         };
         var enrolled = new GroupEnrollmentPackage(GroupEnrollmentPackages.Format, 1,
