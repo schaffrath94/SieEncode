@@ -5,7 +5,7 @@ using RFiDGear.Builder.Core;
 namespace RFiDGear.Builder.App;
 
 internal sealed record LibraryStationBasis(string SourcePath, FileRevision SourceFile,
-    string VaultPath, ProjectKeyLibrarySessionBasis Library);
+    string VaultPath, ProjectKeyLibrarySessionBasis Library, string SyncStatus);
 
 public partial class MainWindow
 {
@@ -69,7 +69,7 @@ public partial class MainWindow
                     if (ConcurrentFileWriter.Capture(sourcePath) != sourceFile)
                         throw new ConcurrentFileChangeException(sourcePath);
                     return (resolved.Hydrated, new(Path.GetFullPath(sourcePath), sourceFile,
-                        choice.Path, resolved.Basis), syncStatus);
+                        choice.Path, resolved.Basis, syncStatus), syncStatus);
                 }
                 catch (CryptographicException) { }
             }
