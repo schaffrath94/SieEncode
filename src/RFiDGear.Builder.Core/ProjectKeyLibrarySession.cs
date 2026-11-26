@@ -28,6 +28,8 @@ public static class ProjectKeyLibrarySession
         var file = ConcurrentFileWriter.Capture(path);
         if (!file.Exists) throw new FileNotFoundException("Freigegebene lokale Schlüsselbibliothek fehlt.");
         var bytes = KeyLibraryVaultStore.ReadBytes(path);
+        if (Convert.ToHexString(SHA256.HashData(bytes)) != file.Sha256)
+            throw new ConcurrentFileChangeException(path);
         if (!policy.Policy.CustomerScopesEnabled &&
             GroupVaultService.Read(bytes).Header.Policy != policy.Checkpoint)
             throw new CryptographicException("Bibliotheks-Vault und bestätigter Gruppenstand stimmen nicht überein.");
