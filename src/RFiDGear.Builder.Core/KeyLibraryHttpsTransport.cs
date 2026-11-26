@@ -13,7 +13,7 @@ namespace RFiDGear.Builder.Core;
 /// there is no trust-on-first-use, HTTP fallback, redirect or client password.
 /// Keep the personal identity alive until this transport is disposed.
 /// </summary>
-public sealed class KeyLibraryHttpsTransport : IDisposable, IKeyLibraryPolicyTransitionTransport
+public sealed class KeyLibraryHttpsTransport : IDisposable, IKeyLibrarySyncTransport
 {
     private readonly HttpClient client;
     private readonly Guid libraryId;
