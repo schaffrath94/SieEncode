@@ -823,8 +823,9 @@ public partial class MainWindow
             string.IsNullOrWhiteSpace(StationGuidanceEvidence.Text))
             throw new InvalidOperationException("Die primäre Bedienentscheidung ist nach dem Laden eines Projekts nicht vollständig sichtbar.");
         if (!Equals(StationPrepareButton.Content, "1 · Daten prüfen und bereitstellen (Enter)") ||
-            !Equals(StationStartAutoModeButton.Content, "2 · Kodierung starten") ||
-            !Equals(StationCheckReadbacksButton.Content, "3 · Ergebnis jetzt prüfen (optional · F8)"))
+            !Equals(StationStartAutoModeButton.Content, "2 · Kodierung ausdrücklich starten") ||
+            !Equals(StationCheckReadbacksButton.Content, "Ergebnis aktualisieren (F8)") ||
+            StationCheckReadbacksButton.ToolTip is not string hint || !hint.Contains("automatisch", StringComparison.Ordinal))
             throw new InvalidOperationException("Der normale Kodierweg zeigt zwei erforderliche Aktionen und die optionale manuelle Ergebnisaktualisierung nicht eindeutig.");
         if (StationOpenRFiDGearButton is null || StationMasteringAutoButton is null ||
             StationRecoveryTransportButton is null || StationApplicationAcceptanceButton is null)
