@@ -239,7 +239,9 @@ internal sealed partial class GroupAdministrationWindow : Window
             if (!person.Enabled) return false;
             if (!personRows.TryGetValue(person.Id, out var updated) || !updated.Enabled ||
                 person.AllowKeyLibraryView && !updated.AllowKeyLibraryView ||
-                person.AllowKeyLibraryCopy && !updated.AllowKeyLibraryCopy) return true;
+                person.AllowKeyLibraryCopy && !updated.AllowKeyLibraryCopy ||
+                prior.CustomerScopesEnabled && (person.AllKeyLibraryCustomers && !updated.AllKeyLibraryCustomers ||
+                    !updated.AllKeyLibraryCustomers && person.KeyLibraryCustomers.Except(updated.KeyLibraryCustomers).Any())) return true;
             return person.Devices.Any(device => device.Enabled && !updated.Devices.Any(current =>
                 current.Fingerprint == device.Fingerprint && current.Enabled));
         });
@@ -267,6 +269,7 @@ internal sealed partial class GroupAdministrationWindow : Window
         var endpoint = CentralGroupPolicyWorkflow.Endpoint(id);
         if (endpoint is null)
         {
+            if (customerScopeDraft) throw new InvalidOperationException("Kundenfreigaben können nur über den bestätigten zentralen Richtlinienwechsel gespeichert werden.");
             SaveGroups();
             return;
         }
@@ -279,10 +282,28 @@ internal sealed partial class GroupAdministrationWindow : Window
         var proposed = current.Policy with
         {
             Revision = checked(current.Policy.Revision + 1),
+            CustomerScopesEnabled = customerScopeDraft,
             People = PersonRows(),
             Groups = groups.Select(g => new OfflineVaultGroup(g.Id, g.Name, g.Members.ToArray())).ToArray()
         };
-        var reduced = ReducesPreviouslySignedAccess();
+        if (proposed.CustomerScopesEnabled)
+        {
+            var basis = ReadScopeBasis();
+            var customerIds = basis.Catalog.Customers.Select(c => c.CustomerId).ToHashSet();
+            if (proposed.People.Any(p => p.KeyLibraryCustomers.Any(id => !customerIds.Contains(id))))
+                throw new InvalidOperationException("Kundenfreigabe enthält eine unbekannte Kunden-ID.");
+            var activeGroup = proposed.Groups.SingleOrDefault(g => g.Id == basis.Head.GroupId)
+                ?? throw new InvalidOperationException("Die bestehende Bibliotheksgruppe muss erhalten bleiben.");
+            var active = proposed.People.Where(p => p.Enabled && activeGroup.Members.Contains(p.Id, StringComparer.Ordinal) &&
+                p.Devices.Any(d => d.Enabled)).ToArray();
+            if (!active.Any(p => p.AllKeyLibraryCustomers))
+                throw new InvalidOperationException("Mindestens ein aktiver persönlicher Vollzugang muss erhalten bleiben.");
+            var summary = $"Aktive Bibliotheksmitglieder: {active.Length}\nAlle Kunden: {active.Count(p => p.AllKeyLibraryCustomers)}\nAusgewählte Kunden: {active.Count(p => !p.AllKeyLibraryCustomers && p.KeyLibraryCustomers.Length > 0)}\nKeine Kunden: {active.Count(p => !p.AllKeyLibraryCustomers && p.KeyLibraryCustomers.Length == 0)}";
+            if (MessageBox.Show(this, (current.Policy.CustomerScopesEnabled ? "Kundenfreigaben und Gruppenstand zentral übernehmen?" : "Kryptografische Kundentrennung unwiderruflich für den aktuellen Bestand aktivieren?") +
+                "\n\n" + summary + "\n\nAlle Kundenbereiche werden neu verschlüsselt. Alte Offline-Kopien bleiben gegebenenfalls entschlüsselbar.",
+                Title, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        }
+        var reduced = ReducesPreviouslySignedAccess() || !current.Policy.CustomerScopesEnabled && proposed.CustomerScopesEnabled;
         policySyncing = true; IsEnabled = false;
         status.Text = "Berechtigungsänderung wird vorbereitet und zentral bestätigt …";
         var head = await CentralGroupPolicyWorkflow.SaveAsync(id, store!, OwnTrust(id), proposed, endpoint, expectedPolicy: current.Checkpoint);
@@ -394,8 +415,8 @@ internal sealed partial class GroupAdministrationWindow : Window
         RequireStore(); CommitEdits();
         using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
         CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
-        if (GroupEnrollmentPackages.Validate(store!.ExportPublic()).Policy.CustomerScopesEnabled)
-            throw new InvalidOperationException("Kundenbereichsrichtlinie erst über den noch nicht freigegebenen koordinierten Wechsel bearbeiten.");
+        if (customerScopeDraft || GroupEnrollmentPackages.Validate(store!.ExportPublic()).Policy.CustomerScopesEnabled)
+            throw new InvalidOperationException("Kundenbereichsrichtlinie nur über den zentralen koordinierten Wechsel bearbeiten.");
         var accessReduced = ReducesPreviouslySignedAccess();
         var groupRows = groups.Select(g => new OfflineVaultGroup(g.Id, g.Name, g.Members.ToArray())).ToArray();
         if (!personMode && people.Count > 0) throw new InvalidOperationException("Bitte zuerst die bisherigen Gruppen auf Personen umstellen.");
