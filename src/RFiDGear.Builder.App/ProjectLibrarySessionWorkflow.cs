@@ -7,7 +7,7 @@ namespace RFiDGear.Builder.App;
 internal sealed record LibraryStationBasis(string SourcePath, FileRevision SourceFile,
     string VaultPath, ProjectKeyLibrarySessionBasis Library);
 
-internal sealed partial class MainWindow
+public partial class MainWindow
 {
     private LibraryStationBasis? libraryStationBasis;
 
@@ -83,7 +83,11 @@ internal sealed partial class MainWindow
     private WorkspaceLease? RequireCurrentLibraryStation()
     {
         var entry = selectedProject ?? throw new InvalidOperationException("Kein Projekt ausgewählt.");
-        if (entry.ArtifactOnly) return null;
+        if (entry.ArtifactOnly)
+        {
+            if (libraryStationBasis is not null) throw new InvalidOperationException("Projekt gewechselt. Kodierstation erneut öffnen.");
+            return null;
+        }
         var source = ProjectJson.Load(entry.SourcePath);
         if (source.Project.KeyLibrary is null && !entry.HasLibraryBinding)
         {
