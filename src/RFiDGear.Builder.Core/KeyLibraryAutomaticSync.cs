@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
@@ -17,6 +18,10 @@ public enum KeyLibrarySyncOutcome
 
 public sealed record KeyLibrarySyncResult(KeyLibrarySyncOutcome Outcome,
     CentralKeyLibraryHead Central);
+
+// Only an unreachable initial head allows the member offline fallback.
+public sealed class KeyLibraryCentralUnavailableException(Exception inner)
+    : IOException("Zentraler Ausgangsstand konnte nicht abgerufen werden.", inner);
 
 /// <summary>
 /// Single pass, no background worker and no second store. Studio can call this
@@ -178,7 +183,14 @@ public static class KeyLibraryAutomaticSync
         }
 
         var policy = trust.LoadOffline();
-        var remote = await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false);
+        CentralKeyLibraryHead remote;
+        try { remote = await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false); }
+        catch (HttpRequestException ex) when (ex.StatusCode is null)
+        { throw new KeyLibraryCentralUnavailableException(ex); }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        { throw new KeyLibraryCentralUnavailableException(ex); }
+        // Once a head was observed, any later download failure is a failed
+        // reconciliation, not permission to silently use an older snapshot.
         if (remote.LibraryId != policy.Policy.LibraryId ||
             remote.CentralRevision > 0 && remote.GroupId != groupId)
             throw new CryptographicException("Zentrale gehört zu einer anderen Bibliothek oder Gruppe.");
