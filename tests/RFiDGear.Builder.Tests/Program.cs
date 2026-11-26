@@ -60,6 +60,7 @@ var tests = new (string Name, Action Run)[]
     ("Shared strict bounded central HTTP sync wire format", KeyLibrarySyncWireTests.Verify),
     ("Atomic signed key library policy and recipient transition", KeyLibraryPolicyTransitionTests.Verify),
     ("Explicit member disclosure rights, exact selection and protected audit", KeyLibraryDisclosureTests.Verify),
+    ("Signed customer-scoped offline vault with independent recipient wrapping", ScopedKeyLibraryVaultTests.Verify),
     ("Workspace navigation retains context and history", TestWorkspaceNavigation),
     ("Complete expert file rights and recipe snapshot", TestFileExpertDescription),
     ("Inventory evidence distinguishes missing, denied and partial reads", TestInventoryEvidence),
