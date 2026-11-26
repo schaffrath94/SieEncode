@@ -85,6 +85,18 @@ public static class ScopedKeyLibraryVault
         DateTimeOffset now, bool requireFull = false, bool recovery = false)
     {
         var enrolled = trust.ExportPublic();
+        var result = OpenVerified(signed, enrolled, groupId, identity, now, requireFull, recovery);
+        if (trust.LoadOffline().Checkpoint != GroupEnrollmentPackages.Validate(enrolled).Checkpoint)
+            throw new CryptographicException("Kundenrichtlinie wurde während der Entschlüsselung geändert.");
+        return result;
+    }
+
+    // The caller must independently pin the enrollment (or verify a same-root
+    // policy transition). Never accept a self-selected trust root from a file.
+    internal static KeyLibraryVaultPayload OpenVerified(SignedScopedKeyLibraryBundle signed,
+        GroupEnrollmentPackage enrolled, string groupId, X509Certificate2 identity,
+        DateTimeOffset now, bool requireFull = false, bool recovery = false)
+    {
         var verified = GroupEnrollmentPackages.Validate(enrolled);
         var bundle = Verify(signed, enrolled, groupId);
         var policy = verified.Policy;
@@ -127,8 +139,6 @@ public static class ScopedKeyLibraryVault
             customers.Add(payload.Catalog.Customers[0]);
             keys.AddRange(payload.Catalog.Keys); secrets.AddRange(payload.Secrets);
         }
-        if (trust.LoadOffline().Checkpoint != verified.Checkpoint)
-            throw new CryptographicException("Kundenrichtlinie wurde während der Entschlüsselung geändert.");
         var result = new KeyLibraryVaultPayload(new(bundle.LibraryId, bundle.CatalogRevision, keys.ToArray())
             { Customers = customers.ToArray() }, secrets.ToArray());
         KeyLibraryVault.Validate(result);
