@@ -26,24 +26,40 @@ if (!int.TryParse(portText, out var port) || port is < 1024 or > 65535)
 var mode = Environment.GetEnvironmentVariable("SIEENCODE_SYNC_START_MODE") ?? "existing";
 if (mode is not ("existing" or "bootstrap" or "restore"))
     throw new InvalidOperationException("Unbekannter Startmodus der Zentrale.");
-FargateHosting.Validate(Environment.GetEnvironmentVariable("SIEENCODE_SYNC_HOSTING"), stateFile, mode);
+var hosting = Environment.GetEnvironmentVariable("SIEENCODE_SYNC_HOSTING");
+FargateHosting.Validate(hosting, stateFile, mode);
+// Shared root lease survives replacement of the live directory. This is
+// cooperative filesystem exclusion; external ECS fencing remains mandatory.
+using var volume = hosting is "fargate" or "fargate-maintenance"
+    ? CentralKeyLibraryVolumeSession.Acquire(FargateHosting.MountPath, libraryId)
+    : null;
 using var serverCertificate = LoadTlsCertificate(tlsPassword);
 if (!serverCertificate.HasPrivateKey ||
     DateTime.UtcNow < serverCertificate.NotBefore.ToUniversalTime() ||
     DateTime.UtcNow >= serverCertificate.NotAfter.ToUniversalTime())
     throw new CryptographicException("Gültiges TLS-Serverzertifikat mit privatem Schlüssel fehlt.");
 
+if (hosting == "fargate-maintenance")
+{
+    if (volume is null) throw new InvalidOperationException("Wartungsvolume fehlt.");
+    if (mode == "bootstrap")
+    {
+        volume.Bootstrap(ReadEnrollment(), Required("SIEENCODE_SYNC_BOOTSTRAP_ADMIN_FINGERPRINT"),
+            Required("SIEENCODE_SYNC_CONFIRM_FIRST_INSTALLATION") == "INITIAL_INSTALLATION");
+    }
+    else
+    {
+        volume.Restore(Required("SIEENCODE_SYNC_RECOVERY_DIRECTORY"), ReadApproval(),
+            Required("SIEENCODE_SYNC_RECOVERY_ADMIN_FINGERPRINT"),
+            CertificateVaultService.Fingerprint(serverCertificate), DateTimeOffset.UtcNow);
+    }
+    Console.WriteLine("Einmaliger SieEncode-Wartungsauftrag abgeschlossen. Kein HTTPS-Dienst gestartet.");
+    return;
+}
+
 if (mode == "restore")
 {
-    var approvalPath = Path.GetFullPath(Required("SIEENCODE_SYNC_RECOVERY_APPROVAL_FILE"));
-    using var approvalFile = new FileStream(approvalPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-    var approval = KeyLibrarySyncWire.ReadAsync<SignedCentralKeyLibraryActivation>(
-        approvalFile, CentralKeyLibraryActivation.MaximumBytes).GetAwaiter().GetResult();
-    // The service ID is independently configured, not adopted from an archive.
-    var claim = KeyLibrarySyncWire.Read<CentralKeyLibraryActivationClaim>(
-        approval.Payload, CentralKeyLibraryActivation.MaximumBytes);
-    if (claim.Reference?.Head?.LibraryId != libraryId)
-        throw new CryptographicException("Aktivierungsauftrag gehört zu einer anderen Bibliothek.");
+    var approval = ReadApproval();
     CentralKeyLibraryBackupService.ActivateRecovered(
         Required("SIEENCODE_SYNC_RECOVERY_DIRECTORY"), stateFile, approval,
         Required("SIEENCODE_SYNC_RECOVERY_ADMIN_FINGERPRINT"),
@@ -51,7 +67,15 @@ if (mode == "restore")
 }
 using var serverLease = CentralKeyLibraryStartup.AcquireLease(stateFile);
 CentralKeyLibraryStore store;
-if (mode == "bootstrap")
+if (volume is not null)
+    store = volume.OpenExisting();
+else if (mode == "bootstrap")
+    store = CentralKeyLibraryStartup.BootstrapNew(stateFile, libraryId,
+        ReadEnrollment(), Required("SIEENCODE_SYNC_BOOTSTRAP_ADMIN_FINGERPRINT"));
+else
+    store = CentralKeyLibraryStartup.OpenExisting(stateFile, libraryId);
+
+GroupEnrollmentPackage ReadEnrollment()
 {
     var publicPackageFile = Path.GetFullPath(Required("SIEENCODE_SYNC_BOOTSTRAP_ENROLLMENT_FILE"));
     using var input = new FileStream(publicPackageFile, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -59,11 +83,21 @@ if (mode == "bootstrap")
         throw new InvalidDataException("Öffentliches SieEncode-Gruppenpaket fehlt oder ist ungültig.");
     var bytes = new byte[(int)input.Length];
     input.ReadExactly(bytes);
-    store = CentralKeyLibraryStartup.BootstrapNew(stateFile, libraryId,
-        GroupEnrollmentPackages.Read(bytes), Required("SIEENCODE_SYNC_BOOTSTRAP_ADMIN_FINGERPRINT"));
+    return GroupEnrollmentPackages.Read(bytes);
 }
-else
-    store = CentralKeyLibraryStartup.OpenExisting(stateFile, libraryId);
+
+SignedCentralKeyLibraryActivation ReadApproval()
+{
+    var approvalPath = Path.GetFullPath(Required("SIEENCODE_SYNC_RECOVERY_APPROVAL_FILE"));
+    using var approvalFile = new FileStream(approvalPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+    var approval = KeyLibrarySyncWire.ReadAsync<SignedCentralKeyLibraryActivation>(
+        approvalFile, CentralKeyLibraryActivation.MaximumBytes).GetAwaiter().GetResult();
+    var claim = KeyLibrarySyncWire.Read<CentralKeyLibraryActivationClaim>(
+        approval.Payload, CentralKeyLibraryActivation.MaximumBytes);
+    if (claim.Reference?.Head?.LibraryId != libraryId)
+        throw new CryptographicException("Aktivierungsauftrag gehört zu einer anderen Bibliothek.");
+    return approval;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();

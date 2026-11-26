@@ -241,6 +241,48 @@ internal static class KeyLibraryDisclosureTests
             if (!File.Exists(Path.Combine(restoredCold.Directory, "NOT-ACTIVATED.json")))
                 throw new Exception("Activation changed the isolated source.");
 
+            // The common volume lease is outside live state. Normal startup
+            // cannot bootstrap, and deleting live state cannot clear reservation.
+            var volumeRoot = Path.Combine(directory, "synthetic-volume");
+            Directory.CreateDirectory(volumeRoot);
+            string volumeState;
+            using (var volume = CentralKeyLibraryVolumeSession.Acquire(volumeRoot, id))
+            {
+                volumeState = volume.StatePath;
+                Reject<FileNotFoundException>(() => volume.OpenExisting());
+                Reject<IOException>(() => CentralKeyLibraryVolumeSession.Acquire(volumeRoot, id));
+                Reject<InvalidOperationException>(() => volume.Bootstrap(enrollment, pin, false));
+                Reject<CryptographicException>(() => volume.Bootstrap(enrollment, new string('F', 64), true));
+                if (File.Exists(Path.Combine(volumeRoot, "CENTRAL-VOLUME.json")))
+                    throw new Exception("Rejected bootstrap reserved a volume.");
+                volume.Bootstrap(enrollment, pin, true);
+                if (volume.OpenExisting().ReadHead().CentralRevision != 0)
+                    throw new Exception("First provisioning did not register an empty central state.");
+                Reject<InvalidOperationException>(() => volume.Bootstrap(enrollment, pin, true));
+                Reject<IOException>(() => volume.Restore(restoredCold.Directory, approval, pin, tlsPin, now));
+            }
+            // Simulated loss of the live directory, but not the independent
+            // volume marker. Preserve all synthetic original backup inputs.
+            Directory.Move(Path.GetDirectoryName(volumeState)!, Path.Combine(volumeRoot, "lost-live"));
+            using (var volume = CentralKeyLibraryVolumeSession.Acquire(volumeRoot, id))
+            {
+                Reject<InvalidOperationException>(() => volume.Bootstrap(enrollment, pin, true));
+                Reject<IOException>(() => volume.OpenExisting());
+                var volumeClaim = activation with { RequestId = Guid.NewGuid(), TargetStatePath = volume.StatePath };
+                var volumeApproval = CentralKeyLibraryActivation.Sign(volumeClaim, authority);
+                Reject<CryptographicException>(() => volume.Restore(restoredCold.Directory, approval, pin, tlsPin, now));
+                Reject<CryptographicException>(() => volume.Restore(restoredCold.Directory, volumeApproval, pin, tlsPin, now.AddMinutes(16)));
+                volume.Restore(restoredCold.Directory, volumeApproval, pin, tlsPin, now);
+                if (volume.OpenExisting().ReadHead() != centralHead ||
+                    ConcurrentFileWriter.Capture(volume.StatePath) != sourceRevision)
+                    throw new Exception("Volume maintenance did not restore the exact central state.");
+            }
+            using (var wrongVolume = CentralKeyLibraryVolumeSession.Acquire(volumeRoot, Guid.NewGuid()))
+                Reject<CryptographicException>(() => wrongVolume.OpenExisting());
+            using (var restartedVolume = CentralKeyLibraryVolumeSession.Acquire(volumeRoot, id))
+                if (restartedVolume.OpenExisting().ReadHead() != centralHead)
+                    throw new Exception("Service restart did not open restored volume.");
+
             var backupAudit = Directory.GetFiles(Path.Combine(cold.Directory, "central-state.json.audit"), "*.json").First();
             File.Delete(backupAudit);
             Reject<CryptographicException>(() => CentralKeyLibraryBackupService.VerifyCold(cold.Directory, cold.Reference));

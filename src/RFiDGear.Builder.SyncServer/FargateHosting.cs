@@ -11,17 +11,19 @@ internal static class FargateHosting
     internal static void Validate(string? hosting, string stateFile, string mode)
     {
         if (string.IsNullOrEmpty(hosting) || hosting == "local") return;
-        if (hosting != "fargate")
+        if (hosting is not ("fargate" or "fargate-maintenance"))
             throw new InvalidOperationException("Unbekanntes Hosting-Profil der Zentrale.");
         if (!OperatingSystem.IsLinux())
             throw new InvalidOperationException("Fargate-Profil erfordert Linux.");
         if (!string.Equals(stateFile, StatePath, StringComparison.Ordinal))
             throw new InvalidOperationException("Fargate-Zustand muss im vorgesehenen persistenten Volume liegen.");
-        if (mode != "existing")
+        if (hosting == "fargate" && mode != "existing")
             throw new InvalidOperationException("Regulärer Fargate-Dienst darf weder Bootstrap noch Recovery-Aktivierung ausführen.");
+        if (hosting == "fargate-maintenance" && mode is not ("bootstrap" or "restore"))
+            throw new InvalidOperationException("Fargate-Wartung benötigt einen expliziten einmaligen Auftrag.");
         if (!HasPersistentMount(File.ReadLines("/proc/self/mountinfo")))
             throw new IOException("Persistentes EFS/NFS-Volume fehlt. Kein Start mit Container-Speicher.");
-        if (!File.Exists(stateFile))
+        if (hosting == "fargate" && !File.Exists(stateFile))
             throw new FileNotFoundException("Fargate-Zentralzustand fehlt. Kein automatischer Bootstrap.", stateFile);
     }
 
