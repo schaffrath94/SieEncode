@@ -116,6 +116,25 @@ internal static class ScopedKeyLibraryVaultTests
                 KeyLibraryVaultStore.Load(localPath, trust, "keys", [limitedCert]).Catalog.Customers.Length != 1)
                 throw new Exception("Full and partial offline scopes diverged after same-policy sync.");
             Reject<ConcurrentFileChangeException>(() => central.Accept(transfer2));
+            // A signed newer catalog must not silently drop a hidden customer.
+            // The member cannot inspect that customer's secrets, but can check
+            // the signed complete list of stable customer IDs.
+            var missingHidden = new KeyLibraryVaultPayload(nextPayload.Catalog with
+            {
+                Revision = nextPayload.Catalog.Revision + 1,
+                Customers = nextPayload.Catalog.Customers.Where(c => c.CustomerId != customerB).ToArray(),
+                Keys = nextPayload.Catalog.Keys.Where(k => k.CustomerId != customerB).ToArray()
+            }, nextPayload.Secrets.Where(s => s.Key.KeyId != keyB.KeyId).ToArray());
+            var badBytes = KeyLibrarySyncWire.Write(ScopedKeyLibraryVault.Protect(missingHidden, enrolled, authority, "keys", now));
+            var badTransfer = KeyLibrarySyncTransport.Sign(KeyLibrarySyncTransport.Prepare(enrolled, "keys",
+                head2.CentralRevision, head2.CiphertextSha256, missingHidden.Catalog.Revision, badBytes), badBytes, authority);
+            var badHead = new CentralKeyLibraryHead(id, head2.CentralRevision + 1,
+                KeyLibrarySyncTransport.CiphertextSha256(badBytes), "keys", verified.Checkpoint, missingHidden.Catalog.Revision);
+            Reject<CryptographicException>(() => KeyLibrarySyncClient.InstallDownloadedSnapshot(localPath,
+                trust, "keys", badHead, badTransfer, [limitedCert], file2));
+            if (ConcurrentFileWriter.Capture(localPath) != file2)
+                throw new Exception("Rejected hidden-customer deletion changed the local file.");
+
             var next = Enrollment(policy with { Revision = 2, People = [fullPerson, limited with { KeyLibraryCustomers = [customerB] }, none] });
             var rotated = ScopedKeyLibraryVault.Protect(payload, next, authority, "keys", now);
             trust.AcceptPackageUpdate(next, verified.Checkpoint);
