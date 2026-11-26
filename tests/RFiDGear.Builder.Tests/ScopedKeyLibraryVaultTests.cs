@@ -266,6 +266,42 @@ internal static class ScopedKeyLibraryVaultTests
                 limitedCert, false, now, candidates, head2));
             Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.Analyze(trust, "keys",
                 fullCert, false, now, [candidates[0] with { ConfirmedPolicy = verified.Checkpoint with { Revision = 2 } }]));
+            // The same verified-source boundary feeds a conservative merge
+            // preview. A matching central base is mandatory and no file is written.
+            var blockedMerge = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert,
+                false, now, candidates, head2, idCentral);
+            if (blockedMerge.CanPrepareCandidate || blockedMerge.ProposedRevision is not null ||
+                !blockedMerge.Issues.Any(i => i.Kind == KeyLibraryMergeIssueKind.SecretValue &&
+                    i.KeyId == keyA.KeyId && i.Version == 2) ||
+                !blockedMerge.Issues.Any(i => i.Kind == KeyLibraryMergeIssueKind.Status && i.KeyId == keyB.KeyId))
+                throw new Exception("Merge preview failed to block immutable or status conflicts.");
+            var independent = KeyLibraryEditing.AddVersion(nextPayload, keyB.KeyId, new string('E', 32)).Next;
+            var independentPath = Path.Combine(directory, "independent-offline.json");
+            File.WriteAllBytes(independentPath, KeyLibrarySyncWire.Write(
+                ScopedKeyLibraryVault.Protect(independent, enrolled, authority, "keys", now)));
+            KeyLibraryDisasterSource[] compatible =
+                [candidates[0], candidates[1], new(Guid.NewGuid(), independentPath, enrolled, verified.Checkpoint)];
+            var preview = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert,
+                false, now, compatible, head2, idCentral);
+            if (!preview.CanPrepareCandidate || preview.Issues.Length != 0 ||
+                preview.AddedCustomers != 0 || preview.AddedKeyVersions != 2 ||
+                preview.ProposedRevision != historical.Catalog.Revision + 1)
+                throw new Exception("Independent additions did not form one safe candidate preview.");
+            Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.PreviewMerge(trust,
+                "keys", fullCert, false, now, compatible, head2, idHistory));
+            var noChanges = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert, false, now,
+                [candidates[0], candidates[0] with { SourceId = Guid.NewGuid() }], head2, idCentral);
+            if (noChanges.CanPrepareCandidate || noChanges.Issues.Length != 0 || noChanges.ProposedRevision is not null)
+                throw new Exception("Identical sources unnecessarily created a new revision.");
+            var missingPath = Path.Combine(directory, "missing-base-offline.json");
+            File.WriteAllBytes(missingPath, badBytes);
+            var missing = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert, false, now,
+                [candidates[0], new(Guid.NewGuid(), missingPath, enrolled, verified.Checkpoint)], head2, idCentral);
+            if (missing.CanPrepareCandidate ||
+                !missing.Issues.Any(i => i.Kind == KeyLibraryMergeIssueKind.MissingBaseCustomer) ||
+                !missing.Issues.Any(i => i.Kind == KeyLibraryMergeIssueKind.MissingBaseVersion))
+                throw new Exception("Merge preview accepted a branch missing base history.");
+
             var recoveryInventory = KeyLibraryDisasterAnalysis.Analyze(trust, "keys", recoveryCert,
                 true, now, candidates);
             if (recoveryInventory.Comparisons.Length != 3 ||

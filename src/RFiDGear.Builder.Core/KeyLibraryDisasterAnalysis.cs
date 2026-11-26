@@ -40,7 +40,34 @@ public static class KeyLibraryDisasterAnalysis
 
     public static KeyLibraryDisasterReport Analyze(OfflineGroupTrustStore trust,
         string groupId, X509Certificate2 identity, bool recovery, DateTimeOffset now,
-        IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead? independentlyKnownHead = null)
+        IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead? independentlyKnownHead = null) =>
+        WithVerifiedSources(trust, groupId, identity, recovery, now, sources,
+            independentlyKnownHead, (report, _) => report);
+
+    /// <summary>Key-free preview of an additions-only union with an exact
+    /// independently known common base. Does not persist or authorize changes.</summary>
+    public static KeyLibraryMergePreview PreviewMerge(OfflineGroupTrustStore trust,
+        string groupId, X509Certificate2 identity, bool recovery, DateTimeOffset now,
+        IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead independentlyKnownHead,
+        Guid baseSourceId)
+    {
+        ArgumentNullException.ThrowIfNull(independentlyKnownHead);
+        return WithVerifiedSources(trust, groupId, identity, recovery, now, sources,
+            independentlyKnownHead, (report, opened) =>
+            {
+                if (opened.Count < 2 || opened.Any(s => !s.Inventory.CurrentPolicy) ||
+                    opened.SingleOrDefault(s => s.Inventory.SourceId == baseSourceId)?.Inventory.CentralRelation
+                        != KeyLibraryDisasterCentralRelation.ExactKnownCiphertext)
+                    throw new CryptographicException("Zusammenführung erfordert einen exakt bestätigten gemeinsamen Ausgangsstand und aktuelle Richtlinien.");
+                return KeyLibraryMergePlanner.Build(report, baseSourceId,
+                    opened.ToDictionary(s => s.Inventory.SourceId, s => s.Payload)).Preview;
+            });
+    }
+
+    private static T WithVerifiedSources<T>(OfflineGroupTrustStore trust,
+        string groupId, X509Certificate2 identity, bool recovery, DateTimeOffset now,
+        IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead? independentlyKnownHead,
+        Func<KeyLibraryDisasterReport, List<Opened>, T> project)
     {
         ArgumentNullException.ThrowIfNull(trust);
         ArgumentNullException.ThrowIfNull(sources);
@@ -111,14 +138,15 @@ public static class KeyLibraryDisasterAnalysis
         for (var i = 0; i < opened.Count; i++)
             for (var j = i + 1; j < opened.Count; j++)
                 comparisons.Add(Compare(opened[i], opened[j]));
+        var result = project(new(pinned.LibraryId, groupId, current.Checkpoint,
+            opened.Select(s => s.Inventory).ToArray(), comparisons.ToArray()), opened);
         foreach (var candidate in opened)
             if (ConcurrentFileWriter.Capture(candidate.Path) != candidate.File)
                 throw new ConcurrentFileChangeException(candidate.Path);
         if (trust.LoadOffline().Checkpoint != current.Checkpoint ||
             !trust.ExportPublic().AdministratorPublicKey.SequenceEqual(pinned.AdministratorPublicKey))
             throw new CryptographicException("Vertrauensstand wurde während der Bestandsanalyse geändert.");
-        return new(pinned.LibraryId, groupId, current.Checkpoint,
-            opened.Select(s => s.Inventory).ToArray(), comparisons.ToArray());
+        return result;
     }
 
     private static KeyLibraryDisasterCentralRelation Relation(CentralKeyLibraryHead? head,
