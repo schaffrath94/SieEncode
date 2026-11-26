@@ -82,11 +82,16 @@ public static class KeyLibrarySyncClient
             throw new ConcurrentFileChangeException(path);
         if (expectedLocalFile.Exists)
         {
-            var previous = KeyLibraryVaultStore.OpenEncrypted(ReadVaultBytes(path), trust, groupId, identities);
+            var previousBytes = ReadVaultBytes(path);
+            var previous = KeyLibraryVaultStore.OpenEncrypted(previousBytes, trust, groupId, identities);
             if (next.Catalog.LibraryId != previous.Catalog.LibraryId ||
                 next.Catalog.Revision <= previous.Catalog.Revision)
                 throw new InvalidDataException("Die zentrale Bibliothek ist nicht neuer als die bereits vorhandene lokale Schlüsselhistorie.");
-            KeyLibraryVaultStore.ValidateImmutableHistory(previous, next);
+            if (policy.Policy.CustomerScopesEnabled)
+                KeyLibraryPolicyTransition.ValidateReceivedHistory(previousBytes, transfer.EncryptedVault,
+                    registered, registered, groupId, identities.Single(), previous, next);
+            else
+                KeyLibraryVaultStore.ValidateImmutableHistory(previous, next);
         }
 
         // The download never edits the logical keys; only the exact, validated
