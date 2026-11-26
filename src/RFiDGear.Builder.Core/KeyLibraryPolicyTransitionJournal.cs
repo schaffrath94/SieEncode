@@ -64,7 +64,8 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
         if (!local.Exists || local.Sha256 != expected.CiphertextSha256 ||
             !cursor.HasUploadBase(expected) || !cursor.HasUnchangedLocalBase(local))
             throw new ConcurrentFileChangeException(vaultPath);
-        var current = KeyLibraryVaultStore.Load(vaultPath, trust, expected.GroupId, [retainedIdentity]);
+        var current = KeyLibraryPolicyTransition.OpenEpoch(KeyLibraryVaultStore.ReadBytes(vaultPath),
+            previous, expected.GroupId, retainedIdentity, DateTimeOffset.UtcNow, requireFull: true);
         var next = OpenTarget(pending, retainedIdentity);
         if (current.Catalog.Revision != expected.CatalogRevision ||
             !KeyLibraryAutomaticSync.LogicallyEquivalent(current, next) ||
@@ -94,16 +95,16 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
         if (!local.Exists || local.Sha256 != baseline.CiphertextSha256 ||
             !cursor.HasUploadBase(baseline) || !cursor.HasUnchangedLocalBase(local))
             throw new ConcurrentFileChangeException(vaultPath);
-        var current = KeyLibraryVaultStore.Load(vaultPath, trust, baseline.GroupId, [personalIdentity]);
+        var oldBytes = KeyLibraryVaultStore.ReadBytes(vaultPath);
+        var current = KeyLibraryPolicyTransition.OpenEpoch(oldBytes, previous,
+            baseline.GroupId, personalIdentity, DateTimeOffset.UtcNow, requireFull: false);
         var next = OpenTarget(pending, personalIdentity);
         if (current.Catalog.Revision != baseline.CatalogRevision ||
             ConcurrentFileWriter.Capture(vaultPath) != local ||
             trust.LoadOffline().Checkpoint != baseline.Policy)
             throw new CryptographicException("Lokaler Bestand ist nicht exakt abgeglichen.");
-        KeyLibraryVaultStore.ValidateImmutableHistory(current, next);
-        if (next.Catalog.Revision == current.Catalog.Revision &&
-            !KeyLibraryAutomaticSync.LogicallyEquivalent(current, next))
-            throw new CryptographicException("Empfangener Richtlinienwechsel verändert den Katalog ohne neue Revision.");
+        KeyLibraryPolicyTransition.ValidateReceivedHistory(oldBytes, frozen.Transfer.EncryptedVault,
+            previous, frozen.Enrollment, baseline.GroupId, personalIdentity, current, next);
         Save(new(Format, 1, libraryId, vaultPath, pending, null), revision);
     }
 
@@ -211,8 +212,9 @@ public sealed class KeyLibraryPolicyTransitionJournal(string journalPath, Guid l
 
     private static KeyLibraryVaultPayload OpenTarget(Pending pending, X509Certificate2 identity)
     {
-        var payload = KeyLibraryVault.Unprotect(GroupVaultService.Read(pending.Transition.Rewrapped.EncryptedVault),
-            GroupEnrollmentPackages.Validate(pending.Transition.Enrollment), pending.Expected.GroupId, [identity]);
+        var payload = KeyLibraryPolicyTransition.OpenEpoch(pending.Transition.Rewrapped.EncryptedVault,
+            pending.Transition.Enrollment, pending.Expected.GroupId, identity, DateTimeOffset.UtcNow,
+            requireFull: pending.ReceivedHead is null);
         if (payload.Catalog.Revision != (pending.ReceivedHead ?? pending.Expected).CatalogRevision)
             throw new CryptographicException("Neu verschlüsselter Katalog besitzt eine falsche Revision.");
         return payload;
