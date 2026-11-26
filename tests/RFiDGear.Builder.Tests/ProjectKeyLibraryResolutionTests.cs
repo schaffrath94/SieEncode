@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using RFiDGear.Builder.Core;
 
@@ -183,6 +184,11 @@ internal static class ProjectKeyLibraryResolutionTests
         Reject<InvalidDataException>(() => ProjectKeyLibraryResolution.Bind(project, profiles, catalog,
             customer, links.Select((link, i) => i == customerBSlot ? link with { CustomerId = Guid.Empty } : link)));
 
+        VerifyAuthorizedSession(compositeProject, profiles, compositeVault with
+        {
+            Catalog = compositeCatalog with { Customers = [new(customer, "Synthetic A"), new(otherCustomer, "Synthetic B")] }
+        }, customer, otherCustomer);
+
         var retired = catalog with { Keys = entries.Select((key, i) =>
             i == 1 ? key with { Status = KeyLibraryContracts.Retired } : key).ToArray() };
         Reject<InvalidOperationException>(() => ProjectKeyLibraryResolution.Bind(project, profiles, retired, customer, links));
@@ -205,6 +211,79 @@ internal static class ProjectKeyLibraryResolutionTests
             copy.Productive.PiccKey.Value = new string('B', 32);
             return copy;
         }
+    }
+
+    private static void VerifyAuthorizedSession(ProjectDefinition project, ProfileLibrary profiles,
+        KeyLibraryVaultPayload vault, Guid customerA, Guid customerB)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "SieEncode-library-session-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var now = DateTimeOffset.UtcNow;
+        var libraryId = vault.Catalog.LibraryId;
+        using var authority = RSA.Create(3072);
+        using var fullKey = RSA.Create(3072);
+        using var aKey = RSA.Create(3072);
+        using var bKey = RSA.Create(3072);
+        using var recoveryKey = RSA.Create(3072);
+        X509Certificate2 Make(string name, RSA key) => new CertificateRequest("CN=" + name, key,
+            HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1).CreateSelfSigned(now.AddDays(-1), now.AddDays(1));
+        using var full = Make("Synthetic all", fullKey);
+        using var a = Make("Synthetic A", aKey);
+        using var b = Make("Synthetic B", bKey);
+        using var recovery = Make("Synthetic recovery", recoveryKey);
+        OfflineVaultDevice Device(X509Certificate2 c) => new(c.Subject, CertificateVaultService.Fingerprint(c),
+            Convert.ToBase64String(c.RawData), true);
+        var policy = new OfflineGroupPolicy(OfflineGroupPolicyService.Format, 2, libraryId, 1,
+            [new("keys", "Keys", ["full", "a", "b"])])
+        {
+            CustomerScopesEnabled = true,
+            People = [new OfflineVaultPerson("full", "Full", true, [Device(full)]) { AllKeyLibraryCustomers = true },
+                new OfflineVaultPerson("a", "A", true, [Device(a)]) { KeyLibraryCustomers = [customerA] },
+                new OfflineVaultPerson("b", "B", true, [Device(b)]) { KeyLibraryCustomers = [customerB] }],
+            RecoveryDevices = [Device(recovery)]
+        };
+        var publicKey = authority.ExportSubjectPublicKeyInfo();
+        GroupEnrollmentPackage Enrollment(OfflineGroupPolicy p) => new(GroupEnrollmentPackages.Format, 1,
+            libraryId, publicKey, OfflineGroupPolicyService.Sign(p, authority));
+        try
+        {
+            var enrolled = Enrollment(policy);
+            var trust = new OfflineGroupTrustStore(Path.Combine(directory, "trust.bin"), libraryId,
+                new OfflineGroupTrustTests.TestProtection());
+            trust.Enroll(publicKey, OfflineGroupTrustStore.AdministratorFingerprint(publicKey), enrolled.Policy);
+            var path = Path.Combine(directory, "library.json");
+            var signed = ScopedKeyLibraryVault.Protect(vault, enrolled, authority, "keys", now);
+            File.WriteAllBytes(path, KeyLibrarySyncWire.Write(signed));
+            var result = ProjectKeyLibrarySession.Resolve(project, profiles, path, trust, "keys", full, now);
+            if (!result.Hydrated.TransientKeyLibraryResolution || result.Basis.Customers.Length != 2 ||
+                result.Basis.DeviceFingerprint != CertificateVaultService.Fingerprint(full) ||
+                result.Basis.CatalogRevision != vault.Catalog.Revision)
+                throw new Exception("Multi-customer session did not retain exact key-free authorization basis.");
+            ProjectKeyLibrarySession.RequireCurrent(result.Basis, path, trust, full, now);
+            Reject<CryptographicException>(() => ProjectKeyLibrarySession.Resolve(project, profiles, path, trust, "keys", a, now));
+            Reject<CryptographicException>(() => ProjectKeyLibrarySession.Resolve(project, profiles, path, trust, "keys", b, now));
+            Reject<CryptographicException>(() => ProjectKeyLibrarySession.Resolve(project, profiles, path, trust, "keys", recovery, now));
+            Reject<CryptographicException>(() => ProjectKeyLibrarySession.RequireCurrent(result.Basis, path, trust, a, now));
+            Reject<CryptographicException>(() => ProjectKeyLibrarySession.RequireCurrent(result.Basis, path, trust, full, now.AddDays(2)));
+            var original = File.ReadAllBytes(path);
+            File.AppendAllText(path, " ");
+            Reject<InvalidOperationException>(() => ProjectKeyLibrarySession.RequireCurrent(result.Basis, path, trust, full, now));
+            File.WriteAllBytes(path, original);
+            var next = Enrollment(policy with { Revision = 2 });
+            trust.AcceptPackageUpdate(next, result.Basis.Policy);
+            Reject<InvalidOperationException>(() => ProjectKeyLibrarySession.RequireCurrent(result.Basis, path, trust, full, now));
+            Reject<CryptographicException>(() => ProjectKeyLibrarySession.Resolve(project, profiles, path, trust, "keys", full, now));
+
+            // Catalog recognition must not treat the independent legacy project
+            // Vault or shared rfPrj output as a fallback for a bound project.
+            var projectPath = Path.Combine(directory, "project.json");
+            ProjectJson.Save(projectPath, project);
+            var entry = new ProjectCatalog().Scan(directory).Single(e => e.SourcePath == projectPath);
+            if (!entry.HasLibraryBinding || !entry.SecureOnDemand || !entry.CanOpenStation ||
+                entry.HasVault || entry.HasOperationalBuild)
+                throw new Exception("Catalog-bound project was not marked as on-demand only.");
+        }
+        finally { Directory.Delete(directory, recursive: true); }
     }
 
     private static void Reject<T>(Action action) where T : Exception
