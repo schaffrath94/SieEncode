@@ -14,10 +14,16 @@ public enum KeyLibraryMergeIssueKind
 public sealed record KeyLibraryMergeIssue(KeyLibraryMergeIssueKind Kind, Guid? CustomerId,
     Guid? KeyId, int? Version, Guid[] SourceIds);
 
+// Select existing authenticated metadata; no arbitrary secret/status override.
+public sealed record KeyLibraryMergeDecision(KeyLibraryMergeIssueKind Kind, Guid? CustomerId,
+    Guid? KeyId, int? Version, Guid SourceId);
+
 public sealed record KeyLibraryMergePreview(KeyLibraryDisasterReport Inventory, Guid BaseSourceId,
     KeyLibraryMergeIssue[] Issues, int AddedCustomers, int AddedKeyVersions,
     long? ProposedRevision)
 {
+    public KeyLibraryMergeDecision[] Decisions { get; init; } = [];
+
     public bool CanPrepareCandidate => Issues.Length == 0 && ProposedRevision.HasValue;
 
     // Hash only public, key-free preview data and the exact central CAS base.
@@ -45,8 +51,32 @@ internal static class KeyLibraryMergePlanner
     private const int MaximumIssues = 10000;
 
     internal static Result Build(KeyLibraryDisasterReport inventory, Guid baseId,
-        IReadOnlyDictionary<Guid, KeyLibraryVaultPayload> sources)
+        IReadOnlyDictionary<Guid, KeyLibraryVaultPayload> sources,
+        IEnumerable<KeyLibraryMergeDecision>? decisions = null)
     {
+        var selected = (decisions ?? []).Take(MaximumIssues + 1).ToArray();
+        if (selected.Length > MaximumIssues || selected.Any(d => d is null ||
+            d.SourceId == Guid.Empty || !sources.ContainsKey(d.SourceId) ||
+            !(d.Kind == KeyLibraryMergeIssueKind.CustomerMetadata && d.CustomerId is not null &&
+                d.KeyId is null && d.Version is null ||
+              d.Kind is KeyLibraryMergeIssueKind.KeyMetadata or KeyLibraryMergeIssueKind.Status &&
+                d.CustomerId is null && d.KeyId is not null && d.Version is > 0)))
+            throw new InvalidDataException("Ungültige oder nicht entscheidbare Konfliktauswahl.");
+        var choices = new Dictionary<(KeyLibraryMergeIssueKind, Guid?, Guid?, int?), KeyLibraryMergeDecision>();
+        foreach (var decision in selected)
+            if (!choices.TryAdd((decision.Kind, decision.CustomerId, decision.KeyId, decision.Version), decision))
+                throw new InvalidDataException("Konflikt wurde mehrfach entschieden.");
+        var applied = new List<KeyLibraryMergeDecision>();
+        Guid? Choose(KeyLibraryMergeIssueKind kind, Guid? customer, Guid? key, int? version,
+            IEnumerable<Guid> allowed)
+        {
+            if (!choices.Remove((kind, customer, key, version), out var decision)) return null;
+            if (!allowed.Contains(decision.SourceId))
+                throw new InvalidDataException("Ausgewählte Quelle besitzt keinen passenden Konfliktwert.");
+            applied.Add(decision);
+            return decision.SourceId;
+        }
+
         var baseline = sources[baseId];
         var ordered = sources.OrderBy(s => s.Key).ToArray();
         var issues = new List<KeyLibraryMergeIssue>();
@@ -82,7 +112,12 @@ internal static class KeyLibraryMergePlanner
         {
             var first = group.First().Customer;
             if (group.Any(x => x.Customer != first))
-                Issue(KeyLibraryMergeIssueKind.CustomerMetadata, group.Key, null, null, group.Select(x => x.Source));
+            {
+                var choice = Choose(KeyLibraryMergeIssueKind.CustomerMetadata, group.Key, null, null,
+                    group.Select(x => x.Source));
+                if (choice is Guid source) first = group.Single(x => x.Source == source).Customer;
+                else Issue(KeyLibraryMergeIssueKind.CustomerMetadata, group.Key, null, null, group.Select(x => x.Source));
+            }
             customersCombined.Add(first);
         }
         foreach (var group in customersCombined.GroupBy(c => c.Name.Trim(), StringComparer.OrdinalIgnoreCase)
@@ -109,9 +144,27 @@ internal static class KeyLibraryMergePlanner
             if (group.Any(x => !string.Equals(x.Secret.HexValue, first.Secret.HexValue, StringComparison.OrdinalIgnoreCase)))
                 Issue(KeyLibraryMergeIssueKind.SecretValue, null, key.KeyId, key.Version, ids);
             if (group.Any(x => (x.Entry.Name, x.Entry.Purpose, x.Entry.HostSystem) != (key.Name, key.Purpose, key.HostSystem)))
-                Issue(KeyLibraryMergeIssueKind.KeyMetadata, null, key.KeyId, key.Version, ids);
+            {
+                var choice = Choose(KeyLibraryMergeIssueKind.KeyMetadata, null, key.KeyId, key.Version, ids);
+                if (choice is Guid source)
+                {
+                    var metadata = group.Single(x => x.Source == source).Entry;
+                    key = key with { Name = metadata.Name, Purpose = metadata.Purpose, HostSystem = metadata.HostSystem };
+                }
+                else Issue(KeyLibraryMergeIssueKind.KeyMetadata, null, key.KeyId, key.Version, ids);
+            }
             if (group.Any(x => x.Entry.Status != key.Status))
-                Issue(KeyLibraryMergeIssueKind.Status, null, key.KeyId, key.Version, ids);
+            {
+                var choice = Choose(KeyLibraryMergeIssueKind.Status, null, key.KeyId, key.Version, ids);
+                if (choice is Guid source)
+                {
+                    var chosen = group.Single(x => x.Source == source).Entry.Status;
+                    if (group.Any(x => StatusRank(x.Entry.Status) > StatusRank(chosen)))
+                        throw new InvalidDataException("Eine Konfliktentscheidung darf keine abgelöste oder kompromittierte Version reaktivieren.");
+                    key = key with { Status = chosen };
+                }
+                else Issue(KeyLibraryMergeIssueKind.Status, null, key.KeyId, key.Version, ids);
+            }
             entries.Add(key);
             secrets.Add(first.Secret);
         }
@@ -137,12 +190,15 @@ internal static class KeyLibraryMergePlanner
         var baseKeys = KeyLibraryContracts.Validate(baseline.Catalog);
         var addedCustomers = customersCombined.Count(c => !baseCustomers.Contains(c.CustomerId));
         var addedVersions = entries.Count(k => !baseKeys.ContainsKey(new(k.KeyId, k.Version)));
+        if (choices.Count != 0)
+            throw new InvalidDataException("Konfliktentscheidung passt nicht zur aktuellen Vorschau.");
+        var changed = addedCustomers > 0 || addedVersions > 0 || applied.Count > 0;
         var maxRevision = ordered.Max(s => s.Value.Catalog.Revision);
-        if (maxRevision == long.MaxValue && (addedCustomers > 0 || addedVersions > 0))
+        if (maxRevision == long.MaxValue && changed)
             Issue(KeyLibraryMergeIssueKind.RevisionExhausted, null, null, null, sources.Keys);
 
         KeyLibraryVaultPayload? candidate = null;
-        if (issues.Count == 0 && (addedCustomers > 0 || addedVersions > 0))
+        if (issues.Count == 0 && changed)
         {
             var proposed = new KeyLibraryVaultPayload(new(baseline.Catalog.LibraryId,
                 checked(maxRevision + 1), entries.OrderBy(k => k.KeyId).ThenBy(k => k.Version).ToArray())
@@ -161,6 +217,18 @@ internal static class KeyLibraryMergePlanner
             }
         }
         return new(new(inventory, baseId, issues.ToArray(), addedCustomers, addedVersions,
-            candidate?.Catalog.Revision), candidate);
+            candidate?.Catalog.Revision)
+        {
+            Decisions = applied.OrderBy(x => x.Kind).ThenBy(x => x.CustomerId)
+                .ThenBy(x => x.KeyId).ThenBy(x => x.Version).ToArray()
+        }, candidate);
     }
+
+    private static int StatusRank(string status) => status switch
+    {
+        KeyLibraryContracts.Active => 0,
+        KeyLibraryContracts.Retired => 1,
+        KeyLibraryContracts.Compromised => 2,
+        _ => throw new InvalidDataException("Unbekannter Schlüsselstatus.")
+    };
 }

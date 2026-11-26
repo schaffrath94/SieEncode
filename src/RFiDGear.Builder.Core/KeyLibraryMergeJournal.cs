@@ -30,7 +30,7 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         string groupId, X509Certificate2 fullMember, DateTimeOffset now,
         IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead expected,
         Guid baseSourceId, string approvedPreviewSha256, bool explicitlyApproved,
-        KeyLibrarySyncEndpoint? endpoint = null)
+        KeyLibrarySyncEndpoint? endpoint = null, IEnumerable<KeyLibraryMergeDecision>? decisions = null)
     {
         if (policyJournal.HasPending) throw new InvalidOperationException("Richtlinienauftrag ist noch offen.");
         var (old, revision) = Read();
@@ -38,7 +38,7 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         var local = ConcurrentFileWriter.Capture(vault);
         if (!local.Exists) throw new FileNotFoundException("Lokale Bibliothek fehlt.", vault);
         var merge = KeyLibraryDisasterAnalysis.PrepareApprovedMerge(trust, administration,
-            groupId, fullMember, now, sources, expected, baseSourceId, approvedPreviewSha256, explicitlyApproved);
+            groupId, fullMember, now, sources, expected, baseSourceId, approvedPreviewSha256, explicitlyApproved, decisions);
         var root = OfflineGroupTrustStore.AdministratorFingerprint(trust.ExportPublic().AdministratorPublicKey);
         if (endpoint is not null && (endpoint.LibraryId != libraryId || KeyLibrarySyncEndpointStore.Validate(endpoint) != endpoint))
             throw new CryptographicException("Zentralverbindung passt nicht zur Zusammenführung.");

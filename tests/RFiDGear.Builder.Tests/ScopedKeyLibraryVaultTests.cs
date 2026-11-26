@@ -345,6 +345,60 @@ internal static class ScopedKeyLibraryVaultTests
                 ConcurrentFileWriter.Capture(localPath) != file2 || central.ReadHead() != centralBefore)
                 throw new Exception("Read-only disaster inventory changed operational data.");
 
+            // Manual decisions choose existing authenticated metadata and
+            // the strictest status; no secret override, even by administration.
+            var metadataPath = Path.Combine(directory, "merge-metadata.json");
+            var changedMetadata = nextPayload with { Catalog = nextPayload.Catalog with
+            {
+                Revision = nextPayload.Catalog.Revision + 1,
+                Customers = nextPayload.Catalog.Customers.Select(c => c.CustomerId == customerA
+                    ? c with { Name = "Synthetic renamed customer" } : c).ToArray(),
+                Keys = nextPayload.Catalog.Keys.Select(k => k.KeyId == keyA.KeyId
+                    ? k with { Name = "Synthetic renamed key", Status = KeyLibraryContracts.Compromised } : k).ToArray()
+            } };
+            File.WriteAllBytes(metadataPath, KeyLibrarySyncWire.Write(
+                ScopedKeyLibraryVault.Protect(changedMetadata, enrolled, authority, "keys", now)));
+            var metadataId = Guid.NewGuid();
+            KeyLibraryDisasterSource[] metadataSources =
+                [candidates[0], new(metadataId, metadataPath, enrolled, verified.Checkpoint)];
+            KeyLibraryMergeDecision[] decisions =
+            [
+                new(KeyLibraryMergeIssueKind.CustomerMetadata, customerA, null, null, metadataId),
+                new(KeyLibraryMergeIssueKind.KeyMetadata, null, keyA.KeyId, 1, metadataId),
+                new(KeyLibraryMergeIssueKind.Status, null, keyA.KeyId, 1, metadataId)
+            ];
+            var unresolved = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert, false, now,
+                metadataSources, head2, idCentral);
+            var resolved = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert, false, now,
+                metadataSources, head2, idCentral, decisions);
+            if (unresolved.CanPrepareCandidate || unresolved.Issues.Length != 3 ||
+                !resolved.CanPrepareCandidate || resolved.Decisions.Length != 3 ||
+                resolved.AddedCustomers != 0 || resolved.AddedKeyVersions != 0 ||
+                resolved.ProposedRevision != changedMetadata.Catalog.Revision + 1)
+                throw new Exception("Explicit metadata/status decisions did not produce the expected candidate.");
+            Reject<InvalidDataException>(() => KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys",
+                fullCert, false, now, metadataSources, head2, idCentral,
+                [decisions[0], decisions[1], decisions[2] with { SourceId = idCentral }]));
+            Reject<InvalidDataException>(() => KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys",
+                fullCert, false, now, metadataSources, head2, idCentral, [.. decisions, decisions[0]]));
+            Reject<InvalidDataException>(() => KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys",
+                fullCert, false, now, candidates, head2, idCentral,
+                [new(KeyLibraryMergeIssueKind.SecretValue, null, keyA.KeyId, 2, idHistory)]));
+            var selectedHash = resolved.ApprovalSha256(head2);
+            Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.PrepareApprovedMerge(trust,
+                mergeAdministration, "keys", fullCert, now, metadataSources, head2, idCentral, selectedHash,
+                true, [decisions[0] with { SourceId = idCentral }, decisions[1], decisions[2]]));
+            var selectedMerge = KeyLibraryDisasterAnalysis.PrepareApprovedMerge(trust, mergeAdministration,
+                "keys", fullCert, now, metadataSources, head2, idCentral, selectedHash, true, decisions);
+            var selectedPayload = ScopedKeyLibraryVault.Open(KeyLibrarySyncWire.Read<SignedScopedKeyLibraryBundle>(
+                selectedMerge.Transfer.EncryptedVault, GroupVaultService.MaximumBytes), trust,
+                "keys", fullCert, now, requireFull: true);
+            if (selectedPayload.Catalog.Customers.Single(c => c.CustomerId == customerA).Name != "Synthetic renamed customer" ||
+                selectedPayload.Catalog.Keys.Single(k => k.KeyId == keyA.KeyId).Name != "Synthetic renamed key" ||
+                selectedPayload.Catalog.Keys.Single(k => k.KeyId == keyA.KeyId).Status != KeyLibraryContracts.Compromised ||
+                !selectedPayload.Secrets.OrderBy(s => s.Key.KeyId).SequenceEqual(nextPayload.Secrets.OrderBy(s => s.Key.KeyId)))
+                throw new Exception("Explicit decisions changed immutable secret values or ignored selected metadata.");
+
             // Durable merge on a separate synthetic server and local offline branch.
             var mergeServerPath = Path.Combine(directory, "merge-server.json");
             var mergeServer = new CentralKeyLibraryStore(mergeServerPath, id);

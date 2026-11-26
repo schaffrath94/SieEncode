@@ -49,11 +49,11 @@ public static class KeyLibraryDisasterAnalysis
     public static KeyLibraryMergePreview PreviewMerge(OfflineGroupTrustStore trust,
         string groupId, X509Certificate2 identity, bool recovery, DateTimeOffset now,
         IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead independentlyKnownHead,
-        Guid baseSourceId)
+        Guid baseSourceId, IEnumerable<KeyLibraryMergeDecision>? decisions = null)
     {
         ArgumentNullException.ThrowIfNull(independentlyKnownHead);
         return WithVerifiedSources(trust, groupId, identity, recovery, now, sources,
-            independentlyKnownHead, (report, opened) => BuildMerge(report, opened, baseSourceId).Preview);
+            independentlyKnownHead, (report, opened) => BuildMerge(report, opened, baseSourceId, decisions).Preview);
     }
 
     /// <summary>Explicit approval of the exact key-free preview. Reopen every
@@ -64,7 +64,8 @@ public static class KeyLibraryDisasterAnalysis
         OfflineGroupAdministrationStore administration, string groupId,
         X509Certificate2 fullMember, DateTimeOffset now,
         IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead independentlyKnownHead,
-        Guid baseSourceId, string approvedPreviewSha256, bool explicitlyApproved)
+        Guid baseSourceId, string approvedPreviewSha256, bool explicitlyApproved,
+        IEnumerable<KeyLibraryMergeDecision>? decisions = null)
     {
         ArgumentNullException.ThrowIfNull(administration);
         ArgumentNullException.ThrowIfNull(independentlyKnownHead);
@@ -74,7 +75,7 @@ public static class KeyLibraryDisasterAnalysis
         return WithVerifiedSources(trust, groupId, fullMember, false, now, sources,
             independentlyKnownHead, (report, opened) =>
             {
-                var result = BuildMerge(report, opened, baseSourceId);
+                var result = BuildMerge(report, opened, baseSourceId, decisions);
                 if (report.CurrentPolicy != checkpoint || !result.Preview.CanPrepareCandidate ||
                     result.Candidate is null || result.Preview.ApprovalSha256(independentlyKnownHead) != approvedPreviewSha256)
                     throw new CryptographicException("Zusammenführung ist nicht konfliktfrei oder entspricht nicht der bestätigten Vorschau.");
@@ -99,14 +100,14 @@ public static class KeyLibraryDisasterAnalysis
     }
 
     private static KeyLibraryMergePlanner.Result BuildMerge(KeyLibraryDisasterReport report,
-        List<Opened> opened, Guid baseSourceId)
+        List<Opened> opened, Guid baseSourceId, IEnumerable<KeyLibraryMergeDecision>? decisions)
     {
         if (opened.Count < 2 || opened.Any(s => !s.Inventory.CurrentPolicy) ||
             opened.SingleOrDefault(s => s.Inventory.SourceId == baseSourceId)?.Inventory.CentralRelation
                 != KeyLibraryDisasterCentralRelation.ExactKnownCiphertext)
             throw new CryptographicException("Zusammenführung erfordert einen exakt bestätigten gemeinsamen Ausgangsstand und aktuelle Richtlinien.");
         return KeyLibraryMergePlanner.Build(report, baseSourceId,
-            opened.ToDictionary(s => s.Inventory.SourceId, s => s.Payload));
+            opened.ToDictionary(s => s.Inventory.SourceId, s => s.Payload), decisions);
     }
 
     private static T WithVerifiedSources<T>(OfflineGroupTrustStore trust,
