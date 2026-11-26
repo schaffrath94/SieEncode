@@ -16,8 +16,8 @@ internal sealed partial class GroupAdministrationWindow
         var panel = new StackPanel();
         panel.Children.Add(Note("Recovery-Zugänge gelten für alle Gruppen dieser Bibliothek. Verwenden Sie eigene Identitäten mit getrennten Schlüsseln. Gruppenverwalter können sie nicht ändern. Vor der Verwendung muss der private Recovery-Schlüssel unabhängig gesichert und wiederhergestellt geprüft werden; die öffentliche Einladung ist keine private Sicherung."));
         panel.Children.Add(recoveryList);
-        panel.Children.Add(Action("Separate Recovery-Einladung freigeben", ImportRecovery));
-        panel.Children.Add(Action("Recovery-Zugang aktivieren / entziehen", ToggleRecovery));
+        panel.Children.Add(AsyncPolicyAction("Separate Recovery-Einladung freigeben", ImportRecoveryAsync));
+        panel.Children.Add(AsyncPolicyAction("Recovery-Zugang aktivieren / entziehen", ToggleRecoveryAsync));
         root.Children.Add(new Expander { Header = "Separate Recovery-Zugänge", Content = panel });
     }
     private void RefreshRecovery(OfflineGroupPolicy policy)
@@ -42,7 +42,7 @@ internal sealed partial class GroupAdministrationWindow
         store.UpdateRecoveryDevices(current.Policy.RecoveryDevices.Select(d => d.Fingerprint == fingerprint ? d with { Enabled = enabled } : d).ToArray(), checkpoint!);
         LoadAdministration(currentLibrary!.Value);
     }
-    private void ImportRecovery()
+    private async Task ImportRecoveryAsync()
     {
         RequireSavedAdministration();
         var dialog = new OpenFileDialog { Title = "Öffentliche Einladung der separaten Recovery-Identität", Filter = "Öffentliche Identität (*.recipient.json)|*.recipient.json" };
@@ -52,15 +52,22 @@ internal sealed partial class GroupAdministrationWindow
         var fingerprint = TextEntryPrompt.Show(this, "Bibliotheksweiten Recovery-Zugang bestätigen",
             "Den unabhängig erhaltenen SHA-256-Fingerabdruck der separaten Recovery-Identität eingeben. Sie erhält Zugriff auf alle Gruppen-Vaults dieser Bibliothek nach deren Erstellung oder Abgleich.", "");
         if (fingerprint is null) return;
-        GrantRecoveryInvitation(invitation, fingerprint.Trim().ToUpperInvariant());
+        var confirmed = fingerprint.Trim().ToUpperInvariant();
+        await ApplySpecialPolicyAsync(
+            current => OfflineGroupAdministrationStore.ProposeRecoveryGrant(current, invitation, confirmed),
+            () => GrantRecoveryInvitation(invitation, confirmed),
+            "Separaten bibliotheksweiten Recovery-Zugang freigeben. Privaten Recovery-Schlüssel zuvor unabhängig sichern und Wiederherstellung prüfen.");
     }
-    private void ToggleRecovery()
+    private async Task ToggleRecoveryAsync()
     {
         RequireSavedAdministration();
         if (recoveryList.SelectedItem is not RecoveryLabel selected) throw new InvalidOperationException("Bitte einen Recovery-Zugang auswählen.");
         var action = selected.Enabled ? "entziehen" : "aktivieren";
         if (MessageBox.Show(this, $"{selected.Label}\n\nDiesen bibliotheksweiten Recovery-Zugang {action}? Neue Vaults und Rotation benötigen mindestens einen aktiven Recovery-Zugang. Den neuen Stand verteilen und betroffene Vaults abgleichen; alte Kopien bleiben zugänglich.", Title,
             MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
-        SetRecoveryEnabled(selected.Fingerprint, !selected.Enabled);
+        await ApplySpecialPolicyAsync(
+            current => OfflineGroupAdministrationStore.ProposeRecoveryEnabled(current, selected.Fingerprint, !selected.Enabled),
+            () => SetRecoveryEnabled(selected.Fingerprint, !selected.Enabled),
+            "Recovery-Zugang " + action + ". Mindestens ein gültiger separater Recovery-Zugang muss für die Neuverschlüsselung erhalten bleiben.");
     }
 }
