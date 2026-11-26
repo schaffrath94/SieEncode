@@ -19,7 +19,7 @@ internal static class FargateHosting
             throw new InvalidOperationException("Fargate-Zustand muss im vorgesehenen persistenten Volume liegen.");
         if (hosting == "fargate" && mode != "existing")
             throw new InvalidOperationException("Regulärer Fargate-Dienst darf weder Bootstrap noch Recovery-Aktivierung ausführen.");
-        if (hosting == "fargate-maintenance" && mode is not ("bootstrap" or "restore"))
+        if (hosting == "fargate-maintenance" && mode is not ("bootstrap" or "restore" or "backup"))
             throw new InvalidOperationException("Fargate-Wartung benötigt einen expliziten einmaligen Auftrag.");
         if (!HasPersistentMount(File.ReadLines("/proc/self/mountinfo")))
             throw new IOException("Persistentes EFS/NFS-Volume fehlt. Kein Start mit Container-Speicher.");

@@ -99,6 +99,40 @@ public sealed class CentralKeyLibraryVolumeSession : IDisposable
             throw new CryptographicException("Wiederhergestellter Zentralstand ist nicht exakt bestätigt.");
     }
 
+    /// <summary>Cold export to a fixed protected staging workspace. No TLS
+    /// identity needed. The caller must fence old writers externally; this
+    /// same-volume copy is NOT an independent disaster backup.</summary>
+    public CentralKeyLibraryBackupResult CreateColdBackup(CentralKeyLibraryHead independentlyConfirmedHead,
+        string independentlyConfirmedAdministratorFingerprint)
+    {
+        EnsureActive();
+        ArgumentNullException.ThrowIfNull(independentlyConfirmedHead);
+        if (independentlyConfirmedHead.LibraryId != libraryId)
+            throw new CryptographicException("Sicherungsauftrag gehört zu einer anderen Bibliothek.");
+        var store = OpenExisting();
+        var workspace = Path.Combine(root, "backups");
+        if (!Directory.Exists(workspace) || (File.GetAttributes(workspace) & FileAttributes.ReparsePoint) != 0)
+            throw new IOException("Vorbereiteter geschützter Sicherungsordner fehlt.");
+        using var stateLease = CentralKeyLibraryStartup.AcquireLease(StatePath);
+        store.VerifyBackupState(independentlyConfirmedHead, independentlyConfirmedAdministratorFingerprint);
+        var backup = CentralKeyLibraryBackupService.CreateCold(StatePath, workspace,
+            independentlyConfirmedHead, independentlyConfirmedAdministratorFingerprint);
+        if (CentralKeyLibraryBackupService.VerifyCold(backup.Directory, backup.Reference) != backup.AuditCount)
+            throw new CryptographicException("Zentrale Sicherung konnte nicht vollständig zurückgeprüft werden.");
+        // The sibling reference is only a staging receipt. Export it to a
+        // separately controlled location before relying on the backup.
+        var receipt = backup.Directory + ".reference.json";
+        var bytes = KeyLibrarySyncWire.Write(backup.Reference);
+        ConcurrentFileWriter.Write(receipt, FileRevision.Missing, temporary =>
+        {
+            using var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+            stream.Write(bytes);
+            stream.Flush(true);
+        });
+        store.VerifyBackupState(independentlyConfirmedHead, independentlyConfirmedAdministratorFingerprint);
+        return backup;
+    }
+
     private void RequireAbsentLive()
     {
         var live = Path.GetDirectoryName(StatePath)!;

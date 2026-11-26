@@ -17,14 +17,10 @@ static string Required(string name) =>
 
 var libraryId = Guid.Parse(Required("SIEENCODE_SYNC_LIBRARY_ID"));
 var stateFile = Path.GetFullPath(Required("SIEENCODE_SYNC_STATE_FILE"));
-var tlsPassword = Required("SIEENCODE_SYNC_TLS_PASSWORD");
-var portText = Required("SIEENCODE_SYNC_PORT");
-if (!int.TryParse(portText, out var port) || port is < 1024 or > 65535)
-    throw new InvalidOperationException("HTTPS-Port ist ungültig.");
 // Normal restart is the default. Missing state must NEVER silently create a
 // replacement authority. First installation and recovery are explicit local modes.
 var mode = Environment.GetEnvironmentVariable("SIEENCODE_SYNC_START_MODE") ?? "existing";
-if (mode is not ("existing" or "bootstrap" or "restore"))
+if (mode is not ("existing" or "bootstrap" or "restore" or "backup"))
     throw new InvalidOperationException("Unbekannter Startmodus der Zentrale.");
 var hosting = Environment.GetEnvironmentVariable("SIEENCODE_SYNC_HOSTING");
 FargateHosting.Validate(hosting, stateFile, mode);
@@ -33,6 +29,23 @@ FargateHosting.Validate(hosting, stateFile, mode);
 using var volume = hosting is "fargate" or "fargate-maintenance"
     ? CentralKeyLibraryVolumeSession.Acquire(FargateHosting.MountPath, libraryId)
     : null;
+if (mode == "backup")
+{
+    if (hosting != "fargate-maintenance" || volume is null)
+        throw new InvalidOperationException("Sicherung ist ein einmaliger Fargate-Wartungsauftrag.");
+    using var headFile = new FileStream(Path.GetFullPath(Required("SIEENCODE_SYNC_BACKUP_CONFIRMED_HEAD_FILE")),
+        FileMode.Open, FileAccess.Read, FileShare.Read);
+    var head = KeyLibrarySyncWire.ReadAsync<CentralKeyLibraryHead>(headFile,
+        KeyLibrarySyncWire.MaximumMetadataBytes).GetAwaiter().GetResult();
+    _ = volume.CreateColdBackup(head, Required("SIEENCODE_SYNC_BACKUP_ADMIN_FINGERPRINT"));
+    Console.WriteLine("Zentralbackup und Referenz im Sicherungsbereich bereitgestellt. Unabhängiger Export erforderlich.");
+    return;
+}
+
+var tlsPassword = Required("SIEENCODE_SYNC_TLS_PASSWORD");
+var portText = Required("SIEENCODE_SYNC_PORT");
+if (!int.TryParse(portText, out var port) || port is < 1024 or > 65535)
+    throw new InvalidOperationException("HTTPS-Port ist ungültig.");
 using var serverCertificate = LoadTlsCertificate(tlsPassword);
 if (!serverCertificate.HasPrivateKey ||
     DateTime.UtcNow < serverCertificate.NotBefore.ToUniversalTime() ||

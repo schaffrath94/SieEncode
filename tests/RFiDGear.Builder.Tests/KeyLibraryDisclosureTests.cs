@@ -283,6 +283,25 @@ internal static class KeyLibraryDisclosureTests
                 if (restartedVolume.OpenExisting().ReadHead() != centralHead)
                     throw new Exception("Service restart did not open restored volume.");
 
+            using (var backupVolume = CentralKeyLibraryVolumeSession.Acquire(volumeRoot, id))
+            {
+                var beforeBackup = ConcurrentFileWriter.Capture(backupVolume.StatePath);
+                Reject<IOException>(() => backupVolume.CreateColdBackup(centralHead, pin));
+                Directory.CreateDirectory(Path.Combine(volumeRoot, "backups"));
+                Reject<CryptographicException>(() => backupVolume.CreateColdBackup(
+                    centralHead with { CentralRevision = centralHead.CentralRevision + 1 }, pin));
+                Reject<CryptographicException>(() => backupVolume.CreateColdBackup(centralHead, new string('F', 64)));
+                if (Directory.EnumerateFileSystemEntries(Path.Combine(volumeRoot, "backups")).Any())
+                    throw new Exception("Rejected volume backup created output.");
+                var volumeBackup = backupVolume.CreateColdBackup(centralHead, pin);
+                var receipt = KeyLibrarySyncWire.Read<CentralKeyLibraryBackupReference>(
+                    File.ReadAllBytes(volumeBackup.Directory + ".reference.json"), KeyLibrarySyncWire.MaximumMetadataBytes);
+                if (receipt != volumeBackup.Reference ||
+                    CentralKeyLibraryBackupService.VerifyCold(volumeBackup.Directory, receipt) != 2 ||
+                    ConcurrentFileWriter.Capture(backupVolume.StatePath) != beforeBackup)
+                    throw new Exception("Volume backup changed live data or lost its separately exportable reference.");
+            }
+
             var backupAudit = Directory.GetFiles(Path.Combine(cold.Directory, "central-state.json.audit"), "*.json").First();
             File.Delete(backupAudit);
             Reject<CryptographicException>(() => CentralKeyLibraryBackupService.VerifyCold(cold.Directory, cold.Reference));
