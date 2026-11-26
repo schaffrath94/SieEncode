@@ -19,7 +19,7 @@ internal static class KeyLibraryAuditWorkflow
     // Caller holds the existing library lease or otherwise serializes local
     // audit writes. This is a best-effort follow-up, never a prerequisite for
     // the offline disclosure itself once the local event was persisted.
-    internal static async Task<string> FlushAsync(Guid id, KeyLibraryHttpsTransport transport,
+    internal static async Task<string> FlushAsync(Guid id, IKeyLibrarySyncTransport transport,
         X509Certificate2 identity, CancellationToken cancellationToken = default)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
