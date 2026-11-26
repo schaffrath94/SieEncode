@@ -33,8 +33,7 @@ public static class KeyLibrarySyncClient
 
         // Successful authenticated local decryption is a prerequisite for upload.
         // This is deliberately the same library decoder as the project editor.
-        var library = KeyLibraryVault.Unprotect(GroupVaultService.Read(encrypted),
-            localPolicy, groupId, ownIdentities);
+        var library = KeyLibraryVaultStore.OpenEncrypted(encrypted, trust, groupId, ownIdentities, requireFull: true);
         if (library.Catalog.LibraryId != remoteHead.LibraryId)
             throw new CryptographicException("Lokaler Bibliotheksinhalt hat eine falsche Identität.");
         if (library.Catalog.Revision <= remoteHead.CatalogRevision)
@@ -72,8 +71,10 @@ public static class KeyLibrarySyncClient
             claim.CatalogRevision != verifiedRemoteHead.CatalogRevision)
             throw new CryptographicException("Heruntergeladener Schlüsselstand stimmt nicht mit der bestätigten zentralen Revision überein.");
 
-        var next = KeyLibraryVault.Unprotect(GroupVaultService.Read(transfer.EncryptedVault),
-            policy, groupId, ownIdentities);
+        var identities = ownIdentities.ToArray();
+        if (policy.Policy.CustomerScopesEnabled && identities.Length != 1)
+            throw new CryptographicException("Kundenabgleich benötigt genau ein persönliches Gerät.");
+        var next = KeyLibraryVaultStore.OpenEncrypted(transfer.EncryptedVault, trust, groupId, identities);
         if (next.Catalog.Revision != claim.CatalogRevision)
             throw new CryptographicException("Signierte Katalogrevision passt nicht zur entschlüsselten Bibliothek.");
         var path = Path.GetFullPath(localVaultPath);
@@ -81,9 +82,7 @@ public static class KeyLibrarySyncClient
             throw new ConcurrentFileChangeException(path);
         if (expectedLocalFile.Exists)
         {
-            var previous = KeyLibraryVault.Unprotect(
-                GroupVaultService.Read(ReadVaultBytes(path)), policy, groupId,
-                ownIdentities);
+            var previous = KeyLibraryVaultStore.OpenEncrypted(ReadVaultBytes(path), trust, groupId, identities);
             if (next.Catalog.LibraryId != previous.Catalog.LibraryId ||
                 next.Catalog.Revision <= previous.Catalog.Revision)
                 throw new InvalidDataException("Die zentrale Bibliothek ist nicht neuer als die bereits vorhandene lokale Schlüsselhistorie.");
