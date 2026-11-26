@@ -84,6 +84,38 @@ internal static class ScopedKeyLibraryVaultTests
             var swapped = KeyLibrarySyncWire.Write(bundle with { Customers = [a with { CustomerId = customerB }] });
             Reject<CryptographicException>(() => ScopedKeyLibraryVault.Verify(new(swapped,
                 authority.SignData(swapped, HashAlgorithmName.SHA256, RSASignaturePadding.Pss)), enrolled, "keys"));
+            // Same file path and same central CAS protocol, without a
+            // separate customer database or server-side decryption.
+            var encrypted = KeyLibrarySyncWire.Write(signed);
+            var central = new CentralKeyLibraryStore(Path.Combine(directory, "central.json"), id);
+            var head0 = central.Register(enrolled, OfflineGroupTrustStore.AdministratorFingerprint(publicKey));
+            var transfer = KeyLibrarySyncTransport.Sign(KeyLibrarySyncTransport.Prepare(enrolled,
+                "keys", head0.CentralRevision, head0.CiphertextSha256, 1, encrypted), encrypted, authority);
+            var head1 = central.Accept(transfer);
+            var received = central.ReadAuthorizedSnapshot(KeyLibraryDownloadAuthorization.Sign(
+                head1, limitedCert, now), limitedCert, now);
+            var localPath = Path.Combine(directory, "library.json");
+            var file1 = KeyLibrarySyncClient.InstallDownloadedSnapshot(localPath, trust, "keys", head1,
+                received.Transfer, [limitedCert], FileRevision.Missing);
+            if (file1.Sha256 != head1.CiphertextSha256 ||
+                KeyLibraryVaultStore.Load(localPath, trust, "keys", [limitedCert]).Secrets.Single().Key.KeyId != keyA.KeyId)
+                throw new Exception("Scoped download did not preserve exact signed bytes or access scope.");
+            Reject<CryptographicException>(() => KeyLibraryVaultStore.Load(localPath, trust,
+                "keys", [limitedCert], requireFull: true));
+            Reject<CryptographicException>(() => KeyLibrarySyncTransport.Prepare(enrolled, "keys",
+                head1.CentralRevision, head1.CiphertextSha256, 2, encrypted));
+            var nextPayload = KeyLibraryEditing.AddCustomer(payload, "New synthetic customer").Next;
+            var bytes2 = KeyLibrarySyncWire.Write(ScopedKeyLibraryVault.Protect(nextPayload, enrolled, authority, "keys", now));
+            var transfer2 = KeyLibrarySyncTransport.Sign(KeyLibrarySyncTransport.Prepare(enrolled,
+                "keys", head1.CentralRevision, head1.CiphertextSha256, nextPayload.Catalog.Revision, bytes2), bytes2, authority);
+            var head2 = central.Accept(transfer2);
+            var file2 = KeyLibrarySyncClient.InstallDownloadedSnapshot(localPath, trust, "keys", head2,
+                transfer2, [limitedCert], file1);
+            if (file2.Sha256 != head2.CiphertextSha256 ||
+                KeyLibraryVaultStore.Load(localPath, trust, "keys", [fullCert], requireFull: true).Catalog.Customers.Length != 4 ||
+                KeyLibraryVaultStore.Load(localPath, trust, "keys", [limitedCert]).Catalog.Customers.Length != 1)
+                throw new Exception("Full and partial offline scopes diverged after same-policy sync.");
+            Reject<ConcurrentFileChangeException>(() => central.Accept(transfer2));
             var next = Enrollment(policy with { Revision = 2, People = [fullPerson, limited with { KeyLibraryCustomers = [customerB] }, none] });
             var rotated = ScopedKeyLibraryVault.Protect(payload, next, authority, "keys", now);
             trust.AcceptPackageUpdate(next, verified.Checkpoint);
