@@ -135,6 +135,38 @@ internal static class ScopedKeyLibraryVaultTests
             if (ConcurrentFileWriter.Capture(localPath) != file2)
                 throw new Exception("Rejected hidden-customer deletion changed the local file.");
 
+            // Replacement workstation: the current signed enrollment is independently
+            // installed, and a separate trusted observation supplies the exact head.
+            var replacementPath = Path.Combine(directory, "replacement.json");
+            var replacementTrust = new OfflineGroupTrustStore(Path.Combine(directory, "replacement-trust.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            replacementTrust.Enroll(publicKey, OfflineGroupTrustStore.AdministratorFingerprint(publicKey), enrolled.Policy);
+            var replacementCursor = new CentralKeyLibraryCursorStore(Path.Combine(directory, "replacement-cursor.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            var replacementJournal = new KeyLibraryPolicyTransitionJournal(Path.Combine(directory, "replacement-journal.bin"),
+                id, replacementPath, new OfflineGroupTrustTests.TestProtection());
+            var transport = new ReplacementTransport(central, limitedCert);
+            KeyLibrarySyncResult Replace(CentralKeyLibraryHead confirmed, X509Certificate2 device) =>
+                KeyLibraryAutomaticSync.RestoreMissingWorkstationAsync(transport, replacementPath,
+                    replacementTrust, replacementCursor, replacementJournal, "keys", device, confirmed)
+                    .GetAwaiter().GetResult();
+            Reject<CryptographicException>(() => Replace(head1, limitedCert));
+            Reject<CryptographicException>(() => Replace(head2, recoveryCert));
+            transport.HeadAfterDownload = head1;
+            Reject<ConcurrentFileChangeException>(() => Replace(head2, limitedCert));
+            if (File.Exists(replacementPath) || replacementCursor.ReadReconciledHead() is not null)
+                throw new Exception("Rejected workstation recovery installed or reconciled a Vault.");
+            transport.HeadAfterDownload = null;
+            transport.Downloaded = false;
+            if (Replace(head2, limitedCert).Central != head2 ||
+                replacementCursor.ReadReconciledHead() != head2 ||
+                ConcurrentFileWriter.Capture(replacementPath).Sha256 != head2.CiphertextSha256 ||
+                KeyLibraryVaultStore.Load(replacementPath, replacementTrust, "keys", [limitedCert]).Secrets.Single().Key.KeyId != keyA.KeyId)
+                throw new Exception("Replacement workstation did not receive the exact current authorized scope.");
+            Reject<ConcurrentFileChangeException>(() => Replace(head2, limitedCert));
+            if (central.ReadHead() != head2 || ConcurrentFileWriter.Capture(localPath) != file2)
+                throw new Exception("Replacement workstation changed existing operational library.");
+
             // Independent encrypted archive: full member creates; separate recovery
             // identity verifies every customer, including an empty customer.
             var backupPath = Path.Combine(directory, "library.backup.json");
@@ -221,6 +253,35 @@ internal static class ScopedKeyLibraryVaultTests
                 purpose: GroupVaultPurpose.CustomerKeyLibrary);
         }
         finally { Directory.Delete(directory, recursive: true); }
+    }
+
+    private sealed class ReplacementTransport(CentralKeyLibraryStore central,
+        X509Certificate2 member) : IKeyLibrarySyncTransport
+    {
+        public CentralKeyLibraryHead? HeadAfterDownload { get; set; }
+        public bool Downloaded { get; set; }
+
+        public Task<CentralKeyLibraryHead> ReadHeadAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(Downloaded && HeadAfterDownload is not null ? HeadAfterDownload! : central.ReadHead());
+
+        public Task<SignedKeyLibrarySync> DownloadAsync(SignedKeyLibraryDownload proof,
+            CancellationToken cancellationToken = default)
+        {
+            var result = central.ReadAuthorizedSnapshot(proof, member, DateTimeOffset.UtcNow).Transfer;
+            Downloaded = true;
+            return Task.FromResult(result);
+        }
+
+        public Task<CentralKeyLibrarySnapshot> DownloadSnapshotAsync(SignedKeyLibraryDownload proof,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<CentralKeyLibraryHead> UploadAsync(SignedKeyLibrarySync transfer,
+            CancellationToken cancellationToken = default) => throw new Exception("Recovery attempted an upload.");
+        public Task<CentralKeyLibraryHead> ChangePolicyAsync(SignedKeyLibraryPolicyTransition transition,
+            CancellationToken cancellationToken = default) => throw new Exception("Recovery attempted a policy change.");
+        public Task<KeyLibraryAuditReceipt> SubmitAuditAsync(SignedKeyLibraryAudit report,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<KeyLibraryAuditPage> ReadAuditPageAsync(SignedKeyLibraryAuditQuery query,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 
     private static void Reject<T>(Action action) where T : Exception

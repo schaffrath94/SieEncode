@@ -217,6 +217,69 @@ public static class KeyLibraryAutomaticSync
         return new(KeyLibrarySyncOutcome.PolicyDownloaded, confirmed);
     }
 
+    /// <summary>Explicit workstation replacement when the central service is
+    /// intact. The caller must have independently provisioned the CURRENT
+    /// signed enrollment and separately confirmed the exact current central
+    /// head. A response from the same transport is not independent evidence.
+    /// Never import a historical backup, upload or overwrite an existing Vault.</summary>
+    public static async Task<KeyLibrarySyncResult> RestoreMissingWorkstationAsync(
+        IKeyLibrarySyncTransport transport, string localVaultPath,
+        OfflineGroupTrustStore trust, CentralKeyLibraryCursorStore cursor,
+        KeyLibraryPolicyTransitionJournal journal, string groupId,
+        X509Certificate2 personalIdentity, CentralKeyLibraryHead independentlyConfirmedHead,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(transport);
+        ArgumentNullException.ThrowIfNull(independentlyConfirmedHead);
+        var policy = trust.LoadOffline();
+        _ = KeyLibraryDisclosure.RequireMember(policy, groupId, personalIdentity, DateTimeOffset.UtcNow);
+        if (!policy.Policy.CustomerScopesEnabled || independentlyConfirmedHead.CentralRevision <= 0 ||
+            independentlyConfirmedHead.LibraryId != policy.Policy.LibraryId ||
+            independentlyConfirmedHead.Policy != policy.Checkpoint ||
+            independentlyConfirmedHead.GroupId != groupId)
+            throw new CryptographicException("Aktueller unabhängig bestätigter Kundenbibliotheksstand erforderlich.");
+
+        void RequireMissingAndIdle()
+        {
+            if (journal.HasPending)
+                throw new InvalidOperationException("Offenen Richtlinienauftrag zuerst kontrolliert klären.");
+            if (ConcurrentFileWriter.Capture(localVaultPath) != FileRevision.Missing)
+                throw new ConcurrentFileChangeException(localVaultPath);
+            if (trust.LoadOffline().Checkpoint != policy.Checkpoint)
+                throw new CryptographicException("Richtlinie während der Arbeitsplatzwiederherstellung geändert.");
+        }
+
+        RequireMissingAndIdle();
+        cursor.RequireNotRolledBack(independentlyConfirmedHead);
+        var remote = await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false);
+        if (remote != independentlyConfirmedHead)
+            throw new CryptographicException("Zentrale weicht vom unabhängig bestätigten Stand ab.");
+        var transfer = await DownloadVerifiedAsync(transport, trust, remote,
+            personalIdentity, groupId, cancellationToken).ConfigureAwait(false);
+        // Authenticate and decrypt using the newly approved personal device,
+        // never a recovery identity. A backup cannot authorize its own use.
+        var opened = KeyLibraryVaultStore.OpenEncrypted(transfer.EncryptedVault, trust,
+            groupId, [personalIdentity]);
+        if (opened.Catalog.LibraryId != remote.LibraryId || opened.Catalog.Revision != remote.CatalogRevision)
+            throw new CryptographicException("Empfangener Katalog passt nicht zum bestätigten Wiederanlauf.");
+        if (await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false) != remote)
+            throw new ConcurrentFileChangeException("Zentrale Schlüsselbibliothek");
+        cancellationToken.ThrowIfCancellationRequested();
+        RequireMissingAndIdle();
+
+        // Retain the observed head even if the local write is interrupted.
+        // No successful result until the exact installed bytes are reconciled.
+        cursor.Remember(remote);
+        var installed = KeyLibrarySyncClient.InstallDownloadedSnapshot(localVaultPath,
+            trust, groupId, remote, transfer, [personalIdentity], FileRevision.Missing);
+        if (installed.Sha256 != remote.CiphertextSha256 ||
+            ConcurrentFileWriter.Capture(localVaultPath) != installed ||
+            trust.LoadOffline().Checkpoint != policy.Checkpoint || journal.HasPending)
+            throw new ConcurrentFileChangeException(localVaultPath);
+        cursor.RememberReconciled(remote, installed);
+        return new(KeyLibrarySyncOutcome.Downloaded, remote);
+    }
+
     private static async Task<SignedKeyLibrarySync> DownloadVerifiedAsync(
         IKeyLibrarySyncTransport transport, OfflineGroupTrustStore trust,
         CentralKeyLibraryHead head, X509Certificate2 identity, string groupId,
