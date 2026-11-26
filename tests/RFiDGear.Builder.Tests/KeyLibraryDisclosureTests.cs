@@ -164,6 +164,47 @@ internal static class KeyLibraryDisclosureTests
                 throw new Exception("Audit pagination returned duplicates or missing events.");
             Reject<CryptographicException>(() => KeyLibraryAuditReview.ValidateRecord(
                 page1.Records[0] with { Receipt = page1.Records[0].Receipt with { PayloadSha256 = new string('F', 64) } }, id));
+            // Cold central backup: preserve the exact head, accepted audit
+            // receipts and replay state, without provisioning a new server.
+            var centralHead = centralState.ReadHead();
+            var usedDownload = KeyLibraryDownloadAuthorization.Sign(centralHead, copy, now);
+            _ = centralState.ReadAuthorizedSnapshot(usedDownload, copy, now);
+            var coldWorkspace = Path.Combine(directory, "cold-backups");
+            var coldRecovery = Path.Combine(directory, "cold-recovery");
+            Directory.CreateDirectory(coldWorkspace);
+            Directory.CreateDirectory(coldRecovery);
+            var centralSource = Path.Combine(directory, "central-state.json");
+            var sourceRevision = ConcurrentFileWriter.Capture(centralSource);
+            var cold = CentralKeyLibraryBackupService.CreateCold(centralSource, coldWorkspace,
+                centralHead, OfflineGroupTrustStore.AdministratorFingerprint(publicKey));
+            Reject<CryptographicException>(() => CentralKeyLibraryBackupService.RestoreIsolated(
+                cold.Directory, coldRecovery, cold.Reference, centralHead with { CentralRevision = centralHead.CentralRevision + 1 }));
+            var restoredCold = CentralKeyLibraryBackupService.RestoreIsolated(cold.Directory, coldRecovery,
+                cold.Reference, centralHead);
+            var restoredState = Path.Combine(restoredCold.Directory, "central-state.json");
+            var restoredCenter = new CentralKeyLibraryStore(restoredState, id);
+            if (cold.AuditCount != 2 || restoredCold.AuditCount != 2 ||
+                restoredCenter.ReadHead() != centralHead ||
+                ConcurrentFileWriter.Capture(restoredState) != sourceRevision ||
+                !File.Exists(Path.Combine(restoredCold.Directory, "NOT-ACTIVATED.json")))
+                throw new Exception("Cold restore lost central state, exact revision or audit.");
+            Reject<CryptographicException>(() => restoredCenter.ReadAuthorizedSnapshot(usedDownload, copy, now));
+            var restoredPage = restoredCenter.ReadAuditPage(signedQuery, copy, now);
+            if (restoredPage.Records.Single().Receipt != page1.Records.Single().Receipt ||
+                restoredCenter.ReadAuditPage(KeyLibraryAuditReview.Sign(following, authority), copy, now)
+                    .Records.Single().Receipt != page2.Records.Single().Receipt)
+                throw new Exception("Cold restore lost accepted audit receipts.");
+            if (restoredCenter.AcceptAudit(signedAudit, copy, now) !=
+                centralState.AcceptAudit(signedAudit, copy, now))
+                throw new Exception("Restored audit lost duplicate-event protection.");
+            var backupAudit = Directory.GetFiles(Path.Combine(cold.Directory, "central-state.json.audit"), "*.json").First();
+            File.Delete(backupAudit);
+            Reject<CryptographicException>(() => CentralKeyLibraryBackupService.RestoreIsolated(
+                cold.Directory, coldRecovery, cold.Reference, centralHead));
+            if (ConcurrentFileWriter.Capture(centralSource) != sourceRevision ||
+                Directory.GetDirectories(coldRecovery).Length != 1)
+                throw new Exception("Cold recovery changed the live source or published a failed restore.");
+
             var localReview = KeyLibraryDisclosureAudit.ReadLocal(outbox, protector, verified);
             if (localReview.Records.Length != 1 || !localReview.Records[0].Archived ||
                 !localReview.Records[0].SignatureVerified || localReview.InvalidCount != 0)

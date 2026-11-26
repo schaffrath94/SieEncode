@@ -64,6 +64,16 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
         return Head(state);
     }
 
+    // Backup inspection never creates a new server revision or imports a root.
+    internal void VerifyBackupState(CentralKeyLibraryHead independentlyConfirmedHead,
+        string independentlyConfirmedAdministratorFingerprint)
+    {
+        var state = Read().State;
+        if (state.CentralRevision <= 0 || Head(state) != independentlyConfirmedHead ||
+            state.AdministratorFingerprint != independentlyConfirmedAdministratorFingerprint)
+            throw new CryptographicException("Zentraler Sicherungsstand passt nicht zur unabhängig bestätigten Revision und Verwaltung.");
+    }
+
     /// <summary>Return only the current version cursor; does not reveal raw card keys.</summary>
     public CentralKeyLibraryHead ReadHead() => Head(Read().State);
 
