@@ -26,7 +26,7 @@ public sealed record KeyLibrarySyncResult(KeyLibrarySyncOutcome Outcome,
 public static class KeyLibraryAutomaticSync
 {
     public static async Task<KeyLibrarySyncResult> SynchronizeOnceAsync(
-        KeyLibraryHttpsTransport transport, string localVaultPath,
+        IKeyLibrarySyncTransport transport, string localVaultPath,
         OfflineGroupTrustStore trust, CentralKeyLibraryCursorStore cursor,
         string groupId,
         X509Certificate2 personalIdentity,
@@ -162,7 +162,7 @@ public static class KeyLibraryAutomaticSync
     /// <summary>Read-only workstation sync. The member never submits a
     /// central write, even when an administrator has a pending journal.</summary>
     public static async Task<KeyLibrarySyncResult> SynchronizeMemberAsync(
-        KeyLibraryHttpsTransport transport, string localVaultPath,
+        IKeyLibrarySyncTransport transport, string localVaultPath,
         OfflineGroupTrustStore trust, CentralKeyLibraryCursorStore cursor,
         KeyLibraryPolicyTransitionJournal journal, string groupId,
         X509Certificate2 personalIdentity, CancellationToken cancellationToken = default,
@@ -206,7 +206,7 @@ public static class KeyLibraryAutomaticSync
     }
 
     private static async Task<SignedKeyLibrarySync> DownloadVerifiedAsync(
-        KeyLibraryHttpsTransport transport, OfflineGroupTrustStore trust,
+        IKeyLibrarySyncTransport transport, OfflineGroupTrustStore trust,
         CentralKeyLibraryHead head, X509Certificate2 identity, string groupId,
         CancellationToken cancellationToken)
     {
