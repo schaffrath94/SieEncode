@@ -480,6 +480,8 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
             using var administrator = OpenKey(state);
             var current = OfflineGroupPolicyService.Verify(state.Policy, administrator, libraryId);
             if (current.Checkpoint != expectedPolicy) throw new ConcurrentFileChangeException(path);
+            if (current.Policy.CustomerScopesEnabled)
+                throw new InvalidOperationException("Kundenbereichsrichtlinie benötigt den koordinierten Richtlinienwechsel.");
             var signed = OfflineGroupPolicyService.Sign(transform(current), administrator);
             Save(state with { Policy = signed }, revision);
             return PublicPackage(administrator, signed);
