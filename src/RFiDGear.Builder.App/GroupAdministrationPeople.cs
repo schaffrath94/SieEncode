@@ -37,6 +37,8 @@ internal sealed partial class GroupAdministrationWindow
     private readonly DataGrid deviceGrid = new() { AutoGenerateColumns = false, CanUserAddRows = false, CanUserDeleteRows = false, MinHeight = 70, MaxHeight = 140 };
     private bool personMode;
     private bool customerScopeDraft;
+    private Button? prepareCustomerScopesButton;
+    private Button? editCustomerScopeButton;
     private readonly TextBlock customerScopeStatus = new() { TextWrapping = TextWrapping.Wrap };
     private readonly DataGridTextColumn customerScopeColumn = new() { Header = "Kundenfreigabe", Binding = new Binding(nameof(PersonAdministrationDraft.CustomerScopeLabel)), IsReadOnly = true };
 
@@ -66,8 +68,11 @@ internal sealed partial class GroupAdministrationWindow
         }));
         panel.Children.Add(customerScopeStatus);
         var scopeActions = new WrapPanel();
-        scopeActions.Children.Add(Action("Kundentrennung vorbereiten", PrepareCustomerScopes));
-        scopeActions.Children.Add(Action("Kundenfreigabe der Person bearbeiten", EditSelectedCustomerScope));
+        prepareCustomerScopesButton = Action("Kundentrennung vorbereiten", PrepareCustomerScopes);
+        editCustomerScopeButton = Action("Kundenfreigabe der Person bearbeiten", EditSelectedCustomerScope);
+        scopeActions.Children.Add(prepareCustomerScopesButton);
+        scopeActions.Children.Add(editCustomerScopeButton);
+        editCustomerScopeButton.IsEnabled = false;
         panel.Children.Add(scopeActions);
         panel.Children.Add(deviceGrid);
         panel.Children.Add(Action("Geräteeinladung zur Person hinzufügen", ImportPersonDevice));
