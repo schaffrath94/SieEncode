@@ -129,7 +129,7 @@ public static class KeyLibrarySyncTransport
     {
         var document = GroupVaultService.Read(encrypted);
         var header = document.Header;
-        if (signedPolicy.Policy.Version != 2 ||
+        if (signedPolicy.Policy.Version != 2 || signedPolicy.Policy.CustomerScopesEnabled ||
             header.Format != GroupVaultService.KeyLibraryFormat ||
             header.LibraryId != enrolled.LibraryId ||
             header.ProjectId != enrolled.LibraryId ||
