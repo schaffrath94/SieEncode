@@ -50,7 +50,7 @@ public static class KeyLibrarySyncTransport
             expectedCentralRevision > 0 &&
                 !IsSha(expectedCentralCiphertextSha256))
             throw new InvalidDataException("Fehlende oder ungültige vorherige zentrale Revision.");
-        ValidateEnvelope(enrolled, policy, groupId, encrypted);
+        ValidateEnvelope(enrolled, policy, groupId, encrypted, catalogRevision);
         return new(Format, 1, enrolled.LibraryId, groupId, policy.Checkpoint,
             expectedCentralRevision, expectedCentralCiphertextSha256,
             CiphertextSha256(encrypted), catalogRevision, Guid.NewGuid());
@@ -95,7 +95,7 @@ public static class KeyLibrarySyncTransport
         if (!transfer.Claim.SequenceEqual(JsonSerializer.SerializeToUtf8Bytes(claim, Options)) ||
             claim.LibraryId != enrolled.LibraryId || claim.Policy != policy.Checkpoint)
             throw new CryptographicException("Nicht kanonischer Auftrag oder anderer signierter Gruppenstand.");
-        ValidateEnvelope(enrolled, policy, claim.GroupId, transfer.EncryptedVault);
+        ValidateEnvelope(enrolled, policy, claim.GroupId, transfer.EncryptedVault, claim.CatalogRevision);
         if (claim.NextCiphertextSha256 != CiphertextSha256(transfer.EncryptedVault))
             throw new CryptographicException("Übertragene verschlüsselte Datei stimmt nicht mit ihrer Signatur überein.");
         return claim;
@@ -125,11 +125,19 @@ public static class KeyLibrarySyncTransport
     /// directory, but never calls KeyLibraryVault.Unprotect.
     /// </summary>
     private static void ValidateEnvelope(GroupEnrollmentPackage enrolled,
-        VerifiedGroupPolicy signedPolicy, string groupId, byte[] encrypted)
+        VerifiedGroupPolicy signedPolicy, string groupId, byte[] encrypted, long catalogRevision)
     {
+        if (signedPolicy.Policy.CustomerScopesEnabled)
+        {
+            var signed = KeyLibrarySyncWire.Read<SignedScopedKeyLibraryBundle>(encrypted, GroupVaultService.MaximumBytes);
+            var bundle = ScopedKeyLibraryVault.Verify(signed, enrolled, groupId);
+            if (bundle.CatalogRevision != catalogRevision)
+                throw new CryptographicException("Signierte Kundenbibliothek hat eine abweichende Katalogrevision.");
+            return;
+        }
         var document = GroupVaultService.Read(encrypted);
         var header = document.Header;
-        if (signedPolicy.Policy.Version != 2 || signedPolicy.Policy.CustomerScopesEnabled ||
+        if (signedPolicy.Policy.Version != 2 ||
             header.Format != GroupVaultService.KeyLibraryFormat ||
             header.LibraryId != enrolled.LibraryId ||
             header.ProjectId != enrolled.LibraryId ||
