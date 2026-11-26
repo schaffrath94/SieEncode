@@ -234,12 +234,55 @@ internal static class ScopedKeyLibraryVaultTests
                 trust.LoadOffline().Checkpoint != trustBefore || central.ReadHead() != centralBefore)
                 throw new Exception("Recovery reused an output or modified operational state.");
 
+            // Disaster inventory uses complete authenticated sources, not
+            // central revision numbers or the union of partial projections.
+            var branchPath = Path.Combine(directory, "competing-offline.json");
+            var competing = KeyLibraryEditing.AddVersion(nextPayload, keyA.KeyId, new string('D', 32)).Next;
+            competing = competing with { Catalog = competing.Catalog with
+            {
+                Keys = competing.Catalog.Keys.Select(k => k.KeyId == keyB.KeyId
+                    ? k with { Status = KeyLibraryContracts.Compromised } : k).ToArray()
+            } };
+            File.WriteAllBytes(branchPath, KeyLibrarySyncWire.Write(
+                ScopedKeyLibraryVault.Protect(competing, enrolled, authority, "keys", now)));
+            var idCentral = Guid.NewGuid(); var idHistory = Guid.NewGuid(); var idBranch = Guid.NewGuid();
+            KeyLibraryDisasterSource[] candidates =
+            [
+                new(idCentral, localPath, enrolled, verified.Checkpoint),
+                new(idHistory, isolated.EncryptedVaultPath, enrolled, verified.Checkpoint),
+                new(idBranch, branchPath, enrolled, verified.Checkpoint)
+            ];
+            var inventory = KeyLibraryDisasterAnalysis.Analyze(trust, "keys", fullCert, false, now, candidates, head2);
+            var baselineComparison = inventory.Comparisons.Single(c => c.LeftSourceId == idCentral && c.RightSourceId == idHistory);
+            var forkComparison = inventory.Comparisons.Single(c => c.LeftSourceId == idHistory && c.RightSourceId == idBranch);
+            if (inventory.Sources[0].CentralRelation != KeyLibraryDisasterCentralRelation.ExactKnownCiphertext ||
+                inventory.Sources[1].CentralRelation != KeyLibraryDisasterCentralRelation.NewerCatalogUnconfirmed ||
+                baselineComparison.VersionsOnlyRight != 1 || !baselineComparison.RightPreservesLeftHistory ||
+                baselineComparison.LeftPreservesRightHistory || forkComparison.SecretValueConflicts != 1 ||
+                forkComparison.StatusDifferences != 1 || forkComparison.SameLogicalCatalog ||
+                forkComparison.LeftPreservesRightHistory || forkComparison.RightPreservesLeftHistory)
+                throw new Exception("Disaster inventory incorrectly treated diverging branches as compatible.");
+            Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.Analyze(trust, "keys",
+                limitedCert, false, now, candidates, head2));
+            Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.Analyze(trust, "keys",
+                fullCert, false, now, [candidates[0] with { ConfirmedPolicy = verified.Checkpoint with { Revision = 2 } }]));
+            var recoveryInventory = KeyLibraryDisasterAnalysis.Analyze(trust, "keys", recoveryCert,
+                true, now, candidates);
+            if (recoveryInventory.Comparisons.Length != 3 ||
+                recoveryInventory.Sources.Any(s => s.CentralRelation != KeyLibraryDisasterCentralRelation.Unknown) ||
+                ConcurrentFileWriter.Capture(localPath) != file2 || central.ReadHead() != centralBefore)
+                throw new Exception("Read-only disaster inventory changed operational data.");
+
             var next = Enrollment(policy with { Revision = 2, People = [fullPerson, limited with { KeyLibraryCustomers = [customerB] }, none] });
             var rotated = ScopedKeyLibraryVault.Protect(payload, next, authority, "keys", now);
             trust.AcceptPackageUpdate(next, verified.Checkpoint);
             Reject<CryptographicException>(() => ScopedKeyLibraryVault.Open(signed, trust, "keys", limitedCert, now));
             if (ScopedKeyLibraryVault.Open(rotated, trust, "keys", limitedCert, now).Secrets.Single().Key.KeyId != keyB.KeyId)
                 throw new Exception("Customer scope rotation failed.");
+            var historicalInventory = KeyLibraryDisasterAnalysis.Analyze(trust, "keys",
+                recoveryCert, true, now, candidates, head2);
+            if (historicalInventory.Sources.Any(s => s.CurrentPolicy))
+                throw new Exception("Historical policy was classified as current.");
             // An archived policy can still be verified offline, but that does
             // not enroll or roll back the operational trust checkpoint.
             var oldRecovery = KeyLibraryBackupService.RestoreIsolated(historyBackup, historyReference,
