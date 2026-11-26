@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 
 namespace RFiDGear.Builder.Core;
 
@@ -45,7 +46,7 @@ public static class ScopedKeyLibraryVault
             var keys = entries[customer.CustomerId].ToArray();
             var payload = new KeyLibraryVaultPayload(new(policy.LibraryId, full.Catalog.Revision, keys)
                 { Customers = [customer] }, keys.Select(k => secrets[new(k.KeyId, k.Version)]).ToArray());
-            var document = GroupVaultService.Protect(System.Text.Encoding.UTF8.GetString(KeyLibrarySyncWire.Write(payload)), verified,
+            var document = GroupVaultService.Protect(JsonSerializer.Serialize(payload), verified,
                 customer.CustomerId, groupId, now, GroupVaultPurpose.CustomerKeyLibrary);
             blocks.Add(new(customer.CustomerId, document));
         }
@@ -114,8 +115,10 @@ public static class ScopedKeyLibraryVault
             if (!recovery && !OfflineGroupDirectory.CanDecryptCustomer(policy, person!, block.CustomerId)) continue;
             var json = GroupVaultService.Unprotect(block.Vault, verified, block.CustomerId, groupId,
                 [identity], recovery, GroupVaultPurpose.CustomerKeyLibrary);
-            var payload = KeyLibrarySyncWire.Read<KeyLibraryVaultPayload>(
-                System.Text.Encoding.UTF8.GetBytes(json), MaximumBytes);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            KeyLibraryVaultPayload payload;
+            try { payload = KeyLibrarySyncWire.Read<KeyLibraryVaultPayload>(bytes, MaximumBytes); }
+            finally { CryptographicOperations.ZeroMemory(bytes); }
             KeyLibraryVault.Validate(payload);
             if (payload.Catalog.LibraryId != bundle.LibraryId || payload.Catalog.Revision != bundle.CatalogRevision ||
                 payload.Catalog.Customers.Length != 1 || payload.Catalog.Customers[0].CustomerId != block.CustomerId ||
@@ -145,6 +148,10 @@ public static class ScopedKeyLibraryVault
             bundle.Policy != verified.Checkpoint || bundle.CatalogRevision < 1 ||
             bundle.Customers is null || bundle.Customers.Length > MaximumCustomers)
             throw new CryptographicException("Kundenbibliothek passt nicht zur bestätigten Richtlinie.");
+        if (!policy.People.Any(p => p.Enabled && p.AllKeyLibraryCustomers &&
+            group.Members.Contains(p.Id, StringComparer.Ordinal) && p.Devices.Any(d => d.Enabled)) ||
+            !policy.RecoveryDevices.Any(d => d.Enabled))
+            throw new CryptographicException("Vollständiger persönlicher Zugang und Recovery müssen erhalten bleiben.");
         var ids = new HashSet<Guid>();
         var generations = new HashSet<Guid>();
         var recovery = policy.RecoveryDevices.Where(d => d.Enabled).Select(d => d.Fingerprint).ToHashSet(StringComparer.Ordinal);
