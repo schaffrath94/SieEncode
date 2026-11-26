@@ -141,17 +141,15 @@ public static class KeyLibraryVaultStore
 
     public static FileRevision Create(string path, KeyLibraryVaultPayload payload,
         OfflineGroupTrustStore trust, string groupId, IEnumerable<X509Certificate2> identities,
-        DateTimeOffset now, SignedKeyLibraryMutation authorization)
+        DateTimeOffset now, SignedKeyLibraryMutation authorization,
+        OfflineGroupAdministrationStore? administration = null)
     {
         ArgumentNullException.ThrowIfNull(trust);
         var current = trust.LoadOffline();
         KeyLibraryVault.Validate(payload);
         KeyLibraryMutationAuthorization.Verify(authorization, trust, "create",
             payload.Catalog.LibraryId, groupId, FileRevision.Missing, payload, current.Checkpoint);
-        var document = KeyLibraryVault.Protect(payload, current, groupId, now);
-        var identitiesArray = identities.ToArray();
-        _ = KeyLibraryVault.Unprotect(document, current, groupId, identitiesArray);
-        var bytes = GroupVaultService.Write(document);
+        var bytes = Seal(payload, trust, groupId, identities.ToArray(), now, administration);
         return Write(path, FileRevision.Missing, bytes, () =>
         {
             if (trust.LoadOffline().Checkpoint != current.Checkpoint)
@@ -160,16 +158,60 @@ public static class KeyLibraryVaultStore
     }
 
     public static KeyLibraryVaultPayload Load(string path, OfflineGroupTrustStore trust, string groupId,
-        IEnumerable<X509Certificate2> identities, bool recovery = false)
+        IEnumerable<X509Certificate2> identities, bool recovery = false, bool requireFull = false)
     {
         ArgumentNullException.ThrowIfNull(trust);
-        var document = ReadDocument(path);
-        return KeyLibraryVault.Unprotect(document, trust.LoadOffline(), groupId, identities, recovery);
+        return OpenEncrypted(ReadBytes(path), trust, groupId, identities, recovery, requireFull);
+    }
+
+    public static KeyLibraryVaultPayload OpenEncrypted(byte[] bytes, OfflineGroupTrustStore trust,
+        string groupId, IEnumerable<X509Certificate2> identities, bool recovery = false, bool requireFull = false)
+    {
+        var policy = trust.LoadOffline();
+        if (!policy.Policy.CustomerScopesEnabled)
+            return KeyLibraryVault.Unprotect(GroupVaultService.Read(bytes), policy, groupId, identities, recovery);
+        var signed = KeyLibrarySyncWire.Read<SignedScopedKeyLibraryBundle>(bytes, GroupVaultService.MaximumBytes);
+        // Select one identity, never merge permissions across people.
+        var candidates = identities.ToArray();
+        foreach (var identity in candidates)
+        {
+            if (!recovery)
+            {
+                KeyLibraryDisclosureAccess access;
+                try { access = KeyLibraryDisclosure.RequireMember(policy, groupId, identity, DateTimeOffset.UtcNow); }
+                catch (CryptographicException) { continue; }
+                if (requireFull && !policy.Policy.People.Single(p => p.Id == access.PersonId).AllKeyLibraryCustomers)
+                    continue;
+            }
+            else if (!policy.Policy.RecoveryDevices.Any(d => d.Enabled &&
+                d.Fingerprint == CertificateVaultService.Fingerprint(identity))) continue;
+            return ScopedKeyLibraryVault.Open(signed, trust, groupId, identity, DateTimeOffset.UtcNow,
+                requireFull, recovery);
+        }
+        throw new CryptographicException("Kein persönlicher Zugang für den geforderten Kundenumfang.");
+    }
+
+    private static byte[] Seal(KeyLibraryVaultPayload payload, OfflineGroupTrustStore trust,
+        string groupId, X509Certificate2[] identities, DateTimeOffset now,
+        OfflineGroupAdministrationStore? administration)
+    {
+        var policy = trust.LoadOffline();
+        var bytes = policy.Policy.CustomerScopesEnabled
+            ? (administration ?? throw new CryptographicException("Kundenbibliothek benötigt die Hauptverwaltung."))
+                .ProtectScopedCatalog(trust, groupId, payload, now)
+            : GroupVaultService.Write(KeyLibraryVault.Protect(payload, policy, groupId, now));
+        var opened = OpenEncrypted(bytes, trust, groupId, identities, requireFull: true);
+        if (!KeyLibraryAutomaticSync.LogicallyEquivalent(payload, opened))
+            throw new CryptographicException("Gespeicherte Bibliothek stimmt nicht mit dem vollständigen Entwurf überein.");
+        if (trust.LoadOffline().Checkpoint != policy.Checkpoint)
+            throw new CryptographicException("Richtlinie während der Erstellung geändert.");
+        return bytes;
     }
 
     public static FileRevision Update(string path, KeyLibraryVaultPayload next, OfflineGroupTrustStore trust,
         string groupId, IEnumerable<X509Certificate2> identities, FileRevision expected,
-        DateTimeOffset now, SignedKeyLibraryMutation authorization)
+        DateTimeOffset now, SignedKeyLibraryMutation authorization,
+        OfflineGroupAdministrationStore? administration = null)
     {
         ArgumentNullException.ThrowIfNull(trust);
         ArgumentNullException.ThrowIfNull(expected);
@@ -177,13 +219,13 @@ public static class KeyLibraryVaultStore
             throw new ConcurrentFileChangeException(Path.GetFullPath(path));
 
         var current = trust.LoadOffline();
-        var previousDocument = ReadDocument(path);
-        // A changed signed group policy needs a separate, explicit recipient
-        // reconciliation, never an implicit rewrap during routine data updates.
-        if (previousDocument.Header.Policy != current.Checkpoint)
+        var previousBytes = ReadBytes(path);
+        // A changed signed group policy requires explicit recipient reconciliation.
+        if (!current.Policy.CustomerScopesEnabled &&
+            GroupVaultService.Read(previousBytes).Header.Policy != current.Checkpoint)
             throw new CryptographicException("Gruppenempfänger haben sich geändert. Bibliotheks-Vault erst kontrolliert abgleichen.");
         var identitiesArray = identities.ToArray();
-        var previous = KeyLibraryVault.Unprotect(previousDocument, current, groupId, identitiesArray);
+        var previous = OpenEncrypted(previousBytes, trust, groupId, identitiesArray, requireFull: true);
         KeyLibraryVault.Validate(next);
         if (next.Catalog.LibraryId != previous.Catalog.LibraryId ||
             previous.Catalog.Revision == long.MaxValue ||
@@ -193,9 +235,7 @@ public static class KeyLibraryVaultStore
         KeyLibraryMutationAuthorization.Verify(authorization, trust, "update",
             next.Catalog.LibraryId, groupId, expected, next, current.Checkpoint);
 
-        var document = KeyLibraryVault.Protect(next, current, groupId, now);
-        _ = KeyLibraryVault.Unprotect(document, current, groupId, identitiesArray);
-        var bytes = GroupVaultService.Write(document);
+        var bytes = Seal(next, trust, groupId, identitiesArray, now, administration);
         return Write(path, expected, bytes, () =>
         {
             if (trust.LoadOffline().Checkpoint != current.Checkpoint)
@@ -230,7 +270,7 @@ public static class KeyLibraryVaultStore
         }
     }
 
-    private static GroupVaultDocument ReadDocument(string path)
+    internal static byte[] ReadBytes(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         using var stream = new FileStream(Path.GetFullPath(path), FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -238,7 +278,7 @@ public static class KeyLibraryVaultStore
             throw new InvalidDataException("Bibliotheks-Vault ist leer oder zu groß.");
         var bytes = new byte[(int)stream.Length];
         stream.ReadExactly(bytes);
-        return GroupVaultService.Read(bytes);
+        return bytes;
     }
 
     private static FileRevision Write(string path, FileRevision expected, byte[] bytes, Action checkPolicy)
