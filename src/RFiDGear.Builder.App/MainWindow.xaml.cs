@@ -644,7 +644,8 @@ public partial class MainWindow : Window
             StationProjectPath.Text = stationEntry.ProjectDirectory;
             StationProjectInfo.Text = $"{profilesCount} Profil(e) · {payloadCount} Payload(s) · {Path.GetFileName(sessionDefinition.CodingProjectPath)}" +
                 (stationEntry.SecureOnDemand ? " · geschützte lokale Sitzung" : entry.ArtifactOnly ? " · nur gebautes Projekt" : entry.HasVault ? " · Neubau mit Vault möglich" : " · vorhandener Build nutzbar, Neubau ohne Vault gesperrt") +
-                (stationEntry.HasRecognition ? " · Transponder-Erkennung verfügbar" : " · Altbuild ohne Transponder-Erkennung");
+                (stationEntry.HasRecognition ? " · Transponder-Erkennung verfügbar" : " · Altbuild ohne Transponder-Erkennung") +
+                (libraryStationBasis is { } basis ? $" · Bibliotheksrevision {basis.Library.CatalogRevision} · Gruppenstand {basis.Library.Policy.Revision}" : "");
             StationRecognitionButton.Visibility = stationEntry.HasRecognition ? Visibility.Visible : Visibility.Collapsed;
             StationLegacyTransportButton.Visibility = stationEntry.HasRecognition ? Visibility.Collapsed : Visibility.Visible;
             StationOpenRecognitionResultButton.Visibility = stationEntry.HasRecognition ? Visibility.Visible : Visibility.Collapsed;
@@ -702,8 +703,34 @@ public partial class MainWindow : Window
         projectSecretServer = null;
         secureOperationalSession?.Dispose();
         secureOperationalSession = null;
-        if (!entry.SecureOnDemand) return entry;
+        libraryStationBasis = null;
+        if (entry.ArtifactOnly) return entry;
         var source = ProjectJson.Load(entry.SourcePath);
+        if (source.Project.KeyLibrary is { } binding)
+        {
+            using var lease = CentralGroupPolicyWorkflow.Acquire(binding.LibraryId);
+            var profiles = LoadProfileLibrary();
+            var resolved = ResolveLibraryProject(entry.SourcePath, profiles, binding.LibraryId);
+            var libraryShells = TaskShellLibrary.Load(Path.Combine(AppContext.BaseDirectory, "assets", "task-shells"));
+            secureOperationalSession = new SecureOperationalSessionService().Materialize(
+                resolved.Hydrated, profiles, libraryShells, entry.SourcePath, Version);
+            if (ConcurrentFileWriter.Capture(resolved.Basis.SourcePath) != resolved.Basis.SourceFile ||
+                ConcurrentFileWriter.Capture(resolved.Basis.VaultPath) != resolved.Basis.Library.VaultFile ||
+                ProjectLibraryTrust(binding.LibraryId).LoadOffline().Checkpoint != resolved.Basis.Library.Policy)
+                throw new InvalidOperationException("Projekt oder Bibliothek wurde während der Sitzungsbereitstellung geändert.");
+            projectSecretServer = ProjectSecretPipeServer.Start(secureOperationalSession.Build.SessionSecrets);
+            libraryStationBasis = resolved.Basis;
+            return entry with
+            {
+                ProjectDirectory = secureOperationalSession.ProjectDirectory,
+                HasLibraryBinding = true,
+                HasVault = false, VaultVersion = 0,
+                HasOperationalBuild = true, HasRecognition = true
+            };
+        }
+        if (entry.HasLibraryBinding)
+            throw new InvalidOperationException("Bibliotheksbindung wurde geändert. Projektliste neu laden.");
+        if (!entry.SecureOnDemand) return entry;
         var passphraseVault = entry.VaultVersion == KeyVaultService.CurrentVersion &&
             source.Project.GroupVault is null && !ProjectGroupVault.IsGroupVaultFile(ProjectKeyVault.GetPath(entry.SourcePath));
         var identities = passphraseVault ? [] : loadEditorVaultIdentities();
@@ -1055,6 +1082,9 @@ public partial class MainWindow : Window
             }
 
             if (selectedProject is null) throw new InvalidOperationException("Kein Projekt geladen.");
+            using var libraryLease = RequireCurrentLibraryStation();
+            if (libraryStationBasis is not null && operation.Destructive)
+                throw new InvalidOperationException("Schreibende Betriebsaktion für Bibliotheksprojekte noch gesperrt: unabhängige Bibliotheks-Backup-/Recovery-Abnahme fehlt.");
             operationWorkspaceDirectory = selectedProject.ProjectDirectory;
             if (TryCardPreflightMode(operation.Kind, out var probeMode)) cardPreflightService.Prepare(selectedProject.ProjectDirectory, probeMode);
             operationCapabilities ??= new RFiDGearCapabilityInspector().Inspect(settings.RFiDGear.ExecutablePath);
@@ -1639,6 +1669,7 @@ public partial class MainWindow : Window
     private ProjectPreflightReport RunSelectedPreflight()
     {
         if (selectedProject is null) throw new InvalidOperationException("Kein Projekt ausgewählt.");
+        using var libraryLease = RequireCurrentLibraryStation();
         if (secureOperationalSession is not null && selectedProject.SecureOnDemand &&
             string.Equals(Path.GetFullPath(selectedProject.ProjectDirectory), Path.GetFullPath(secureOperationalSession.ProjectDirectory), StringComparison.OrdinalIgnoreCase))
             return secureOperationalSession.Build.Preflight;
@@ -1787,6 +1818,7 @@ public partial class MainWindow : Window
                 if (!reader.IsConfigured)
                     throw new InvalidOperationException("Serienmodus kann nicht gestartet werden: " + (reader.Error ?? "In RFiDGear ist kein Reader-Provider ausgewählt."));
             }
+            using var libraryLease = RequireCurrentLibraryStation();
             sessionService.EnsurePreparedPayloads(preparedSession);
             pendingHostRun = hostContractService.Begin(sessionDefinition.ProjectDirectory, sessionDefinition.CodingProjectPath,
                 sessionDefinition.ProjectName, autoMode ? RFiDGearHostModeV1.Automode : RFiDGearHostModeV1.Open,
