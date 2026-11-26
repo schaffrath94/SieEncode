@@ -198,17 +198,17 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
             var nextPolicy = KeyLibraryPolicyTransition.VerifyNextPolicy(previous, next, expected);
             // The same retained member must be able to open both epochs.
             // Recovery is deliberately not an implicit fallback.
-            var oldDocument = GroupVaultService.Read(prior.EncryptedVault);
-            var payload = KeyLibraryVault.Unprotect(oldDocument, oldPolicy,
-                expected.GroupId, [retainedIdentity]);
+            var payload = KeyLibraryPolicyTransition.OpenEpoch(prior.EncryptedVault,
+                previous, expected.GroupId, retainedIdentity, now, requireFull: true);
             if (payload.Catalog.Revision != expected.CatalogRevision)
                 throw new CryptographicException("Entschlüsselter Katalog passt nicht zur zentralen Katalogrevision.");
-            var newDocument = KeyLibraryVault.Protect(payload, nextPolicy, expected.GroupId, now);
-            var verified = KeyLibraryVault.Unprotect(newDocument, nextPolicy,
-                expected.GroupId, [retainedIdentity]);
+            var encrypted = nextPolicy.Policy.CustomerScopesEnabled
+                ? KeyLibrarySyncWire.Write(ScopedKeyLibraryVault.Protect(payload, next, administrator, expected.GroupId, now))
+                : GroupVaultService.Write(KeyLibraryVault.Protect(payload, nextPolicy, expected.GroupId, now));
+            var verified = KeyLibraryPolicyTransition.OpenEpoch(encrypted, next,
+                expected.GroupId, retainedIdentity, now, requireFull: true);
             if (!KeyLibraryAutomaticSync.LogicallyEquivalent(payload, verified))
                 throw new CryptographicException("Neu verschlüsselter Katalog ist nicht inhaltsgleich.");
-            var encrypted = GroupVaultService.Write(newDocument);
             var claim = KeyLibrarySyncTransport.Prepare(next, expected.GroupId,
                 expected.CentralRevision, expected.CiphertextSha256,
                 expected.CatalogRevision, encrypted);
