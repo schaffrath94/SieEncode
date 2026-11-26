@@ -346,6 +346,78 @@ internal static class KeyLibraryPolicyTransitionTests
                 OfflineGroupDelegationService.Format, 1, id, "delegate", revoked.Checkpoint,
                 [new("keys", "Unauthorized rename", ["retained", "added"])]), delegateKey);
             Reject<CryptographicException>(() => OfflineGroupDelegationService.Apply(freshRequest, revoked));
+            // Migrate the exact existing library to customer scopes; a
+            // retained ordinary member may lose all customer grants without
+            // losing its TLS identity or requiring a private authority key.
+            var scopedMemberTrust = new OfflineGroupTrustStore(Path.Combine(directory, "scoped-member-trust.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            var beforeScopes = administration.ExportPublic();
+            scopedMemberTrust.Enroll(beforeScopes.AdministratorPublicKey, fingerprint, beforeScopes.Policy);
+            var scopedMemberPath = Path.Combine(directory, "scoped-member-vault.json");
+            var scopedMemberFile = KeyLibrarySyncClient.InstallDownloadedSnapshot(scopedMemberPath,
+                scopedMemberTrust, "keys", liveHead, liveTransfer, [added], FileRevision.Missing);
+            var scopedMemberCursor = new CentralKeyLibraryCursorStore(Path.Combine(directory, "scoped-member-cursor.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            scopedMemberCursor.RememberReconciled(liveHead, scopedMemberFile);
+            var memberJournalPath2 = Path.Combine(directory, "scoped-member-transition.bin");
+            var memberProtection2 = new OfflineGroupTrustTests.TestProtection();
+            var scopedMemberJournal = new KeyLibraryPolicyTransitionJournal(memberJournalPath2, id,
+                scopedMemberPath, memberProtection2);
+            var migrationBase = liveHead;
+            var scopeDraft = revoked.Policy with
+            {
+                Revision = checked(revoked.Policy.Revision + 1),
+                CustomerScopesEnabled = true,
+                People = revoked.Policy.People.Select(p => p.Id == member.Id
+                    ? p with { AllKeyLibraryCustomers = true }
+                    : p with { AllKeyLibraryCustomers = false, KeyLibraryCustomers = [] }).ToArray()
+            };
+            Reject<CryptographicException>(() => administration.PrepareKeyLibraryPolicyTransition(
+                trust, liveHead, liveTransfer, added, now, true, scopeDraft));
+            ApplySpecial(scopeDraft);
+            var scopedPolicy = trust.LoadOffline();
+            var scopedEnrollment = administration.ExportPublic();
+            var scopedBundle = ScopedKeyLibraryVault.Verify(
+                KeyLibrarySyncWire.Read<SignedScopedKeyLibraryBundle>(liveTransfer.EncryptedVault, GroupVaultService.MaximumBytes),
+                scopedEnrollment, "keys");
+            if (scopedBundle.Customers.Any(c => c.Vault.Header.Recipients.Any(r =>
+                    r.Fingerprint == CertificateVaultService.Fingerprint(added))) ||
+                KeyLibraryVaultStore.Load(localPath, trust, "keys", [retained], requireFull: true).Secrets.Single() != payload.Secrets.Single())
+                throw new Exception("Migration did not preserve full history and remove unauthorized key wraps.");
+            var scopeSnapshot = restarted.ReadAuthorizedSnapshot(
+                KeyLibraryDownloadAuthorization.Sign(liveHead, added, now), added, now);
+            scopedMemberJournal.StageReceived(scopedMemberTrust, scopedMemberCursor,
+                migrationBase, scopeSnapshot, added);
+            var scopedMemberTransport = new LostReplyTransport(restarted, added, now);
+            // Simulate interruption between the trust update and Vault replacement.
+            scopedMemberTrust.AcceptPackageUpdate(scopedEnrollment, migrationBase.Policy);
+            var reopenedScoped = new KeyLibraryPolicyTransitionJournal(memberJournalPath2, id,
+                scopedMemberPath, memberProtection2);
+            if (reopenedScoped.ResumeAsync(scopedMemberTransport, scopedMemberTrust, scopedMemberCursor, added)
+                    .GetAwaiter().GetResult() != liveHead ||
+                scopedMemberTransport.Submissions != 0 || reopenedScoped.HasPending ||
+                KeyLibraryVaultStore.Load(scopedMemberPath, scopedMemberTrust, "keys", [added]).Secrets.Length != 0)
+                throw new Exception("Partial client could not resume migration after loss of its customer grant.");
+            var grantBase = liveHead;
+            var grantDraft = scopedPolicy.Policy with
+            {
+                Revision = checked(scopedPolicy.Policy.Revision + 1),
+                People = scopedPolicy.Policy.People.Select(p => p.Id == addedPerson.Id
+                    ? p with { KeyLibraryCustomers = [customer] } : p).ToArray()
+            };
+            ApplySpecial(grantDraft);
+            var grantSnapshot = restarted.ReadAuthorizedSnapshot(
+                KeyLibraryDownloadAuthorization.Sign(liveHead, added, now), added, now);
+            reopenedScoped.StageReceived(scopedMemberTrust, scopedMemberCursor, grantBase, grantSnapshot, added);
+            if (reopenedScoped.ResumeAsync(scopedMemberTransport, scopedMemberTrust, scopedMemberCursor, added)
+                    .GetAwaiter().GetResult() != liveHead ||
+                scopedMemberTransport.Submissions != 0 ||
+                KeyLibraryVaultStore.Load(scopedMemberPath, scopedMemberTrust, "keys", [added]).Secrets.Single() != payload.Secrets.Single())
+                throw new Exception("New customer grant was not installed as a read-only policy update.");
+            var afterGrant = trust.LoadOffline();
+            Reject<CryptographicException>(() => administration.PrepareKeyLibraryPolicyTransition(
+                trust, liveHead, liveTransfer, retained, now, true, afterGrant.Policy with
+                { Revision = checked(afterGrant.Policy.Revision + 1), CustomerScopesEnabled = false }));
             // Document the unavoidable offline limitation: an already retained
             // historical ciphertext and matching old policy are still usable.
             _ = KeyLibraryVault.Unprotect(GroupVaultService.Read(first.EncryptedVault), oldPolicy, "keys", [removed]);
