@@ -482,9 +482,31 @@ internal sealed class KeyLibraryManagementWindow : Window
             using var transport = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), libraryId,
                 endpoint.ServerCertificateSha256, member);
             var head = await transport.ReadHeadAsync();
-            if (head != basis || !cursorStore.HasUploadBase(basis))
-                throw new InvalidOperationException("Zentrale weicht vom zuletzt abgeglichenen Stand ab. " +
-                    "Diese Mehrplatz-Konfliktart ist noch nicht zur Zusammenführung freigegeben. Keine Daten verändert.");
+            cursorStore.RequireNotRolledBack(head);
+            if (head.LibraryId != basis.LibraryId || head.Policy != basis.Policy || head.GroupId != group ||
+                head.CentralRevision < basis.CentralRevision || head.CatalogRevision < basis.CatalogRevision ||
+                head.CentralRevision == basis.CentralRevision && head != basis ||
+                head.CentralRevision > basis.CentralRevision && head.CatalogRevision <= basis.CatalogRevision)
+                throw new CryptographicException("Zentralstand ist nicht mit der gespeicherten gemeinsamen Basis vereinbar.");
+            var historicalBase = head == basis ? null : basis;
+            string? historicalPath = null;
+            if (historicalBase is not null)
+            {
+                if (MessageBox.Show(this, $"Die Zentrale wurde seit dem letzten Abgleich weiterentwickelt.\n" +
+                    $"Gemeinsame Basis: Katalog {basis.CatalogRevision}, Serverrevision {basis.CentralRevision}\n" +
+                    $"Aktuelle Zentrale: Katalog {head.CatalogRevision}, Serverrevision {head.CentralRevision}\n\n" +
+                    "Für eine sichere Zusammenführung wird die exakt passende verschlüsselte Kopie der gemeinsamen Basis benötigt. " +
+                    "Ohne diese Datei bleiben alle Bestände unverändert.",
+                    Title, MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel) != MessageBoxResult.OK) return;
+                var old = new OpenFileDialog { Title = "Verschlüsselte Kopie der gemeinsamen Basis auswählen",
+                    Filter = "Verschlüsselte Bibliothek (*.json)|*.json", CheckFileExists = true };
+                if (old.ShowDialog(this) != true) return;
+                historicalPath = Path.GetFullPath(old.FileName);
+                if (ConcurrentFileWriter.Capture(historicalPath).Sha256 != basis.CiphertextSha256)
+                    throw new CryptographicException("Ausgewählte Basisdatei entspricht nicht dem gespeicherten Abgleichhash.");
+            }
+            else if (!cursorStore.HasUploadBase(basis))
+                throw new InvalidOperationException("Gemeinsamer Abgleichstand fehlt.");
             var extra = MessageBox.Show(this, "Weitere verschlüsselte Offline-Bibliotheken hinzufügen?\n" +
                 "Ja: Dateien wählen. Nein: nur Zentralstand und lokalen Bestand vergleichen.",
                 Title, MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel);
@@ -496,8 +518,10 @@ internal sealed class KeyLibraryManagementWindow : Window
                     Filter = "Verschlüsselte Bibliothek (*.json)|*.json", Multiselect = true, CheckFileExists = true };
                 if (open.ShowDialog(this) != true) return;
                 paths = open.FileNames.Select(Path.GetFullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-                if (paths.Length > 6 || paths.Any(path => string.Equals(path, localPath, StringComparison.OrdinalIgnoreCase)))
-                    throw new InvalidDataException("Maximal sechs weitere, vom aktiven Vault verschiedene Dateien auswählen.");
+                if (paths.Length > (historicalBase is null ? 6 : 5) ||
+                    paths.Any(path => string.Equals(path, localPath, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(path, historicalPath, StringComparison.OrdinalIgnoreCase)))
+                    throw new InvalidDataException("Maximal acht Gesamtquellen; keine doppelte lokale oder historische Basisdatei auswählen.");
             }
             var transfer = await transport.DownloadAsync(KeyLibraryDownloadAuthorization.Sign(head, member, DateTimeOffset.UtcNow));
             var claim = KeyLibrarySyncTransport.Verify(transfer, enrollment);
@@ -514,14 +538,20 @@ internal sealed class KeyLibraryManagementWindow : Window
                 file.Write(transfer.EncryptedVault);
                 file.Flush(true);
             }
-            var baseId = Guid.NewGuid();
+            var centralId = Guid.NewGuid();
+            var baseId = historicalBase is null ? centralId : Guid.NewGuid();
             var localId = Guid.NewGuid();
             var sources = new List<KeyLibraryDisasterSource>
             {
-                new(baseId, basePath, enrollment, policy.Checkpoint),
+                new(centralId, basePath, enrollment, policy.Checkpoint),
                 new(localId, localPath, enrollment, policy.Checkpoint)
             };
-            var names = new Dictionary<Guid, string> { [baseId] = "Zentralstand", [localId] = "Lokaler Bestand" };
+            var names = new Dictionary<Guid, string> { [centralId] = "Aktueller Zentralstand", [localId] = "Lokaler Bestand" };
+            if (historicalBase is not null)
+            {
+                sources.Add(new(baseId, historicalPath!, enrollment, policy.Checkpoint));
+                names.Add(baseId, "Gemeinsame historische Basis");
+            }
             foreach (var path in paths)
             {
                 var id = Guid.NewGuid();
@@ -529,11 +559,11 @@ internal sealed class KeyLibraryManagementWindow : Window
                 sources.Add(new(id, path, enrollment, policy.Checkpoint));
             }
             var review = KeyLibraryDisasterAnalysis.ReviewMerge(trust, administration, group, member,
-                DateTimeOffset.UtcNow, sources, head, baseId);
+                DateTimeOffset.UtcNow, sources, head, baseId, historicalBase);
             var dialog = new KeyLibraryMergeReviewWindow(this, review, names);
             if (dialog.ShowDialog() != true) return;
             var resolved = KeyLibraryDisasterAnalysis.PreviewMerge(trust, group, member, false,
-                DateTimeOffset.UtcNow, sources, head, baseId, dialog.Decisions);
+                DateTimeOffset.UtcNow, sources, head, baseId, dialog.Decisions, historicalBase);
             if (!resolved.Inventory.Sources.SequenceEqual(review.Preview.Inventory.Sources))
                 throw new ConcurrentFileChangeException("Quellbestände der Zusammenführung");
             if (!resolved.CanPrepareCandidate)
@@ -552,7 +582,7 @@ internal sealed class KeyLibraryManagementWindow : Window
             if (endpointStore.Load() != endpoint || await transport.ReadHeadAsync() != head)
                 throw new ConcurrentFileChangeException("Zentralstand der Zusammenführung");
             CentralGroupPolicyWorkflow.StageMergeUnderLease(libraryId, trust, administration, member,
-                sources, head, baseId, resolved.ApprovalSha256(head), true, resolved.Decisions);
+                sources, head, baseId, resolved.ApprovalSha256(head), true, resolved.Decisions, historicalBase);
             staged = true;
             centralStatus.Text = "Zusammenführung vorbereitet. Zentraler Abgleich ausstehend.";
         }

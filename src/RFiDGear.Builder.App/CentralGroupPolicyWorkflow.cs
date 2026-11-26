@@ -77,13 +77,14 @@ internal static class CentralGroupPolicyWorkflow
     internal static void StageMergeUnderLease(Guid id, OfflineGroupTrustStore trust,
         OfflineGroupAdministrationStore administration, X509Certificate2 member,
         IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead expected,
-        Guid baseSourceId, string previewHash, bool confirmed, IEnumerable<KeyLibraryMergeDecision>? decisions = null)
+        Guid baseSourceId, string previewHash, bool confirmed, IEnumerable<KeyLibraryMergeDecision>? decisions = null,
+        CentralKeyLibraryHead? historicalBase = null)
     {
         RequireNoPending(id);
         var endpoint = Endpoint(id) ?? throw new InvalidOperationException("Bestätigte Zentralverbindung fehlt.");
         MergeJournal(id, expected.GroupId).Stage(trust, administration, Cursor(id),
             Journal(id, expected.GroupId), expected.GroupId, member, DateTimeOffset.UtcNow,
-            sources, expected, baseSourceId, previewHash, confirmed, endpoint, decisions);
+            sources, expected, baseSourceId, previewHash, confirmed, endpoint, decisions, historicalBase);
     }
 
     internal static async Task<CentralKeyLibraryHead> ResumeMergeUnderLeaseAsync(Guid id, string group,

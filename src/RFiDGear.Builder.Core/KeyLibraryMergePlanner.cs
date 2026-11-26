@@ -23,6 +23,8 @@ public sealed record KeyLibraryMergePreview(KeyLibraryDisasterReport Inventory, 
     long? ProposedRevision)
 {
     public KeyLibraryMergeDecision[] Decisions { get; init; } = [];
+    // Null means the common base is the exact current CAS head.
+    public CentralKeyLibraryHead? HistoricalBase { get; init; }
 
     public bool CanPrepareCandidate => Issues.Length == 0 && ProposedRevision.HasValue;
 

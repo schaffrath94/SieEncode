@@ -462,6 +462,55 @@ internal static class ScopedKeyLibraryVaultTests
                 central.ReadHead() != head2 || ConcurrentFileWriter.Capture(localPath) != file2)
                 throw new Exception("Restarted merge did not reconcile exactly once.");
 
+            // Actual multi-workstation conflict: the server has advanced,
+            // but another local branch still uses the exact old shared base.
+            var multiLocal = Path.Combine(directory, "multi-local.json");
+            var multiPayload = KeyLibraryEditing.AddCustomer(nextPayload, "Synthetic independent customer").Next;
+            File.WriteAllBytes(multiLocal, KeyLibrarySyncWire.Write(
+                ScopedKeyLibraryVault.Protect(multiPayload, enrolled, authority, "keys", now)));
+            var multiLocalId = Guid.NewGuid();
+            var multiRemoteId = Guid.NewGuid();
+            KeyLibraryDisasterSource[] multiSources =
+            [
+                candidates[0],
+                new(multiRemoteId, mergeLocal, enrolled, verified.Checkpoint),
+                new(multiLocalId, multiLocal, enrolled, verified.Checkpoint)
+            ];
+            var multiCursor = new CentralKeyLibraryCursorStore(Path.Combine(directory, "multi-cursor.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            multiCursor.RememberReconciled(head2, file2);
+            multiCursor.Remember(mergedHead); // ordinary sync saw the conflict
+            Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys",
+                fullCert, false, now, multiSources, mergedHead, idCentral));
+            Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys",
+                fullCert, false, now, multiSources, mergedHead, idCentral,
+                historicalBase: head2 with { CiphertextSha256 = new string('F', 64) }));
+            Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys",
+                fullCert, false, now, [multiSources[0], multiSources[2]], mergedHead, idCentral,
+                historicalBase: head2));
+            var multiPreview = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert, false, now,
+                multiSources, mergedHead, idCentral, historicalBase: head2);
+            if (!multiPreview.CanPrepareCandidate || multiPreview.HistoricalBase != head2 ||
+                multiPreview.AddedCustomers != 1 || multiPreview.AddedKeyVersions != 2 ||
+                multiCursor.ReadReconciledHead() != head2)
+                throw new Exception("Advanced central head was not treated as a distinct branch.");
+            var multiJournal = new KeyLibraryMergeJournal(Path.Combine(directory, "multi-merge.bin"),
+                id, multiLocal, mergeProtection);
+            var multiPolicy = new KeyLibraryPolicyTransitionJournal(Path.Combine(directory, "multi-policy.bin"),
+                id, multiLocal, mergeProtection);
+            multiJournal.Stage(trust, mergeAdministration, multiCursor, multiPolicy, "keys", fullCert, now,
+                multiSources, mergedHead, idCentral, multiPreview.ApprovalSha256(mergedHead), true, historicalBase: head2);
+            var multiTransport = new ReplacementTransport(mergeServer, fullCert) { AllowUpload = true };
+            var multiResult = multiJournal.ResumeAsync(multiTransport, trust, mergeAdministration,
+                multiCursor, multiPolicy, fullCert).GetAwaiter().GetResult();
+            var multiInstalled = KeyLibraryVaultStore.Load(multiLocal, trust, "keys", [fullCert], requireFull: true);
+            if (multiTransport.UploadCount != 1 || multiJournal.HasPending ||
+                multiResult.CentralRevision != mergedHead.CentralRevision + 1 ||
+                multiCursor.ReadReconciledHead() != multiResult || multiInstalled.Secrets.Length != 4 ||
+                !multiInstalled.Catalog.Customers.Any(c => c.Name == "Synthetic independent customer") ||
+                central.ReadHead() != head2 || ConcurrentFileWriter.Capture(localPath) != file2)
+                throw new Exception("Advanced-head merge did not preserve both branches.");
+
             var next = Enrollment(policy with { Revision = 2, People = [fullPerson, limited with { KeyLibraryCustomers = [customerB] }, none] });
             var rotated = ScopedKeyLibraryVault.Protect(payload, next, authority, "keys", now);
             trust.AcceptPackageUpdate(next, verified.Checkpoint);

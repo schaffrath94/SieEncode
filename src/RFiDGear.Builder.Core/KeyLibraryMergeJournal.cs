@@ -30,7 +30,8 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         string groupId, X509Certificate2 fullMember, DateTimeOffset now,
         IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead expected,
         Guid baseSourceId, string approvedPreviewSha256, bool explicitlyApproved,
-        KeyLibrarySyncEndpoint? endpoint = null, IEnumerable<KeyLibraryMergeDecision>? decisions = null)
+        KeyLibrarySyncEndpoint? endpoint = null, IEnumerable<KeyLibraryMergeDecision>? decisions = null,
+        CentralKeyLibraryHead? historicalBase = null)
     {
         if (policyJournal.HasPending) throw new InvalidOperationException("Richtlinienauftrag ist noch offen.");
         var (old, revision) = Read();
@@ -38,13 +39,13 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         var local = ConcurrentFileWriter.Capture(vault);
         if (!local.Exists) throw new FileNotFoundException("Lokale Bibliothek fehlt.", vault);
         var merge = KeyLibraryDisasterAnalysis.PrepareApprovedMerge(trust, administration,
-            groupId, fullMember, now, sources, expected, baseSourceId, approvedPreviewSha256, explicitlyApproved, decisions);
+            groupId, fullMember, now, sources, expected, baseSourceId, approvedPreviewSha256, explicitlyApproved, decisions, historicalBase);
         var root = OfflineGroupTrustStore.AdministratorFingerprint(trust.ExportPublic().AdministratorPublicKey);
         if (endpoint is not null && (endpoint.LibraryId != libraryId || KeyLibrarySyncEndpointStore.Validate(endpoint) != endpoint))
             throw new CryptographicException("Zentralverbindung passt nicht zur Zusammenführung.");
         var pending = new Pending(merge, local, root, CertificateVaultService.Fingerprint(fullMember), endpoint);
         var target = Validate(pending, trust, administration, fullMember);
-        cursor.RequireMergeBase(expected, target, allowCompleted: false);
+        cursor.RequireMergeBase(expected, target, allowCompleted: false, historicalBase: merge.Preview.HistoricalBase);
         RequireLocal(pending, target, trust, fullMember, allowTarget: false);
         if (policyJournal.HasPending) throw new InvalidOperationException("Richtlinienauftrag ist noch offen.");
         Save(new(Format, 1, libraryId, vault, pending, null, merge.PreviewSha256), revision);
@@ -73,13 +74,13 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         }
 
         Check();
-        cursor.RequireMergeBase(expected, target, allowCompleted: true);
+        cursor.RequireMergeBase(expected, target, allowCompleted: true, historicalBase: pending.Merge.Preview.HistoricalBase);
         var local = RequireLocal(pending, target, trust, fullMember, allowTarget: true);
         var remote = await transport.ReadHeadAsync(cancellationToken).ConfigureAwait(false);
         if (remote == expected)
         {
             if (local != pending.Local) throw new CryptographicException("Zentrale ist auf den Ausgangsstand zurückgefallen.");
-            cursor.RequireMergeBase(expected, target, allowCompleted: false);
+            cursor.RequireMergeBase(expected, target, allowCompleted: false, historicalBase: pending.Merge.Preview.HistoricalBase);
             Check();
             RequireLocal(pending, target, trust, fullMember, allowTarget: false);
             cancellationToken.ThrowIfCancellationRequested();
@@ -93,7 +94,7 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         if (remote != target) throw new ConcurrentFileChangeException("Zentrale Zusammenführung");
         cancellationToken.ThrowIfCancellationRequested();
         Check();
-        cursor.RequireMergeBase(expected, target, allowCompleted: true);
+        cursor.RequireMergeBase(expected, target, allowCompleted: true, historicalBase: pending.Merge.Preview.HistoricalBase);
         local = RequireLocal(pending, target, trust, fullMember, allowTarget: true);
         // Remember the accepted head before installing bytes; never permit a
         // later retry against an older remote head after this observation.
@@ -108,7 +109,7 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
         if (RequireLocal(pending, target, trust, fullMember, allowTarget: true) != local ||
             local.Sha256 != target.CiphertextSha256)
             throw new ConcurrentFileChangeException(vault);
-        cursor.RememberMerged(expected, target, local);
+        cursor.RememberMerged(expected, target, local, pending.Merge.Preview.HistoricalBase);
         Save(new(Format, 1, libraryId, vault, null, target, pending.Merge.PreviewSha256), revision);
         return target;
     }
@@ -134,6 +135,18 @@ public sealed class KeyLibraryMergeJournal(string journalPath, Guid libraryId,
             !pending.Local.Exists ||
             !merge.Preview.Inventory.Sources.Any(s => s.CurrentPolicy && s.CiphertextSha256 == pending.Local.Sha256))
             throw new CryptographicException("Zusammenführungsauftrag passt nicht zum bestätigten lokalen Bestand oder zur Verwaltung.");
+        var baseline = merge.Preview.HistoricalBase ?? expected;
+        var baseInventory = merge.Preview.Inventory.Sources.SingleOrDefault(s => s.SourceId == merge.Preview.BaseSourceId);
+        if (baseline.LibraryId != libraryId || baseline.GroupId != expected.GroupId || baseline.Policy != expected.Policy ||
+            baseline.CentralRevision <= 0 || baseline.CatalogRevision <= 0 ||
+            merge.Preview.HistoricalBase is not null && (baseline.CentralRevision >= expected.CentralRevision ||
+                baseline.CatalogRevision >= expected.CatalogRevision) ||
+            baseInventory is null || !baseInventory.CurrentPolicy ||
+            baseInventory.CatalogRevision != baseline.CatalogRevision ||
+            baseInventory.CiphertextSha256 != baseline.CiphertextSha256 ||
+            !merge.Preview.Inventory.Sources.Any(s => s.CurrentPolicy &&
+                s.CatalogRevision == expected.CatalogRevision && s.CiphertextSha256 == expected.CiphertextSha256))
+            throw new CryptographicException("Zusammenführungsauftrag enthält keine exakte gemeinsame Basis und keinen aktuellen Zentralstand.");
         var claim = KeyLibrarySyncTransport.Verify(merge.Transfer, enrolled);
         var next = KeyLibraryVaultStore.OpenEncrypted(merge.Transfer.EncryptedVault, trust,
             expected.GroupId, [identity], requireFull: true);

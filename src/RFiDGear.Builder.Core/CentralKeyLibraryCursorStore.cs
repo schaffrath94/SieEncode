@@ -76,28 +76,38 @@ public sealed class CentralKeyLibraryCursorStore(
     // A merge can start from an explicitly approved local offline branch.
     // The durable reconciled base must still be the exact central ciphertext.
     internal void RequireMergeBase(CentralKeyLibraryHead expected, CentralKeyLibraryHead target,
-        bool allowCompleted)
+        bool allowCompleted, CentralKeyLibraryHead? historicalBase = null)
     {
+        var baseline = historicalBase ?? expected;
+        Validate(baseline);
         Validate(expected);
         Validate(target);
+        CheckTransition(baseline, expected);
         CheckTransition(expected, target);
         var old = Read().State;
-        if (old is null || !(old.ReconciledHead == expected &&
-                old.ReconciledLocalSha256 == expected.CiphertextSha256 &&
-                (old.Head == expected || allowCompleted && old.Head == target) ||
-            allowCompleted && old.Head == target && old.ReconciledHead == target &&
-                old.ReconciledLocalSha256 == target.CiphertextSha256))
+        if (old is null) throw new CryptographicException("Gemeinsamer Abgleichmerker fehlt.");
+        if (allowCompleted && old.Head == target && old.ReconciledHead == target &&
+            old.ReconciledLocalSha256 == target.CiphertextSha256) return;
+        if (old.ReconciledHead != baseline || old.ReconciledLocalSha256 != baseline.CiphertextSha256)
             throw new CryptographicException("Abgleichmerker passt nicht zur bestätigten Zusammenführung.");
+        // Observation is not reconciliation. Permit a monotonically observed
+        // head between the old shared base and the exact proposed CAS base.
+        if (!(allowCompleted && old.Head == target))
+            CheckTransition(old.Head, expected);
     }
 
-    internal void RememberMerged(CentralKeyLibraryHead expected, CentralKeyLibraryHead target, FileRevision local)
+    internal void RememberMerged(CentralKeyLibraryHead expected, CentralKeyLibraryHead target, FileRevision local,
+        CentralKeyLibraryHead? historicalBase = null)
     {
+        var baseline = historicalBase ?? expected;
+        Validate(baseline);
         Validate(expected);
         Validate(target);
+        CheckTransition(baseline, expected);
         CheckTransition(expected, target);
         var (old, revision) = Read();
         if (!local.Exists || local.Sha256 != target.CiphertextSha256 || old?.Head != target ||
-            !(old.ReconciledHead == expected && old.ReconciledLocalSha256 == expected.CiphertextSha256 ||
+            !(old.ReconciledHead == baseline && old.ReconciledLocalSha256 == baseline.CiphertextSha256 ||
               old.ReconciledHead == target && old.ReconciledLocalSha256 == target.CiphertextSha256))
             throw new CryptographicException("Bestätigte Zusammenführung besitzt keine passende Abgleichbasis.");
         if (old.ReconciledHead == target) return;
