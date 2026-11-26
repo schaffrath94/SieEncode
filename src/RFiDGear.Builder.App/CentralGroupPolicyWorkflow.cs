@@ -104,15 +104,10 @@ internal static class CentralGroupPolicyWorkflow
             var audit = await KeyLibraryAuditWorkflow.FlushAsync(id, transport, certificate, cancellationToken);
             return $"Zentral bestätigt · Katalog {result.Central.CatalogRevision} · Gruppenstand {result.Central.Policy.Revision}" + audit;
         }
-        catch (HttpRequestException)
+        catch (KeyLibraryCentralUnavailableException)
         {
             RequireNoPending(id);
-            return "Offline · Verbindung oder TLS-Anmeldung nicht bestätigt; nur bisheriger Offline-Stand";
-        }
-        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            RequireNoPending(id);
-            return "Offline · zentraler Abgleich nicht abgeschlossen; nur bisheriger Offline-Stand";
+            return "Offline · zentraler Ausgangsstand nicht erreichbar oder TLS-Anmeldung nicht bestätigt; nur bisheriger Offline-Stand";
         }
     }
 
