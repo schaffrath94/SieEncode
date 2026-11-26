@@ -18,7 +18,7 @@ Das neue Interface `IKeyLibrarySyncTransport` kapselt Kopfstand, Upload, Downloa
 | Upload | POST .../upload | Signatur, Bibliothek, Richtlinie, exakter vorheriger Hash und Revision |
 | Download | POST .../download | Signierter gerätegebundener Nachweis, aktuelle Berechtigung, Replay-Schutz |
 | Snapshot | POST .../snapshot | Wie Download, zusätzlich konsistenter signierter Richtlinienstand |
-| Policy | POST .../policy-transition | Signierte neue Richtlinie und verschlüsselter Bestand als atomarer Wechsel; scoped Übergänge im Kern unterstützt; UI-Aktivierung und Abnahme offen |
+| Policy | POST .../policy-transition | Signierte neue Richtlinie und verschlüsselter Bestand als atomarer Wechsel; scoped Übergänge und Studio-Freigabeentwürfe im Quellcode; Abnahme offen |
 | Audit | POST .../audit | Gerätesignatur, idempotente Ereignis-ID, kein Schlüsselwert |
 | Audit review | POST .../audit-review | Aktuelle Hauptverwaltungsfreigabe, gerätegebundene Abfrage, begrenzte Seiten |
 
