@@ -61,6 +61,7 @@ public sealed class SecureOperationalSessionService
             var runtimeProject = JsonSerializer.Deserialize<ProjectDefinition>(
                 JsonSerializer.Serialize(hydratedProject, ProjectJson.Options), ProjectJson.Options)
                 ?? throw new InvalidDataException("Projekt konnte für die sichere Sitzung nicht kopiert werden.");
+            runtimeProject.TransientKeyLibraryResolution = hydratedProject.TransientKeyLibraryResolution;
             runtimeProject.Project.OutputDirectory = sessionDirectory;
             var build = new ProjectBuildService().Build(runtimeProject, library, shells, sourceConfigPath, sessionDirectory, builderVersion);
             File.WriteAllText(Path.Combine(sessionDirectory, ".sieencode-session"),
