@@ -579,7 +579,7 @@ public partial class MainWindow
             EditorNextStep.Text = !profileOk ? "Nächster Schritt: aktuelle Profilbindung prüfen."
                 : !definitionOk ? "Nächster Schritt: Projektpflichtfelder korrigieren."
                 : !slotsMatch ? "Nächster Schritt: nach Profiländerungen alle Schlüsselplätze erneut zuordnen."
-                : "Projekt referenziert Schlüsselversionen ohne Rohwerte. Der Build bleibt bis zur autorisierten Bibliotheksauflösung gesperrt.";
+                : "Projekt referenziert Schlüsselversionen ohne Rohwerte. ‚Projekt sicher prüfen‘ öffnet die freigegebene Bibliothek und prüft einen temporären Sitzungsbuild.";
             EditorKeyGuidance.Text = "Zentrale Offline-Bibliothek: Schlüssel ausschließlich über feste Bibliotheksreferenzen bearbeiten. Kein unabhängiger Projekt-Vault.";
             EditorVaultStatus.Text = $"Bibliothek {catalogBinding.LibraryId:D} · {catalogBinding.Bindings.Length} gebundene Plätze · keine Schlüssel im Projekt gespeichert.";
             EditorGenerateKeysButton.IsEnabled = true;
@@ -592,8 +592,8 @@ public partial class MainWindow
             EditorGroupRecoveryButton.Visibility = Visibility.Collapsed;
             EditorGroupProjectSetupPanel.Visibility = Visibility.Collapsed;
             EditorCreateGroupProjectButton.IsEnabled = false;
-            EditorBuildButton.IsEnabled = false;
-            HighlightEditorNextAction(null);
+            EditorBuildButton.IsEnabled = profileOk && definitionOk && slotsMatch;
+            HighlightEditorNextAction(EditorBuildButton.IsEnabled ? EditorBuildButton : null);
             return;
         }
         var profilesOk = ProfileBindingService.Evaluate(editorProject, editorLibrary).All(status => status.IsMatch);
@@ -1114,8 +1114,25 @@ public partial class MainWindow
         try
         {
             if (editorProject is null || editorLibrary is null) throw new InvalidOperationException("Kein Projekt im Editor geöffnet.");
-            if (editorProject.Project.KeyLibrary is not null)
-                throw new InvalidOperationException("Build gesperrt: Der autorisierte, versionsgenaue Bibliotheksadapter zur Kodiersitzung wird noch angeschlossen.");
+            if (editorProject.Project.KeyLibrary is { } binding)
+            {
+                CaptureEditorControls();
+                if (string.IsNullOrWhiteSpace(editorSourcePath) || editorDirty)
+                    if (!SaveEditorProject(saveAs: false)) return;
+                using var lease = CentralGroupPolicyWorkflow.Acquire(binding.LibraryId);
+                var resolved = ResolveLibraryProject(editorSourcePath, editorLibrary, binding.LibraryId);
+                var libraryShells = TaskShellLibrary.Load(Path.Combine(AppContext.BaseDirectory, "assets", "task-shells"));
+                using var validationSession = new SecureOperationalSessionService().Materialize(
+                    resolved.Hydrated, editorLibrary, libraryShells, editorSourcePath, Version);
+                if (ConcurrentFileWriter.Capture(resolved.Basis.SourcePath) != resolved.Basis.SourceFile ||
+                    ConcurrentFileWriter.Capture(resolved.Basis.VaultPath) != resolved.Basis.Library.VaultFile ||
+                    ProjectLibraryTrust(binding.LibraryId).LoadOffline().Checkpoint != resolved.Basis.Library.Policy)
+                    throw new InvalidOperationException("Projekt oder Bibliothek während der Prüfung geändert.");
+                EditorValidation.Text = $"SICHERER BIBLIOTHEKSBUILD OK · {validationSession.Build.Preflight.Projects.Count} temporäre RFiDGear-Projekte · " + resolved.SyncStatus;
+                SetStatus("Bibliotheksprojekt sicher geprüft. Kein permanenter Build und kein separater Projekt-Vault. Keine Kartenaktion ausgeführt.");
+                RefreshProjects();
+                return;
+            }
             CaptureEditorControls();
             if (string.IsNullOrWhiteSpace(editorSourcePath) || editorDirty)
                 if (!SaveEditorProject(saveAs: false)) return;
