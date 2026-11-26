@@ -367,6 +367,21 @@ internal static class ScopedKeyLibraryVaultTests
                 new(KeyLibraryMergeIssueKind.KeyMetadata, null, keyA.KeyId, 1, metadataId),
                 new(KeyLibraryMergeIssueKind.Status, null, keyA.KeyId, 1, metadataId)
             ];
+            var metadataReview = KeyLibraryDisasterAnalysis.ReviewMerge(trust, mergeAdministration,
+                "keys", fullCert, now, metadataSources, head2, idCentral);
+            var statusReview = metadataReview.Details.Single(i => i.Issue.Kind == KeyLibraryMergeIssueKind.Status);
+            if (metadataReview.Details.Length != 3 ||
+                statusReview.Options.Single(o => o.SourceId == idCentral).Allowed ||
+                !statusReview.Options.Single(o => o.SourceId == metadataId).Allowed ||
+                metadataReview.Details.Single(i => i.Issue.Kind == KeyLibraryMergeIssueKind.CustomerMetadata)
+                    .Options.Single(o => o.SourceId == metadataId).Label != "Synthetic renamed customer")
+                throw new Exception("Protected review did not present the exact selectable metadata and status.");
+            Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.ReviewMerge(trust,
+                mergeAdministration, "keys", limitedCert, now, metadataSources, head2, idCentral));
+            var hardReview = KeyLibraryDisasterAnalysis.ReviewMerge(trust, mergeAdministration,
+                "keys", fullCert, now, candidates, head2, idCentral);
+            if (hardReview.Details.Single(i => i.Issue.Kind == KeyLibraryMergeIssueKind.SecretValue).Options.Length != 0)
+                throw new Exception("Hard secret-value conflict presented a choice.");
             var unresolved = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert, false, now,
                 metadataSources, head2, idCentral);
             var resolved = KeyLibraryDisasterAnalysis.PreviewMerge(trust, "keys", fullCert, false, now,

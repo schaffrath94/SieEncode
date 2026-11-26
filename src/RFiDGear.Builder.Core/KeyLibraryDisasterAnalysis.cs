@@ -29,6 +29,14 @@ public sealed record KeyLibraryDisasterReport(Guid LibraryId, string GroupId,
     GroupPolicyCheckpoint CurrentPolicy, KeyLibraryDisasterInventory[] Sources,
     KeyLibraryDisasterComparison[] Comparisons);
 
+// Protected, transient UI detail. Unlike the public inventory, this contains
+// customer/key metadata; never persist, export or log it. No secret values.
+public sealed record KeyLibraryMergeOption(Guid SourceId, string Label, bool Allowed);
+public sealed record KeyLibraryMergeReviewIssue(KeyLibraryMergeIssue Issue,
+    KeyLibraryMergeOption[] Options);
+public sealed record KeyLibraryMergeReview(KeyLibraryMergePreview Preview,
+    KeyLibraryMergeReviewIssue[] Details);
+
 /// <summary>Read-only disaster inventory. Full currently authorized personal
 /// or recovery identity is mandatory. No union of partial employee views,
 /// no key export, no choice of winner, no new revision or server activation.</summary>
@@ -54,6 +62,50 @@ public static class KeyLibraryDisasterAnalysis
         ArgumentNullException.ThrowIfNull(independentlyKnownHead);
         return WithVerifiedSources(trust, groupId, identity, recovery, now, sources,
             independentlyKnownHead, (report, opened) => BuildMerge(report, opened, baseSourceId, decisions).Preview);
+    }
+
+    /// <summary>Authenticated metadata for the sole administration UI.
+    /// Full personal access and current local signing authority are required.
+    /// Details are derived from the exact same verified sources as the preview.</summary>
+    public static KeyLibraryMergeReview ReviewMerge(OfflineGroupTrustStore trust,
+        OfflineGroupAdministrationStore administration, string groupId,
+        X509Certificate2 fullMember, DateTimeOffset now,
+        IEnumerable<KeyLibraryDisasterSource> sources, CentralKeyLibraryHead independentlyKnownHead,
+        Guid baseSourceId)
+    {
+        ArgumentNullException.ThrowIfNull(independentlyKnownHead);
+        var checkpoint = administration.RequireLocalAuthority(trust);
+        return WithVerifiedSources(trust, groupId, fullMember, false, now, sources,
+            independentlyKnownHead, (report, opened) =>
+            {
+                var preview = BuildMerge(report, opened, baseSourceId, null).Preview;
+                var byId = opened.ToDictionary(o => o.Inventory.SourceId, o => o.Payload.Catalog);
+                var details = preview.Issues.Select(issue =>
+                {
+                    if (issue.Kind == KeyLibraryMergeIssueKind.CustomerMetadata)
+                        return new KeyLibraryMergeReviewIssue(issue, issue.SourceIds.Select(id =>
+                            new KeyLibraryMergeOption(id,
+                                byId[id].Customers.Single(c => c.CustomerId == issue.CustomerId).Name, true)).ToArray());
+                    if (issue.Kind is KeyLibraryMergeIssueKind.KeyMetadata or KeyLibraryMergeIssueKind.Status)
+                    {
+                        var versions = issue.SourceIds.Select(id => (Id: id, Key: byId[id].Keys.Single(k =>
+                            k.KeyId == issue.KeyId && k.Version == issue.Version))).ToArray();
+                        var strictest = versions.Any(v => v.Key.Status == KeyLibraryContracts.Compromised)
+                            ? KeyLibraryContracts.Compromised
+                            : versions.Any(v => v.Key.Status == KeyLibraryContracts.Retired)
+                                ? KeyLibraryContracts.Retired : KeyLibraryContracts.Active;
+                        return new KeyLibraryMergeReviewIssue(issue, versions.Select(v =>
+                            new KeyLibraryMergeOption(v.Id,
+                                issue.Kind == KeyLibraryMergeIssueKind.Status ? v.Key.Status :
+                                    $"{v.Key.Name} · Zweck: {v.Key.Purpose} · Host: {v.Key.HostSystem}",
+                                issue.Kind != KeyLibraryMergeIssueKind.Status || v.Key.Status == strictest)).ToArray());
+                    }
+                    return new KeyLibraryMergeReviewIssue(issue, []);
+                }).ToArray();
+                if (administration.RequireLocalAuthority(trust) != checkpoint || report.CurrentPolicy != checkpoint)
+                    throw new CryptographicException("Verwaltung hat sich während der Konfliktprüfung geändert.");
+                return new KeyLibraryMergeReview(preview, details);
+            });
     }
 
     /// <summary>Explicit approval of the exact key-free preview. Reopen every

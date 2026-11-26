@@ -1,4 +1,5 @@
 using System.IO;
+using Microsoft.Win32;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -37,6 +38,7 @@ internal sealed class KeyLibraryManagementWindow : Window
     private readonly TextBlock centralStatus = new() { TextWrapping = TextWrapping.Wrap, Foreground = Brushes.DarkSlateGray };
     private bool syncing;
     private readonly Button resumeMerge = ActionButton("Zusammenführung fortsetzen");
+    private readonly Button reviewMerge = ActionButton("Verschlüsselte Bestände vergleichen");
     private readonly ComboBox groupSelection = new() { DisplayMemberPath = nameof(GroupChoice.Name), MinWidth = 350 };
     private readonly ComboBox customerSelection = new() { DisplayMemberPath = nameof(KeyLibraryCustomer.Name), MinWidth = 260 };
     private readonly DataGrid keys = new() { AutoGenerateColumns = false, IsReadOnly = true,
@@ -112,6 +114,7 @@ internal sealed class KeyLibraryManagementWindow : Window
         var storeConnection = ActionButton("Bestätigte Zentralverbindung speichern");
         storeConnection.Click += async (_, _) =>
         {
+            if (syncing) return;
             try
             {
                 var proposed = KeyLibrarySyncEndpointStore.Validate(
@@ -136,6 +139,9 @@ internal sealed class KeyLibraryManagementWindow : Window
         resumeMerge.Visibility = Visibility.Collapsed;
         resumeMerge.Click += async (_, _) => await SynchronizeCurrentAsync();
         root.Children.Add(resumeMerge);
+        reviewMerge.Click += async (_, _) => await ReviewMergeAsync();
+        root.Children.Add(new Expander { Header = "Erweitert · Bibliotheksbestände abgleichen",
+            Content = reviewMerge, IsExpanded = false, Margin = new Thickness(0, 6, 0, 4) });
         root.Children.Add(error);
         var close = ActionButton("Schließen");
         close.HorizontalAlignment = HorizontalAlignment.Right;
@@ -267,6 +273,7 @@ internal sealed class KeyLibraryManagementWindow : Window
         resumeMerge.Visibility = pending ? Visibility.Visible : Visibility.Collapsed;
         resumeMerge.IsEnabled = pending && !syncing && group;
         var editable = !syncing && !pending;
+        reviewMerge.IsEnabled = editable && exists;
         create.IsEnabled = editable && group && !exists;
         addCustomer.IsEnabled = editable && exists;
         generate.IsEnabled = import.IsEnabled = editable && exists &&
@@ -432,6 +439,141 @@ internal sealed class KeyLibraryManagementWindow : Window
             foreach (var item in identities) item.Certificate.Dispose();
             syncing = false; groupSelection.IsEnabled = true; RefreshActions();
         }
+    }
+
+    // Parent GroupAdministrationWindow holds the shared library lease for
+    // this modal window. Never acquire a second lease or run a normal sync
+    // during the preview, confirmation or staging operation.
+    private async Task ReviewMergeAsync()
+    {
+        if (syncing) return;
+        syncing = true;
+        groupSelection.IsEnabled = false;
+        RefreshActions();
+        WindowsVaultIdentity[] identities = [];
+        string? temporary = null;
+        var staged = false;
+        try
+        {
+            RequireAuthority();
+            var group = CurrentGroup().Id;
+            var localPath = CurrentPath();
+            var endpoint = endpointStore.Load() ?? throw new InvalidOperationException("Bestätigte HTTPS-Zentrale fehlt.");
+            var basis = cursorStore.ReadReconciledHead() ?? throw new InvalidOperationException("Kein bestätigter gemeinsamer Ausgangsstand vorhanden.");
+            var enrollment = trust.ExportPublic();
+            var policy = GroupEnrollmentPackages.Validate(enrollment);
+            if (basis.GroupId != group || basis.Policy != policy.Checkpoint || !policy.Policy.CustomerScopesEnabled)
+                throw new InvalidOperationException("Zusammenführung benötigt den aktuellen abgeglichenen Kundenbereich.");
+            identities = WindowsVaultIdentityService.List().ToArray();
+            X509Certificate2? member = null;
+            foreach (var candidate in identities)
+            {
+                try
+                {
+                    var access = KeyLibraryDisclosure.RequireMember(policy, group, candidate.Certificate, DateTimeOffset.UtcNow);
+                    if (!policy.Policy.People.Single(p => p.Id == access.PersonId).AllKeyLibraryCustomers) continue;
+                    _ = KeyLibraryVaultStore.Load(localPath, trust, group, [candidate.Certificate], requireFull: true);
+                    member = candidate.Certificate; break;
+                }
+                catch (CryptographicException) { }
+            }
+            if (member is null) throw new CryptographicException("Vollständiger persönlicher Bibliothekszugang fehlt.");
+
+            using var transport = new KeyLibraryHttpsTransport(new Uri(endpoint.HttpsOrigin), libraryId,
+                endpoint.ServerCertificateSha256, member);
+            var head = await transport.ReadHeadAsync();
+            if (head != basis || !cursorStore.HasUploadBase(basis))
+                throw new InvalidOperationException("Zentrale weicht vom zuletzt abgeglichenen Stand ab. " +
+                    "Diese Mehrplatz-Konfliktart ist noch nicht zur Zusammenführung freigegeben. Keine Daten verändert.");
+            var extra = MessageBox.Show(this, "Weitere verschlüsselte Offline-Bibliotheken hinzufügen?\n" +
+                "Ja: Dateien wählen. Nein: nur Zentralstand und lokalen Bestand vergleichen.",
+                Title, MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel);
+            if (extra == MessageBoxResult.Cancel) return;
+            string[] paths = [];
+            if (extra == MessageBoxResult.Yes)
+            {
+                var open = new OpenFileDialog { Title = "Verschlüsselte Bibliothekskopien auswählen",
+                    Filter = "Verschlüsselte Bibliothek (*.json)|*.json", Multiselect = true, CheckFileExists = true };
+                if (open.ShowDialog(this) != true) return;
+                paths = open.FileNames.Select(Path.GetFullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                if (paths.Length > 6 || paths.Any(path => string.Equals(path, localPath, StringComparison.OrdinalIgnoreCase)))
+                    throw new InvalidDataException("Maximal sechs weitere, vom aktiven Vault verschiedene Dateien auswählen.");
+            }
+            var transfer = await transport.DownloadAsync(KeyLibraryDownloadAuthorization.Sign(head, member, DateTimeOffset.UtcNow));
+            var claim = KeyLibrarySyncTransport.Verify(transfer, enrollment);
+            if (claim.LibraryId != head.LibraryId || claim.Policy != head.Policy || claim.GroupId != group ||
+                claim.ExpectedCentralRevision + 1 != head.CentralRevision ||
+                claim.CatalogRevision != head.CatalogRevision || claim.NextCiphertextSha256 != head.CiphertextSha256 ||
+                await transport.ReadHeadAsync() != head)
+                throw new CryptographicException("Heruntergeladener Ausgangsstand stimmt nicht mit der bestätigten Zentrale überein.");
+            temporary = Path.Combine(Path.GetDirectoryName(localPath)!, ".merge-review-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(temporary);
+            var basePath = Path.Combine(temporary, "central-base.json");
+            using (var file = new FileStream(basePath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            {
+                file.Write(transfer.EncryptedVault);
+                file.Flush(true);
+            }
+            var baseId = Guid.NewGuid();
+            var localId = Guid.NewGuid();
+            var sources = new List<KeyLibraryDisasterSource>
+            {
+                new(baseId, basePath, enrollment, policy.Checkpoint),
+                new(localId, localPath, enrollment, policy.Checkpoint)
+            };
+            var names = new Dictionary<Guid, string> { [baseId] = "Zentralstand", [localId] = "Lokaler Bestand" };
+            foreach (var path in paths)
+            {
+                var id = Guid.NewGuid();
+                names.Add(id, $"Quelle {names.Count - 1} · {Path.GetFileName(path)}");
+                sources.Add(new(id, path, enrollment, policy.Checkpoint));
+            }
+            var review = KeyLibraryDisasterAnalysis.ReviewMerge(trust, administration, group, member,
+                DateTimeOffset.UtcNow, sources, head, baseId);
+            var dialog = new KeyLibraryMergeReviewWindow(this, review, names);
+            if (dialog.ShowDialog() != true) return;
+            var resolved = KeyLibraryDisasterAnalysis.PreviewMerge(trust, group, member, false,
+                DateTimeOffset.UtcNow, sources, head, baseId, dialog.Decisions);
+            if (!resolved.Inventory.Sources.SequenceEqual(review.Preview.Inventory.Sources))
+                throw new ConcurrentFileChangeException("Quellbestände der Zusammenführung");
+            if (!resolved.CanPrepareCandidate)
+            {
+                centralStatus.Text = resolved.Issues.Length > 0
+                    ? "Konflikte verbleiben. Keine Zusammenführung gespeichert."
+                    : "Keine Änderungen zusammenzuführen.";
+                return;
+            }
+            var summary = $"Neue Katalogrevision: {resolved.ProposedRevision}\n" +
+                $"Ergänzungen: {resolved.AddedCustomers} Kunden, {resolved.AddedKeyVersions} Schlüsselversionen\n" +
+                $"Ausdrückliche Konfliktentscheidungen: {resolved.Decisions.Length}\n\n" +
+                "Zusammenführung verbindlich bestätigen? Der signierte verschlüsselte Auftrag wird dauerhaft gespeichert und zentral abgeglichen.";
+            if (MessageBox.Show(this, summary, Title, MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                    MessageBoxResult.No) != MessageBoxResult.Yes) return;
+            if (endpointStore.Load() != endpoint || await transport.ReadHeadAsync() != head)
+                throw new ConcurrentFileChangeException("Zentralstand der Zusammenführung");
+            CentralGroupPolicyWorkflow.StageMergeUnderLease(libraryId, trust, administration, member,
+                sources, head, baseId, resolved.ApprovalSha256(head), true, resolved.Decisions);
+            staged = true;
+            centralStatus.Text = "Zusammenführung vorbereitet. Zentraler Abgleich ausstehend.";
+        }
+        catch (Exception exception)
+        {
+            error.Text = "Zusammenführung nicht abgeschlossen: " + exception.Message;
+        }
+        finally
+        {
+            foreach (var identity in identities) identity.Certificate.Dispose();
+            if (temporary is not null)
+            {
+                try { Directory.Delete(temporary, recursive: true); }
+                catch (IOException) { error.Text += " Verschlüsselter Prüfbestand konnte nicht entfernt werden."; }
+                catch (UnauthorizedAccessException) { error.Text += " Verschlüsselter Prüfbestand konnte nicht entfernt werden."; }
+            }
+            syncing = false;
+            groupSelection.IsEnabled = true;
+            RefreshActions();
+        }
+        if (staged) await SynchronizeCurrentAsync();
     }
 
     private async Task ExecuteAndSyncAsync(Action action)
