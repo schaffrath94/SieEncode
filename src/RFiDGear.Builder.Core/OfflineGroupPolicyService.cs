@@ -15,9 +15,14 @@ public sealed record OfflineVaultPerson(string Id, string Name, bool Enabled, Of
     public bool AllowKeyLibraryView { get; init; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool AllowKeyLibraryCopy { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool AllKeyLibraryCustomers { get; init; }
+    public Guid[] KeyLibraryCustomers { get; init; } = [];
 }
 public sealed record OfflineGroupPolicy(string Format, int Version, Guid LibraryId, long Revision, OfflineVaultGroup[] Groups)
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool CustomerScopesEnabled { get; init; }
     public OfflineVaultPerson[] People { get; init; } = [];
     public OfflineGroupDelegation[] Delegations { get; init; } = [];
     public OfflineVaultDevice[] RecoveryDevices { get; init; } = [];
@@ -104,6 +109,8 @@ public static class OfflineGroupPolicyService
         ArgumentNullException.ThrowIfNull(policy);
         if (policy.Format != Format || policy.Version is not (1 or 2) || policy.LibraryId == Guid.Empty || policy.Revision < 1 || policy.Groups is null || policy.Groups.Length > 1000)
             throw new InvalidDataException("Gruppenrichtlinie hat ein ungültiges Format.");
+        if (policy.CustomerScopesEnabled && policy.Version != 2)
+            throw new InvalidDataException("Kundenbereiche benötigen eine personenbasierte Richtlinie.");
         var people = OfflineGroupDirectory.Validate(policy);
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var group in policy.Groups)
