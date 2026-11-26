@@ -56,8 +56,7 @@ public partial class MainWindow
             }
             catch (OperationCanceledException) when (deadline.IsCancellationRequested)
             {
-                CentralGroupPolicyWorkflow.RequireNoPending(expectedLibrary);
-                syncStatus = "Offline · Zeitlimit des Zentralabgleichs erreicht; nur bisheriger bestätigter lokaler Stand";
+                throw new InvalidOperationException("Zentralabgleich nicht rechtzeitig abgeschlossen. Keine neue Sitzung aus einem möglicherweise veralteten Bibliotheksstand; bitte erneut öffnen.");
             }
             CentralGroupPolicyWorkflow.RequireNoPending(expectedLibrary);
             foreach (var identity in identities)
