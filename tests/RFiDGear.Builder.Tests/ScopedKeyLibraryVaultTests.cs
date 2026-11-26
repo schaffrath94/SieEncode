@@ -335,6 +335,47 @@ internal static class ScopedKeyLibraryVaultTests
             var syntheticBackup = GroupPrivateKeyBackups.Protect(authority,
                 new GroupPrivateKeyContext(id, GroupPrivateKeyBackups.Administrator), syntheticPassphrase);
             mergeAdministration.RestorePrivateBackup(syntheticBackup, syntheticPassphrase, trust);
+            // No surviving server is used for disaster candidate preparation.
+            // A complete superset of every supplied source is required.
+            KeyLibraryDisasterSource[] disasterSources = [candidates[0], candidates[1]];
+            var disaster = KeyLibraryDisasterAnalysis.PreviewDisasterCandidate(trust, "keys",
+                recoveryCert, now, disasterSources, idHistory, head2);
+            if (!disaster.CanPrepare || disaster.ProposedCatalogRevision != historical.Catalog.Revision + 1 ||
+                disaster.LastKnownHead != head2)
+                throw new Exception("Complete disaster superset was not recognized.");
+            if (KeyLibraryDisasterAnalysis.PreviewDisasterCandidate(trust, "keys", recoveryCert,
+                    now, disasterSources, idCentral, head2).CanPrepare ||
+                KeyLibraryDisasterAnalysis.PreviewDisasterCandidate(trust, "keys", recoveryCert,
+                    now, candidates, idHistory, head2).CanPrepare ||
+                KeyLibraryDisasterAnalysis.PreviewDisasterCandidate(trust, "keys", recoveryCert,
+                    now, [candidates[1]], idHistory, head2).CanPrepare)
+                throw new Exception("Incomplete or conflicting disaster history was accepted.");
+            Reject<CryptographicException>(() => KeyLibraryDisasterAnalysis.PreviewDisasterCandidate(
+                trust, "keys", fullCert, now, disasterSources, idHistory, head2));
+            KeyLibraryIsolatedDisasterCandidate PrepareDisaster(string hash, bool approved, bool loss,
+                X509Certificate2 device) => KeyLibraryDisasterAnalysis.PrepareDisasterCandidate(trust,
+                    mergeAdministration, "keys", recoveryCert, device, now, disasterSources, idHistory,
+                    head2, hash, approved, loss);
+            var disasterHash = disaster.ApprovalSha256();
+            Reject<InvalidOperationException>(() => PrepareDisaster(disasterHash, true, false, fullCert));
+            Reject<InvalidOperationException>(() => PrepareDisaster(disasterHash, false, true, fullCert));
+            Reject<CryptographicException>(() => PrepareDisaster(disasterHash, true, true, limitedCert));
+            Reject<CryptographicException>(() => PrepareDisaster(new string('F', 64), true, true, fullCert));
+            var isolatedDisaster = PrepareDisaster(disasterHash, true, true, fullCert);
+            var disasterOpened = ScopedKeyLibraryVault.OpenVerified(
+                KeyLibrarySyncWire.Read<SignedScopedKeyLibraryBundle>(isolatedDisaster.EncryptedVault,
+                    GroupVaultService.MaximumBytes), isolatedDisaster.Enrollment, "keys", recoveryCert, now,
+                requireFull: true, recovery: true);
+            if (isolatedDisaster.ApprovedPreviewSha256 != disasterHash ||
+                isolatedDisaster.CiphertextSha256 != KeyLibrarySyncTransport.CiphertextSha256(isolatedDisaster.EncryptedVault) ||
+                disasterOpened.Catalog.Revision != disaster.ProposedCatalogRevision ||
+                disasterOpened.Secrets.Length != 3 ||
+                !disasterOpened.Secrets.Any(s => s.Key.KeyId == keyA.KeyId && s.Key.Version == 2 &&
+                    s.HexValue == new string('C', 32)) ||
+                central.ReadHead() != head2 || ConcurrentFileWriter.Capture(localPath) != file2 ||
+                trust.LoadOffline().Checkpoint != verified.Checkpoint)
+                throw new Exception("Disaster reconstruction did not remain isolated or lost historical keys.");
+
             var previewHash = preview.ApprovalSha256(head2);
             KeyLibraryPreparedMerge Prepare(IEnumerable<KeyLibraryDisasterSource> input, string hash, bool approved,
                 X509Certificate2 device) => KeyLibraryDisasterAnalysis.PrepareApprovedMerge(trust,

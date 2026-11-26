@@ -40,7 +40,7 @@ public sealed record KeyLibraryMergeReview(KeyLibraryMergePreview Preview,
 /// <summary>Read-only disaster inventory. Full currently authorized personal
 /// or recovery identity is mandatory. No union of partial employee views,
 /// no key export, no choice of winner, no new revision or server activation.</summary>
-public static class KeyLibraryDisasterAnalysis
+public static partial class KeyLibraryDisasterAnalysis
 {
     private const int MaximumSources = 8;
     private sealed record Opened(KeyLibraryDisasterInventory Inventory, KeyLibraryVaultPayload Payload,
