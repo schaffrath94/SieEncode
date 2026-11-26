@@ -585,6 +585,8 @@ public partial class MainWindow : Window
                 throw new InvalidOperationException("Eine Kodiersitzung ist noch aktiv. Bitte zuerst Readbacks prüfen oder den Datensatz ausdrücklich als fehlgeschlagen abschließen.");
             RequireNoRunningRFiDGear("Die Kodierstation kann nicht gewechselt werden.");
             SelectProject(entry);
+            sessionDefinition = null;
+            operationCatalog = null;
             var stationEntry = MaterializeSecureStationEntry(entry);
             selectedProject = stationEntry;
             var schemaPath = Path.Combine(stationEntry.ProjectDirectory, "coding.schema.json");
