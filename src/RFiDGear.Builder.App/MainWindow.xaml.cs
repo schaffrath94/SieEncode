@@ -645,7 +645,7 @@ public partial class MainWindow : Window
             StationProjectInfo.Text = $"{profilesCount} Profil(e) · {payloadCount} Payload(s) · {Path.GetFileName(sessionDefinition.CodingProjectPath)}" +
                 (stationEntry.SecureOnDemand ? " · geschützte lokale Sitzung" : entry.ArtifactOnly ? " · nur gebautes Projekt" : entry.HasVault ? " · Neubau mit Vault möglich" : " · vorhandener Build nutzbar, Neubau ohne Vault gesperrt") +
                 (stationEntry.HasRecognition ? " · Transponder-Erkennung verfügbar" : " · Altbuild ohne Transponder-Erkennung") +
-                (libraryStationBasis is { } basis ? $" · Bibliotheksrevision {basis.Library.CatalogRevision} · Gruppenstand {basis.Library.Policy.Revision}" : "");
+                (libraryStationBasis is { } basis ? $" · Bibliotheksrevision {basis.Library.CatalogRevision} · Gruppenstand {basis.Library.Policy.Revision} · {basis.SyncStatus}" : "");
             StationRecognitionButton.Visibility = stationEntry.HasRecognition ? Visibility.Visible : Visibility.Collapsed;
             StationLegacyTransportButton.Visibility = stationEntry.HasRecognition ? Visibility.Collapsed : Visibility.Visible;
             StationOpenRecognitionResultButton.Visibility = stationEntry.HasRecognition ? Visibility.Visible : Visibility.Collapsed;
@@ -784,11 +784,11 @@ public partial class MainWindow : Window
         var extension = IsSelectedExtensionProject();
         var productiveExpectationAvailable = selectedProject is not null &&
             File.Exists(Path.Combine(selectedProject.ProjectDirectory, "card_preflight", "expected-card.json"));
-        StationMasteringManualButton.IsEnabled = operationAvailable && projectLaunch && Has(RFiDGearOperationKind.MasteringManual) &&
+        StationMasteringManualButton.IsEnabled = libraryStationBasis is null && operationAvailable && projectLaunch && Has(RFiDGearOperationKind.MasteringManual) &&
             (!extension || lastCardRecognitionReport?.Report.ExtensionEligible == true);
         StationMasteringAutoButton.Content = extension ? "Neue Applications vorbereiten" : "Transponder vorbereiten";
         StationMasteringManualButton.Content = extension ? "Erweiterung manuell öffnen" : "Mastering manuell öffnen";
-        StationMasteringAutoButton.IsEnabled = operationAvailable && autorun && editable && Has(RFiDGearOperationKind.MasteringAutorun) &&
+        StationMasteringAutoButton.IsEnabled = libraryStationBasis is null && operationAvailable && autorun && editable && Has(RFiDGearOperationKind.MasteringAutorun) &&
             (!extension || lastCardRecognitionReport?.Report.ExtensionEligible == true);
         StationPreflightTransportButton.IsEnabled = operationAvailable && autorun && Has(RFiDGearOperationKind.CardPreflightTransport);
         StationRecognitionButton.IsEnabled = operationAvailable && autorun && Has(RFiDGearOperationKind.CardRecognitionReadOnly);
@@ -804,9 +804,9 @@ public partial class MainWindow : Window
         StationRecoveryTransportButton.Visibility = extension ? Visibility.Collapsed : Visibility.Visible;
         StationRecoveryProductiveButton.Visibility = extension ? Visibility.Collapsed : Visibility.Visible;
         StationExtensionRollbackButton.Visibility = extension ? Visibility.Visible : Visibility.Collapsed;
-        StationRecoveryTransportButton.IsEnabled = !extension && operationAvailable && autorun && editable && Has(RFiDGearOperationKind.RecoveryTransport);
-        StationRecoveryProductiveButton.IsEnabled = !extension && operationAvailable && autorun && editable && Has(RFiDGearOperationKind.RecoveryProductive);
-        StationExtensionRollbackButton.IsEnabled = extension && operationAvailable && autorun && editable && Has(RFiDGearOperationKind.ExtensionRollback);
+        StationRecoveryTransportButton.IsEnabled = libraryStationBasis is null && !extension && operationAvailable && autorun && editable && Has(RFiDGearOperationKind.RecoveryTransport);
+        StationRecoveryProductiveButton.IsEnabled = libraryStationBasis is null && !extension && operationAvailable && autorun && editable && Has(RFiDGearOperationKind.RecoveryProductive);
+        StationExtensionRollbackButton.IsEnabled = libraryStationBasis is null && extension && operationAvailable && autorun && editable && Has(RFiDGearOperationKind.ExtensionRollback);
         StationRefreshOperationButton.IsEnabled = running;
         StationCloseRFiDGearButton.IsEnabled = CurrentTrackedLaunch() is { } launch && processProbe.IsRunning(launch);
         TestRefreshOperationButton.IsEnabled = running;
@@ -1046,6 +1046,8 @@ public partial class MainWindow : Window
             }
             if (operation.Destructive)
             {
+                if (selectedProject?.HasLibraryBinding == true || libraryStationBasis is not null)
+                    throw new InvalidOperationException("Schreibende Betriebsaktion für Bibliotheksprojekte noch gesperrt: unabhängige Bibliotheks-Backup-/Recovery-Abnahme fehlt.");
                 if (operation.Autorun)
                 {
                     if (selectedProject?.ArtifactOnly != false) throw new InvalidOperationException("Automatische Schreibläufe sind für reine Bauartefakte gesperrt.");
@@ -1083,8 +1085,6 @@ public partial class MainWindow : Window
 
             if (selectedProject is null) throw new InvalidOperationException("Kein Projekt geladen.");
             using var libraryLease = RequireCurrentLibraryStation();
-            if (libraryStationBasis is not null && operation.Destructive)
-                throw new InvalidOperationException("Schreibende Betriebsaktion für Bibliotheksprojekte noch gesperrt: unabhängige Bibliotheks-Backup-/Recovery-Abnahme fehlt.");
             operationWorkspaceDirectory = selectedProject.ProjectDirectory;
             if (TryCardPreflightMode(operation.Kind, out var probeMode)) cardPreflightService.Prepare(selectedProject.ProjectDirectory, probeMode);
             operationCapabilities ??= new RFiDGearCapabilityInspector().Inspect(settings.RFiDGear.ExecutablePath);
