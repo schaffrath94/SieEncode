@@ -394,6 +394,8 @@ internal sealed partial class GroupAdministrationWindow : Window
         RequireStore(); CommitEdits();
         using var lease = CentralGroupPolicyWorkflow.Acquire(currentLibrary!.Value);
         CentralGroupPolicyWorkflow.RequireOfflinePolicyEdit(currentLibrary!.Value);
+        if (GroupEnrollmentPackages.Validate(store!.ExportPublic()).Policy.CustomerScopesEnabled)
+            throw new InvalidOperationException("Kundenbereichsrichtlinie erst über den noch nicht freigegebenen koordinierten Wechsel bearbeiten.");
         var accessReduced = ReducesPreviouslySignedAccess();
         var groupRows = groups.Select(g => new OfflineVaultGroup(g.Id, g.Name, g.Members.ToArray())).ToArray();
         if (!personMode && people.Count > 0) throw new InvalidOperationException("Bitte zuerst die bisherigen Gruppen auf Personen umstellen.");
