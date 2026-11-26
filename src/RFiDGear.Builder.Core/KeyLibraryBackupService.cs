@@ -12,6 +12,10 @@ public sealed record KeyLibraryBackupReference(Guid LibraryId, string GroupId,
 public sealed record KeyLibraryBackupVerification(Guid LibraryId, long CatalogRevision,
     int CustomerCount, int KeyVersionCount);
 
+// These files are evidence for a recovery exercise, not an installed library.
+public sealed record KeyLibraryIsolatedRestore(string Directory, string EncryptedVaultPath,
+    string PublicEnrollmentPath, KeyLibraryBackupVerification Verification);
+
 /// <summary>Encrypted scoped-library backup and offline recovery verification.
 /// Does not install a vault, enroll trust, change a cursor or authorize card writes.</summary>
 public static class KeyLibraryBackupService
@@ -62,11 +66,84 @@ public static class KeyLibraryBackupService
     public static KeyLibraryBackupVerification VerifyRecovery(string backupPath,
         KeyLibraryBackupReference independentlyConfirmed, X509Certificate2 recovery, DateTimeOffset now)
     {
+        return ReadVerified(backupPath, independentlyConfirmed, recovery, now).Verification;
+    }
+
+    /// <summary>Reconstruct the exact encrypted vault and public registration in
+    /// a new, non-operational directory. Never enroll or replace a live store.
+    /// The caller selects an existing, access-controlled recovery workspace.</summary>
+    public static KeyLibraryIsolatedRestore RestoreIsolated(string backupPath,
+        KeyLibraryBackupReference independentlyConfirmed, X509Certificate2 recovery,
+        DateTimeOffset now, string recoveryWorkspace)
+    {
+        var (archive, verification) = ReadVerified(backupPath, independentlyConfirmed, recovery, now);
+        ArgumentException.ThrowIfNullOrWhiteSpace(recoveryWorkspace);
+        var root = Path.GetFullPath(recoveryWorkspace);
+        if (!Directory.Exists(root))
+            throw new DirectoryNotFoundException("Separater Wiederherstellungsordner fehlt.");
+        if ((File.GetAttributes(root) & FileAttributes.ReparsePoint) != 0)
+            throw new IOException("Wiederherstellungsordner darf keine direkte Umleitung sein.");
+
+        var id = Guid.NewGuid().ToString("N");
+        var staging = Path.Combine(root, ".recovery-pending-" + id);
+        var destination = Path.Combine(root, "recovery-not-activated-" + id);
+        const string vaultName = "recovered-encrypted-library.json";
+        const string enrollmentName = "recovered-public-enrollment.json";
+        const string noteName = "NOT-ACTIVATED.json";
+        Directory.CreateDirectory(staging);
+        try
+        {
+            var vaultPath = Path.Combine(staging, vaultName);
+            var enrollmentPath = Path.Combine(staging, enrollmentName);
+            WriteNew(vaultPath, archive.EncryptedVault);
+            WriteNew(enrollmentPath, archive.Enrollment);
+            var vaultBytes = KeyLibraryVaultStore.ReadBytes(vaultPath);
+            var enrollmentBytes = ReadBounded(enrollmentPath, GroupEnrollmentPackages.MaximumBytes);
+            if (!vaultBytes.AsSpan().SequenceEqual(archive.EncryptedVault) ||
+                !enrollmentBytes.AsSpan().SequenceEqual(archive.Enrollment))
+                throw new CryptographicException("Rekonstruierte Dateien stimmen nicht mit der Sicherung überein.");
+            // Reopen the persisted files with the independently pinned recovery
+            // context. Never use a normal member identity or live trust store.
+            var diskVerification = VerifyArchive(new Archive(Format, 1, enrollmentBytes, vaultBytes),
+                independentlyConfirmed, recovery, now);
+            if (diskVerification != verification)
+                throw new CryptographicException("Wiederhergestellter Bibliotheksstand stimmt nicht überein.");
+            WriteNew(Path.Combine(staging, noteName), KeyLibrarySyncWire.Write(new
+            {
+                Status = "IsolatedNotActivated",
+                Reference = independentlyConfirmed,
+                Verification = diskVerification,
+                VerifiedAt = now
+            }));
+            // Publish only the verified directory. No overwrite, no active
+            // filenames, no registration or central cursor writes.
+            Directory.Move(staging, destination);
+            return new(destination, Path.Combine(destination, vaultName),
+                Path.Combine(destination, enrollmentName), diskVerification);
+        }
+        finally
+        {
+            // The staging directory never contains plaintext secrets.
+            if (Directory.Exists(staging))
+                Directory.Delete(staging, recursive: true);
+        }
+    }
+
+    private static (Archive Archive, KeyLibraryBackupVerification Verification) ReadVerified(
+        string backupPath, KeyLibraryBackupReference independentlyConfirmed,
+        X509Certificate2 recovery, DateTimeOffset now)
+    {
         ArgumentNullException.ThrowIfNull(independentlyConfirmed);
         var bytes = ReadArchive(backupPath);
         if (Hash(bytes) != independentlyConfirmed.ArchiveSha256)
             throw new CryptographicException("Bibliothekssicherung stimmt nicht mit dem unabhängig bestätigten Stand überein.");
         var archive = KeyLibrarySyncWire.Read<Archive>(bytes, KeyLibrarySyncWire.MaximumEncryptedBytes);
+        return (archive, VerifyArchive(archive, independentlyConfirmed, recovery, now));
+    }
+
+    private static KeyLibraryBackupVerification VerifyArchive(Archive archive,
+        KeyLibraryBackupReference independentlyConfirmed, X509Certificate2 recovery, DateTimeOffset now)
+    {
         if (archive.Format != Format || archive.Version != 1 || archive.Enrollment is null ||
             archive.EncryptedVault is null || archive.EncryptedVault.Length > GroupVaultService.MaximumBytes)
             throw new InvalidDataException("Ungültiges Bibliothekssicherungsformat.");
@@ -85,12 +162,22 @@ public static class KeyLibraryBackupService
             restored.Catalog.Customers.Length, restored.Catalog.Keys.Length);
     }
 
+    private static void WriteNew(string path, byte[] bytes)
+    {
+        using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        stream.Write(bytes);
+        stream.Flush(true);
+    }
+
     private static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes));
 
-    private static byte[] ReadArchive(string path)
+    private static byte[] ReadArchive(string path) =>
+        ReadBounded(path, KeyLibrarySyncWire.MaximumEncryptedBytes);
+
+    private static byte[] ReadBounded(string path, int maximumBytes)
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        if (stream.Length is <= 0 or > KeyLibrarySyncWire.MaximumEncryptedBytes)
+        if (stream.Length <= 0 || stream.Length > maximumBytes)
             throw new InvalidDataException("Bibliothekssicherung ist leer oder zu groß.");
         var bytes = new byte[(int)stream.Length];
         stream.ReadExactly(bytes);

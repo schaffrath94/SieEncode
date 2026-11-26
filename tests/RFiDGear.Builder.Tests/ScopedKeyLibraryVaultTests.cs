@@ -158,12 +158,63 @@ internal static class ScopedKeyLibraryVaultTests
             if (ConcurrentFileWriter.Capture(localPath) != file2)
                 throw new Exception("Backup or recovery verification changed the active vault.");
 
+            // Separate workspace, no installed registration, member key or central server
+            // is needed for the recovery exercise. Exercise a historical key version too.
+            var historical = KeyLibraryEditing.AddVersion(nextPayload, keyA.KeyId, new string('C', 32)).Next;
+            var historyPath = Path.Combine(directory, "history-source.json");
+            File.WriteAllBytes(historyPath, KeyLibrarySyncWire.Write(
+                ScopedKeyLibraryVault.Protect(historical, enrolled, authority, "keys", now)));
+            var historyBackup = Path.Combine(directory, "history-backup.json");
+            var historyReference = KeyLibraryBackupService.Create(historyPath, historyBackup, trust,
+                "keys", fullCert, now);
+            var expectedHistoryBytes = File.ReadAllBytes(historyPath);
+            File.Delete(historyPath); // Simulate loss of the original encrypted library.
+            var workspace = Path.Combine(directory, "isolated");
+            Directory.CreateDirectory(workspace);
+            var trustBefore = trust.LoadOffline().Checkpoint;
+            var centralBefore = central.ReadHead();
+            Reject<CryptographicException>(() => KeyLibraryBackupService.RestoreIsolated(damagedPath,
+                reference, recoveryCert, now, workspace));
+            Reject<CryptographicException>(() => KeyLibraryBackupService.RestoreIsolated(historyBackup,
+                historyReference, limitedCert, now, workspace));
+            if (Directory.EnumerateFileSystemEntries(workspace).Any())
+                throw new Exception("Rejected recovery left a published or staged result.");
+            var isolated = KeyLibraryBackupService.RestoreIsolated(historyBackup, historyReference,
+                recoveryCert, now, workspace);
+            if (!File.ReadAllBytes(isolated.EncryptedVaultPath).SequenceEqual(expectedHistoryBytes) ||
+                isolated.Verification.KeyVersionCount != 3 || isolated.Verification.CustomerCount != 4 ||
+                !File.Exists(Path.Combine(isolated.Directory, "NOT-ACTIVATED.json")))
+                throw new Exception("Isolated recovery did not reconstruct the complete historical snapshot.");
+            var restoredEnrollment = GroupEnrollmentPackages.Read(File.ReadAllBytes(isolated.PublicEnrollmentPath));
+            var isolatedTrust = new OfflineGroupTrustStore(Path.Combine(workspace, "synthetic-check-trust.bin"),
+                id, new OfflineGroupTrustTests.TestProtection());
+            isolatedTrust.Enroll(restoredEnrollment.AdministratorPublicKey, historyReference.AdministratorFingerprint,
+                restoredEnrollment.Policy);
+            var restoredPayload = KeyLibraryVaultStore.Load(isolated.EncryptedVaultPath, isolatedTrust,
+                "keys", [recoveryCert], recovery: true, requireFull: true);
+            if (restoredPayload.Catalog.Revision != historical.Catalog.Revision ||
+                !restoredPayload.Secrets.Any(s => s.Key.KeyId == keyA.KeyId && s.Key.Version == 1 && s.HexValue == new string('A', 32)) ||
+                !restoredPayload.Secrets.Any(s => s.Key.KeyId == keyA.KeyId && s.Key.Version == 2 && s.HexValue == new string('C', 32)))
+                throw new Exception("Recovered historical versions or values differ.");
+            var again = KeyLibraryBackupService.RestoreIsolated(historyBackup, historyReference,
+                recoveryCert, now, workspace);
+            if (again.Directory == isolated.Directory || ConcurrentFileWriter.Capture(localPath) != file2 ||
+                trust.LoadOffline().Checkpoint != trustBefore || central.ReadHead() != centralBefore)
+                throw new Exception("Recovery reused an output or modified operational state.");
+
             var next = Enrollment(policy with { Revision = 2, People = [fullPerson, limited with { KeyLibraryCustomers = [customerB] }, none] });
             var rotated = ScopedKeyLibraryVault.Protect(payload, next, authority, "keys", now);
             trust.AcceptPackageUpdate(next, verified.Checkpoint);
             Reject<CryptographicException>(() => ScopedKeyLibraryVault.Open(signed, trust, "keys", limitedCert, now));
             if (ScopedKeyLibraryVault.Open(rotated, trust, "keys", limitedCert, now).Secrets.Single().Key.KeyId != keyB.KeyId)
                 throw new Exception("Customer scope rotation failed.");
+            // An archived policy can still be verified offline, but that does
+            // not enroll or roll back the operational trust checkpoint.
+            var oldRecovery = KeyLibraryBackupService.RestoreIsolated(historyBackup, historyReference,
+                recoveryCert, now, workspace);
+            if (oldRecovery.Verification.CatalogRevision != historical.Catalog.Revision ||
+                trust.LoadOffline().Checkpoint == trustBefore)
+                throw new Exception("Historical recovery changed the operational policy.");
             // Offline revocation is not retroactive: the original signed
             // policy and original ciphertext can still open the old grant.
             _ = GroupVaultService.Unprotect(a.Vault, verified, customerA, "keys", [limitedCert],
