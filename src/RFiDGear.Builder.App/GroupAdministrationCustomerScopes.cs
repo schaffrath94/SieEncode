@@ -11,6 +11,13 @@ internal sealed partial class GroupAdministrationWindow
     private void RefreshCustomerScopeStatus()
     {
         customerScopeColumn.Visibility = customerScopeDraft ? Visibility.Visible : Visibility.Collapsed;
+        if (prepareCustomerScopesButton is not null)
+        {
+            prepareCustomerScopesButton.Visibility = customerScopeDraft ? Visibility.Collapsed : Visibility.Visible;
+            prepareCustomerScopesButton.IsEnabled = !peopleGrid.IsReadOnly;
+        }
+        if (editCustomerScopeButton is not null)
+            editCustomerScopeButton.IsEnabled = customerScopeDraft && !peopleGrid.IsReadOnly;
         customerScopeStatus.Text = customerScopeDraft
             ? "Kundenfreigaben im Entwurf · Alle (auch neue), ausgewählte Kunden oder keine. Gruppenmitgliedschaft und Gerätefreigabe bleiben zusätzlich erforderlich."
             : "Bisher gemeinsame Bibliothek ohne kryptografische Kundentrennung. Die Umstellung benötigt einen vollständig abgeglichenen Zentralbestand.";
