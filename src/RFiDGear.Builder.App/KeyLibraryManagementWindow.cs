@@ -459,6 +459,7 @@ internal sealed class KeyLibraryManagementWindow : Window
             var allowedGroup = policy.Groups.SingleOrDefault(g => g.Id == group.Id)
                 ?? throw new CryptographicException("Signierte Schlüsselgruppe fehlt.");
             var permitted = policy.People.Where(p => p.Enabled &&
+                    (!policy.CustomerScopesEnabled || p.AllKeyLibraryCustomers) &&
                     allowedGroup.Members.Contains(p.Id, StringComparer.Ordinal))
                 .SelectMany(p => p.Devices).Where(d => d.Enabled)
                 .Select(d => d.Fingerprint).ToHashSet(StringComparer.Ordinal);
