@@ -21,24 +21,11 @@ var tlsPassword = Required("SIEENCODE_SYNC_TLS_PASSWORD");
 var portText = Required("SIEENCODE_SYNC_PORT");
 if (!int.TryParse(portText, out var port) || port is < 1024 or > 65535)
     throw new InvalidOperationException("HTTPS-Port ist ungültig.");
-// One-time local bootstrap only. The public enrollment package originates
-// from the existing SieEncode Studio group administration. Its fingerprint
-// must be independently verified and supplied by the server operator.
-// No remote HTTP request can create or replace the trust root.
-var store = new CentralKeyLibraryStore(stateFile, libraryId);
-if (!File.Exists(stateFile))
-{
-    var publicPackageFile = Path.GetFullPath(
-        Required("SIEENCODE_SYNC_BOOTSTRAP_ENROLLMENT_FILE"));
-    var confirmedFingerprint = Required(
-        "SIEENCODE_SYNC_BOOTSTRAP_ADMIN_FINGERPRINT");
-    var info = new FileInfo(publicPackageFile);
-    if (!info.Exists || info.Length is <= 0 or > GroupEnrollmentPackages.MaximumBytes)
-        throw new InvalidDataException("Öffentliches SieEncode-Gruppenpaket fehlt oder ist ungültig.");
-    var signedEnrollment = GroupEnrollmentPackages.Read(
-        File.ReadAllBytes(publicPackageFile));
-    store.Register(signedEnrollment, confirmedFingerprint);
-}
+// Normal restart is the default. Missing state must NEVER silently create a
+// replacement authority. First installation and recovery are explicit local modes.
+var mode = Environment.GetEnvironmentVariable("SIEENCODE_SYNC_START_MODE") ?? "existing";
+if (mode is not ("existing" or "bootstrap" or "restore"))
+    throw new InvalidOperationException("Unbekannter Startmodus der Zentrale.");
 using var serverCertificate = new X509Certificate2(tlsPath, tlsPassword,
     X509KeyStorageFlags.EphemeralKeySet);
 if (!serverCertificate.HasPrivateKey ||
@@ -46,7 +33,37 @@ if (!serverCertificate.HasPrivateKey ||
     DateTime.UtcNow >= serverCertificate.NotAfter.ToUniversalTime())
     throw new CryptographicException("Gültiges TLS-Serverzertifikat mit privatem Schlüssel fehlt.");
 
-_ = store.ReadHead(); // Verify the already pinned authority before listening.
+if (mode == "restore")
+{
+    var approvalPath = Path.GetFullPath(Required("SIEENCODE_SYNC_RECOVERY_APPROVAL_FILE"));
+    using var approvalFile = new FileStream(approvalPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+    var approval = KeyLibrarySyncWire.ReadAsync<SignedCentralKeyLibraryActivation>(
+        approvalFile, CentralKeyLibraryActivation.MaximumBytes).GetAwaiter().GetResult();
+    // The service ID is independently configured, not adopted from an archive.
+    var claim = KeyLibrarySyncWire.Read<CentralKeyLibraryActivationClaim>(
+        approval.Payload, CentralKeyLibraryActivation.MaximumBytes);
+    if (claim.Reference?.Head?.LibraryId != libraryId)
+        throw new CryptographicException("Aktivierungsauftrag gehört zu einer anderen Bibliothek.");
+    CentralKeyLibraryBackupService.ActivateRecovered(
+        Required("SIEENCODE_SYNC_RECOVERY_DIRECTORY"), stateFile, approval,
+        Required("SIEENCODE_SYNC_RECOVERY_ADMIN_FINGERPRINT"),
+        CertificateVaultService.Fingerprint(serverCertificate), DateTimeOffset.UtcNow);
+}
+using var serverLease = CentralKeyLibraryStartup.AcquireLease(stateFile);
+CentralKeyLibraryStore store;
+if (mode == "bootstrap")
+{
+    var publicPackageFile = Path.GetFullPath(Required("SIEENCODE_SYNC_BOOTSTRAP_ENROLLMENT_FILE"));
+    using var input = new FileStream(publicPackageFile, FileMode.Open, FileAccess.Read, FileShare.Read);
+    if (input.Length is <= 0 or > GroupEnrollmentPackages.MaximumBytes)
+        throw new InvalidDataException("Öffentliches SieEncode-Gruppenpaket fehlt oder ist ungültig.");
+    var bytes = new byte[(int)input.Length];
+    input.ReadExactly(bytes);
+    store = CentralKeyLibraryStartup.BootstrapNew(stateFile, libraryId,
+        GroupEnrollmentPackages.Read(bytes), Required("SIEENCODE_SYNC_BOOTSTRAP_ADMIN_FINGERPRINT"));
+}
+else
+    store = CentralKeyLibraryStartup.OpenExisting(stateFile, libraryId);
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();

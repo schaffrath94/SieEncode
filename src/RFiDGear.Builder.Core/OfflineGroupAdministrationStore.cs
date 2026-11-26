@@ -47,6 +47,34 @@ public sealed class OfflineGroupAdministrationStore(string localPath, Guid libra
         return signed.Checkpoint;
     }
 
+    /// <summary>Explicit approval after independent head confirmation and external
+    /// fencing of the old central server. Does not contact or activate any server.</summary>
+    public SignedCentralKeyLibraryActivation SignCentralRecoveryActivation(OfflineGroupTrustStore trust,
+        CentralKeyLibraryBackupReference reference, CentralKeyLibraryHead independentlyConfirmedCurrentHead,
+        string targetStatePath, string tlsCertificateSha256, bool oldServerFenced, DateTimeOffset now)
+    {
+        var checkpoint = RequireLocalAuthority(trust);
+        if (!oldServerFenced || reference.Head != independentlyConfirmedCurrentHead ||
+            reference.Head.LibraryId != libraryId || reference.Head.Policy != checkpoint ||
+            reference.AdministratorFingerprint != OfflineGroupTrustStore.AdministratorFingerprint(
+                trust.ExportPublic().AdministratorPublicKey))
+            throw new CryptographicException("Aktueller unabhängiger Zentralstand und bestätigte Stilllegung der alten Zentrale erforderlich.");
+        var (state, revision) = Load();
+        try
+        {
+            using var authority = OpenKey(state);
+            if (OfflineGroupPolicyService.Verify(state.Policy, authority, libraryId).Checkpoint != checkpoint ||
+                ConcurrentFileWriter.Capture(path) != revision || RequireLocalAuthority(trust) != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            var signed = CentralKeyLibraryActivation.Sign(new(CentralKeyLibraryActivation.Format,
+                Guid.NewGuid(), reference, targetStatePath, tlsCertificateSha256, now, now.AddMinutes(15)), authority);
+            if (ConcurrentFileWriter.Capture(path) != revision || RequireLocalAuthority(trust) != checkpoint)
+                throw new ConcurrentFileChangeException(path);
+            return signed;
+        }
+        finally { CryptographicOperations.ZeroMemory(state.PrivateKey); }
+    }
+
     /// <summary>Sign one bounded audit read with the current protected main authority.</summary>
     public SignedKeyLibraryAuditQuery SignAuditQuery(OfflineGroupTrustStore trust,
         string afterId, int limit, X509Certificate2 identity, DateTimeOffset now)

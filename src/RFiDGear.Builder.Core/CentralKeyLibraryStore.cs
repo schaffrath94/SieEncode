@@ -74,6 +74,8 @@ public sealed class CentralKeyLibraryStore(string statePath, Guid expectedLibrar
             throw new CryptographicException("Zentraler Sicherungsstand passt nicht zur unabhängig bestätigten Revision und Verwaltung.");
     }
 
+    internal GroupEnrollmentPackage ReadBackupEnrollment() => Read().State.Enrollment;
+
     /// <summary>Return only the current version cursor; does not reveal raw card keys.</summary>
     public CentralKeyLibraryHead ReadHead() => Head(Read().State);
 

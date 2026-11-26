@@ -108,6 +108,46 @@ public static class CentralKeyLibraryBackupService
         });
     }
 
+    /// <summary>Prepare a new operational directory after an independently
+    /// approved, signed recovery. The old service must already be fenced.
+    /// Never overwrite an existing directory or modify the isolated source.</summary>
+    public static void ActivateRecovered(string isolatedDirectory, string targetStatePath,
+        SignedCentralKeyLibraryActivation authorization, string independentlyConfirmedAdministratorFingerprint,
+        string tlsCertificateSha256, DateTimeOffset now)
+    {
+        var target = Path.GetFullPath(targetStatePath);
+        var targetDirectory = Path.GetDirectoryName(target)!;
+        if (Path.GetFileName(target) != StateName || Directory.Exists(targetDirectory) || File.Exists(targetDirectory))
+            throw new IOException("Aktivierung benötigt ein neues Dienstverzeichnis mit zentralem Standarddateinamen.");
+        var parent = Path.GetDirectoryName(targetDirectory)!;
+        RequireDirectory(parent);
+        var source = Path.GetFullPath(isolatedDirectory);
+        RequireDirectory(source);
+        RequireRegularFile(Path.Combine(source, "NOT-ACTIVATED.json"));
+        var untrusted = CentralKeyLibraryActivation.ReadClaim(authorization);
+        var center = new CentralKeyLibraryStore(Path.Combine(source, StateName),
+            untrusted.Reference.Head.LibraryId);
+        var claim = CentralKeyLibraryActivation.Verify(authorization, center.ReadBackupEnrollment(),
+            independentlyConfirmedAdministratorFingerprint, target, tlsCertificateSha256, now);
+
+        // Reuse the complete independent manifest verification and disk readback.
+        // Keep the result under its non-operational name until the final move.
+        var staged = RestoreIsolated(source, parent, claim.Reference, claim.Reference.Head);
+        try
+        {
+            WriteNew(Path.Combine(staged.Directory, "CENTRAL-ACTIVATION.json"),
+                KeyLibrarySyncWire.Write(authorization));
+            // The staging name itself is still blocked by the service startup gate.
+            File.Delete(Path.Combine(staged.Directory, ManifestName));
+            File.Delete(Path.Combine(staged.Directory, "NOT-ACTIVATED.json"));
+            Directory.Move(staged.Directory, targetDirectory);
+        }
+        finally
+        {
+            if (Directory.Exists(staged.Directory)) Directory.Delete(staged.Directory, recursive: true);
+        }
+    }
+
     private static Manifest Inspect(string root, CentralKeyLibraryHead head, string administrator)
     {
         RequireDirectory(root);

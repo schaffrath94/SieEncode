@@ -197,6 +197,45 @@ internal static class KeyLibraryDisclosureTests
             if (restoredCenter.AcceptAudit(signedAudit, copy, now) !=
                 centralState.AcceptAudit(signedAudit, copy, now))
                 throw new Exception("Restored audit lost duplicate-event protection.");
+            // Startup does not bootstrap a lost server or open a recovery folder.
+            Reject<InvalidOperationException>(() => CentralKeyLibraryStartup.OpenExisting(
+                restoredState, id));
+            var absent = Path.Combine(directory, "absent-server.json");
+            Reject<FileNotFoundException>(() => CentralKeyLibraryStartup.OpenExisting(absent, id));
+            if (File.Exists(absent)) throw new Exception("Normal startup silently created central state.");
+            Reject<IOException>(() => CentralKeyLibraryStartup.BootstrapNew(centralSource, id,
+                enrollment, OfflineGroupTrustStore.AdministratorFingerprint(publicKey)));
+            var targetState = Path.Combine(directory, "operational-replacement", "central-state.json");
+            var tlsPin = CertificateVaultService.Fingerprint(copy); // synthetic pin
+            var activation = new CentralKeyLibraryActivationClaim(CentralKeyLibraryActivation.Format,
+                Guid.NewGuid(), cold.Reference, targetState, tlsPin, now, now.AddMinutes(15));
+            var approval = CentralKeyLibraryActivation.Sign(activation, authority);
+            var pin = OfflineGroupTrustStore.AdministratorFingerprint(publicKey);
+            Reject<CryptographicException>(() => CentralKeyLibraryBackupService.ActivateRecovered(
+                restoredCold.Directory, targetState, CentralKeyLibraryActivation.Sign(activation, copyKey), pin, tlsPin, now));
+            Reject<CryptographicException>(() => CentralKeyLibraryBackupService.ActivateRecovered(
+                restoredCold.Directory, targetState, approval, pin, new string('F', 64), now));
+            Reject<CryptographicException>(() => CentralKeyLibraryBackupService.ActivateRecovered(
+                restoredCold.Directory, targetState, approval, pin, tlsPin, now.AddMinutes(16)));
+            if (Directory.Exists(Path.GetDirectoryName(targetState)))
+                throw new Exception("Rejected activation published operational state.");
+            CentralKeyLibraryBackupService.ActivateRecovered(restoredCold.Directory, targetState,
+                approval, pin, tlsPin, now);
+            using (CentralKeyLibraryStartup.AcquireLease(targetState))
+            {
+                Reject<IOException>(() => CentralKeyLibraryStartup.AcquireLease(targetState));
+                var operational = CentralKeyLibraryStartup.OpenExisting(targetState, id);
+                if (operational.ReadHead() != centralHead ||
+                    ConcurrentFileWriter.Capture(targetState) != sourceRevision ||
+                    !File.Exists(Path.Combine(Path.GetDirectoryName(targetState)!, "CENTRAL-ACTIVATION.json")))
+                    throw new Exception("Activated central state did not retain exact revision.");
+                Reject<CryptographicException>(() => operational.ReadAuthorizedSnapshot(usedDownload, copy, now));
+            }
+            Reject<IOException>(() => CentralKeyLibraryBackupService.ActivateRecovered(
+                restoredCold.Directory, targetState, approval, pin, tlsPin, now));
+            if (!File.Exists(Path.Combine(restoredCold.Directory, "NOT-ACTIVATED.json")))
+                throw new Exception("Activation changed the isolated source.");
+
             var backupAudit = Directory.GetFiles(Path.Combine(cold.Directory, "central-state.json.audit"), "*.json").First();
             File.Delete(backupAudit);
             Reject<CryptographicException>(() => CentralKeyLibraryBackupService.RestoreIsolated(
